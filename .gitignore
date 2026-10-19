@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# Secrets
+.env
+.env.*
+!.env.example
+**/android/key.properties
+*.jks
+*.keystore
+
+# Claude Code's own local dev-server launch config, per-machine
+.claude/launch.json
