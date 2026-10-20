@@ -10,7 +10,7 @@ API, схема ключей) закрылись раньше, чем на ни�
 
 ## Прогресс
 
-- [ ] Этап 0 — Подготовка, проверка API, скелет CI
+- [ ] Этап 0 — Подготовка, проверка API, скелет CI *(в работе)*
 - [ ] Этап 1 — Локальная БД, ключи, настройки
 - [ ] Этап 2 — Поиск и карточка
 - [ ] Этап 3 — Оценки, заметки, «Хочу посмотреть», калибровка
@@ -22,27 +22,42 @@ API, схема ключей) закрылись раньше, чем на ни�
 
 ## Этап 0 — Подготовка, проверка API, скелет CI
 
-**Статус:** не начат
+**Статус:** в работе — сделаны пункты 3–5; 1, 2 и 6 ждут ключей, телефонов
+и keystore
 
-1. **Проверка доступности API — до любого кода приложения.** Получить
+1. ⏳ **Проверка доступности API — до любого кода приложения.** Получить
    ключи TMDB, ПоискКино, OMDb. С телефонов всех трёх пользователей
    (мобильная сеть и Wi-Fi, без VPN) проверить `api.themoviedb.org`,
    `image.tmdb.org`, `api.poiskkino.dev`, `www.omdbapi.com`. Результат
    записать в [external-sources.md](external-sources.md). Если TMDB
    недоступен — пересмотреть выбор каталога и схему `work_key` до Этапа 1.
-2. Пройти вручную (curl) все запросы из
+   - С машины разработки (2026-10-20) все четыре отвечают, но внешний IP
+     там нидерландский — для РФ это ничего не доказывает. Нужны телефоны.
+2. ⏳ Пройти вручную (curl) все запросы из
    [external-sources.md](external-sources.md), снять пометки
    **(проверить)**: имена фильтров ПоискКино v1.5, наличие рейтинга КП у
    сезонов и серий, ответы OMDb для серий. Сохранить ответы как фикстуры
    тестов (без ключей).
-3. `flutter create --org com.github.tiltozavr2545 --platforms=android,ios app`
-   на Flutter 3.32.8. Подобрать версии пакетов из
-   [client-architecture.md](client-architecture.md) под этот SDK и
-   закрепить lock-файлом, в первую очередь google_sign_in.
-4. Makefile (`verify`, `verify-version`, `bump-*`, `build-apk`) и git-хуки —
-   по образцу Amicus.
-5. CI: `.github/workflows/ci.yml` — формат, analyze, тесты.
-6. Release-keystore, `key.properties`, первый подписанный APK-пустышка
+   - Скрипт готов: `scripts/capture-fixtures.sh`, ключи — в
+     `~/.config/framebook/keys.env` (см. [operations.md](operations.md)).
+     Ждёт ключей.
+3. ✅ `flutter create --org com.github.tiltozavr2545 --platforms=android,ios app`
+   на Flutter 3.32.8. Версии пакетов подобраны и закреплены lock-файлом —
+   таблица в [client-architecture.md](client-architecture.md). Потолки:
+   drift 2.29 (2.31 не сочетается с `drift_dev` на Dart 3.8), Riverpod 3.3.2;
+   google_sign_in встала 7.2.0, то есть с новым API авторизации.
+   - Android: compileSdk/targetSdk 36, AGP 8.9.3, NDK 27, minSdk 26 — как в
+     Amicus, по тем же причинам. Release без `key.properties` падает, а не
+     подписывается debug-ключом (проверено).
+   - Release APK со всеми плагинами собирается (`make build-apk-check`,
+     46.6 МБ — универсальный, с нативными библиотеками sqlite и движком под
+     все ABI).
+4. ✅ Makefile (`verify`, `verify-version`, `bump-*`, `build-apk`,
+   `build-apk-check`) и git-хуки — по образцу Amicus
+   (`make install-hooks` включает).
+5. ✅ CI: `.github/workflows/ci.yml` — формат, analyze, тесты, сборка APK
+   с debug-подписью.
+6. ⏳ Release-keystore, `key.properties`, первый подписанный APK-пустышка
    ставится на телефон.
 
 ## Этап 1 — Локальная БД, ключи, настройки

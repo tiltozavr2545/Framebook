@@ -1,0 +1,6 @@
+# Copy to key.properties (gitignored) and fill in. See docs/operations.md.
+# storeFile is relative to android/app/.
+storeFile=framebook-release.jks
+storePassword=
+keyAlias=framebook
+keyPassword=

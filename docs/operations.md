@@ -23,6 +23,23 @@
 Разработчику для тестов нужны свои ключи. В репозиторий и в фикстуры тестов
 они не попадают (фикстуры — записанные ответы без заголовков запроса).
 
+### Снятие фикстур
+
+`scripts/capture-fixtures.sh` записывает живые ответы всех трёх API в
+`app/test/fixtures/`. Ключи он берёт из файла вне репозитория,
+`~/.config/framebook/keys.env` (или путь из `FRAMEBOOK_KEYS`):
+
+```sh
+TMDB_TOKEN=eyJ...
+POISKKINO_KEY=...
+OMDB_KEY=...
+```
+
+Источник без ключа пропускается. Скрипт тратит 6 из 200 суточных запросов
+ПоискКино. В конце он проверяет, что ни одно значение ключа не попало в
+сохранённые файлы. Перезапускать стоит, когда меняется формат ответов или
+добавляется новый запрос.
+
 ---
 
 ## Google Cloud: OAuth для Drive
@@ -69,11 +86,17 @@ Testing и сделать повторный вход незаметным (ти
   паролей + резервная копия). Потеря ключа — это невозможность обновить
   приложение поверх установленного: у друзей придётся удалять старое,
   а вместе с ним и локальные данные, если они не синхронизированы.
-- `android/key.properties` — в `.gitignore`, шаблон —
-  `android/key.properties.example`.
+- `app/android/key.properties` — в `.gitignore`, шаблон —
+  `app/android/key.properties.example`. Создать keystore:
+  `keytool -genkeypair -v -keystore app/android/app/framebook-release.jks -alias framebook -keyalg RSA -keysize 2048 -validity 10000`
+  (keytool лежит в JDK Android Studio:
+  `/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool`).
 - Сборка: `make build-apk` → `flutter build apk --release`. Один
   универсальный APK, без `--split-per-abi`: друзьям проще один файл, чем
-  выбор архитектуры.
+  выбор архитектуры. Без `key.properties` release-сборка **падает**, а не
+  подписывается молча debug-ключом. Для проверки компиляции есть
+  `make build-apk-check`: он явно разрешает debug-подпись, и так же собирает
+  CI.
 - `applicationId` — `com.github.tiltozavr2545.framebook`, `minSdk` —
   по требованию плагинов (google_sign_in, flutter_secure_storage),
   `targetSdk` — актуальный для того AGP, что работает с Flutter 3.32.8.

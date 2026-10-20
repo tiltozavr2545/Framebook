@@ -1,0 +1,79 @@
+SHELL := /bin/sh
+
+APP_DIR := app
+# Keep hooks independent of the interactive shell PATH. Override this when
+# Flutter is installed elsewhere: make FLUTTER=/path/to/flutter verify
+FLUTTER ?= $(HOME)/development/flutter/bin/flutter
+DART ?= $(HOME)/development/flutter/bin/dart
+BASE_REF ?= origin/main
+
+.PHONY: help deps format-check analyze test verify verify-version bump-build bump-patch bump-minor bump-major build-apk build-apk-check pre-commit pre-push install-hooks uninstall-hooks
+
+help:
+	@printf '%s\n' \
+		'make verify          Run dependency, format, analysis, and test checks' \
+		'make verify-version  Verify a version bump against BASE_REF (default: origin/main)' \
+		'make bump-build      Bump only versionCode, keep versionName the same' \
+		'make bump-patch      Bump versionName patch + versionCode (0.1.0 -> 0.1.1)' \
+		'make bump-minor      Bump versionName minor + versionCode (0.1.0 -> 0.2.0)' \
+		'make bump-major      Bump versionName major + versionCode (0.1.0 -> 1.0.0)' \
+		'make build-apk       Build the signed release APK (needs android/key.properties)' \
+		'make build-apk-check Compile-check the release APK with the debug key' \
+		'make pre-commit      Run fast checks used by the pre-commit hook' \
+		'make pre-push        Run checks plus the release compile check' \
+		'make install-hooks   Enable the repository-managed Git hooks' \
+		'make uninstall-hooks Disable the repository-managed Git hooks'
+
+deps:
+	cd $(APP_DIR) && $(FLUTTER) pub get --enforce-lockfile
+
+format-check:
+	cd $(APP_DIR) && $(DART) format --set-exit-if-changed .
+
+analyze:
+	cd $(APP_DIR) && $(FLUTTER) analyze
+
+test:
+	cd $(APP_DIR) && $(FLUTTER) test
+
+verify: deps format-check analyze test
+
+verify-version:
+	BASE_REF="$(BASE_REF)" ./scripts/verify-version.sh
+
+bump-build:
+	./scripts/bump-version.sh build
+
+bump-patch:
+	./scripts/bump-version.sh patch
+
+bump-minor:
+	./scripts/bump-version.sh minor
+
+bump-major:
+	./scripts/bump-version.sh major
+
+# One universal APK, no --split-per-abi: friends get a single file to install
+# (docs/operations.md). Fails without android/key.properties by design.
+build-apk:
+	cd $(APP_DIR) && $(FLUTTER) build apk --release
+
+# -PallowDebugSigning=true: a compile check, not a shippable build, so it opts
+# in to the debug-key fallback that a release build otherwise refuses (see
+# android/app/build.gradle.kts). Never use this output for distribution.
+build-apk-check:
+	cd $(APP_DIR) && $(FLUTTER) build apk --release -PallowDebugSigning=true
+
+# Deliberately excludes `test`: pre-commit runs on every commit and needs to
+# stay fast enough not to be worked around. The full suite gates every push.
+pre-commit: deps format-check analyze
+
+pre-push: verify build-apk-check
+
+install-hooks:
+	git config core.hooksPath .githooks
+	@printf '%s\n' 'Repository hooks enabled via .githooks'
+
+uninstall-hooks:
+	git config --unset core.hooksPath || true
+	@printf '%s\n' 'Repository hooks disabled'

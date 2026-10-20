@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: app
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.21.0
+        with:
+          # Same SDK as the dev machines: newer Flutter needs macOS 14+, which
+          # the Android machine cannot run (AGENTS.md).
+          flutter-version: '3.32.8'
+          channel: 'stable'
+          cache: true
+          pub-cache: true
+      - run: flutter pub get --enforce-lockfile
+      - name: Verify PR version bump
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.sha }}
+        run: make -C .. verify-version BASE_REF="$BASE_REF"
+      - run: dart format --set-exit-if-changed .
+      - run: flutter analyze
+      # No secrets needed: tests never call external APIs (fixtures only).
+      - run: flutter test
+      - name: Build release APK (compile check, debug-signed)
+        run: flutter build apk --release -PallowDebugSigning=true

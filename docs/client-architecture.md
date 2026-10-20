@@ -31,9 +31,9 @@ Amicus. Схема данных — в [data-model.md](data-model.md), внеш�
 - **Секреты:** flutter_secure_storage (ключи API)
 - **Настройки:** shared_preferences
 - **Google:** google_sign_in + googleapis (Drive v3) +
-  extension_google_sign_in_as_googleapis_auth. У google_sign_in 7.x поменялся
-  API авторизации, и версию надо выбрать совместимую с Dart из 3.32.8
-  **(проверить на Этапе 0)**
+  extension_google_sign_in_as_googleapis_auth. Встала google_sign_in 7.2.0 —
+  это уже новый API (авторизация отдельно от входа через
+  `authorizationClient`), примеры под 6.x к ней не подходят
 - **Сериализация:** json_serializable для DTO внешних API и формата
   синхронизации; DTO API и строки БД — разные классы
 - **Графики статистики:** fl_chart
@@ -42,6 +42,28 @@ Amicus. Схема данных — в [data-model.md](data-model.md), внеш�
 - **Структура репозитория:** `app/` — Flutter-проект (org
   `com.github.tiltozavr2545`, пакет `framebook`), `docs/` — документация
 - **Репозиторий:** [github.com/tiltozavr2545/Framebook](https://github.com/tiltozavr2545/Framebook)
+
+### Версии, подобранные под Flutter 3.32.8 (Этап 0)
+
+| Пакет | Версия | Примечание |
+|---|---|---|
+| flutter_riverpod | 3.3.2 | 3.4.1+ требует Dart 3.12 |
+| go_router | 17.0.0 | |
+| drift / drift_flutter / drift_dev | 2.29.0 / 0.2.7 / 2.29.0 | **потолок**: drift 2.31 тянет sqlite3 и test, которым нужен Dart 3.10+, а `test` закреплён через `flutter_test` из SDK |
+| build_runner / json_serializable | 2.7.1 / 6.11.2 | analyzer 7.7.1 |
+| dio / dio_cache_interceptor / http_cache_file_store | 5.11.1 / 4.0.7 / 2.0.2 | |
+| cached_network_image | 3.4.1 | |
+| flutter_secure_storage | 10.3.4 | |
+| shared_preferences | 2.5.3 | |
+| google_sign_in | 7.2.0 | новый API авторизации |
+| googleapis / extension_google_sign_in_as_googleapis_auth | 15.0.0 / 3.0.0 | |
+| fl_chart | 1.1.0 | |
+| uuid / intl | 4.6.0 / 0.20.2 | |
+
+`flutter pub upgrade --major-versions` здесь не инструмент: «новее» почти
+всегда значит «требует более свежий SDK», а SDK закреплён. Если нужен апгрейд
+одного пакета — снять с него ограничение (`any`) и посмотреть, что выберет
+решатель, как это сделано для drift.
 
 ---
 
