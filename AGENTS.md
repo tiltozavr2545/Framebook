@@ -14,7 +14,7 @@
 | какие внешние API, сопоставление id, кэш, лимиты | [docs/external-sources.md](docs/external-sources.md) |
 | формат файла в Google Drive, слияние, экспорт/импорт | [docs/sync.md](docs/sync.md) |
 | устройство клиента, решения по умолчанию | [docs/client-architecture.md](docs/client-architecture.md) |
-| ключи, OAuth-клиент Google, подпись и раздача APK | [docs/operations.md](docs/operations.md) |
+| ключи API, OAuth-клиент Google, где лежит ключ подписи, как выпустить релиз | [docs/operations.md](docs/operations.md) |
 | этапы MVP и прогресс | [docs/implementation-plan.md](docs/implementation-plan.md) |
 | отложенное, открытые вопросы | [docs/future-development.md](docs/future-development.md) |
 | историческое: замысел и решения до старта | [docs/project-brief.md](docs/project-brief.md) |

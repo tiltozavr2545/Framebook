@@ -1,0 +1,96 @@
+name: Release APK
+
+# Пуш тега vX.Y.Z → подписанный универсальный APK → GitHub Release с ним.
+# Это и есть канал раздачи друзьям (docs/operations.md).
+#
+# Ключ подписи живёт только в секретах репозитория (ANDROID_KEYSTORE_BASE64
+# и пароли) и в резервной копии на машине разработки — поэтому релиз не
+# зависит ни от чьего ноутбука. Секреты GitHub нельзя прочитать обратно:
+# если пропадёт и репозиторий, и копия, обновления поверх установленного
+# APK станут невозможны.
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    working-directory: app
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.21.0
+        with:
+          flutter-version: '3.32.8'
+          channel: 'stable'
+          cache: true
+          pub-cache: true
+
+      - name: Check that the tag matches pubspec version
+        id: version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -eu
+          version=$(awk '/^version:[[:space:]]/ { print $2; exit }' pubspec.yaml)
+          name=${version%+*}
+          if [ "$TAG" != "v$name" ]; then
+            echo "::error title=Tag mismatch::tag $TAG, but pubspec.yaml has $version (expected tag v$name)"
+            exit 1
+          fi
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+
+      - run: flutter pub get --enforce-lockfile
+      - run: flutter analyze
+      - run: flutter test
+
+      - name: Configure release signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -eu
+          for secret_name in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            eval "secret_value=\${$secret_name-}"
+            if [ -z "$secret_value" ]; then
+              echo "::error title=Missing signing secret::$secret_name is not configured"
+              exit 1
+            fi
+          done
+          umask 077
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/framebook-release.jks
+          cat > android/key.properties <<EOF
+          storeFile=framebook-release.jks
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          keyPassword=$ANDROID_KEY_PASSWORD
+          EOF
+
+      # Без -PallowDebugSigning: если подпись не настроилась, сборка падает,
+      # а не выпускает APK с debug-ключом (android/app/build.gradle.kts).
+      - name: Build signed universal APK
+        run: flutter build apk --release
+
+      - name: Create GitHub release with the APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          NAME: ${{ steps.version.outputs.name }}
+        run: |
+          set -eu
+          out="build/app/outputs/flutter-apk/framebook-$NAME.apk"
+          mv build/app/outputs/flutter-apk/app-release.apk "$out"
+          gh release create "$TAG" "$out" --title "Framebook $NAME" --generate-notes
+
+      - name: Remove signing files
+        if: always()
+        run: rm -f android/key.properties android/app/framebook-release.jks

@@ -82,41 +82,64 @@ Testing и сделать повторный вход незаметным (ти
 
 ## Подпись и сборка
 
-- Release-keystore создаётся один раз и хранится вне репозитория (менеджер
-  паролей + резервная копия). Потеря ключа — это невозможность обновить
-  приложение поверх установленного: у друзей придётся удалять старое,
-  а вместе с ним и локальные данные, если они не синхронизированы.
-- `app/android/key.properties` — в `.gitignore`, шаблон —
-  `app/android/key.properties.example`. Создать keystore:
-  `keytool -genkeypair -v -keystore app/android/app/framebook-release.jks -alias framebook -keyalg RSA -keysize 2048 -validity 10000`
-  (keytool лежит в JDK Android Studio:
-  `/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool`).
-- Сборка: `make build-apk` → `flutter build apk --release`. Один
+Release-ключ создан 2026-10-20 и ни от кого лично не зависит:
+
+| Где | Что | Зачем |
+|---|---|---|
+| секреты репозитория GitHub | `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` | ими подписывает релизы CI (`release-apk.yml`) |
+| `~/.config/framebook/` на Intel-маке | `framebook-release.jks` + `key.properties` | резервная копия: секреты GitHub нельзя прочитать обратно |
+| `app/android/key.properties` (gitignored) | копия `key.properties` с абсолютным путём к ключу | локальный `make build-apk` |
+
+Пароль случайный (32 символа), нигде, кроме этих мест, не записан. Ключ RSA
+4096, срок действия 100 лет, alias `framebook`.
+
+Потеря ключа — это невозможность обновить приложение поверх
+установленного: у друзей придётся удалять старое, а вместе с ним и
+несинхронизированные данные. Ключ пропадёт, только если одновременно
+исчезнут и репозиторий, и копия на маке. Для спокойствия копию
+`~/.config/framebook/` стоит положить ещё куда-нибудь (менеджер паролей,
+зашифрованный архив в облаке), но это не обязательно.
+
+Отпечатки — для Android OAuth-клиентов в Google Cloud (Этап 5):
+
+| Ключ | SHA-1 |
+|---|---|
+| release (`framebook`) | `F4:07:7F:14:A1:36:FF:01:70:F1:CB:C6:4A:1A:F4:20:51:4C:0A:FD` |
+| debug, Intel-мак | `D0:75:83:3B:53:FB:34:2B:78:97:6E:FD:5D:F3:2B:C4:EE:D0:5B:5B` |
+| debug, M4-мак | снять на нём: `keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android` |
+
+Сборка:
+
+- `make build-apk` → `flutter build apk --release`, подписанный APK. Один
   универсальный APK, без `--split-per-abi`: друзьям проще один файл, чем
-  выбор архитектуры. Без `key.properties` release-сборка **падает**, а не
-  подписывается молча debug-ключом. Для проверки компиляции есть
-  `make build-apk-check`: он явно разрешает debug-подпись, и так же собирает
-  CI.
-- `applicationId` — `com.github.tiltozavr2545.framebook`, `minSdk` —
-  по требованию плагинов (google_sign_in, flutter_secure_storage),
-  `targetSdk` — актуальный для того AGP, что работает с Flutter 3.32.8.
+  выбор архитектуры.
+- Без `key.properties` release-сборка **падает**, а не подписывается молча
+  debug-ключом. Для проверки компиляции есть `make build-apk-check`: он
+  явно разрешает debug-подпись, так же собирает CI.
+- Чтобы собирать подписанное на другой машине (M4), скопировать туда
+  `~/.config/framebook/` и `app/android/key.properties` (путь к ключу в нём
+  абсолютный — поправить под ту машину).
+- `keytool` и `apksigner` берут JDK из Android Studio:
+  `/Applications/Android Studio.app/Contents/jbr/Contents/Home`. Проверить
+  подпись APK: `apksigner verify --print-certs <apk>`.
+- `applicationId` — `com.github.tiltozavr2545.framebook`, `minSdk` 26,
+  `targetSdk`/`compileSdk` 36.
 
 ---
 
 ## Раздача (Android)
 
-- **GitHub Releases**: тег `v{name}` (например, `v0.3.0`), к релизу
-  прикладывается APK и короткий список изменений из
-  [../CHANGELOG.md](../CHANGELOG.md).
-- Установка у друга: скачать APK, разрешить установку из этого источника,
-  поставить. Обновление — новый APK поверх, данные сохраняются (тот же ключ
-  подписи, `versionCode` больше).
+- **Релиз — это тег.** Бампнуть версию (`make bump-minor` и т.п.), дописать
+  [../CHANGELOG.md](../CHANGELOG.md), закоммитить, затем
+  `git tag v0.1.0 && git push origin v0.1.0`. Workflow `release-apk.yml`
+  проверит, что тег совпадает с версией в `pubspec.yaml`, прогонит analyze и
+  тесты, соберёт подписанный APK `framebook-0.1.0.apk` и создаст GitHub
+  Release с ним.
+- Установка у друга: скачать APK со страницы релиза, разрешить установку из
+  этого источника, поставить. Обновление — новый APK поверх, данные
+  сохраняются (тот же ключ подписи, `versionCode` больше).
 - Проверка обновлений в самом приложении — в
   [future-development.md](future-development.md); в MVP — сообщением в чат.
-
-Релиз пока делается руками. Автоматизация (тег → CI собирает и подписывает
-APK → прикладывает к релизу) — после первых двух-трёх релизов, когда
-процесс устоится.
 
 ---
 
