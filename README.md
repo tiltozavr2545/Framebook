@@ -71,6 +71,7 @@ flutter run
 - [Внешние источники](docs/external-sources.md) — какие API, что из них берём, сопоставление id, кэш, лимиты
 - [Синхронизация и бэкап](docs/sync.md) — формат файла в Google Drive, алгоритм слияния, экспорт/импорт
 - [Устройство клиента](docs/client-architecture.md) — чем собрано приложение и решения по умолчанию
+- [Как получить ключи API](docs/api-keys.md) — TMDB, ПоискКино, OMDb: пошагово, что вписывать в каждое поле
 - [Эксплуатация](docs/operations.md) — ключи, Google Cloud OAuth, подпись и раздача APK
 - [Отложенные фичи](docs/future-development.md) — iOS, импорт из других сервисов, открытые вопросы
 - [План реализации](docs/implementation-plan.md) — этапы MVP и прогресс по ним
