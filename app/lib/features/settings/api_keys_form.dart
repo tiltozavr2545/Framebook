@@ -171,7 +171,10 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
               enabled: !checking,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
-                hintText: hint,
+                // Подсказка длиннее поля на телефоне — под полем она
+                // переносится, а в hintText обрезалась многоточием.
+                helperText: hint,
+                helperMaxLines: 3,
                 suffixIcon: IconButton(
                   icon: Icon(
                     _obscured ? Icons.visibility : Icons.visibility_off,
