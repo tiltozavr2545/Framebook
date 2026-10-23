@@ -4,9 +4,13 @@
 это единственная схема в проекте: всё, что пользователь создал, лежит здесь, а
 всё, что пришло из внешних API, — либо мини-снимок, либо вытесняемый кэш.
 
-**Статус: проект схемы до Этапа 1.** Когда появится код, источником истины
-станут таблицы drift в `app/lib/data/db/`, а этот файл — снимком для быстрой
-ориентации, как `data-model.md` в Amicus.
+**Статус: реализовано на Этапе 1.** Источник истины — таблицы drift в
+`app/lib/data/db/tables.dart`; снимки схемы по версиям — в
+`app/drift_schemas/`. Этот файл — для быстрой ориентации и «почему»; при
+расхождении прав код. CHECK-ограничения (диапазон `score_half`, допустимые
+`kind`/`source`/`status`/`scale`, номера сезонов и серий) и внешние ключи
+`ratings`/`watchlist` → `works` держит сама база — это покрыто
+`test/data/database_test.dart`.
 
 Как эти данные переезжают между устройствами — в [sync.md](sync.md); откуда
 берутся внешние данные — в [external-sources.md](external-sources.md).
@@ -149,14 +153,14 @@ HTTP-кэш). Если новая фича захочет поле в `works`, �
 |---|---|---|
 | `work_key` | text | |
 | `source` | text | `kp` / `imdb` / `tmdb` / `rt` / `metacritic` |
-| `status` | text | `ok` / `not_found` / `error` |
+| `status` | text | `ok` / `notFound` / `error` |
 | `value` | real null | как отдал источник |
 | `scale` | int | 10 или 100 (RT в процентах, Metacritic 0–100) |
 | `votes` | int null | |
 | `via` | text | какой API это отдал (`omdb`, `poiskkino`, `tmdb`) — IMDb может прийти из двух |
 | `fetched_at` | int | мс UTC |
 
-PK — (`work_key`, `source`). `not_found` кэшируется так же, как `ok`: иначе
+PK — (`work_key`, `source`). `notFound` кэшируется так же, как `ok`: иначе
 фильм, которого нет на Кинопоиске, сжигал бы лимит ПоискКино при каждом
 открытии. `error` живёт коротко (час) — это сбой, а не ответ. TTL и бюджет —
 в [external-sources.md](external-sources.md).

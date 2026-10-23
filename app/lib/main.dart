@@ -1,29 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-// Этап 0: только скелет, чтобы проверить сборку, CI и установку APK.
-// Шелл с вкладками, локализация и тема — Этап 1
-// (docs/implementation-plan.md).
-void main() {
-  runApp(const FramebookApp());
-}
+import 'app/app.dart';
+import 'app/preferences.dart';
+import 'data/api_keys.dart';
+import 'data/db/database.dart';
+import 'data/db/database_provider.dart';
 
-class FramebookApp extends StatelessWidget {
-  const FramebookApp({super.key});
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Framebook',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
-      ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepOrange,
-          brightness: Brightness.dark,
-        ),
-      ),
-      home: const Scaffold(body: Center(child: Text('Framebook'))),
-    );
-  }
+  // Всё, что нужно первому кадру, читается до runApp: тема и язык — чтобы не
+  // мигнуть чужими, ключи — чтобы роутер сразу знал, показывать ли
+  // онбординг.
+  final db = AppDatabase.open();
+  // device_id создаётся на первом запуске и больше не меняется (docs/sync.md).
+  await db.deviceId();
+  final prefs = await SharedPreferences.getInstance();
+  final keyStore = ApiKeyStore(SecureKeyStorage());
+  final keys = await keyStore.load();
+
+  runApp(
+    ProviderScope(
+      overrides: [
+        databaseProvider.overrideWithValue(db),
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        apiKeyStoreProvider.overrideWithValue(keyStore),
+        initialApiKeysProvider.overrideWithValue(keys),
+      ],
+      child: const FramebookApp(),
+    ),
+  );
 }

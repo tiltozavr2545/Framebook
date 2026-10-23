@@ -8,8 +8,10 @@
 
 ## Статус
 
-Проектирование. Кода ещё нет — есть документация и план по этапам
-([docs/implementation-plan.md](docs/implementation-plan.md)). Первая целевая
+В разработке, версия 0.1.0. Готов каркас: локальная база, онбординг с вводом
+и проверкой ключей API, настройки языка и темы, вкладки-заглушки. Поиск и
+карточки — следующий этап. Ход работы — в
+[docs/implementation-plan.md](docs/implementation-plan.md). Первая целевая
 платформа — Android (APK для себя и друзей), iOS отложен
 ([docs/future-development.md](docs/future-development.md)).
 
@@ -60,7 +62,8 @@ flutter run
 ```
 
 Секретов в сборке нет: ключи API вводятся в самом приложении на первом
-запуске. Для синхронизации с Google Drive нужен OAuth-клиент под свой
+запуске ([как получить](docs/api-keys.md)). После правки таблиц drift или
+строк локализации — `make codegen`. Для синхронизации с Google Drive нужен OAuth-клиент под свой
 `applicationId` и SHA-1 ключа подписи — см. [docs/operations.md](docs/operations.md).
 
 ## Документация

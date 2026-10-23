@@ -7,11 +7,12 @@ FLUTTER ?= $(HOME)/development/flutter/bin/flutter
 DART ?= $(HOME)/development/flutter/bin/dart
 BASE_REF ?= origin/main
 
-.PHONY: help deps format-check analyze test verify verify-version bump-build bump-patch bump-minor bump-major build-apk build-apk-check pre-commit pre-push install-hooks uninstall-hooks
+.PHONY: help codegen deps format-check analyze test verify verify-version bump-build bump-patch bump-minor bump-major build-apk build-apk-check pre-commit pre-push install-hooks uninstall-hooks
 
 help:
 	@printf '%s\n' \
 		'make verify          Run dependency, format, analysis, and test checks' \
+		'make codegen         Regenerate drift code, localizations and schema snapshots' \
 		'make verify-version  Verify a version bump against BASE_REF (default: origin/main)' \
 		'make bump-build      Bump only versionCode, keep versionName the same' \
 		'make bump-patch      Bump versionName patch + versionCode (0.1.0 -> 0.1.1)' \
@@ -23,6 +24,13 @@ help:
 		'make pre-push        Run checks plus the release compile check' \
 		'make install-hooks   Enable the repository-managed Git hooks' \
 		'make uninstall-hooks Disable the repository-managed Git hooks'
+
+# Generated files are committed; CI fails if they differ from what this
+# produces. make-migrations only writes a new snapshot when schemaVersion grew.
+codegen:
+	cd $(APP_DIR) && $(DART) run build_runner build --delete-conflicting-outputs
+	cd $(APP_DIR) && $(FLUTTER) gen-l10n
+	cd $(APP_DIR) && $(DART) run drift_dev make-migrations
 
 deps:
 	cd $(APP_DIR) && $(FLUTTER) pub get --enforce-lockfile

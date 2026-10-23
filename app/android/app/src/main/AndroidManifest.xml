@@ -1,6 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- flutter create puts INTERNET only into the debug/profile manifests:
+         without it here every release build would be offline. All data in
+         this app comes from TMDB, PoiskKino and OMDb. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="framebook"
+        android:label="Framebook"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -37,6 +41,11 @@
 
          In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
     <queries>
+        <!-- url_launcher: open https links (the API keys guide) in a browser. -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>

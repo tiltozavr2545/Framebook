@@ -10,8 +10,10 @@ analyzer:
     - build/**
     - android/**
     - ios/**
-    # Генерат drift и json_serializable.
-    - "**/*.g.dart"
+    # `*.g.dart` (drift, json_serializable) НЕ исключать: это part-файлы
+    # библиотек, и исключение прятало не стиль, а ошибку компиляции —
+    # сгенерированный код ссылался на тип, импорт которого убрали из
+    # database.dart, а `flutter analyze` отвечал «No issues found».
 
   # Весь внешний мир здесь приходит как `Map<String, dynamic>` — ответы TMDB,
   # ПоискКино, OMDb и файл синхронизации. Без strict-casts `json['vote_average']`

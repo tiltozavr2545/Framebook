@@ -39,7 +39,22 @@ jobs:
           BASE_REF: ${{ github.event.pull_request.base.sha }}
         run: make -C .. verify-version BASE_REF="$BASE_REF"
       - run: dart format --set-exit-if-changed .
+      # Сгенерированный код (drift, gen-l10n) коммитится — и должен совпадать
+      # с исходниками. Расхождение уже прятало ошибку компиляции, см. «Грабли»
+      # в AGENTS.md.
+      - name: Generated code is up to date
+        run: |
+          dart run build_runner build --delete-conflicting-outputs
+          flutter gen-l10n
+          git diff --exit-code -- . || {
+            echo "::error title=Stale generated code::run 'make codegen' and commit the result"
+            exit 1
+          }
       - run: flutter analyze
+      # Тесты БД открывают SQLite в памяти через системную библиотеку
+      # (drift NativeDatabase); на macOS она есть, на раннере — ставим.
+      - name: Install SQLite for database tests
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libsqlite3-dev
       # No secrets needed: tests never call external APIs (fixtures only).
       - run: flutter test
       - name: Build release APK (compile check, debug-signed)

@@ -49,6 +49,10 @@ jobs:
 
       - run: flutter pub get --enforce-lockfile
       - run: flutter analyze
+      # Тесты БД открывают SQLite в памяти через системную библиотеку
+      # (drift NativeDatabase); на macOS она есть, на раннере — ставим.
+      - name: Install SQLite for database tests
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libsqlite3-dev
       - run: flutter test
 
       - name: Configure release signing
