@@ -1,0 +1,223 @@
+{
+  "page": 1,
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/tlm8UkiQsitc8rSuIAscQDCnP8d.jpg",
+      "id": 603,
+      "title": "Матрица",
+      "original_title": "The Matrix",
+      "overview": "Жизнь Томаса Андерсона разделена на две части: днём он — самый обычный офисный работник, получающий нагоняи от начальства, а ночью превращается в хакера по имени Нео, и нет места в сети, куда он бы не смог проникнуть. Но однажды всё меняется. Томас узнаёт ужасающую правду о реальности.",
+      "poster_path": "/kEDbym5htJgDQNenjUtSJxAHysB.jpg",
+      "media_type": "movie",
+      "original_language": "en",
+      "genre_ids": [
+        28,
+        878
+      ],
+      "popularity": 45.5085,
+      "release_date": "1999-03-31",
+      "softcore": false,
+      "video": false,
+      "vote_average": 8.261,
+      "vote_count": 29028
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/ihOJcrorpDQtHTzIOrobbOhpJsj.jpg",
+      "id": 604,
+      "title": "Матрица: Перезагрузка",
+      "original_title": "The Matrix Reloaded",
+      "overview": "Борцы за свободу Нео, Тринити и Морфеус продолжают руководить восстанием людей против армии машин. Они вынуждены использовать не только арсенал превосходного оружия, но и свои выдающиеся навыки. Участие в миссии по спасению человеческой расы от истребления приносит им более глубокое понимание Матрицы и осознание центральной роли Нео в судьбе человечества.",
+      "poster_path": "/d0xVNNxIYxId2qHkqpgE39soOvD.jpg",
+      "media_type": "movie",
+      "original_language": "en",
+      "genre_ids": [
+        28,
+        53,
+        878
+      ],
+      "popularity": 20.724,
+      "release_date": "2003-05-15",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.086,
+      "vote_count": 12448
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/Ams57f2bNSwWsoQWCfD5u3xQjgS.jpg",
+      "id": 711,
+      "name": "Матрица: Угроза",
+      "original_name": "Threat Matrix",
+      "overview": "В глубоком подземном бункере в Вашингтоне совместно работают группы ЦРУ, ФБР и АНБ как часть сил Национальной безопасности США. Их задача – сдерживать террористическую угрозу. Руководитель этого подразделения - специальный агент Джон Килмер, 42-летний бывший служащий ФБР, обладающий мощнейшими техническими навыками и имеющий в полном распоряжении любое оружие и лучших специалистов.\n\nЕдинственное, что смущает Килмера – присутствие в команде его бывшей жены Фрэнки, специального агента ЦРУ, безжалостной и хорошо обученной профессионалки, чьи навыки позволяют ей быстро взламывать любые замки.",
+      "poster_path": "/xOeA42Rc9EiIe0dGnwywLqYKetG.jpg",
+      "media_type": "tv",
+      "original_language": "en",
+      "genre_ids": [
+        18,
+        10759
+      ],
+      "popularity": 15.0871,
+      "first_air_date": "2003-09-18",
+      "softcore": false,
+      "vote_average": 6.2,
+      "vote_count": 6,
+      "origin_country": [
+        "US"
+      ]
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/533xAMhhVyjTy8hwMUFEt5TuDfR.jpg",
+      "id": 605,
+      "title": "Матрица: Революция",
+      "original_title": "The Matrix Revolutions",
+      "overview": "Пока армия машин пытается уничтожить Зион, его жители из последних сил держат оборону.",
+      "poster_path": "/19LNhQz4nwbwS95CQ9LHLxAUAXB.jpg",
+      "media_type": "movie",
+      "original_language": "en",
+      "genre_ids": [
+        28,
+        53,
+        878
+      ],
+      "popularity": 18.3915,
+      "release_date": "2003-11-05",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.76,
+      "vote_count": 11247
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/eNI7PtK6DEYgZmHWP9gQNuff8pv.jpg",
+      "id": 624860,
+      "title": "Матрица: Воскрешение",
+      "original_title": "The Matrix Resurrections",
+      "overview": "Продолжение саги, начатой в «Матрице», стирающее грань между бытием и иллюзией. Нео и Тринити возвращаются, но не как воспоминания, не как призраки прошлого, а как сила, способная изменить саму ткань реальности. Мир, в который они возвращаются, наполнен знакомыми образами, но искажает их, как отражение в треснувшем зеркале. Здесь реальность не фиксирована — она дышит, подстраивается под героев. Чтобы увидеть истину, недостаточно выбрать таблетку. Нужно перестать верить в саму возможность выбора. Потому что теперь всё, что остаётся, — это довериться падению.",
+      "poster_path": "/wUNFs1bTM8O4ZmRNU3Pgi6c68sX.jpg",
+      "media_type": "movie",
+      "original_language": "en",
+      "genre_ids": [
+        878,
+        28,
+        12
+      ],
+      "popularity": 15.6161,
+      "release_date": "2021-12-16",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.3,
+      "vote_count": 6808
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/q0X5l5GfbqxKuof0XHEIuh94RKb.jpg",
+      "id": 397837,
+      "title": "Матрица времени",
+      "original_title": "Before I Fall",
+      "overview": "Саманта — крутая девчонка, которой всегда и во всем везло. Но в тот день, в пятницу, 12 февраля, что-то пошло не так, а потом та авария на трассе... Саманта оказалась в заколдованном круге проклятого дня, и теперь она вынуждена проживать ужас той пятницы снова и снова. Чтобы распутать петлю времени, она должна вычислить ошибку и исправить неверный шаг. Но каждый раз что-то не срабатывает...",
+      "poster_path": "/wW0a9yXSvcXPLdg3ZfqsN4auxyT.jpg",
+      "media_type": "movie",
+      "original_language": "en",
+      "genre_ids": [
+        18,
+        14
+      ],
+      "popularity": 6.2847,
+      "release_date": "2017-03-02",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.966,
+      "vote_count": 3604
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/eJQcM8hukxWv8HcNLl7L6LKKswY.jpg",
+      "id": 21769,
+      "title": "Армитаж: Двойная матрица",
+      "original_title": "アミテージ・ザ・サード DUAL-MATRIX",
+      "overview": "Наоми Армитаж и Росс Силибус укрылись под вымышленными фамилиями на Марсе и тихо растят дочку Йоко. Однако спокойной семейной жизни проходит конец, когда на одном из земных предприятий по производству антиматерии происходит бунт роботов. Армитаж узнаёт, что восстание — лишь повод для сокрытия информации о разработке новых роботов «третьего типа».  Наоми отправляется на Землю, чтобы вычислить организаторов мрачной затеи, и встречает на своём пути самого сильного противника из всех, что ей когда-либо попадались: собственные копии!",
+      "poster_path": "/xqBSgV3T2GpaS0VWGJ4Se2BG5lY.jpg",
+      "media_type": "movie",
+      "original_language": "ja",
+      "genre_ids": [
+        53,
+        28,
+        16,
+        878,
+        12
+      ],
+      "popularity": 4.3092,
+      "release_date": "2002-03-22",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.4,
+      "vote_count": 61
+    },
+    {
+      "adult": false,
+      "backdrop_path": null,
+      "id": 51767,
+      "title": "SF: Матрица",
+      "original_title": "Sexual Matrix",
+      "overview": "Молодой ученый, профессор Ашбрук, работая над крайне важной темой для могущественной корпорации \"Сайбертек\", обратился к руководству университета за поддержкой. И ему разрешили привлечь студентов к научному эксперименту, соединяющему современные компьютерные исследования и область сексуальных фантазий человека. Профессор Ашбрук предложил студентам делиться своими самыми сокровенными мечтами, после чего закладывал их рассказы в изобретенное им электронное устройство \"сайбертрон\", и устное повествование оживало, приобретало черты реального... Пусть эта реальность и была всего лишь виртуальной...",
+      "poster_path": "/vmhBIPKyYCWlp2PrIIc6EXZlP9Z.jpg",
+      "media_type": "movie",
+      "original_language": "en",
+      "genre_ids": [
+        878,
+        10749
+      ],
+      "popularity": 1.3915,
+      "release_date": "2000-04-01",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.4,
+      "vote_count": 23
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/2JCUdkC84MWnRQzOEMDO2i37tZy.jpg",
+      "id": 411948,
+      "title": "Matrix",
+      "original_title": "Matrix",
+      "overview": "",
+      "poster_path": "/wwGvUPEM6MRiXv3gRNaVUlUCHiT.jpg",
+      "media_type": "movie",
+      "original_language": "en",
+      "genre_ids": [
+        16
+      ],
+      "popularity": 1.2789,
+      "release_date": "1971-05-18",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.3,
+      "vote_count": 3
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/kYZhvlmKHUuAhXPBzTkZy42oZ3h.jpg",
+      "id": 344225,
+      "title": "Секс в большой Матрице",
+      "original_title": "Sex and the Matrix",
+      "overview": "Созданный специально для церемонии Премии MTV 2000 года проект, комбинирующий «Матрицу» и «Секс в большом городе».",
+      "poster_path": "/oCYKLcutQzMIeeonk8xhXxlDmq.jpg",
+      "media_type": "movie",
+      "original_language": "en",
+      "genre_ids": [
+        35
+      ],
+      "popularity": 2.1352,
+      "release_date": "2000-06-03",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.7,
+      "vote_count": 9
+    }
+  ],
+  "total_pages": 1,
+  "total_results": 10
+}

@@ -10,7 +10,7 @@
 #   POISKKINO_KEY=...        # необязательно
 #   OMDB_KEY=...             # необязательно
 #
-# Источник без ключа пропускается. ПоискКино: скрипт тратит 6 из 200
+# Источник без ключа пропускается. ПоискКино: скрипт тратит 8 из 200
 # суточных запросов.
 #
 # Ключи передаются только в заголовке или в query и в сохранённые файлы не
@@ -70,13 +70,19 @@ if [ -n "${POISKKINO_KEY:-}" ]; then
 	p="https://api.poiskkino.dev/v1.5"
 	h="X-API-KEY: $POISKKINO_KEY"
 	# Матрица: tmdb 603, imdb tt0133093, kp 301. Игра престолов: tmdb 1399, kp 464963.
+	# Без фильтра по типу tmdb 603 находит и фильм, и сериал с тем же номером
+	# (у TMDB раздельная нумерация movie и tv) — фикстура это фиксирует.
 	fetch "$out/poiskkino/movie_by_tmdb_603.json" "$p/movie?externalId.tmdb=603" "$h"
+	fetch "$out/poiskkino/movie_by_tmdb_603_type_movie.json" "$p/movie?externalId.tmdb=603&type=movie" "$h"
 	fetch "$out/poiskkino/movie_by_imdb_tt0133093.json" "$p/movie?externalId.imdb=tt0133093" "$h"
 	fetch "$out/poiskkino/movie_301.json" "$p/movie/301" "$h"
 	fetch "$out/poiskkino/tv_by_tmdb_1399.json" "$p/movie?externalId.tmdb=1399&type=tv-series" "$h"
 	# Есть ли у сезонов/серий рейтинг КП — ради этого и запрос (проверить).
 	fetch "$out/poiskkino/season_464963.json" "$p/season?movieId=464963&limit=2" "$h"
-	fetch "$out/poiskkino/movie_by_tmdb_not_found.json" "$p/movie?externalId.tmdb=999999999" "$h"
+	# tmdb id вне 1..2000000 ПоискКино отбивает 400 (ошибка валидации) —
+	# честное «не найдено» снимаем по несуществующему imdb id.
+	fetch "$out/poiskkino/movie_by_tmdb_out_of_range.json" "$p/movie?externalId.tmdb=999999999" "$h"
+	fetch "$out/poiskkino/movie_by_imdb_not_found.json" "$p/movie?externalId.imdb=tt9999999" "$h"
 else
 	echo "POISKKINO_KEY не задан — пропускаю ПоискКино"
 fi
@@ -87,7 +93,8 @@ if [ -n "${OMDB_KEY:-}" ]; then
 	fetch "$out/omdb/tt0944947_series.json" "$o&i=tt0944947"
 	fetch "$out/omdb/tt0944947_season_1.json" "$o&i=tt0944947&Season=1"
 	fetch "$out/omdb/tt0944947_s1e3.json" "$o&i=tt0944947&Season=1&Episode=3"
-	fetch "$out/omdb/not_found.json" "$o&i=tt9999999999"
+	fetch "$out/omdb/malformed_id.json" "$o&i=tt9999999999"
+	fetch "$out/omdb/not_found.json" "$o&i=tt9999999"
 	fetch "$out/omdb/invalid_key.json" "https://www.omdbapi.com/?apikey=invalid&i=tt0133093"
 else
 	echo "OMDB_KEY не задан — пропускаю OMDb"

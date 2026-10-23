@@ -1,0 +1,1517 @@
+{
+  "names": [
+    {
+      "language": "EN",
+      "name": "The Matrix",
+      "type": "Original title on tmdb"
+    },
+    {
+      "language": "RU",
+      "name": "Матрица",
+      "type": "Russian title on tmdb"
+    },
+    {
+      "language": "TH",
+      "name": "เพาะพันธุ์มนุษย์เหนือโลก",
+      "type": "Alternative title on tmdb"
+    },
+    {
+      "language": "GR",
+      "name": "Μάτριξ",
+      "type": "Alternative title on tmdb"
+    },
+    {
+      "language": "KR",
+      "name": "매트릭스",
+      "type": "Alternative title on tmdb"
+    },
+    {
+      "language": "HK",
+      "name": "廿二世紀殺人網絡",
+      "type": "Alternative title on tmdb"
+    },
+    {
+      "language": "TW",
+      "name": "廿二世紀殺人網絡",
+      "type": "Alternative title on tmdb"
+    },
+    {
+      "language": "CN",
+      "name": "廿二世紀殺人網絡",
+      "type": "Alternative title on tmdb"
+    },
+    {
+      "language": "TW",
+      "name": "駭客任務",
+      "type": "Alternative title on tmdb"
+    },
+    {
+      "language": "AM",
+      "name": "Մատրիցա",
+      "type": "Alternative title on tmdb"
+    },
+    {
+      "language": "BY",
+      "name": "Матрыца",
+      "type": "Alternative title on tmdb"
+    },
+    {
+      "language": "RU",
+      "name": "Матрица",
+      "type": "Russian title on kinopoisk"
+    },
+    {
+      "language": null,
+      "name": "The Matrix",
+      "type": "Original title on kinopoisk"
+    }
+  ],
+  "year": 1999,
+  "shortDescription": "Хакер Нео узнает, что его мир — виртуальный. Выдающийся экшен, доказавший, что зрелищное кино может быть умным",
+  "movieLength": 136,
+  "watchability": {
+    "items": []
+  },
+  "description": "Жизнь Томаса Андерсона разделена на две части: днём он — самый обычный офисный работник, получающий нагоняи от начальства, а ночью превращается в хакера по имени Нео, и нет места в сети, куда он бы не смог проникнуть. Но однажды всё меняется. Томас узнаёт ужасающую правду о реальности.",
+  "poster": {
+    "previewUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/4774061/cf1970bc-3f08-4e0e-a095-2fb57c3aa7c6/300x450",
+    "url": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/4774061/cf1970bc-3f08-4e0e-a095-2fb57c3aa7c6/600x900"
+  },
+  "audience": [
+    {
+      "count": 33800000,
+      "country": "США"
+    },
+    {
+      "count": 5300000,
+      "country": "Япония"
+    },
+    {
+      "count": 4712567,
+      "country": "Франция"
+    }
+  ],
+  "externalId": {
+    "kpHD": "4824a95e60a7db7e86f14137516ba590",
+    "imdb": "tt0133093",
+    "tmdb": 603
+  },
+  "name": "Матрица",
+  "alternativeName": "The Matrix",
+  "ageRating": 18,
+  "votes": {
+    "filmCritics": 209,
+    "imdb": 2200000,
+    "kp": 816869,
+    "russianFilmCritics": 5
+  },
+  "budget": {
+    "currency": "$",
+    "value": 63000000
+  },
+  "similarMovies": [
+    {
+      "alternativeName": "Inception",
+      "id": 447301,
+      "name": "Начало",
+      "poster": {
+        "previewUrl": "https://avatars.mds.yandex.net/get-kinopoisk-image/1629390/8ab9a119-dd74-44f0-baec-0629797483d7/300x450",
+        "url": "https://avatars.mds.yandex.net/get-kinopoisk-image/1629390/8ab9a119-dd74-44f0-baec-0629797483d7/600x900"
+      },
+      "rating": {
+        "kp": 8.673
+      },
+      "type": "movie",
+      "year": 2010
+    },
+    {
+      "alternativeName": "Equilibrium",
+      "id": 309,
+      "name": "Эквилибриум",
+      "poster": {
+        "previewUrl": "https://avatars.mds.yandex.net/get-kinopoisk-image/1898899/72f6f1e2-472f-4467-8191-177b176d50d2/300x450",
+        "url": "https://avatars.mds.yandex.net/get-kinopoisk-image/1898899/72f6f1e2-472f-4467-8191-177b176d50d2/600x900"
+      },
+      "rating": {
+        "kp": 7.882
+      },
+      "type": "movie",
+      "year": 2002
+    },
+    {
+      "alternativeName": "The Thirteenth Floor",
+      "id": 1086,
+      "name": "Тринадцатый этаж",
+      "poster": {
+        "previewUrl": "https://avatars.mds.yandex.net/get-kinopoisk-image/1629390/92565528-258c-489b-8133-9edb4d08b684/300x450",
+        "url": "https://avatars.mds.yandex.net/get-kinopoisk-image/1629390/92565528-258c-489b-8133-9edb4d08b684/600x900"
+      },
+      "rating": {
+        "kp": 7.582
+      },
+      "type": "movie",
+      "year": 1999
+    },
+    {
+      "alternativeName": "Dark City",
+      "id": 4739,
+      "name": "Тёмный город",
+      "poster": {
+        "previewUrl": "https://avatars.mds.yandex.net/get-kinopoisk-image/1599028/cfcc9481-8653-4341-99fb-43d65850b6bb/300x450",
+        "url": "https://avatars.mds.yandex.net/get-kinopoisk-image/1599028/cfcc9481-8653-4341-99fb-43d65850b6bb/600x900"
+      },
+      "rating": {
+        "kp": 7.292
+      },
+      "type": "movie",
+      "year": 1998
+    },
+    {
+      "alternativeName": "Oblivion",
+      "id": 470185,
+      "name": "Обливион",
+      "poster": {
+        "previewUrl": "https://avatars.mds.yandex.net/get-kinopoisk-image/1600647/e73af80a-2fb8-4b7f-80a1-4a4f7106fe93/300x450",
+        "url": "https://avatars.mds.yandex.net/get-kinopoisk-image/1600647/e73af80a-2fb8-4b7f-80a1-4a4f7106fe93/600x900"
+      },
+      "rating": {
+        "kp": 7.229
+      },
+      "type": "movie",
+      "year": 2013
+    },
+    {
+      "alternativeName": "The Adjustment Bureau",
+      "id": 450765,
+      "name": "Меняющие реальность",
+      "poster": {
+        "previewUrl": "https://avatars.mds.yandex.net/get-kinopoisk-image/1773646/c7f5ad63-5ce9-4d65-b1b4-020abd45668d/300x450",
+        "url": "https://avatars.mds.yandex.net/get-kinopoisk-image/1773646/c7f5ad63-5ce9-4d65-b1b4-020abd45668d/600x900"
+      },
+      "rating": {
+        "kp": 7.372
+      },
+      "type": "movie",
+      "year": 2011
+    },
+    {
+      "alternativeName": "Tron: Legacy",
+      "id": 399959,
+      "name": "Трон: Наследие",
+      "poster": {
+        "previewUrl": "https://avatars.mds.yandex.net/get-kinopoisk-image/1629390/a619eecb-a67a-4705-a191-0e9da8255ac4/300x450",
+        "url": "https://avatars.mds.yandex.net/get-kinopoisk-image/1629390/a619eecb-a67a-4705-a191-0e9da8255ac4/600x900"
+      },
+      "rating": {
+        "kp": 6.898
+      },
+      "type": "movie",
+      "year": 2010
+    },
+    {
+      "alternativeName": "Surrogates",
+      "id": 397671,
+      "name": "Суррогаты",
+      "poster": {
+        "previewUrl": "https://avatars.mds.yandex.net/get-kinopoisk-image/4483445/ba00ddc4-d8d4-4b42-aa7b-e6f63f2dbb35/300x450",
+        "url": "https://avatars.mds.yandex.net/get-kinopoisk-image/4483445/ba00ddc4-d8d4-4b42-aa7b-e6f63f2dbb35/600x900"
+      },
+      "rating": {
+        "kp": 6.895
+      },
+      "type": "movie",
+      "year": 2009
+    },
+    {
+      "alternativeName": "Cloud Atlas",
+      "id": 464484,
+      "name": "Облачный атлас",
+      "poster": {
+        "previewUrl": "https://avatars.mds.yandex.net/get-kinopoisk-image/1704946/55a6ce2d-bc58-4384-a757-5161efbcc2c6/300x450",
+        "url": "https://avatars.mds.yandex.net/get-kinopoisk-image/1704946/55a6ce2d-bc58-4384-a757-5161efbcc2c6/600x900"
+      },
+      "rating": {
+        "kp": 7.765
+      },
+      "type": "movie",
+      "year": 2012
+    },
+    {
+      "alternativeName": "Terminator 2: Judgment Day",
+      "id": 444,
+      "name": "Терминатор 2: Судный день",
+      "poster": {
+        "previewUrl": "https://avatars.mds.yandex.net/get-kinopoisk-image/10592371/90c79b8e-7f7c-4c66-b477-361b627cf28b/300x450",
+        "url": "https://avatars.mds.yandex.net/get-kinopoisk-image/10592371/90c79b8e-7f7c-4c66-b477-361b627cf28b/600x900"
+      },
+      "rating": {
+        "kp": 8.431
+      },
+      "type": "movie",
+      "year": 1991
+    }
+  ],
+  "technology": {
+    "hasImax": false,
+    "has3D": false
+  },
+  "distributors": {
+    "bluray": "Юниверсал Пикчерс Рус",
+    "distributor": "Каро-Премьер",
+    "dvd": "Мост-Видео",
+    "rerelease": "Маурис Филм"
+  },
+  "backdrop": {
+    "previewUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-ott/1672343/2a0000016cc7177239d4025185c488b1bf43/678x380",
+    "url": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-ott/1672343/2a0000016cc7177239d4025185c488b1bf43/1344x756"
+  },
+  "fees": {
+    "usa": {
+      "currency": "$",
+      "value": 171479930
+    },
+    "world": {
+      "currency": "$",
+      "value": 463517383
+    }
+  },
+  "facts": [
+    {
+      "type": "FACT",
+      "spoiler": false,
+      "value": "На роль Нео претендовали <a href=\"/name/7590/\" class=\"all\">Юэн МакГрегор</a> и <a href=\"/name/37859/\" class=\"all\">Леонардо ДиКаприо</a> и <a href=\"/name/20302/\" class=\"all\">Том Круз</a>. В свою очередь, <a href=\"/name/8516/\" class=\"all\">Вэл Килмер</a> претендовал на роль Морфиуса. <a href=\"/name/513/\" class=\"all\">Уилл Смит</a> также вполне мог сыграть Нео, однако предпочел сняться в неудавшемся «<a href=\"/film/2762/\" class=\"all\">Диком, диком Западе</a>» (1999)."
+    },
+    {
+      "value": "В первый день съёмок снималась сцена в офисе, в которой Нео пытается скрыться от преследующих его агентов.",
+      "type": "FACT",
+      "spoiler": true
+    },
+    {
+      "value": "Роль агента Смита по замыслу режиссёров <a href=\"/name/23330/\" class=\"all\">Ланы Вачовски</a> и <a href=\"/name/23329/\" class=\"all\">Лилли</a> должен был исполнить француз <a href=\"/name/11505/\" class=\"all\">Жан Рено</a>. Однако последний предпочел поработать в другом голливудском блокбастере - «<a href=\"/film/4012/\" class=\"all\">Годзилла</a>».",
+      "type": "FACT",
+      "spoiler": false
+    },
+    {
+      "spoiler": false,
+      "value": "Во время съемок одной из сцен актриса <a href=\"/name/6226/\" class=\"all\">Керри-Энн Мосс</a> сломала ногу, однако решила не ставить в известность съемочную группу, дабы не лишиться знаковой в её карьере роли.",
+      "type": "FACT"
+    },
+    {
+      "value": "Перед началом съемок ведущие актеры изучали основы восточных единоборств. Длилось это обучение с октября 1997 года по март 1998 года. Актеры не ожидали таких нагрузок и были полностью уверены, что для получения практических навыков хватит и нескольких недель.",
+      "type": "FACT",
+      "spoiler": false
+    },
+    {
+      "value": "Как только картина вышла на экраны и поразила зрителей эффектом замирающей камеры, тут же возникло множество людей, утверждающих, что именно они первыми перенесли это изобретение на большой экран. Французский режиссер <a href=\"/name/51040/\" class=\"all\">Мишель Гондри</a> использовал этот эффект в рекламе страховой компании, а чуть позднее в клипе поп-звезды <a href=\"/name/55267/\" class=\"all\">Бьорк</a>. Архитектор Мэттью Банистер подробно описал данную проблему в своей научной работе. Он предположил, что движение и время в кадре могут идти как параллельно, так и отдельно друг от друга. Однако в то время аппаратура не позволяла провести данный эксперимент. И, наконец, художник Тим МакМиллан продемонстрировал эту технику на одном из британских каналов в 1993 году. Возможно, каждый из них изобрел этот эффект по отдельности, возможно кто-то воспользовался идеями других. Так или иначе, для большинства обывателей, революционерами все равно останутся <a href=\"/name/23330/\" class=\"all\">Лана</a> и <a href=\"/name/23329/\" class=\"all\">Лилли Вачовски</a>.",
+      "type": "FACT",
+      "spoiler": false
+    },
+    {
+      "value": "В картине немало обращений к сказкам <a href=\"/name/177165/\" class=\"all\">Льюиса Кэрролла</a> «Алиса в стране чудес» и «Алиса в зазеркалье». В фильме также содержится множество ссылок на <a href=\"/name/2063387/\" class=\"all\">Маркса</a>, <a href=\"/name/112893/\" class=\"all\">Кафку</a>, дзэн-буддизм и «Одиссею» <a href=\"/name/55871/\" class=\"all\">Гомера</a>.",
+      "type": "FACT",
+      "spoiler": false
+    },
+    {
+      "type": "FACT",
+      "spoiler": false,
+      "value": "Забавные анаграммы (переставив буквы во фразах можно получить новую фразу) замечены в саундтреке к фильму. Композиции, звучащие во время тренировочного поединка Нео и Морфиуса, под названиями «Bow Whisk Orchestra» и «Switch or Break Show» являются анаграммами к «Wachowski Brothers» (сестры Вачовски (ранее братья) — режиссеры картины). Также в картине звучат следующие композиции: «Exit Mr. Hat» и «Threat Mix». Оба этих трека являются анаграммами к названию фильма — «The Matrix». Кроме того, после того как Нео начинают называть избранным (The One), анаграмму можно заметить и здесь — Neo ~ One."
+    },
+    {
+      "value": "Номер комнаты ТРИнити — 303 , а номер комнаты «избранного» (The One — «один») — 101.",
+      "type": "FACT",
+      "spoiler": false
+    },
+    {
+      "type": "FACT",
+      "spoiler": false,
+      "value": "Во второй раз в своей актерской карьере <a href=\"/name/9838/\" class=\"all\">Лоренсу Фишбёрну</a> довелось сыграть капитана корабля. В 1997 году в картине «<a href=\"/film/3728/\" class=\"all\">Сквозь горизонт</a>» он сыграл капитана Миллера."
+    },
+    {
+      "spoiler": false,
+      "value": "Незадолго до начала съемок <a href=\"/name/7836/\" class=\"all\">Киану Ривз</a> серьезно повредил шейные позвонки. В течение 4 месяцев подготовительных тренировок он был вынужден носить на шее фиксирующий бандаж.",
+      "type": "FACT"
+    },
+    {
+      "value": "К середине 2002 года (спустя 3 года после выхода Матрицы) эффект «медленно летящей пули» был использован в 20 различных фильмах.",
+      "type": "FACT",
+      "spoiler": false
+    },
+    {
+      "type": "FACT",
+      "spoiler": false,
+      "value": "Первоначально сцену, в которой Нео уклоняется от пуль, выпускаемых в него агентами, хотели снимать по старинке, используя манекенов и различные технические устройства. Однако после того, как было потрачено несколько километров кинопленки и израсходовано множество манекенов, было принято решение прибегнуть к компьютерной графике. Для этого была специально разработана новая компьютерная программа, которая после выхода картины в прокат стала объектом мечтаний для многих режиссеров высокобюджетных картин."
+    },
+    {
+      "value": "Внимательный зритель сможет заметить дату на одном из мониторов в самом начале фильма — 18 февраля 98 года. Ближе к концу картины на экране высвечивается уже иная дата — 18 сентября 99 года. Таким образом, события, описанные в картине, проходят в течение 19 месяцев.",
+      "type": "FACT",
+      "spoiler": false
+    },
+    {
+      "value": "В конце картины герой <a href=\"/name/7836/\" class=\"all\">Киану Ривза</a> произносит финальный монолог. Примечателен тот факт, что ранее за всю свою актерскую карьеру Киану никогда не произносил более 5 предложений подряд.",
+      "type": "FACT",
+      "spoiler": false
+    },
+    {
+      "value": "Съемки картины полностью проходили в Австралии. Однако, как выяснилось уже в ходе съемочного процесса, в Австралии практически нет мест, походящих на американские гетто. В результате все декорации пришлось изготавливать на месте.",
+      "type": "FACT",
+      "spoiler": false
+    },
+    {
+      "type": "FACT",
+      "spoiler": false,
+      "value": "Съемки сцены драки между Нео и агентом Смитом в подземке несколько затянулись. Никто из участников группы не ожидал, что на этот эпизод будет затрачено такое количество времени. Сотни неудачных дублей, и в итоге съемки этой битвы заняли на 10 суток больше намеченного."
+    },
+    {
+      "type": "FACT",
+      "spoiler": false,
+      "value": "Харизматичные очки главных персонажей картины любезно предоставил лейбл Blinde. В тендере приняли участие 3 компании-производителя солнцезащитных очков. Удивительно, но тендер был проигран такими гигантами рынка как Ray-Ban и Arnette. Узнав результаты тендера, основатель компании Blinde Ричард Уолкер незамедлительно вылетел в Австралию, чтобы вместе с костюмерами подобрать очки на каждого актера."
+    },
+    {
+      "spoiler": false,
+      "value": "<a href=\"/name/7836/\" class=\"all\">Киану Ривз</a> вложил собственные 38 миллионов долларов в производство спецэффектов для двух сиквелов.",
+      "type": "FACT"
+    },
+    {
+      "value": "<a href=\"/name/23330/\" class=\"all\">Лана</a> и <a href=\"/name/23329/\" class=\"all\">Лилли</a> Вачовски уверяли, что их проект задумывался как трилогия ещё в 1993 году.",
+      "type": "FACT",
+      "spoiler": false
+    },
+    {
+      "type": "FACT",
+      "spoiler": false,
+      "value": "В тренировочной программе рукопашного боя, перед тем как Нео начинает нападать на Морфиуса, он потирает свой нос большим пальцем руки, что является воспроизведением известного движения <a href=\"/name/115534/\" class=\"all\">Брюса Ли</a>. Данный элемент отсутствовал в сценарии и является импровизацией <a href=\"/name/7836/\" class=\"all\">Киану Ривза</a>."
+    },
+    {
+      "value": "Пистолеты, которые использует Нео в вестибюле, являются точной копией MP5K. Однако в отличие от настоящего оружия, копии весили всего лишь 150-200 грамм.",
+      "type": "FACT",
+      "spoiler": false
+    },
+    {
+      "value": "<a href=\"/name/6793/\" class=\"all\">Николас Кейдж</a> отклонил предложение сыграть Нео.",
+      "type": "FACT",
+      "spoiler": false
+    },
+    {
+      "type": "FACT",
+      "spoiler": false,
+      "value": "В картине использовалось множество декораций из «<a href=\"/film/4739/\" class=\"all\">Темного города</a>» (1998)."
+    },
+    {
+      "value": "Сцена, в которой Нео встречается с одаренными детьми в квартире Оракула, - дань уважения «<a href=\"/film/8224/\" class=\"all\">Акире</a>» (1988).",
+      "type": "FACT",
+      "spoiler": false
+    },
+    {
+      "value": "После встречи с Тринити в ночном клубе Нео просыпается в 9:18.",
+      "type": "FACT",
+      "spoiler": false
+    },
+    {
+      "value": "Нео останавливает лифт на 41 этаже в здании, где держат Морфиуса.",
+      "type": "FACT",
+      "spoiler": false
+    },
+    {
+      "spoiler": false,
+      "value": "Тринити пилотирует вертолет B212.",
+      "type": "FACT"
+    },
+    {
+      "value": "Режиссёры предложили <a href=\"/name/1491/\" class=\"all\">Хьюго Уивингу</a> сыграть агента Смита после того, как увидели его актерскую игру в «<a href=\"/film/3836/\" class=\"all\">Доказательстве</a>» (1991).",
+      "type": "FACT",
+      "spoiler": false
+    },
+    {
+      "type": "FACT",
+      "spoiler": false,
+      "value": "По словам <a href=\"/name/477776/\" class=\"all\">Дона Дэвиса</a>, <a href=\"/name/6245/\" class=\"all\">Джонни Депп</a> был первоначальным выбором на роль Нео, однако студия хотела, чтобы <a href=\"/name/25584/\" class=\"all\">Брэд Питт</a> или <a href=\"/name/8516/\" class=\"all\">Вэл Килмер</a> сыграл главную роль."
+    },
+    {
+      "spoiler": false,
+      "value": "В эпизоде, где Тринити и Нео в поисках Морфиуса оказываются на крыше, один из пилотов вертолета трансформируется в агента Джонса. При этом левый висок Джонса приходится на затылок пилота. Однако после выстрела Тринити именно в этот висок, пулевое отверстие у пилота, покинутого «программой» агента, почему-то оказывается во лбу.",
+      "type": "BLOOPER"
+    },
+    {
+      "value": "В сцене, когда Нео впервые встречается с Морфиусом, герой Лоренса Фишбёрна здоровается с Избранным. Морфиус протягивает правую руку, при этом левая рука у него за спиной. Далее сразу же следует вставка с другого ракурса, где левая рука уже почему-то опущена к полу. В следующем кадре левая рука Морфиуса снова за спиной.",
+      "type": "BLOOPER",
+      "spoiler": false
+    },
+    {
+      "value": "Когда агент Смит и Морфиус дерутся, последний бьёт агента головой и ломает ему очки. В следующем кадре камера показывает Морфиуса, и можно заметить, что очки ещё надеты на агенте Смите.",
+      "type": "BLOOPER",
+      "spoiler": false
+    },
+    {
+      "type": "BLOOPER",
+      "spoiler": false,
+      "value": "Когда на 2-й минуте фильма полицейские вламываются в гостиничный номер, чтобы задержать Тринити, она в это момент сидит в неосвещённой комнате. Когда в следующей сцене ей удаётся обезвредить всех полицейских, отчётливо видно, что на стенах появляются работающие светильники."
+    },
+    {
+      "value": "Когда на 6-й минуте фильма Тринити с разбега прыгает в окно, плафон лампы под потолком висит неподвижно. После смены кадра, когда Тринити целится в сторону разбитого окна, и камера приближается к окну, плафон начинает качаться. Светильник вновь висит неподвижно, когда Тринити собирается встать.",
+      "type": "BLOOPER",
+      "spoiler": false
+    },
+    {
+      "value": "Когда на 6-й минуте фильма Тринити забегает в телефонную будку, у неё на лице заметен кровавый порез, хотя в прошлой сцене, после прыжка в окно, пореза не было.",
+      "type": "BLOOPER",
+      "spoiler": false
+    },
+    {
+      "value": "Когда на 13-й минуте фильма начальник отчитывает Нео за опоздание, положение рук Томаса меняется при сменах кадра.",
+      "type": "BLOOPER",
+      "spoiler": false
+    },
+    {
+      "value": "На 14-й минуте фильма Нео берётся за край конверта, чтобы открыть его. В следующем кадре, когда курьер уходит, Нео делает это ещё раз.",
+      "type": "BLOOPER",
+      "spoiler": false
+    },
+    {
+      "value": "На 15-й минуте фильма можно заметить на внутренней вывеске название компании Meta Cortech, хотя ранее, когда Нео опоздал на работу, на фасаде здания было указано название Metacortex.",
+      "type": "BLOOPER",
+      "spoiler": false
+    },
+    {
+      "value": "На 18-й минуте фильма агент Смит просматривает досье Нео, не переворачивая страницы. В следующем кадре на обложке личного дела уже лежат несколько перевёрнутых страниц.",
+      "type": "BLOOPER",
+      "spoiler": false
+    },
+    {
+      "value": "На 19-й минуте фильма агент Смит снимает очки и кладёт их на стол рядом с правой рукой. Когда на 20-й минуте агент отодвигает в сторону досье, очки пропадают со стола.",
+      "type": "BLOOPER",
+      "spoiler": false
+    },
+    {
+      "value": "На 21-й минуте фильма у Нео слипается рот, и он в ужасе подскакивает со стула и вжимается в угол. В следующем кадре в отражении очков ухмыляющегося агента Смита можно заметить, что Нео продолжает сидеть на стуле.",
+      "type": "BLOOPER",
+      "spoiler": true
+    },
+    {
+      "value": "На 23-й минуте фильма, когда машина подъезжает к Нео, пассажирская дверь начинает открываться ещё до остановки. В следующем кадре Тринити открывает дверь ещё раз.",
+      "type": "BLOOPER",
+      "spoiler": true
+    },
+    {
+      "value": "На 40-й минуте фильма, когда Нео погружается в симуляцию, на Морфиусе надеты очки с матовыми линзами. После смены кадра линзы становятся зеркальными.",
+      "type": "BLOOPER",
+      "spoiler": true
+    },
+    {
+      "value": "На 45-й минуте фильма Нео выходит из симуляции и сразу встаёт с кресла, хотя ранее перед подключением к программе симуляции его ноги были скованы зажимами.",
+      "type": "BLOOPER",
+      "spoiler": true
+    },
+    {
+      "value": "На 54-й минуте фильма, когда Нео и Морфиус перемещаются на крышу небоскрёба, надстройка находится в нескольких метрах от них. В следующем кадре, когда они уже стоят на крыше, надстройка оказывается значительно ближе.",
+      "type": "BLOOPER",
+      "spoiler": true
+    },
+    {
+      "value": "Когда на 55-й минуте фильма Нео прыгает с небоскрёба, под его футболкой можно разглядеть страховочные ремни.",
+      "type": "BLOOPER",
+      "spoiler": true
+    },
+    {
+      "spoiler": true,
+      "value": "На 83-й минуте фильма, когда Смит пробивает стену и хватает Нео, он просовывает руки по локоть. Когда в следующей сцене Морфиус бросается на Смита, руки агента оказываются в стене лишь по запястье.",
+      "type": "BLOOPER"
+    },
+    {
+      "value": "На 84-й минуте фильма, когда Апок отстреливается от спецназа, на его лице нет очков. Когда в следующей сцене он прыгает в люк в полу, на нём уже надеты тёмные очки.",
+      "type": "BLOOPER",
+      "spoiler": true
+    },
+    {
+      "type": "BLOOPER",
+      "spoiler": true,
+      "value": "На 85-й минуте фильма агент Смит во время схватки с Морфиусом пробивает дыру в кирпичной стене. Когда Смит хватает Морфиуса за ногу и швыряет его в сторону, можно заметить, что кирпичная стена вновь оказывается целой."
+    },
+    {
+      "value": "На 91-й минуте фильма, когда Тэнк стреляет в Сайфера, можно заметить, что актёра <a href=\"/name/9030/\" class=\"all\">Джо Пантольяно</a> перед попаданием плазмы подменяет дублёр.",
+      "type": "BLOOPER",
+      "spoiler": true
+    },
+    {
+      "type": "BLOOPER",
+      "spoiler": true,
+      "value": "На 105-й минуте фильма, когда Нео и Тринити заходят в лифт, в вестибюле лежит множество тел убитых ранее спецназовцев. Когда Нео отстреливает трос лифта, и тот взрывается при падении, в вестибюле уже нет ни одного тела."
+    },
+    {
+      "value": "На 102-й минуте фильма, когда Нео проходит через металлоискатель и встаёт перед охранником, можно заметить, что у него на поясе нет кобур и оружия, которые появляются в следующей сцене.",
+      "type": "BLOOPER",
+      "spoiler": true
+    },
+    {
+      "value": "На 107-й минуте фильма агент Джонс отходит вбок от лестницы, которая ведёт на вертолётную площадку. Однако когда Нео начинает стрелять в уворачивающегося агента, тот оказывается значительно ближе. Когда в следующей сцене Джонс начинает стрелять в ответ, можно заметить, что в этот раз агент находится дальше — там, где он и должен был стоять первоначально.",
+      "type": "BLOOPER",
+      "spoiler": true
+    },
+    {
+      "value": "На 107-й минуте фильма, когда Нео уворачивается от выстрелов агента Джонс, можно заметить, что рядом с ним отсутствуют детали из предыдущих сцен: разряженные и выброшенные ранее пистолеты, тела убитых спецназовцев и Тринити.",
+      "type": "BLOOPER",
+      "spoiler": true
+    },
+    {
+      "spoiler": true,
+      "value": "На 109-й минуте фильма, когда Нео расстреливает офис, в котором агенты допрашивают Морфиуса, при ракурсе снаружи здания можно заметить, что в помещении никого нет.",
+      "type": "BLOOPER"
+    },
+    {
+      "value": "На 110-й минуте фильма, когда Тринити управляет вертолётом, на ней надеты чёрные перчатки, хотя ранее, когда она садилась в вертолёт на крыше, перчаток на ней не было.",
+      "type": "BLOOPER",
+      "spoiler": true
+    },
+    {
+      "value": "На 111-й минуте фильма, когда во время виража висящий на канате Нео держит за руку Морфиуса, можно заметить, что у каскадёра, заменяющего <a href=\"/name/9838/\" class=\"all\">Лоренса Фишбёрна</a>, к руке привязан страховочный трос.",
+      "type": "BLOOPER",
+      "spoiler": true
+    },
+    {
+      "value": "На 111-й минуте фильма, когда Нео спрыгивает на крыше, у тени пролетающего над ним вертолёта нет лопастей. Когда в следующем кадре Нео хватается за канат, и вертолёт падает между небоскрёбами, тени от лопастей появляются. Также падающий вертолёт не отражается в окнах стоящего напротив небоскрёба.",
+      "type": "BLOOPER",
+      "spoiler": true
+    },
+    {
+      "value": "На 116-й минуте фильма, когда агент Смит промахивается и пробивает левым кулаком колонну, можно заметить заранее подготовленные фрагменты бетона.",
+      "type": "BLOOPER",
+      "spoiler": true
+    }
+  ],
+  "updatedAt": "2026-10-23T04:54:29.252Z",
+  "lists": [
+    "popular",
+    "top250",
+    "top_100_scifi_by_total_scifi_online",
+    "box-world-not-usa",
+    "top500",
+    "popular-films",
+    "oscar-visual-effects",
+    "saturn-best-sci-fi-fantasy-horror",
+    "country1",
+    "year1990-1999",
+    "best_by_they_shoot_pictures",
+    "best_martial_arts",
+    "top_100_hollywood_by_the_hollywood_reporter",
+    "top_301_by_empire",
+    "top_50_influential_by_totalfilm",
+    "best_woman_director",
+    "top_100_thriller_by_afi",
+    "top_100_action_by_time_out",
+    "top_75_by_motion_picture_editor_guild",
+    "american_national_registry",
+    "best_vfx",
+    "top_1000",
+    "box-usa-inflation",
+    "top-250-2020",
+    "best_501",
+    "top_500_by_empire",
+    "best_by_cinematography_institute",
+    "box-usa-all-time",
+    "box-total",
+    "best_1001",
+    "rotten-tomatoes",
+    "genresci-fi",
+    "all_content"
+  ],
+  "typeNumber": 1,
+  "ratingMpaa": "r",
+  "isSeries": false,
+  "countries": [
+    {
+      "id": 1,
+      "name": "США"
+    },
+    {
+      "id": 25,
+      "name": "Австралия"
+    }
+  ],
+  "id": 301,
+  "slogan": "Добро пожаловать в реальный мир",
+  "ticketsOnSale": false,
+  "persons": [
+    {
+      "enName": "Keanu Reeves",
+      "enProfession": "actor",
+      "id": 7836,
+      "name": "Киану Ривз",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_7836.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Laurence Fishburne",
+      "enProfession": "actor",
+      "id": 9838,
+      "name": "Лоренс Фишбёрн",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_9838.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Carrie-Anne Moss",
+      "enProfession": "actor",
+      "id": 6226,
+      "name": "Кэрри-Энн Мосс",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_6226.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Hugo Weaving",
+      "enProfession": "actor",
+      "id": 1491,
+      "name": "Хьюго Уивинг",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1491.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Gloria Foster",
+      "enProfession": "actor",
+      "id": 23331,
+      "name": "Глория Фостер",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23331.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Joe Pantoliano",
+      "enProfession": "actor",
+      "id": 9030,
+      "name": "Джо Пантольяно",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_9030.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Marcus Chong",
+      "enProfession": "actor",
+      "id": 23332,
+      "name": "Маркус Чонг",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23332.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Julian Arahanga",
+      "enProfession": "actor",
+      "id": 23333,
+      "name": "Джулиан Араханга",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23333.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Matt Doran",
+      "enProfession": "actor",
+      "id": 23334,
+      "name": "Мэтт Доран",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23334.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Belinda McClory",
+      "enProfession": "actor",
+      "id": 23335,
+      "name": "Белинда МакКлори",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23335.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Anthony Ray Parker",
+      "enProfession": "actor",
+      "id": 23336,
+      "name": "Энтони Рэй Паркер",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23336.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Paul Goddard",
+      "enProfession": "actor",
+      "id": 21711,
+      "name": "Пол Годдард",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_21711.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Robert Taylor",
+      "enProfession": "actor",
+      "id": 10311,
+      "name": "Роберт Тейлор",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_10311.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "David Aston",
+      "enProfession": "actor",
+      "id": 23337,
+      "name": "Дэвид Эстон",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23337.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Marc Gray",
+      "enProfession": "actor",
+      "id": 23338,
+      "name": "Марк Грэй",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23338.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Ada Nicodemou",
+      "enProfession": "actor",
+      "id": 23339,
+      "name": "Ада Никодему",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23339.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Deni Gordon",
+      "enProfession": "actor",
+      "id": 23340,
+      "name": "Дени Гордон",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23340.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Rowan Witt",
+      "enProfession": "actor",
+      "id": 23341,
+      "name": "Роуэн Уитт",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23341.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Eleanor Witt",
+      "enProfession": "actor",
+      "id": 23342,
+      "name": "Эленор Уитт",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23342.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Tamara Brown",
+      "enProfession": "actor",
+      "id": 23343,
+      "name": "Тамара Браун",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23343.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Janaya Pender",
+      "enProfession": "actor",
+      "id": 23344,
+      "name": "Яная Пендер",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23344.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Adryn White",
+      "enProfession": "actor",
+      "id": 23345,
+      "name": "Эдрин Уайт",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23345.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Natalie Tjen",
+      "enProfession": "actor",
+      "id": 23346,
+      "name": "Натали Тдзен",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23346.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Bill Young",
+      "enProfession": "actor",
+      "id": 11219,
+      "name": "Билл Янг",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_11219.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "David O'Connor",
+      "enProfession": "actor",
+      "id": 23347,
+      "name": "Дэвид О’Коннор",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23347.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Jeremy Ball",
+      "enProfession": "actor",
+      "id": 23348,
+      "name": "Джереми Болл",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23348.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Fiona Johnson",
+      "enProfession": "actor",
+      "id": 23349,
+      "name": "Фиона Джонсон",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23349.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Harry Lawrence",
+      "enProfession": "actor",
+      "id": 23350,
+      "name": "Гарри Лоуренс",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23350.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Steve Dodd",
+      "enProfession": "actor",
+      "id": 23351,
+      "name": "Стив Додд",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23351.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Luke Quinton",
+      "enProfession": "actor",
+      "id": 23352,
+      "name": "Люк Куинтон",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23352.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Lawrence Woodward",
+      "enProfession": "actor",
+      "id": 23353,
+      "name": "Лоуренс Вудворд",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23353.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Michael Butcher",
+      "enProfession": "actor",
+      "id": 23354,
+      "name": "Майкл Батчер",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23354.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Bernard Ledger",
+      "enProfession": "actor",
+      "id": 23355,
+      "name": "Бернард Леджер",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23355.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Robert Simper",
+      "enProfession": "actor",
+      "id": 23356,
+      "name": "Роберт Симпер",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23356.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Chris Scott",
+      "enProfession": "actor",
+      "id": 23357,
+      "name": "Крис Скотт",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23357.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Nigel Harbach",
+      "enProfession": "actor",
+      "id": 23358,
+      "name": "Найджел Харбах",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23358.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Michael Duncan",
+      "enProfession": "actor",
+      "id": 1304670,
+      "name": "Майкл Дункан",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1304670.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Nash Edgerton",
+      "enProfession": "actor",
+      "id": 31368,
+      "name": "Нэш Эдгертон",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_31368.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Rana Morrison",
+      "enProfession": "actor",
+      "id": 1773877,
+      "name": "Рана Моррисон",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1773877.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Steve Rutherford",
+      "enProfession": "actor",
+      "id": 3575527,
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_3575527.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Cody Zacharias",
+      "enProfession": "actor",
+      "id": 6503430,
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_6503430.jpg",
+      "profession": "актеры",
+      "professionId": 1
+    },
+    {
+      "enName": "Lana Wachowski",
+      "enProfession": "director",
+      "id": 23330,
+      "name": "Лана Вачовски",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23330.jpg",
+      "profession": "режиссеры",
+      "professionId": 2
+    },
+    {
+      "enName": "Lilly Wachowski",
+      "enProfession": "director",
+      "id": 23329,
+      "name": "Лилли Вачовски",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23329.jpg",
+      "profession": "режиссеры",
+      "professionId": 2
+    },
+    {
+      "enName": "Joel Silver",
+      "enProfession": "producer",
+      "id": 1790,
+      "name": "Джоэл Силвер",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1790.jpg",
+      "profession": "продюсеры",
+      "professionId": 3
+    },
+    {
+      "enName": "Bruce Berman",
+      "enProfession": "producer",
+      "id": 712,
+      "name": "Брюс Берман",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_712.jpg",
+      "profession": "продюсеры",
+      "professionId": 3
+    },
+    {
+      "enName": "Dan Cracchiolo",
+      "enProfession": "producer",
+      "id": 1787,
+      "name": "Дэн Краччиоло",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1787.jpg",
+      "profession": "продюсеры",
+      "professionId": 3
+    },
+    {
+      "enName": "Carol Hughes",
+      "enProfession": "producer",
+      "id": 23359,
+      "name": "Кэрол Хьюз",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23359.jpg",
+      "profession": "продюсеры",
+      "professionId": 3
+    },
+    {
+      "enName": "Lilly Wachowski",
+      "enProfession": "writer",
+      "id": 23329,
+      "name": "Лилли Вачовски",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23329.jpg",
+      "profession": "сценаристы",
+      "professionId": 4
+    },
+    {
+      "enName": "Lana Wachowski",
+      "enProfession": "writer",
+      "id": 23330,
+      "name": "Лана Вачовски",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_23330.jpg",
+      "profession": "сценаристы",
+      "professionId": 4
+    },
+    {
+      "enName": "Don Davis",
+      "enProfession": "composer",
+      "id": 477776,
+      "name": "Дон Дэвис",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_477776.jpg",
+      "profession": "композиторы",
+      "professionId": 5
+    },
+    {
+      "enName": "Bill Pope",
+      "enProfession": "operator",
+      "id": 278101,
+      "name": "Билл Поуп",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_278101.jpg",
+      "profession": "операторы",
+      "professionId": 6
+    },
+    {
+      "enName": "Owen Paterson",
+      "enProfession": "design",
+      "id": 1268948,
+      "name": "Оуэн Патерсон",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1268948.jpg",
+      "profession": "художники",
+      "professionId": 7
+    },
+    {
+      "enName": "Hugh Bateup",
+      "enProfession": "design",
+      "id": 1987225,
+      "name": "Хью Бэйтап",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1987225.jpg",
+      "profession": "художники",
+      "professionId": 7
+    },
+    {
+      "enName": "Michelle McGahey",
+      "enProfession": "design",
+      "id": 1988843,
+      "name": "Мишель Макгэхи",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1988843.jpg",
+      "profession": "художники",
+      "professionId": 7
+    },
+    {
+      "enName": "Kym Barrett",
+      "enProfession": "design",
+      "id": 1268945,
+      "name": "Ким Барретт",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1268945.jpg",
+      "profession": "художники",
+      "professionId": 7
+    },
+    {
+      "enName": "Lisa Brennan",
+      "enProfession": "design",
+      "id": 2009105,
+      "name": "Лиза Бреннан",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_2009105.jpg",
+      "profession": "художники",
+      "professionId": 7
+    },
+    {
+      "enName": "Tim Ferrier",
+      "enProfession": "design",
+      "id": 1988611,
+      "name": "Тим Феррье",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1988611.jpg",
+      "profession": "художники",
+      "professionId": 7
+    },
+    {
+      "enName": "Marta McElroy",
+      "enProfession": "design",
+      "id": 1653659,
+      "name": "Марта МакЭлрой",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1653659.jpg",
+      "profession": "художники",
+      "professionId": 7
+    },
+    {
+      "enName": "Zach Staenberg",
+      "enProfession": "editor",
+      "id": 310065,
+      "name": "Зак Стэнберг",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_310065.jpg",
+      "profession": "монтажеры",
+      "professionId": 8
+    },
+    {
+      "enProfession": "voiceover",
+      "id": 1616407,
+      "name": "Всеволод Кузнецов",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1616407.jpg",
+      "profession": "актеры дубляжа",
+      "professionId": 9
+    },
+    {
+      "enProfession": "voiceover",
+      "id": 287413,
+      "name": "Владимир Вихров",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_287413.jpg",
+      "profession": "актеры дубляжа",
+      "professionId": 9
+    },
+    {
+      "enProfession": "voiceover",
+      "id": 1654400,
+      "name": "Елена Соловьева",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1654400.jpg",
+      "profession": "актеры дубляжа",
+      "professionId": 9
+    },
+    {
+      "enProfession": "voiceover",
+      "id": 261729,
+      "name": "Владимир Антоник",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_261729.jpg",
+      "profession": "актеры дубляжа",
+      "professionId": 9
+    },
+    {
+      "enProfession": "voiceover",
+      "id": 330068,
+      "name": "Светлана Старикова",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_330068.jpg",
+      "profession": "актеры дубляжа",
+      "professionId": 9
+    },
+    {
+      "enProfession": "voiceover",
+      "id": 290494,
+      "name": "Леонид Белозорович",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_290494.jpg",
+      "profession": "актеры дубляжа",
+      "professionId": 9
+    },
+    {
+      "enProfession": "voiceover",
+      "id": 1079073,
+      "name": "Андрей Бархударов",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1079073.jpg",
+      "profession": "актеры дубляжа",
+      "professionId": 9
+    },
+    {
+      "enProfession": "voiceover",
+      "id": 224608,
+      "name": "Борис Шувалов",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_224608.jpg",
+      "profession": "актеры дубляжа",
+      "professionId": 9
+    },
+    {
+      "enProfession": "voiceover",
+      "id": 1649884,
+      "name": "Андрей Казанцев",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1649884.jpg",
+      "profession": "актеры дубляжа",
+      "professionId": 9
+    },
+    {
+      "enProfession": "voiceover",
+      "id": 315846,
+      "name": "Ирина Маликова",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_315846.jpg",
+      "profession": "актеры дубляжа",
+      "professionId": 9
+    },
+    {
+      "enProfession": "voiceover",
+      "id": 1053232,
+      "name": "Алексей Мясников",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1053232.jpg",
+      "profession": "актеры дубляжа",
+      "professionId": 9
+    },
+    {
+      "enProfession": "voiceover",
+      "id": 277027,
+      "name": "Андрей Градов",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_277027.jpg",
+      "profession": "актеры дубляжа",
+      "professionId": 9
+    },
+    {
+      "enProfession": "voiceover",
+      "id": 273180,
+      "name": "Никита Прозоровский",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_273180.jpg",
+      "profession": "актеры дубляжа",
+      "professionId": 9
+    },
+    {
+      "enProfession": "voiceover",
+      "id": 284235,
+      "name": "Дальвин Щербаков",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_284235.jpg",
+      "profession": "актеры дубляжа",
+      "professionId": 9
+    },
+    {
+      "enProfession": "voiceover",
+      "id": 304577,
+      "name": "Алексей Иващенко",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_304577.jpg",
+      "profession": "актеры дубляжа",
+      "professionId": 9
+    },
+    {
+      "enProfession": "voiceover",
+      "id": 122801,
+      "name": "Елена Борзунова",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_122801.jpg",
+      "profession": "актеры дубляжа",
+      "professionId": 9
+    },
+    {
+      "enProfession": "voiceover",
+      "id": 1643974,
+      "name": "Николай Быстров",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1643974.jpg",
+      "profession": "актеры дубляжа",
+      "professionId": 9
+    },
+    {
+      "enProfession": "voiceover",
+      "id": 1616606,
+      "name": "Алексей Рязанцев",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1616606.jpg",
+      "profession": "актеры дубляжа",
+      "professionId": 9
+    },
+    {
+      "enProfession": "voiceover",
+      "id": 1159780,
+      "name": "Александр Груздев",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1159780.jpg",
+      "profession": "актеры дубляжа",
+      "professionId": 9
+    },
+    {
+      "enProfession": "voiceover",
+      "id": 310535,
+      "name": "Олег Куценко",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_310535.jpg",
+      "profession": "актеры дубляжа",
+      "professionId": 9
+    },
+    {
+      "enProfession": "voiceover",
+      "id": 1604859,
+      "name": "Борис Токарев",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1604859.jpg",
+      "profession": "актеры дубляжа",
+      "professionId": 9
+    },
+    {
+      "enProfession": "voiceover",
+      "id": 280829,
+      "name": "Юрий Маляров",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_280829.jpg",
+      "profession": "актеры дубляжа",
+      "professionId": 9
+    },
+    {
+      "enProfession": "voiceover",
+      "id": 1040432,
+      "name": "Денис Беспалый",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1040432.jpg",
+      "profession": "актеры дубляжа",
+      "professionId": 9
+    },
+    {
+      "enProfession": "voiceover",
+      "id": 1419143,
+      "name": "Дмитрий Филимонов",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1419143.jpg",
+      "profession": "актеры дубляжа",
+      "professionId": 9
+    },
+    {
+      "enProfession": "voiceover",
+      "id": 2231168,
+      "name": "Игорь Копченко",
+      "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_2231168.jpg",
+      "profession": "актеры дубляжа",
+      "professionId": 9
+    }
+  ],
+  "premiere": {
+    "bluray": "2009-01-27T00:00:00.000Z",
+    "dvd": "2000-09-12T00:00:00.000Z",
+    "rerelease": "2019-10-14T00:00:00.000Z",
+    "russia": "1999-10-14T00:00:00.000Z",
+    "world": "1999-03-24T00:00:00.000Z"
+  },
+  "hasOttFeatures": true,
+  "rating": {
+    "filmCritics": 7.9,
+    "imdb": 8.7,
+    "kp": 8.501,
+    "russianFilmCritics": 60
+  },
+  "genres": [
+    {
+      "id": 2,
+      "name": "фантастика",
+      "slug": "sci-fi"
+    },
+    {
+      "id": 3,
+      "name": "боевик",
+      "slug": "action"
+    }
+  ],
+  "type": "movie",
+  "awards": [
+    {
+      "movieId": 301,
+      "nomination": {
+        "award": {
+          "title": "Оскар",
+          "year": 2000
+        },
+        "title": "Лучший звук"
+      },
+      "winning": true
+    },
+    {
+      "movieId": 301,
+      "nomination": {
+        "award": {
+          "title": "Оскар",
+          "year": 2000
+        },
+        "title": "Лучший монтаж"
+      },
+      "winning": true
+    },
+    {
+      "movieId": 301,
+      "nomination": {
+        "award": {
+          "title": "Оскар",
+          "year": 2000
+        },
+        "title": "Лучший монтаж звука"
+      },
+      "winning": true
+    },
+    {
+      "movieId": 301,
+      "nomination": {
+        "award": {
+          "title": "Оскар",
+          "year": 2000
+        },
+        "title": "Лучшие визуальные эффекты"
+      },
+      "winning": true
+    }
+  ],
+  "hasSkippableFragments": true,
+  "createdAt": "2026-02-11T04:22:57.000Z",
+  "logo": {
+    "url": "https://image.tmdb.org/t/p/original/wqL8PhiN021ySyEJg8UXi4d03Hn.png",
+    "previewUrl": "https://image.tmdb.org/t/p/w500/wqL8PhiN021ySyEJg8UXi4d03Hn.png"
+  },
+  "sequelsAndPrequels": [
+    {
+      "id": 63744,
+      "relationType": "AFTER",
+      "type": "anime",
+      "name": "Аниматрица: Второе возрождение – Часть 1",
+      "alternativeName": "The Second Renaissance Part I",
+      "poster": {
+        "previewUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/1599028/fe4bd7c6-c344-4b51-a19a-a1541960f965/300x450",
+        "url": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/1599028/fe4bd7c6-c344-4b51-a19a-a1541960f965/600x900"
+      },
+      "year": 2003
+    },
+    {
+      "id": 8407,
+      "relationType": "AFTER",
+      "type": "cartoon",
+      "name": "Аниматрица: Последний полет Осириса",
+      "alternativeName": "Final Flight of the Osiris",
+      "poster": {
+        "previewUrl": "https://avatars.mds.yandex.net/get-kinopoisk-image/1600647/6b03721c-f98c-415e-8c59-1933ec84e810/300x450",
+        "url": "https://avatars.mds.yandex.net/get-kinopoisk-image/1600647/6b03721c-f98c-415e-8c59-1933ec84e810/600x900"
+      },
+      "year": 2003
+    },
+    {
+      "id": 63745,
+      "relationType": "AFTER",
+      "type": "anime",
+      "name": "Аниматрица: Второе возрождение – Часть 2",
+      "alternativeName": "The Second Renaissance Part II",
+      "poster": {
+        "previewUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/1599028/85639052-8fda-4b41-ab6d-b573d2b17cdd/300x450",
+        "url": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/1599028/85639052-8fda-4b41-ab6d-b573d2b17cdd/600x900"
+      },
+      "year": 2003
+    },
+    {
+      "id": 299,
+      "relationType": "AFTER",
+      "type": "movie",
+      "name": "Матрица: Перезагрузка",
+      "alternativeName": "The Matrix Reloaded",
+      "poster": {
+        "previewUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/4774061/a53d1c75-4d1a-4c86-a936-65b2a724345c/300x450",
+        "url": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/4774061/a53d1c75-4d1a-4c86-a936-65b2a724345c/600x900"
+      },
+      "year": 2003
+    },
+    {
+      "id": 316,
+      "relationType": "AFTER",
+      "type": "movie",
+      "name": "Матрица: Революция",
+      "alternativeName": "The Matrix Revolutions",
+      "poster": {
+        "previewUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/1900788/37fc55e7-dfc7-406f-a187-17ef49f65b6f/300x450",
+        "url": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/1900788/37fc55e7-dfc7-406f-a187-17ef49f65b6f/600x900"
+      },
+      "year": 2003
+    },
+    {
+      "id": 1294123,
+      "relationType": "AFTER",
+      "type": "movie",
+      "name": "Матрица: Воскрешение",
+      "alternativeName": "The Matrix Resurrections",
+      "poster": {
+        "previewUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/1898899/f71f55b2-0a74-4a9e-b9a2-7369eccbb3a3/300x450",
+        "url": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/1898899/f71f55b2-0a74-4a9e-b9a2-7369eccbb3a3/600x900"
+      },
+      "year": 2021
+    }
+  ],
+  "top250": 34
+}

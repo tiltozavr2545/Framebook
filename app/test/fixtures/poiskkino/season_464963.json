@@ -1,0 +1,229 @@
+{
+  "docs": [
+    {
+      "updatedAt": "2026-09-21T08:02:29.952Z",
+      "movieId": 464963,
+      "name": "Сезон 8",
+      "enName": "Season 8",
+      "episodesCount": 6,
+      "episodes": [
+        {
+          "airDate": "2019-04-14T00:00:00.000Z",
+          "description": "Джон воссоединяется с Арьей и Браном и узнает от Сэма правду о своем происхождении. Бран встречает того, кто пытался его убить.",
+          "duration": 55,
+          "enName": "Winterfell",
+          "id": 2046949,
+          "name": "Винтерфелл",
+          "number": 1,
+          "still": {
+            "previewUrl": "https://avatars.mds.yandex.net/get-ott/1531675/2a00000185f4cf9eeb9cecdb27bde8328231/320x180",
+            "url": "https://avatars.mds.yandex.net/get-ott/1531675/2a00000185f4cf9eeb9cecdb27bde8328231/1920x1080"
+          },
+          "enDescription": "Arriving at Winterfell, Jon and Daenerys struggle to unite a divided North. Jon Snow gets some big news."
+        },
+        {
+          "airDate": "2019-04-21T00:00:00.000Z",
+          "description": "Винтерфелл готовится к бою. Джейме посвящает Бриенну в рыцари. Санса не доверяет Дейенерис. Джон рассказывает ей о своей семье.",
+          "duration": 59,
+          "enName": "A Knight of the Seven Kingdoms",
+          "id": 2046950,
+          "name": "Рыцарь Семи Королевств",
+          "number": 2,
+          "still": {
+            "previewUrl": "https://avatars.mds.yandex.net/get-ott/17687051/2a0000019c2e43cf6d943b089ae46333b34f/320x180",
+            "url": "https://avatars.mds.yandex.net/get-ott/17687051/2a0000019c2e43cf6d943b089ae46333b34f/1920x1080"
+          },
+          "enDescription": "The battle at Winterfell is approaching. Jaime is confronted with the consequences of the past. A tense interaction between Sansa and Daenerys follows."
+        },
+        {
+          "airDate": "2019-04-28T00:00:00.000Z",
+          "description": "В Винтерфелле — решающая битва живых и мертвых. Мелисандра использует магию, чтобы помочь людям. Король Ночи идет за Браном.",
+          "duration": 82,
+          "enName": "The Long Night",
+          "id": 2046951,
+          "name": "Долгая ночь",
+          "number": 3,
+          "still": {
+            "previewUrl": "https://avatars.mds.yandex.net/get-ott/18164279/2a0000019c2e4501e929e2d3152dfef010d4/320x180",
+            "url": "https://avatars.mds.yandex.net/get-ott/18164279/2a0000019c2e4501e929e2d3152dfef010d4/1920x1080"
+          },
+          "enDescription": "The Night King and his army have arrived at Winterfell and the great battle begins. Arya looks to prove her worth as a fighter."
+        },
+        {
+          "airDate": "2019-05-05T00:00:00.000Z",
+          "description": "Выжившие хоронят павших и празднуют победу. Дейенерис намерена штурмовать Гавань. Джейме покидает Бриенну ради Серсеи.",
+          "duration": 79,
+          "enName": "The Last of the Starks",
+          "id": 2046952,
+          "name": "Последние из Старков",
+          "number": 4,
+          "still": {
+            "previewUrl": "https://avatars.mds.yandex.net/get-ott/18701600/2a0000019c2e452a2b707293b13fbd06e1c0/320x180",
+            "url": "https://avatars.mds.yandex.net/get-ott/18701600/2a0000019c2e452a2b707293b13fbd06e1c0/1920x1080"
+          },
+          "enDescription": "In the wake of a costly victory, Jon and Daenerys look to the south as Tyrion eyes a compromise that could save countless lives."
+        },
+        {
+          "airDate": "2019-05-12T00:00:00.000Z",
+          "description": "Дейенерис наступает на Гавань. Джейме пытается найти Серсею. Арья и Пес в поисках мести. Варис убеждает Джона посягнуть на трон.",
+          "duration": 80,
+          "enName": "The Bells",
+          "id": 2046953,
+          "name": "Колокола",
+          "number": 5,
+          "still": {
+            "previewUrl": "https://avatars.mds.yandex.net/get-ott/18701600/2a0000019c2e4552d0fdd55a3864d246bd37/320x180",
+            "url": "https://avatars.mds.yandex.net/get-ott/18701600/2a0000019c2e4552d0fdd55a3864d246bd37/1920x1080"
+          },
+          "enDescription": "Daenerys brings her forces to King's Landing."
+        },
+        {
+          "airDate": "2019-05-19T00:00:00.000Z",
+          "description": "Гавань разрушена. Дейенерис и Джон говорят о будущем. Лидеры Вестероса выбирают единого правителя Шести Королевств.",
+          "duration": 80,
+          "enName": "The Iron Throne",
+          "id": 2046954,
+          "name": "Железный Трон",
+          "number": 6,
+          "still": {
+            "previewUrl": "https://avatars.mds.yandex.net/get-ott/17667793/2a0000019c2e457b299a3984941c55cd20e7/320x180",
+            "url": "https://avatars.mds.yandex.net/get-ott/17667793/2a0000019c2e457b299a3984941c55cd20e7/1920x1080"
+          },
+          "enDescription": "In the aftermath of the devastating attack on King's Landing, Daenerys must face the survivors."
+        }
+      ],
+      "source": "kp",
+      "seasonId": 2046948,
+      "number": 8,
+      "airDate": "2019-04-14T00:00:00.000Z",
+      "duration": 435,
+      "poster": {
+        "url": "https://image.tmdb.org/t/p/original/bHzz0i6Ue7IixhSjFlGs0slzL2m.jpg",
+        "previewUrl": "https://image.tmdb.org/t/p/w500/bHzz0i6Ue7IixhSjFlGs0slzL2m.jpg"
+      },
+      "id": "69954c7985a9826c39c2fe92"
+    },
+    {
+      "enName": "Season 7",
+      "episodes": [
+        {
+          "airDate": "2017-07-16T00:00:00.000Z",
+          "description": "Арья мстит дому Фреев. Дейенерис прибывает в Драконий Камень, родовой замок Таргариенов. Эурон Грейджой предлагает Серсее брак.",
+          "duration": 59,
+          "enName": "Dragonstone",
+          "id": 2046941,
+          "name": "Драконий камень",
+          "number": 1,
+          "still": {
+            "previewUrl": "https://avatars.mds.yandex.net/get-ott/17687051/2a0000019c2e41909f87649338c853bf6b37/320x180",
+            "url": "https://avatars.mds.yandex.net/get-ott/17687051/2a0000019c2e41909f87649338c853bf6b37/1920x1080"
+          },
+          "enDescription": "Jon organizes the defense of the North. Cersei tries to even the odds. Daenerys comes home."
+        },
+        {
+          "airDate": "2017-07-23T00:00:00.000Z",
+          "description": "Сэм пытается вылечить Джораха от серой хвори. Арья встречается со своей лютоволчицей Нимерией. Эурон нападает на флот Яры.",
+          "duration": 59,
+          "enName": "Stormborn",
+          "id": 2046942,
+          "name": "Бурерожденная",
+          "number": 2,
+          "still": {
+            "previewUrl": "https://avatars.mds.yandex.net/get-ott/18164279/2a0000019c2e41b0a2895f10697e1e700824/320x180",
+            "url": "https://avatars.mds.yandex.net/get-ott/18164279/2a0000019c2e41b0a2895f10697e1e700824/1920x1080"
+          },
+          "enDescription": "Daenerys receives an unexpected visitor. Jon faces a revolt. Tyrion plans the conquest of Westeros."
+        },
+        {
+          "airDate": "2017-07-30T00:00:00.000Z",
+          "description": "Джон и Дейенерис впервые встречаются. В Винтерфелл прибывают неожиданные гости. Серсея мучает своих пленниц и упивается властью.",
+          "duration": 63,
+          "enName": "The Queen's Justice",
+          "id": 2046943,
+          "name": "Правосудие королевы",
+          "number": 3,
+          "still": {
+            "previewUrl": "https://avatars.mds.yandex.net/get-ott/18701600/2a0000019c2e41d6cdedc6dab33b7cb606b3/320x180",
+            "url": "https://avatars.mds.yandex.net/get-ott/18701600/2a0000019c2e41d6cdedc6dab33b7cb606b3/1920x1080"
+          },
+          "enDescription": "Daenerys holds court. Tyrion backchannels. Cersei returns a gift. Jaime learns from his mistakes."
+        },
+        {
+          "airDate": "2017-08-06T00:00:00.000Z",
+          "description": "В Винтерфелле уже три Старка. Арья сражается с Бриенной в дружеском поединке. Армия Джейме попадает в ловушку.",
+          "duration": 50,
+          "enName": "The Spoils of War",
+          "id": 2046944,
+          "name": "Трофеи войны",
+          "number": 4,
+          "still": {
+            "previewUrl": "https://avatars.mds.yandex.net/get-ott/18164279/2a0000019c2e421d0d1c89f478d68a92d43a/320x180",
+            "url": "https://avatars.mds.yandex.net/get-ott/18164279/2a0000019c2e421d0d1c89f478d68a92d43a/1920x1080"
+          },
+          "enDescription": "Daenerys fights back. Jaime faces an unexpected situation. Arya comes home."
+        },
+        {
+          "airDate": "2017-08-13T00:00:00.000Z",
+          "description": "Бран видит армию ходоков, идущих на Стену. Мизинец ссорит Арью и Сансу. Лилли находит важный документ. Тирион тайно едет в Гавань.",
+          "duration": 59,
+          "enName": "Eastwatch",
+          "id": 2046945,
+          "name": "Восточный дозор",
+          "number": 5,
+          "still": {
+            "previewUrl": "https://avatars.mds.yandex.net/get-ott/17702706/2a0000019c2e427620f332bc19e60fcf054b/320x180",
+            "url": "https://avatars.mds.yandex.net/get-ott/17702706/2a0000019c2e427620f332bc19e60fcf054b/1920x1080"
+          },
+          "enDescription": "Tyrion tries to find a way to make Daenerys listen to reason while Jon plans a dangerous new mission."
+        },
+        {
+          "airDate": "2017-08-20T00:00:00.000Z",
+          "description": "За Стеной разгорается смертельная битва между людьми, драконами и ходоками. Джон клянется в верности Дейенерис.",
+          "duration": 70,
+          "enName": "Beyond the Wall",
+          "id": 2046946,
+          "name": "За стеной",
+          "number": 6,
+          "still": {
+            "previewUrl": "https://avatars.mds.yandex.net/get-ott/17687051/2a0000019c2e4309cc4c862357df810f5f54/320x180",
+            "url": "https://avatars.mds.yandex.net/get-ott/17687051/2a0000019c2e4309cc4c862357df810f5f54/1920x1080"
+          },
+          "enDescription": "Jon and his team go beyond the wall to capture a wight. Daenerys has to make a tough decision."
+        },
+        {
+          "airDate": "2017-08-27T00:00:00.000Z",
+          "description": "Мизинец учит Сансу просчитывать свои ходы. Дейенерис и Джон занимаются сексом. Король Ночи на драконе Визерионе разрушает Стену.",
+          "duration": 80,
+          "enName": "The Dragon and the Wolf",
+          "id": 2046947,
+          "name": "Дракон и волк",
+          "number": 7,
+          "still": {
+            "previewUrl": "https://avatars.mds.yandex.net/get-ott/18164279/2a0000019c2e434eeed11f8c00221e90fdc4/320x180",
+            "url": "https://avatars.mds.yandex.net/get-ott/18164279/2a0000019c2e434eeed11f8c00221e90fdc4/1920x1080"
+          },
+          "enDescription": "A meeting is held in King's Landing. Problems arise in the North."
+        }
+      ],
+      "updatedAt": "2026-09-21T08:02:29.951Z",
+      "name": "Сезон 7",
+      "airDate": "2017-07-16T00:00:00.000Z",
+      "episodesCount": 7,
+      "source": "kp",
+      "seasonId": 2046940,
+      "movieId": 464963,
+      "number": 7,
+      "duration": 440,
+      "poster": {
+        "url": "https://image.tmdb.org/t/p/original/gJsyidpUnMj8dQ9Ep9QHWR1frPp.jpg",
+        "previewUrl": "https://image.tmdb.org/t/p/w500/gJsyidpUnMj8dQ9Ep9QHWR1frPp.jpg"
+      },
+      "id": "69954c7885a9826c39c2fe8d"
+    }
+  ],
+  "limit": 2,
+  "next": "eyJ2IjpbbnVsbF0sImlkIjoiNjk5NTRjNzg4NWE5ODI2YzM5YzJmZThkIiwicCI6Mn0=",
+  "prev": null,
+  "hasNext": true,
+  "hasPrev": false
+}

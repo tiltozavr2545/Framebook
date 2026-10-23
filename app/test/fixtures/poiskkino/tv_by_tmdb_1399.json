@@ -1,0 +1,270 @@
+{
+  "docs": [
+    {
+      "description": "К концу подходит время благоденствия, и лето, длившееся почти десятилетие, угасает. Вокруг средоточия власти Семи королевств, Железного трона, зреет заговор, и в это непростое время король решает искать поддержки у друга юности Эддарда Старка. В мире, где все — от короля до наемника — рвутся к власти, плетут интриги и готовы вонзить нож в спину, есть место и благородству, состраданию и любви. Между тем никто не замечает пробуждение тьмы из легенд далеко на Севере — и лишь Стена защищает живых к югу от нее.",
+      "isSeries": true,
+      "ageRating": 18,
+      "ticketsOnSale": false,
+      "typeNumber": 2,
+      "shortDescription": "Рыцари, мертвецы и драконы в эпической битве за судьбы мира. Фэнтези HBO, которое навсегда изменило телевидение",
+      "countries": [
+        {
+          "id": 1,
+          "name": "США"
+        },
+        {
+          "id": 11,
+          "name": "Великобритания"
+        }
+      ],
+      "names": [
+        {
+          "language": "EN",
+          "name": "Game of Thrones",
+          "type": "Original title on tmdb"
+        },
+        {
+          "language": "RU",
+          "name": "Игра Престолов",
+          "type": "Russian title on tmdb"
+        },
+        {
+          "language": "AL",
+          "name": "Froni i shpatave",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "AM",
+          "name": "Գահերի Խաղը",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "AR",
+          "name": "El Juego de Tronos",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "AZ",
+          "name": "Taxt Oyunları",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "BR",
+          "name": "A Guerra dos Tronos",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "CA",
+          "name": "Le Trône de fer",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "CN",
+          "name": "冰与火之歌",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "CN",
+          "name": "权力的游戏",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "CO",
+          "name": "Juego de Tronos",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "FR",
+          "name": "Game of Thrones - Le trône de fer",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "GE",
+          "name": "სატახტოთა თამაში",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "GR",
+          "name": "Παιχνίδι Του Στέμματος",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "HK",
+          "name": "權力遊戲",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "IR",
+          "name": "Baziye tajo takht",
+          "type": "Alternative title on tmdb (romanization)"
+        },
+        {
+          "language": "IR",
+          "name": "بازی تاج و تخت",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "IR",
+          "name": "گیم آف ترونز",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "KR",
+          "name": "왕좌의 게임",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "LT",
+          "name": "Sostų žaidimas",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "LV",
+          "name": "Troņu spēle",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "MK",
+          "name": "Игра на тронови",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "PL",
+          "name": "Gra o Tron",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "PT",
+          "name": "A Guerra dos Tronos",
+          "type": "Alternative title on tmdb (Fantasia)"
+        },
+        {
+          "language": "SA",
+          "name": "لعبة العروش",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "SA",
+          "name": "صراع العروش",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "SI",
+          "name": "Igra prestolov",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "TR",
+          "name": "Taht Oyunları",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "UA",
+          "name": "Гра Престолів",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "US",
+          "name": "A Song of Ice and Fire",
+          "type": "Alternative title on tmdb (working title)"
+        },
+        {
+          "language": "US",
+          "name": "GoT",
+          "type": "Alternative title on tmdb (common abbreviation)"
+        },
+        {
+          "language": "UZ",
+          "name": "Taxt o'yinlari",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "UZ",
+          "name": "Taxtlar o'yini",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "VN",
+          "name": "Cuộc Chiến Vương Quyền",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "RU",
+          "name": "Игра престолов",
+          "type": "Russian title on kinopoisk"
+        },
+        {
+          "language": null,
+          "name": "Game of Thrones",
+          "type": "Original title on kinopoisk"
+        }
+      ],
+      "year": 2011,
+      "rating": {
+        "imdb": 9.2,
+        "kp": 9.009,
+        "russianFilmCritics": 90
+      },
+      "backdrop": {
+        "previewUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-ott/374297/2a0000016a9809ff1d0e4d9ababb6a2085e0/678x380",
+        "url": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-ott/374297/2a0000016a9809ff1d0e4d9ababb6a2085e0/1344x756"
+      },
+      "releaseYears": [
+        {
+          "end": 2019,
+          "start": 2011
+        }
+      ],
+      "id": 464963,
+      "type": "tv-series",
+      "votes": {
+        "imdb": 2600000,
+        "kp": 1713372,
+        "russianFilmCritics": 20
+      },
+      "seriesLength": 55,
+      "name": "Игра престолов",
+      "alternativeName": "Game of Thrones",
+      "poster": {
+        "previewUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/1777765/dd78edfd-6a1f-486c-9a86-6acbca940418/300x450",
+        "url": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/1777765/dd78edfd-6a1f-486c-9a86-6acbca940418/600x900"
+      },
+      "genres": [
+        {
+          "id": 5,
+          "name": "фэнтези",
+          "slug": "fantasy"
+        },
+        {
+          "id": 8,
+          "name": "драма",
+          "slug": "drama"
+        },
+        {
+          "id": 3,
+          "name": "боевик",
+          "slug": "action"
+        },
+        {
+          "id": 7,
+          "name": "мелодрама",
+          "slug": "romance"
+        },
+        {
+          "id": 10,
+          "name": "приключения",
+          "slug": "adventure"
+        }
+      ],
+      "logo": {
+        "url": "https://image.tmdb.org/t/p/original/6Xog9OYPNg59j3CHo9ijqeTwRbY.png",
+        "previewUrl": "https://image.tmdb.org/t/p/w500/6Xog9OYPNg59j3CHo9ijqeTwRbY.png"
+      }
+    }
+  ],
+  "limit": 10,
+  "next": null,
+  "prev": null,
+  "hasNext": false,
+  "hasPrev": false
+}

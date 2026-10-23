@@ -1,0 +1,7 @@
+{
+  "message": [
+    "Значение поля externalId.tmdb должно быть в диапазоне от 1 до 2000000!"
+  ],
+  "error": "Bad Request",
+  "statusCode": 400
+}

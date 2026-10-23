@@ -1,0 +1,138 @@
+{
+  "docs": [
+    {
+      "names": [
+        {
+          "language": "EN",
+          "name": "The Matrix",
+          "type": "Original title on tmdb"
+        },
+        {
+          "language": "RU",
+          "name": "Матрица",
+          "type": "Russian title on tmdb"
+        },
+        {
+          "language": "TH",
+          "name": "เพาะพันธุ์มนุษย์เหนือโลก",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "GR",
+          "name": "Μάτριξ",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "KR",
+          "name": "매트릭스",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "HK",
+          "name": "廿二世紀殺人網絡",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "TW",
+          "name": "廿二世紀殺人網絡",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "CN",
+          "name": "廿二世紀殺人網絡",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "TW",
+          "name": "駭客任務",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "AM",
+          "name": "Մատրիցա",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "BY",
+          "name": "Матрыца",
+          "type": "Alternative title on tmdb"
+        },
+        {
+          "language": "RU",
+          "name": "Матрица",
+          "type": "Russian title on kinopoisk"
+        },
+        {
+          "language": null,
+          "name": "The Matrix",
+          "type": "Original title on kinopoisk"
+        }
+      ],
+      "year": 1999,
+      "shortDescription": "Хакер Нео узнает, что его мир — виртуальный. Выдающийся экшен, доказавший, что зрелищное кино может быть умным",
+      "movieLength": 136,
+      "description": "Жизнь Томаса Андерсона разделена на две части: днём он — самый обычный офисный работник, получающий нагоняи от начальства, а ночью превращается в хакера по имени Нео, и нет места в сети, куда он бы не смог проникнуть. Но однажды всё меняется. Томас узнаёт ужасающую правду о реальности.",
+      "poster": {
+        "previewUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/4774061/cf1970bc-3f08-4e0e-a095-2fb57c3aa7c6/300x450",
+        "url": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/4774061/cf1970bc-3f08-4e0e-a095-2fb57c3aa7c6/600x900"
+      },
+      "name": "Матрица",
+      "alternativeName": "The Matrix",
+      "ageRating": 18,
+      "votes": {
+        "filmCritics": 209,
+        "imdb": 2200000,
+        "kp": 816869,
+        "russianFilmCritics": 5
+      },
+      "backdrop": {
+        "previewUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-ott/1672343/2a0000016cc7177239d4025185c488b1bf43/678x380",
+        "url": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-ott/1672343/2a0000016cc7177239d4025185c488b1bf43/1344x756"
+      },
+      "typeNumber": 1,
+      "ratingMpaa": "r",
+      "isSeries": false,
+      "countries": [
+        {
+          "id": 1,
+          "name": "США"
+        },
+        {
+          "id": 25,
+          "name": "Австралия"
+        }
+      ],
+      "id": 301,
+      "ticketsOnSale": false,
+      "rating": {
+        "filmCritics": 7.9,
+        "imdb": 8.7,
+        "kp": 8.501,
+        "russianFilmCritics": 60
+      },
+      "genres": [
+        {
+          "id": 2,
+          "name": "фантастика",
+          "slug": "sci-fi"
+        },
+        {
+          "id": 3,
+          "name": "боевик",
+          "slug": "action"
+        }
+      ],
+      "type": "movie",
+      "logo": {
+        "url": "https://image.tmdb.org/t/p/original/wqL8PhiN021ySyEJg8UXi4d03Hn.png",
+        "previewUrl": "https://image.tmdb.org/t/p/w500/wqL8PhiN021ySyEJg8UXi4d03Hn.png"
+      },
+      "top250": 34
+    }
+  ],
+  "limit": 10,
+  "next": null,
+  "prev": null,
+  "hasNext": false,
+  "hasPrev": false
+}

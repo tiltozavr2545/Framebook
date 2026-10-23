@@ -161,7 +161,7 @@ curl -s https://api.poiskkino.dev/v1.5/movie/301 \
    | First Name / Last Name | имя и фамилия |
    | Use | `Personal non-commercial Android app to compare my own film ratings with IMDb, Rotten Tomatoes and Metacritic.` |
 
-4. **Submit**. Придёт письмо с ключом (8 символов, например `1a2b3c4d`) и
+4. **Submit**. Придёт письмо с ключом (7–8 символов, например `1a2b3c4d`) и
    **ссылкой активации**. По ссылке **обязательно перейти**: до этого
    ключ отвечает ошибкой.
 5. Письмо может идти до часа. Хуже всего доходит на Outlook, Hotmail и
