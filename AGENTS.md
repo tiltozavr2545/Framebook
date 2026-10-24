@@ -80,6 +80,10 @@
 
 ## Конвенции работы
 
+- **Write all repo-facing text in English**: commit messages, docs,
+  code comments/docstrings, and GitHub release bodies. Exception:
+  anything genuinely user-facing that the app itself produces, and
+  the `app/lib/l10n/app_ru.arb` localization file — those stay as-is.
 - **Изменения локальной схемы — только миграциями drift** с увеличением
   `schemaVersion`, шагом в `migration` и тестом миграции на снимке
   предыдущей схемы. `make codegen` пересобирает код drift и локализацию и
