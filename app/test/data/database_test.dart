@@ -61,6 +61,38 @@ void main() {
       final moscowEarlyMorning = DateTime.parse('2026-10-24T01:30:00+03:00');
       expect(AppDatabase.budgetDay(moscowEarlyMorning), '2026-10-23');
     });
+
+    test(
+      'tryConsume stops at the ceiling and spends nothing past it',
+      () async {
+        const day = '2026-10-24';
+        expect(await db.tryConsumeBudget(ApiSource.omdb, day, 2), isTrue);
+        expect(await db.tryConsumeBudget(ApiSource.omdb, day, 2), isTrue);
+        expect(await db.tryConsumeBudget(ApiSource.omdb, day, 2), isFalse);
+        expect(await db.budgetUsed(ApiSource.omdb, day), 2);
+      },
+    );
+
+    test(
+      'exhaust raises the counter to the daily limit, never lowers it',
+      () async {
+        const day = '2026-10-24';
+        await db.consumeBudget(ApiSource.poiskkino, day);
+        await db.exhaustBudget(ApiSource.poiskkino, day, 200);
+        expect(await db.budgetUsed(ApiSource.poiskkino, day), 200);
+        await db.consumeBudget(ApiSource.poiskkino, day);
+        await db.exhaustBudget(ApiSource.poiskkino, day, 200);
+        expect(await db.budgetUsed(ApiSource.poiskkino, day), 201);
+      },
+    );
+
+    test('rows older than a week are pruned', () async {
+      await db.consumeBudget(ApiSource.omdb, '2026-10-16');
+      await db.consumeBudget(ApiSource.omdb, '2026-10-17');
+      await db.pruneBudget(DateTime.utc(2026, 10, 24, 12));
+      expect(await db.budgetUsed(ApiSource.omdb, '2026-10-16'), 0);
+      expect(await db.budgetUsed(ApiSource.omdb, '2026-10-17'), 1);
+    });
   });
 
   group('constraints', () {

@@ -1,4 +1,4 @@
 # app
 
-Flutter-приложение Framebook. Описание, запуск и документация — в
-[корневом README](../README.md).
+The Framebook Flutter app. The description, how to run it and the
+documentation are in the [root README](../README.md).

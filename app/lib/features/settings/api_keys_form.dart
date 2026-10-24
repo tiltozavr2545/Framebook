@@ -7,13 +7,16 @@ import '../../data/api_source.dart';
 import '../../data/key_validator.dart';
 import '../../l10n/app_localizations.dart';
 
-/// Пошаговая инструкция по ключам — та же, что в репозитории.
-final apiKeysGuideUrl = Uri.parse(
-  'https://github.com/tiltozavr2545/Framebook/blob/main/docs/api-keys.md',
+/// The step-by-step key guide from the repository, in the UI's language:
+/// `docs/api-keys.md` is English, `docs/api-keys.ru.md` its Russian
+/// translation for the people who actually use the app.
+Uri apiKeysGuideUrl(Locale locale) => Uri.parse(
+  'https://github.com/tiltozavr2545/Framebook/blob/main/docs/'
+  '${locale.languageCode == 'ru' ? 'api-keys.ru.md' : 'api-keys.md'}',
 );
 
-/// Ввод и проверка ключей всех источников. Общий для онбординга и
-/// «Настройки → Источники».
+/// Entering and checking the keys of every source. Shared by onboarding and
+/// Settings → Sources.
 class ApiKeysForm extends StatelessWidget {
   const ApiKeysForm({super.key});
 
@@ -29,7 +32,7 @@ class ApiKeysForm extends StatelessWidget {
             icon: const Icon(Icons.open_in_new),
             label: Text(l10n.sourcesHowToGet),
             onPressed: () => launchUrl(
-              apiKeysGuideUrl,
+              apiKeysGuideUrl(Localizations.localeOf(context)),
               mode: LaunchMode.externalApplication,
             ),
           ),
@@ -86,8 +89,8 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
       return;
     }
     setState(() => _status = _Status.checking);
-    // Всё из ref — до await: после него экран может быть уже закрыт, и ref
-    // бросит (AGENTS.md, «Грабли»).
+    // Everything from ref before the await: after it the screen may already be
+    // closed, and ref would throw (AGENTS.md, pitfalls).
     final keys = ref.read(apiKeysProvider.notifier);
     final validator = ref.read(keyValidatorProvider);
 
@@ -171,8 +174,8 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
               enabled: !checking,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
-                // Подсказка длиннее поля на телефоне — под полем она
-                // переносится, а в hintText обрезалась многоточием.
+                // On a phone the hint is longer than the field: below the field
+                // it wraps, while in hintText it was cut off with an ellipsis.
                 helperText: hint,
                 helperMaxLines: 3,
                 suffixIcon: IconButton(
@@ -188,19 +191,21 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
             const SizedBox(height: 8),
             _StatusLine(status: _status),
             const SizedBox(height: 8),
-            Row(
+            // Wrap, not Row: on a narrow screen or with a large system font
+            // the second button moves to the next line instead of overflowing.
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
               children: [
                 FilledButton.tonal(
                   onPressed: checking ? null : _save,
                   child: Text(l10n.keySave),
                 ),
-                if (stored) ...[
-                  const SizedBox(width: 8),
+                if (stored)
                   TextButton(
                     onPressed: checking ? null : _remove,
                     child: Text(l10n.keyRemove),
                   ),
-                ],
               ],
             ),
           ],

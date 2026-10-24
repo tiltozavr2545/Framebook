@@ -24,9 +24,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get tabStats => 'Статистика';
 
   @override
-  String get tabSearchPlaceholder => 'Здесь будет поиск фильмов и сериалов.';
-
-  @override
   String get tabRatingsPlaceholder => 'Здесь будут твои оценки.';
 
   @override
@@ -156,4 +153,181 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get keyStatusEmpty => 'Сначала вставь ключ';
+
+  @override
+  String get retry => 'Повторить';
+
+  @override
+  String get searchHint => 'Фильм или сериал';
+
+  @override
+  String get searchClear => 'Очистить';
+
+  @override
+  String get searchEmpty => 'Найди фильм или сериал по названию.';
+
+  @override
+  String searchNothing(String query) {
+    return 'По запросу «$query» ничего не нашлось.';
+  }
+
+  @override
+  String get kindMovie => 'Фильм';
+
+  @override
+  String get kindTv => 'Сериал';
+
+  @override
+  String get failureOffline =>
+      'Нет связи. Поиску и карточкам нужен интернет; то, что уже открывалось, показывается из кэша.';
+
+  @override
+  String get failureTmdbKey => 'TMDB не принял ключ. Проверь его в настройках.';
+
+  @override
+  String get failureNotFound => 'В TMDB такого нет.';
+
+  @override
+  String get failureTmdb =>
+      'TMDB ответил не так, как надо. Попробуй чуть позже.';
+
+  @override
+  String get titleOverview => 'Описание';
+
+  @override
+  String get titleSeasons => 'Сезоны';
+
+  @override
+  String get titleEpisodes => 'Серии';
+
+  @override
+  String get tvStatusRunning => 'выходит';
+
+  @override
+  String get tvStatusEnded => 'завершён';
+
+  @override
+  String get tvStatusCanceled => 'закрыт';
+
+  @override
+  String seasonCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count сезона',
+      many: '$count сезонов',
+      few: '$count сезона',
+      one: '$count сезон',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String episodeCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count серии',
+      many: '$count серий',
+      few: '$count серии',
+      one: '$count серия',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String seasonNumber(int number) {
+    return 'Сезон $number';
+  }
+
+  @override
+  String get seasonSpecials => 'Спецвыпуски';
+
+  @override
+  String episodeNumber(int number) {
+    return 'Серия $number';
+  }
+
+  @override
+  String episodeCode(int season, int episode) {
+    return 'Сезон $season · серия $episode';
+  }
+
+  @override
+  String runtimeMinutes(int minutes) {
+    return '$minutes мин';
+  }
+
+  @override
+  String runtimeHours(int hours) {
+    return '$hours ч';
+  }
+
+  @override
+  String runtimeHoursMinutes(int hours, int minutes) {
+    return '$hours ч $minutes мин';
+  }
+
+  @override
+  String get ratingKinopoisk => 'Кинопоиск';
+
+  @override
+  String ratingVotes(String count) {
+    return '$count голосов';
+  }
+
+  @override
+  String ratingAsOf(String date) {
+    return 'на $date';
+  }
+
+  @override
+  String get ratingSeasonAverage => 'среднее по сериям';
+
+  @override
+  String get ratingNoData => 'нет данных';
+
+  @override
+  String get ratingNeedsKey => 'добавь ключ';
+
+  @override
+  String get ratingOffline => 'нет связи';
+
+  @override
+  String get ratingLimit => 'лимит на сегодня';
+
+  @override
+  String get ratingKeyRejected => 'ключ не принят';
+
+  @override
+  String get ratingFailed => 'ошибка источника';
+
+  @override
+  String get aboutTitle => 'О приложении';
+
+  @override
+  String get aboutIntro =>
+      'Framebook — личный дневник оценок фильмов и сериалов со сравнением с Кинопоиском, IMDb и другими. Сервера нет: всё, что ты оценил, хранится на телефоне.';
+
+  @override
+  String get aboutData => 'Откуда данные';
+
+  @override
+  String get aboutTmdb => 'Каталог, постеры, сезоны и серии, рейтинг TMDB.';
+
+  @override
+  String get aboutPoiskkinoTitle => 'ПоискКино API';
+
+  @override
+  String get aboutPoiskkino =>
+      'Рейтинг Кинопоиска. Неофициальный сервис, с Кинопоиском не связан.';
+
+  @override
+  String get aboutOmdb => 'Рейтинги IMDb, Rotten Tomatoes и Metacritic.';
+
+  @override
+  String get aboutSource => 'Исходный код';
+
+  @override
+  String get aboutLicenses => 'Лицензии открытого ПО';
 }

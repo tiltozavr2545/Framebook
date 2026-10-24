@@ -3,7 +3,7 @@ targets:
     builders:
       drift_dev:
         options:
-          # Снимки схемы для тестов миграций:
+          # Schema snapshots for migration tests:
           # `dart run drift_dev make-migrations` (AGENTS.md).
           databases:
             framebook: lib/data/db/database.dart

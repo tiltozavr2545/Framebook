@@ -24,10 +24,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabStats => 'Stats';
 
   @override
-  String get tabSearchPlaceholder =>
-      'Search for films and series will be here.';
-
-  @override
   String get tabRatingsPlaceholder => 'Your ratings will be here.';
 
   @override
@@ -157,4 +153,178 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get keyStatusEmpty => 'Paste a key first';
+
+  @override
+  String get retry => 'Try again';
+
+  @override
+  String get searchHint => 'Film or series';
+
+  @override
+  String get searchClear => 'Clear';
+
+  @override
+  String get searchEmpty => 'Find a film or series by title.';
+
+  @override
+  String searchNothing(String query) {
+    return 'Nothing found for “$query”.';
+  }
+
+  @override
+  String get kindMovie => 'Film';
+
+  @override
+  String get kindTv => 'Series';
+
+  @override
+  String get failureOffline =>
+      'No connection. Search and title pages need the internet; what was opened before is shown from the cache.';
+
+  @override
+  String get failureTmdbKey => 'TMDB rejected the key. Check it in settings.';
+
+  @override
+  String get failureNotFound => 'TMDB has no such title.';
+
+  @override
+  String get failureTmdb =>
+      'TMDB didn\'t answer properly. Try again a bit later.';
+
+  @override
+  String get titleOverview => 'Overview';
+
+  @override
+  String get titleSeasons => 'Seasons';
+
+  @override
+  String get titleEpisodes => 'Episodes';
+
+  @override
+  String get tvStatusRunning => 'ongoing';
+
+  @override
+  String get tvStatusEnded => 'ended';
+
+  @override
+  String get tvStatusCanceled => 'canceled';
+
+  @override
+  String seasonCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count seasons',
+      one: '$count season',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String episodeCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count episodes',
+      one: '$count episode',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String seasonNumber(int number) {
+    return 'Season $number';
+  }
+
+  @override
+  String get seasonSpecials => 'Specials';
+
+  @override
+  String episodeNumber(int number) {
+    return 'Episode $number';
+  }
+
+  @override
+  String episodeCode(int season, int episode) {
+    return 'S$season · E$episode';
+  }
+
+  @override
+  String runtimeMinutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String runtimeHours(int hours) {
+    return '$hours h';
+  }
+
+  @override
+  String runtimeHoursMinutes(int hours, int minutes) {
+    return '$hours h $minutes min';
+  }
+
+  @override
+  String get ratingKinopoisk => 'Kinopoisk';
+
+  @override
+  String ratingVotes(String count) {
+    return '$count votes';
+  }
+
+  @override
+  String ratingAsOf(String date) {
+    return 'as of $date';
+  }
+
+  @override
+  String get ratingSeasonAverage => 'episode average';
+
+  @override
+  String get ratingNoData => 'no data';
+
+  @override
+  String get ratingNeedsKey => 'add a key';
+
+  @override
+  String get ratingOffline => 'no connection';
+
+  @override
+  String get ratingLimit => 'daily limit used up';
+
+  @override
+  String get ratingKeyRejected => 'key rejected';
+
+  @override
+  String get ratingFailed => 'source error';
+
+  @override
+  String get aboutTitle => 'About';
+
+  @override
+  String get aboutIntro =>
+      'Framebook is a personal diary of film and series ratings that compares your scores with Kinopoisk, IMDb and others. It has no server: everything you rate stays on your phone.';
+
+  @override
+  String get aboutData => 'Where the data comes from';
+
+  @override
+  String get aboutTmdb =>
+      'Catalog, posters, seasons and episodes, TMDB rating.';
+
+  @override
+  String get aboutPoiskkinoTitle => 'PoiskKino API';
+
+  @override
+  String get aboutPoiskkino =>
+      'Kinopoisk rating. An unofficial service, not affiliated with Kinopoisk.';
+
+  @override
+  String get aboutOmdb => 'IMDb, Rotten Tomatoes and Metacritic ratings.';
+
+  @override
+  String get aboutSource => 'Source code';
+
+  @override
+  String get aboutLicenses => 'Open-source licenses';
 }

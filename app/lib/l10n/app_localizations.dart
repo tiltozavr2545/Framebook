@@ -128,12 +128,6 @@ abstract class AppLocalizations {
   /// **'Stats'**
   String get tabStats;
 
-  /// No description provided for @tabSearchPlaceholder.
-  ///
-  /// In en, this message translates to:
-  /// **'Search for films and series will be here.'**
-  String get tabSearchPlaceholder;
-
   /// No description provided for @tabRatingsPlaceholder.
   ///
   /// In en, this message translates to:
@@ -379,6 +373,276 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Paste a key first'**
   String get keyStatusEmpty;
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get retry;
+
+  /// No description provided for @searchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Film or series'**
+  String get searchHint;
+
+  /// No description provided for @searchClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get searchClear;
+
+  /// No description provided for @searchEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Find a film or series by title.'**
+  String get searchEmpty;
+
+  /// No description provided for @searchNothing.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing found for “{query}”.'**
+  String searchNothing(String query);
+
+  /// No description provided for @kindMovie.
+  ///
+  /// In en, this message translates to:
+  /// **'Film'**
+  String get kindMovie;
+
+  /// No description provided for @kindTv.
+  ///
+  /// In en, this message translates to:
+  /// **'Series'**
+  String get kindTv;
+
+  /// No description provided for @failureOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'No connection. Search and title pages need the internet; what was opened before is shown from the cache.'**
+  String get failureOffline;
+
+  /// No description provided for @failureTmdbKey.
+  ///
+  /// In en, this message translates to:
+  /// **'TMDB rejected the key. Check it in settings.'**
+  String get failureTmdbKey;
+
+  /// No description provided for @failureNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'TMDB has no such title.'**
+  String get failureNotFound;
+
+  /// No description provided for @failureTmdb.
+  ///
+  /// In en, this message translates to:
+  /// **'TMDB didn\'t answer properly. Try again a bit later.'**
+  String get failureTmdb;
+
+  /// No description provided for @titleOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get titleOverview;
+
+  /// No description provided for @titleSeasons.
+  ///
+  /// In en, this message translates to:
+  /// **'Seasons'**
+  String get titleSeasons;
+
+  /// No description provided for @titleEpisodes.
+  ///
+  /// In en, this message translates to:
+  /// **'Episodes'**
+  String get titleEpisodes;
+
+  /// No description provided for @tvStatusRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'ongoing'**
+  String get tvStatusRunning;
+
+  /// No description provided for @tvStatusEnded.
+  ///
+  /// In en, this message translates to:
+  /// **'ended'**
+  String get tvStatusEnded;
+
+  /// No description provided for @tvStatusCanceled.
+  ///
+  /// In en, this message translates to:
+  /// **'canceled'**
+  String get tvStatusCanceled;
+
+  /// No description provided for @seasonCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} season} other{{count} seasons}}'**
+  String seasonCount(int count);
+
+  /// No description provided for @episodeCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} episode} other{{count} episodes}}'**
+  String episodeCount(int count);
+
+  /// No description provided for @seasonNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Season {number}'**
+  String seasonNumber(int number);
+
+  /// No description provided for @seasonSpecials.
+  ///
+  /// In en, this message translates to:
+  /// **'Specials'**
+  String get seasonSpecials;
+
+  /// No description provided for @episodeNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Episode {number}'**
+  String episodeNumber(int number);
+
+  /// No description provided for @episodeCode.
+  ///
+  /// In en, this message translates to:
+  /// **'S{season} · E{episode}'**
+  String episodeCode(int season, int episode);
+
+  /// No description provided for @runtimeMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min'**
+  String runtimeMinutes(int minutes);
+
+  /// No description provided for @runtimeHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} h'**
+  String runtimeHours(int hours);
+
+  /// No description provided for @runtimeHoursMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} h {minutes} min'**
+  String runtimeHoursMinutes(int hours, int minutes);
+
+  /// No description provided for @ratingKinopoisk.
+  ///
+  /// In en, this message translates to:
+  /// **'Kinopoisk'**
+  String get ratingKinopoisk;
+
+  /// No description provided for @ratingVotes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} votes'**
+  String ratingVotes(String count);
+
+  /// No description provided for @ratingAsOf.
+  ///
+  /// In en, this message translates to:
+  /// **'as of {date}'**
+  String ratingAsOf(String date);
+
+  /// No description provided for @ratingSeasonAverage.
+  ///
+  /// In en, this message translates to:
+  /// **'episode average'**
+  String get ratingSeasonAverage;
+
+  /// No description provided for @ratingNoData.
+  ///
+  /// In en, this message translates to:
+  /// **'no data'**
+  String get ratingNoData;
+
+  /// No description provided for @ratingNeedsKey.
+  ///
+  /// In en, this message translates to:
+  /// **'add a key'**
+  String get ratingNeedsKey;
+
+  /// No description provided for @ratingOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'no connection'**
+  String get ratingOffline;
+
+  /// No description provided for @ratingLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'daily limit used up'**
+  String get ratingLimit;
+
+  /// No description provided for @ratingKeyRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'key rejected'**
+  String get ratingKeyRejected;
+
+  /// No description provided for @ratingFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'source error'**
+  String get ratingFailed;
+
+  /// No description provided for @aboutTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get aboutTitle;
+
+  /// No description provided for @aboutIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Framebook is a personal diary of film and series ratings that compares your scores with Kinopoisk, IMDb and others. It has no server: everything you rate stays on your phone.'**
+  String get aboutIntro;
+
+  /// No description provided for @aboutData.
+  ///
+  /// In en, this message translates to:
+  /// **'Where the data comes from'**
+  String get aboutData;
+
+  /// No description provided for @aboutTmdb.
+  ///
+  /// In en, this message translates to:
+  /// **'Catalog, posters, seasons and episodes, TMDB rating.'**
+  String get aboutTmdb;
+
+  /// No description provided for @aboutPoiskkinoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'PoiskKino API'**
+  String get aboutPoiskkinoTitle;
+
+  /// No description provided for @aboutPoiskkino.
+  ///
+  /// In en, this message translates to:
+  /// **'Kinopoisk rating. An unofficial service, not affiliated with Kinopoisk.'**
+  String get aboutPoiskkino;
+
+  /// No description provided for @aboutOmdb.
+  ///
+  /// In en, this message translates to:
+  /// **'IMDb, Rotten Tomatoes and Metacritic ratings.'**
+  String get aboutOmdb;
+
+  /// No description provided for @aboutSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Source code'**
+  String get aboutSource;
+
+  /// No description provided for @aboutLicenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Open-source licenses'**
+  String get aboutLicenses;
 }
 
 class _AppLocalizationsDelegate

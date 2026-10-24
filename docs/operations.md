@@ -1,28 +1,31 @@
-# Эксплуатация
+# Operations
 
-Что настроить и что нажать, чтобы приложение собралось, синхронизировалось
-и доехало до друзей. Сервера нет, поэтому эксплуатация сводится к трём
-вещам: ключи внешних API, OAuth-клиент Google и раздача APK.
+What to set up and what to press so the app builds, syncs and reaches
+friends. There is no server, so operations come down to three things: the
+external API keys, the Google OAuth client, and distributing the APK.
 
-**Статус: проект до Этапа 0.** Шаги уточняются по мере прохождения.
+**Status: keys, signing and releases are in use (Stages 0–2); the Google
+Cloud part is a plan until Stage 5.**
 
 ---
 
-## Ключи внешних API (делает каждый пользователь)
+## External API keys (every user does this)
 
-Ключи не лежат ни в репозитории, ни в сборке: каждый получает свои и вводит
-в приложении (онбординг или «Настройки → Источники»). Пошаговая инструкция
-по всем трём сервисам, с тем, что вписывать в каждое поле форм, — в
-[api-keys.md](api-keys.md).
+Keys are neither in the repository nor in the build: everyone gets their own
+and enters them in the app (onboarding or Settings → Sources). The
+step-by-step guide for all three services, with what to enter in every form
+field, is in [api-keys.md](api-keys.md) (Russian translation:
+[api-keys.ru.md](api-keys.ru.md)).
 
-Разработчику для тестов нужны свои ключи. В репозиторий и в фикстуры тестов
-они не попадают (фикстуры — записанные ответы без заголовков запроса).
+The developer needs their own keys for tests. They never reach the
+repository or the test fixtures (fixtures are recorded responses, without
+request headers).
 
-### Снятие фикстур
+### Capturing fixtures
 
-`scripts/capture-fixtures.sh` записывает живые ответы всех трёх API в
-`app/test/fixtures/`. Ключи он берёт из файла вне репозитория,
-`~/.config/framebook/keys.env` (или путь из `FRAMEBOOK_KEYS`):
+`scripts/capture-fixtures.sh` records live responses of all three APIs into
+`app/test/fixtures/`. It takes the keys from a file outside the repository,
+`~/.config/framebook/keys.env` (or the path in `FRAMEBOOK_KEYS`):
 
 ```sh
 TMDB_TOKEN=eyJ...
@@ -30,117 +33,126 @@ POISKKINO_KEY=...
 OMDB_KEY=...
 ```
 
-Источник без ключа пропускается. Скрипт тратит 6 из 200 суточных запросов
-ПоискКино. В конце он проверяет, что ни одно значение ключа не попало в
-сохранённые файлы. Перезапускать стоит, когда меняется формат ответов или
-добавляется новый запрос.
+A source without a key is skipped. The script spends 8 of the 200 daily
+PoiskKino requests. At the end it checks that no key value ended up in the
+saved files. Rerun it when the response format changes or a new request is
+added.
 
 ---
 
-## Google Cloud: OAuth для Drive
+## Google Cloud: OAuth for Drive
 
-Один проект в Google Cloud на приложение, заводит владелец репозитория.
+One Google Cloud project per app, set up by the repository owner.
 
-1. Создать проект, включить **Google Drive API**.
-2. **OAuth consent screen**: тип External, имя Framebook, email поддержки.
-   Scope — только `.../auth/drive.appdata` (нечувствительный).
+1. Create a project and enable the **Google Drive API**.
+2. **OAuth consent screen**: type External, name Framebook, a support email.
+   The only scope is `.../auth/drive.appdata` (non-sensitive).
 3. **Credentials → OAuth client ID → Android**: package name
-   `com.github.tiltozavr2545.framebook` и SHA-1 ключа подписи. Клиентов
-   нужно несколько — по одному на каждый ключ, которым подписываются сборки:
-   - release-keystore (сборки для друзей);
-   - debug-keystore **каждой** машины разработки
-     (`~/.android/debug.keystore`, у Intel- и M4-мака они разные).
+   `com.github.tiltozavr2545.framebook` and the signing key's SHA-1. Several
+   clients are needed — one for every key that signs builds:
+   - the release keystore (builds for friends);
+   - the debug keystore of **every** development machine
+     (`~/.android/debug.keystore`; the Intel and M4 Macs have different
+     ones).
 
-   SHA-1: `keytool -list -v -keystore <файл> -alias <alias>`.
-   Несовпадение SHA-1 — самая частая причина `ApiException: 10` при входе.
-4. **Web client ID** — нужен, только если google_sign_in выбранной версии
-   требует `serverClientId` для получения токена доступа на Android
-   **(проверить на Этапе 5)**.
+   SHA-1: `keytool -list -v -keystore <file> -alias <alias>`.
+   A SHA-1 mismatch is the most common cause of `ApiException: 10` on
+   sign-in.
+4. **Web client ID** — needed only if the chosen google_sign_in version
+   requires a `serverClientId` to get an access token on Android **(to be
+   checked in Stage 5)**.
 
-### Testing или Production
+### Testing or Production
 
-Пока OAuth-приложение в статусе **Testing**:
+While the OAuth app is in **Testing** status:
 
-- войти могут только аккаунты из списка Test users (до 100) — друзей нужно
-  добавить вручную;
-- refresh-токены живут **7 дней**, после чего нужен повторный вход.
+- only accounts from the Test users list (up to 100) can sign in — friends
+  have to be added by hand;
+- refresh tokens live **7 days**, after which a new sign-in is needed.
 
-Для трёх человек список тестовых пользователей не проблема, а еженедельный
-повторный вход — проблема. План: перевести в **Production**. Для
-нечувствительного scope это не требует проверки приложения Google, но экран
-согласия может показывать предупреждение «приложение не проверено»
-**(проверить при переводе)**. Если перевод упрётся в проверку — остаться в
-Testing и сделать повторный вход незаметным (тихая повторная авторизация при
-запуске, без потери локальных данных).
+For three people the test user list is no problem, but signing in again
+every week is. The plan: move to **Production**. For a non-sensitive scope
+that doesn't require Google's app verification, but the consent screen may
+show an "app not verified" warning **(to be checked when moving)**. If the
+move runs into verification, stay in Testing and make the repeated sign-in
+invisible (a silent re-authorization on launch, without losing local data).
 
 ---
 
-## Подпись и сборка
+## Signing and building
 
-Release-ключ создан 2026-10-20 и ни от кого лично не зависит:
+The release key was created on 2026-10-20 and doesn't depend on any one
+person:
 
-| Где | Что | Зачем |
+| Where | What | Why |
 |---|---|---|
-| секреты репозитория GitHub | `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` | ими подписывает релизы CI (`release-apk.yml`) |
-| `~/.config/framebook/` на Intel-маке | `framebook-release.jks` + `key.properties` | резервная копия: секреты GitHub нельзя прочитать обратно |
-| `app/android/key.properties` (gitignored) | копия `key.properties` с абсолютным путём к ключу | локальный `make build-apk` |
+| GitHub repository secrets | `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` | CI signs releases with them (`release-apk.yml`) |
+| `~/.config/framebook/` on the Intel Mac | `framebook-release.jks` + `key.properties` | a backup copy: GitHub secrets can't be read back |
+| `app/android/key.properties` (gitignored) | a copy of `key.properties` with an absolute path to the key | local `make build-apk` |
 
-Пароль случайный (32 символа), нигде, кроме этих мест, не записан. Ключ RSA
-4096, срок действия 100 лет, alias `framebook`.
+The password is random (32 characters) and written down nowhere but these
+places. The key is RSA 4096, valid for 100 years, alias `framebook`.
 
-Потеря ключа — это невозможность обновить приложение поверх
-установленного: у друзей придётся удалять старое, а вместе с ним и
-несинхронизированные данные. Ключ пропадёт, только если одновременно
-исчезнут и репозиторий, и копия на маке. Для спокойствия копию
-`~/.config/framebook/` стоит положить ещё куда-нибудь (менеджер паролей,
-зашифрованный архив в облаке), но это не обязательно.
+Losing the key means the app can't be updated over the installed one:
+friends would have to uninstall the old one, and with it any unsynced data.
+The key is lost only if both the repository and the copy on the Mac vanish at
+once. For peace of mind the copy of `~/.config/framebook/` could go somewhere
+else too (a password manager, an encrypted archive in the cloud), but that is
+optional.
 
-Отпечатки — для Android OAuth-клиентов в Google Cloud (Этап 5):
+Fingerprints — for the Android OAuth clients in Google Cloud (Stage 5):
 
-| Ключ | SHA-1 |
+| Key | SHA-1 |
 |---|---|
 | release (`framebook`) | `F4:07:7F:14:A1:36:FF:01:70:F1:CB:C6:4A:1A:F4:20:51:4C:0A:FD` |
-| debug, Intel-мак | `D0:75:83:3B:53:FB:34:2B:78:97:6E:FD:5D:F3:2B:C4:EE:D0:5B:5B` |
-| debug, M4-мак | снять на нём: `keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android` |
+| debug, Intel Mac | `D0:75:83:3B:53:FB:34:2B:78:97:6E:FD:5D:F3:2B:C4:EE:D0:5B:5B` |
+| debug, M4 Mac | take it there: `keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android` |
 
-Сборка:
+Building:
 
-- `make build-apk` → `flutter build apk --release`, подписанный APK. Один
-  универсальный APK, без `--split-per-abi`: друзьям проще один файл, чем
-  выбор архитектуры.
-- Без `key.properties` release-сборка **падает**, а не подписывается молча
-  debug-ключом. Для проверки компиляции есть `make build-apk-check`: он
-  явно разрешает debug-подпись, так же собирает CI.
-- Чтобы собирать подписанное на другой машине (M4), скопировать туда
-  `~/.config/framebook/` и `app/android/key.properties` (путь к ключу в нём
-  абсолютный — поправить под ту машину).
-- `keytool` и `apksigner` берут JDK из Android Studio:
-  `/Applications/Android Studio.app/Contents/jbr/Contents/Home`. Проверить
-  подпись APK: `apksigner verify --print-certs <apk>`.
-- `applicationId` — `com.github.tiltozavr2545.framebook`, `minSdk` 26,
+- `make build-apk` → `flutter build apk --release`, a signed APK. One
+  universal APK, no `--split-per-abi`: one file is simpler for friends than
+  choosing an architecture.
+- Without `key.properties` a release build **fails** rather than being
+  silently signed with the debug key. To check that it compiles there is
+  `make build-apk-check`: it explicitly allows debug signing, and CI builds
+  the same way.
+- To build signed on another machine (M4), copy `~/.config/framebook/` and
+  `app/android/key.properties` there (the key path in it is absolute — adjust
+  it for that machine).
+- `keytool` and `apksigner` use the JDK from Android Studio:
+  `/Applications/Android Studio.app/Contents/jbr/Contents/Home`. To check an
+  APK's signature: `apksigner verify --print-certs <apk>`.
+- `applicationId` is `com.github.tiltozavr2545.framebook`, `minSdk` 26,
   `targetSdk`/`compileSdk` 36.
 
 ---
 
-## Раздача (Android)
+## Distribution (Android)
 
-- **Релиз — это тег.** Бампнуть версию (`make bump-minor` и т.п.), дописать
-  [../CHANGELOG.md](../CHANGELOG.md), закоммитить, затем
-  `git tag v0.1.0 && git push origin v0.1.0`. Workflow `release-apk.yml`
-  проверит, что тег совпадает с версией в `pubspec.yaml`, прогонит analyze и
-  тесты, соберёт подписанный APK `framebook-0.1.0.apk` и создаст GitHub
-  Release с ним.
-- Установка у друга: скачать APK со страницы релиза, разрешить установку из
-  этого источника, поставить. Обновление — новый APK поверх, данные
-  сохраняются (тот же ключ подписи, `versionCode` больше).
-- Проверка обновлений в самом приложении — в
-  [future-development.md](future-development.md); в MVP — сообщением в чат.
+- **A release is a tag.** Bump the version (`make bump-minor` etc.), add to
+  [../CHANGELOG.md](../CHANGELOG.md), commit, then
+  `git tag v0.2.0 && git push origin v0.2.0`. The `release-apk.yml` workflow
+  checks that the tag matches the version in `pubspec.yaml`, runs analyze and
+  the tests, builds the signed APK `framebook-0.2.0.apk` and creates a GitHub
+  Release with it.
+- The workflow fills the release body with GitHub's generated notes; replace
+  them with written ones (`gh release edit vX.Y.Z --notes-file …`) — in
+  English, like all repository text: what is new, how to install, the
+  signing certificate's SHA-1, the TMDB attribution line.
+- Installing at a friend's: download the APK from the release page, allow
+  installs from that source, install. An update is a new APK over the old
+  one, and the data stays (the same signing key, a higher `versionCode`).
+- Checking for updates inside the app is in
+  [future-development.md](future-development.md); in the MVP it is a message
+  in a chat.
 
 ---
 
 ## CI
 
-GitHub Actions на каждый push/PR: `dart format --set-exit-if-changed`,
-`flutter analyze`, `flutter test`, проверка бампа версии в PR. Flutter в CI —
-та же 3.32.8, что на машинах. Секретов CI не требует: тесты не ходят во
-внешние API.
+GitHub Actions on every push/PR: `dart format --set-exit-if-changed`, a check
+that generated code is up to date, `flutter analyze`, `flutter test`, a
+version bump check on PRs, and an APK build with the debug key. Flutter in CI
+is the same 3.32.8 as on the machines. CI needs no secrets: the tests never
+call external APIs. Only `release-apk.yml` uses the signing secrets.

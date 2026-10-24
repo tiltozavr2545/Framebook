@@ -5,10 +5,13 @@ import 'package:go_router/go_router.dart';
 import '../data/api_keys.dart';
 import '../data/api_source.dart';
 import '../features/onboarding/onboarding_screen.dart';
+import '../features/search/search_screen.dart';
+import '../features/settings/about_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/settings/sources_screen.dart';
 import '../features/shell/shell_screen.dart';
 import '../features/shell/tab_placeholder.dart';
+import '../features/title/title_routes.dart';
 
 abstract final class Routes {
   static const onboarding = '/onboarding';
@@ -18,13 +21,15 @@ abstract final class Routes {
   static const stats = '/stats';
   static const settings = '/settings';
   static const sources = '/settings/sources';
+  static const about = '/settings/about';
 }
 
 final routerProvider = Provider<GoRouter>((ref) {
-  // Без ключа TMDB приложение бесполезно: нет ни поиска, ни карточек. Роутер
-  // держит человека на онбординге, пока ключа нет, — и возвращает туда, если
-  // ключ удалили в настройках. Уходит с онбординга человек сам, кнопкой:
-  // после ключа TMDB он может захотеть добавить и необязательные.
+  // Without a TMDB key the app is useless: no search, no cards. The router
+  // keeps the user on onboarding while there is no key, and sends them back
+  // there if the key is removed in settings. The user leaves onboarding
+  // themselves, with a button: after the TMDB key they may want to add the
+  // optional ones too.
   final hasTmdb = ValueNotifier(ref.read(apiKeysProvider).has(ApiSource.tmdb));
   ref.listen(
     apiKeysProvider,
@@ -51,10 +56,17 @@ final routerProvider = Provider<GoRouter>((ref) {
           for (final tab in AppTab.values)
             StatefulShellBranch(
               routes: [
-                GoRoute(
-                  path: tab.path,
-                  builder: (context, state) => TabPlaceholder(tab: tab),
-                ),
+                switch (tab) {
+                  AppTab.search => GoRoute(
+                    path: tab.path,
+                    builder: (context, state) => const SearchScreen(),
+                    routes: TitleRoutes.routes(),
+                  ),
+                  _ => GoRoute(
+                    path: tab.path,
+                    builder: (context, state) => TabPlaceholder(tab: tab),
+                  ),
+                },
               ],
             ),
         ],
@@ -66,6 +78,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'sources',
             builder: (context, state) => const SourcesScreen(),
+          ),
+          GoRoute(
+            path: 'about',
+            builder: (context, state) => const AboutScreen(),
           ),
         ],
       ),

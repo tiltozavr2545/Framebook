@@ -3,9 +3,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'api_source.dart';
 
-/// Ключ пользователя к одному API. `verified == false` — сохранён без
-/// проверки, потому что не было связи (docs/external-sources.md, «Проверка
-/// ключей»).
+/// A user's key for one API. `verified == false` means it was saved unchecked
+/// because there was no connection (docs/external-sources.md, "Key checks").
 final class StoredKey {
   const StoredKey(this.value, {required this.verified});
 
@@ -13,7 +12,7 @@ final class StoredKey {
   final bool verified;
 }
 
-/// Все ключи пользователя. Неизменяемый снимок: правка — через
+/// All of the user's keys. An immutable snapshot: changes go through
 /// [ApiKeysNotifier].
 final class ApiKeys {
   const ApiKeys(this._keys);
@@ -32,8 +31,8 @@ final class ApiKeys {
   ApiKeys without(ApiSource source) => ApiKeys({..._keys}..remove(source));
 }
 
-/// Где физически лежат ключи. В приложении — защищённое хранилище ОС, в
-/// тестах — память.
+/// Where the keys physically live: the OS secure storage in the app, memory in
+/// tests.
 abstract interface class KeyStorage {
   Future<String?> read(String key);
   Future<void> write(String key, String value);
@@ -57,8 +56,8 @@ final class SecureKeyStorage implements KeyStorage {
   Future<void> delete(String key) => _storage.delete(key: key);
 }
 
-/// Чтение и запись ключей. Ключи никогда не попадают ни в SQLite, ни в файл
-/// синхронизации (AGENTS.md, «Инварианты»).
+/// Reads and writes keys. Keys never reach SQLite or the sync file (AGENTS.md,
+/// invariants).
 final class ApiKeyStore {
   ApiKeyStore(this._storage);
 
@@ -94,8 +93,8 @@ final apiKeyStoreProvider = Provider<ApiKeyStore>(
   (ref) => throw UnimplementedError('Overridden in main()'),
 );
 
-/// Ключи, прочитанные до `runApp`: роутеру нужно синхронно знать, есть ли
-/// ключ TMDB, чтобы не мигать главным экраном перед онбордингом.
+/// Keys read before `runApp`: the router must know synchronously whether there
+/// is a TMDB key, so as not to flash the main screen before onboarding.
 final initialApiKeysProvider = Provider<ApiKeys>(
   (ref) => throw UnimplementedError('Overridden in main()'),
 );

@@ -4,15 +4,15 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 
-/// Записанный ответ внешнего API из `test/fixtures/`.
+/// A recorded external API response from `test/fixtures/`.
 String fixture(String path) => File('test/fixtures/$path').readAsStringSync();
 
-/// Подменяет сеть: на каждый запрос отвечает [respond], а сами запросы
-/// складывает в [requests] — чтобы проверять, как они собраны.
+/// Replaces the network: answers every request with [respond], and collects
+/// the requests in [requests] so tests can check how they were built.
 final class FakeHttpAdapter implements HttpClientAdapter {
   FakeHttpAdapter(this.respond);
 
-  /// `null` вместо ответа — имитация отсутствия сети.
+  /// `null` instead of a reply simulates having no network.
   final ({int status, String body})? Function(RequestOptions request) respond;
   final List<RequestOptions> requests = [];
 

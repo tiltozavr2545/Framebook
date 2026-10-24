@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/router.dart';
 import '../../l10n/app_localizations.dart';
 
-/// Вкладки нижней навигации, в порядке показа.
+/// Bottom navigation tabs, in display order.
 enum AppTab {
   search(Routes.search, Icons.search),
   ratings(Routes.ratings, Icons.star_outline),
@@ -36,7 +36,7 @@ class ShellScreen extends StatelessWidget {
       body: shell,
       bottomNavigationBar: NavigationBar(
         selectedIndex: shell.currentIndex,
-        // Повторный тап по активной вкладке возвращает её к началу.
+        // Tapping the active tab again takes it back to its start.
         onDestinationSelected: (index) =>
             shell.goBranch(index, initialLocation: index == shell.currentIndex),
         destinations: [

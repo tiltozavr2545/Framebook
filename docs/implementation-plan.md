@@ -1,159 +1,177 @@
-# План реализации: Framebook (MVP)
+# Implementation plan: Framebook (MVP)
 
-Пошаговый план MVP из [project-brief.md](project-brief.md). CI и раздача
-встроены в этапы, а не отложены на конец. Платформа — Android, iOS
-отложен (см. [future-development.md](future-development.md)).
+A step-by-step plan for the MVP from [project-brief.md](project-brief.md). CI
+and distribution are built into the stages rather than left for the end. The
+platform is Android; iOS is postponed (see
+[future-development.md](future-development.md)).
 
-Каждый этап заканчивается работающим APK, который можно поставить себе на
-телефон. Порядок выбран так, чтобы самые рискованные вопросы (доступность
-API, схема ключей) закрылись раньше, чем на них что-то построено.
+Every stage ends with a working APK you can install on your phone. The order
+is chosen so that the riskiest questions (API availability, the key scheme)
+are settled before anything is built on top of them.
 
-## Прогресс
+## Progress
 
-- [x] Этап 0 — Подготовка, проверка API, скелет CI
-- [x] Этап 1 — Локальная БД, ключи, настройки
-- [ ] Этап 2 — Поиск и карточка
-- [ ] Этап 3 — Оценки, заметки, «Хочу посмотреть», калибровка
-- [ ] Этап 4 — Сравнение и статистика
-- [ ] Этап 5 — Google Drive: синхронизация и бэкап
-- [ ] Этап 6 — Полировка и раздача
+- [x] Stage 0 — Preparation, API checks, CI skeleton
+- [x] Stage 1 — Local database, keys, settings
+- [x] Stage 2 — Search and title card
+- [ ] Stage 3 — Ratings, notes, watchlist, calibration
+- [ ] Stage 4 — Comparison and statistics
+- [ ] Stage 5 — Google Drive: sync and backup
+- [ ] Stage 6 — Polish and distribution
 
 ---
 
-## Этап 0 — Подготовка, проверка API, скелет CI
+## Stage 0 — Preparation, API checks, CI skeleton
 
-**Статус:** сделано
+**Status:** done
 
-1. ✅ **Проверка доступности API.** С машины разработки все четыре API
-   отвечают. Вопрос «доступен ли TMDB из РФ» снят: пользователи приложения
-   не выходят в сеть с российских IP. TMDB остаётся основой каталога.
-2. ✅ Все запросы из [external-sources.md](external-sources.md) пройдены
-   живыми ключами (2026-10-23), ответы — фикстуры в `app/test/fixtures/`
-   (`scripts/capture-fixtures.sh`). Что выяснилось:
-   - **поиск ПоискКино по tmdb id неоднозначен**: фильм и сериал с одним
-     номером TMDB смешиваются, и по `externalId.tmdb=603` первым приходит
-     сериал 1997 года, а не «Матрица». Сопоставление переделано: сначала по
-     `imdb_id`, по tmdb — только с фильтром по `isSeries`;
-   - рейтинга КП у сезонов и серий нет — подтверждено;
-   - OMDb отдаёт числа строками, ошибки различаются только текстом; у
-     сериалов и серий нет RT и Metacritic;
-   - у TMDB `vote_average: 0` значит «нет голосов».
+1. ✅ **API availability check.** From the development machine all four APIs
+   answer. The question "is TMDB reachable from Russia" is closed: the app's
+   users don't go online from Russian IPs. TMDB stays the base of the
+   catalog.
+2. ✅ Every request from [external-sources.md](external-sources.md) was run
+   with live keys (2026-10-23); the responses are fixtures in
+   `app/test/fixtures/` (`scripts/capture-fixtures.sh`). What came out:
+   - **a PoiskKino search by tmdb id is ambiguous**: a film and a series
+     with the same TMDB number get mixed up, and `externalId.tmdb=603`
+     returns a 1997 series first, not The Matrix. Matching was reworked: by
+     `imdb_id` first, by tmdb id only with an `isSeries` filter;
+   - seasons and episodes have no Kinopoisk rating — confirmed;
+   - OMDb sends numbers as strings, errors differ only by text; series and
+     episodes have no RT or Metacritic;
+   - on TMDB `vote_average: 0` means "no votes".
 3. ✅ `flutter create --org com.github.tiltozavr2545 --platforms=android,ios app`
-   на Flutter 3.32.8. Версии пакетов подобраны и закреплены lock-файлом —
-   таблица в [client-architecture.md](client-architecture.md). Потолки:
-   drift 2.29 (2.31 не сочетается с `drift_dev` на Dart 3.8), Riverpod 3.3.2;
-   google_sign_in встала 7.2.0, то есть с новым API авторизации.
-   - Android: compileSdk/targetSdk 36, AGP 8.9.3, NDK 27, minSdk 26 — как в
-     Amicus, по тем же причинам. Release без `key.properties` падает, а не
-     подписывается debug-ключом (проверено).
-   - Release APK со всеми плагинами собирается (`make build-apk-check`,
-     46.6 МБ — универсальный, с нативными библиотеками sqlite и движком под
-     все ABI).
+   on Flutter 3.32.8. Package versions are chosen and pinned by the lock file
+   — the table is in [client-architecture.md](client-architecture.md).
+   Ceilings: drift 2.29 (2.31 doesn't go with `drift_dev` on Dart 3.8),
+   Riverpod 3.3.2; google_sign_in resolved to 7.2.0, i.e. with the new
+   authorization API.
+   - Android: compileSdk/targetSdk 36, AGP 8.9.3, NDK 27, minSdk 26 — as in
+     Amicus, for the same reasons. A release build without `key.properties`
+     fails rather than being signed with the debug key (checked).
+   - The release APK with all the plugins builds (`make build-apk-check`,
+     46.6 MB — universal, with sqlite native libraries and the engine for
+     every ABI).
 4. ✅ Makefile (`verify`, `verify-version`, `bump-*`, `build-apk`,
-   `build-apk-check`) и git-хуки — по образцу Amicus
-   (`make install-hooks` включает).
-5. ✅ CI: `.github/workflows/ci.yml` — формат, analyze, тесты, сборка APK
-   с debug-подписью.
-6. ✅ Release-keystore создан и лежит в секретах GitHub и в копии вне
-   репозитория (схема — в [operations.md](operations.md)); подписанный APK
-   собирается локально (`make build-apk`, подпись проверена `apksigner`)
-   и в CI по тегу `v*` (`release-apk.yml` → GitHub Release).
-   - ✅ APK 0.1.0 поставлен на телефон (2026-10-23): запускается, онбординг
-     открывается, тема и язык берутся из системы.
+   `build-apk-check`) and git hooks, modelled on Amicus
+   (`make install-hooks` turns them on).
+5. ✅ CI: `.github/workflows/ci.yml` — format, analyze, tests, an APK build
+   signed with the debug key.
+6. ✅ The release keystore is created and kept in GitHub secrets and in a
+   copy outside the repository (the scheme is in
+   [operations.md](operations.md)); a signed APK builds locally (`make
+   build-apk`, the signature checked with `apksigner`) and in CI on a `v*`
+   tag (`release-apk.yml` → GitHub Release).
+   - ✅ APK 0.1.0 installed on the phone (2026-10-23): it starts, onboarding
+     opens, theme and language follow the system.
 
-## Этап 1 — Локальная БД, ключи, настройки
+## Stage 1 — Local database, keys, settings
 
-**Статус:** сделано (0.1.0)
+**Status:** done (0.1.0)
 
 1. ✅ drift: `works`, `ratings`, `watchlist`, `external_ratings`,
-   `api_budget`, `sync_state`, `schemaVersion = 1`, снимок схемы
-   (`app/drift_schemas/`). Инварианты продублированы CHECK-ограничениями и
-   внешними ключами — их держит сама база, тесты в
-   `test/data/database_test.dart`.
-2. ✅ `work_key.dart` — сборка и разбор, родитель и цепочка предков, тесты
-   на всё, что не должно разбираться.
-3. ✅ Онбординг: ввод и проверка ключей (TMDB обязателен), хранение в
-   secure storage, экран «Настройки → Источники». Проверка ключей
-   покрыта тестами на записанных ответах.
-4. ✅ Локализация en/ru с переключателем, тема (системная/светлая/тёмная),
-   шелл с четырьмя вкладками-заглушками.
-5. ✅ `device_id` на первом запуске.
+   `api_budget`, `sync_state`, `schemaVersion = 1`, a schema snapshot
+   (`app/drift_schemas/`). The invariants are duplicated with CHECK
+   constraints and foreign keys — the database itself enforces them, tests
+   in `test/data/database_test.dart`.
+2. ✅ `work_key.dart` — building and parsing, the parent and the chain of
+   ancestors, tests for everything that must not parse.
+3. ✅ Onboarding: entering and checking keys (TMDB is required), storing them
+   in secure storage, the Settings → Sources screen. Key checks are covered
+   by tests on recorded responses.
+4. ✅ en/ru localization with a switch, theme (system/light/dark), a shell
+   with four placeholder tabs.
+5. ✅ `device_id` on first launch.
 
-По ходу:
-- В основном манифесте Android не было разрешения `INTERNET` (`flutter
-  create` кладёт его только в debug/profile) — release-сборка была бы без
-  сети. Добавлено.
-- Исключение `*.g.dart` из анализа прятало ошибку компиляции в
-  сгенерированном коде; исключение снято, в CI добавлена проверка, что
-  сгенерированный код совпадает с исходниками (`make codegen`).
+Along the way:
+- The main Android manifest lacked the `INTERNET` permission (`flutter
+  create` puts it only into debug/profile) — the release build would have
+  had no network. Added.
+- Excluding `*.g.dart` from analysis hid a compile error in the generated
+  code; the exclusion is gone, and CI checks that the generated code matches
+  the sources (`make codegen`).
 
-## Этап 2 — Поиск и карточка
+## Stage 2 — Search and title card
 
-**Статус:** не начат
+**Status:** done (0.2.0)
 
-1. Клиент TMDB за интерфейсом, HTTP-кэш с TTL.
-2. Поиск (`search/multi`, только фильмы и сериалы), постеры через кэш
-   картинок.
-3. Карточка фильма и сериала; список сезонов; экран сезона со списком серий;
-   карточка серии.
-4. Клиенты ПоискКино и OMDb, `ratings_service`: кэш → бюджет → запрос,
-   сопоставление id по цепочке без сопоставления по названию. Тесты на
-   сопоставление и на бюджет — на фикстурах.
-5. Ячейки рейтингов на карточке со всеми состояниями (значение / нет данных /
-   нет ключа / загрузка / ошибка / устарело).
-6. Атрибуция TMDB в «О приложении».
+1. ✅ A TMDB client behind an interface, an HTTP cache with TTLs.
+2. ✅ Search (`search/multi`, films and series only), posters through an
+   image cache.
+3. ✅ Film and series cards; the season list; a season screen with its
+   episodes; an episode card.
+4. ✅ PoiskKino and OMDb clients, `ratings_service`: cache → budget →
+   request, ids matched along the chain with no matching by title. Tests for
+   matching and the budget run on the fixtures.
+5. ✅ Rating cells on the card with every state (value / no data / no key /
+   loading / error / stale).
+6. ✅ TMDB attribution on the About screen.
 
-## Этап 3 — Оценки, заметки, «Хочу посмотреть», калибровка
+Along the way:
+- `dio_cache_interceptor` was replaced with our own cache: its `maxStale`
+  slides forward on every hit, so a card opened often would never refresh
+  (client-architecture.md, "HTTP").
+- The budget split is done with ceilings on one shared counter
+  (external-sources.md, "Request budget"); failures are throttled in memory
+  so a new key retries at once.
+- Widget tests run on a phone-sized screen; that caught the key buttons in
+  Sources overflowing on a narrow screen.
+- The snapshot refresh on card open (data-model.md) waits for Stage 3:
+  nothing is in `works` until something is rated.
 
-**Статус:** не начат
+## Stage 3 — Ratings, notes, watchlist, calibration
 
-1. Ввод оценки 1–10 / 0.5 и заметки на карточке любого типа; сохранение
-   одной транзакцией вместе со снимком и предками.
-2. Подсказка-среднее у сериала и сезона.
-3. Окно калибровки: «Так же», соседи сверху и снизу, тот же тип,
-   правка оценки из окна. Тесты на выбор соседей.
-4. «Мои оценки»: фильтр по типу, сортировки по дате, оценке, году,
-   названию; работа без сети.
-5. «Хочу посмотреть»: добавление с карточки, снятие при оценке.
-6. Удаление оценки (tombstone) с подтверждением.
+**Status:** not started
 
-## Этап 4 — Сравнение и статистика
+1. Entering a 1–10 / 0.5 score and a note on a card of any kind; saving in one
+   transaction together with the snapshot and its ancestors.
+2. The average hint for a series and a season.
+3. The calibration sheet: "The same", neighbours above and below, the same
+   kind, editing the score from the sheet. Tests for choosing neighbours.
+4. "My ratings": a filter by kind, sorting by date, score, year, title;
+   works offline.
+5. Watchlist: adding from a card, removal on rating.
+6. Deleting a rating (tombstone) with a confirmation.
 
-**Статус:** не начат
+## Stage 4 — Comparison and statistics
 
-1. Разница «моя − их» на карточке у каждого рейтинга.
-2. Сортировка «Моих оценок» по расхождению с КП или IMDb (со знаком и по
-   модулю), строки без данных — в конце.
-3. Фоновое обновление внешних рейтингов в пределах бюджета, пока приложение
-   открыто; индикатор «рейтинги загружены для N из M».
-4. Статистика: распределение своих оценок, среднее отклонение от КП и IMDb
-   (с указанием, по скольким оценкам посчитано), средняя по жанрам и
-   десятилетиям. Тесты на агрегаты.
+**Status:** not started
 
-## Этап 5 — Google Drive: синхронизация и бэкап
+1. The "mine − theirs" difference next to every rating on the card.
+2. Sorting "My ratings" by divergence from Kinopoisk or IMDb (signed and
+   absolute), rows without data at the end.
+3. Background refresh of external ratings within the budget while the app is
+   open; an indicator "ratings loaded for N of M".
+4. Statistics: the distribution of your scores, the average deviation from
+   Kinopoisk and IMDb (saying how many ratings it was computed over), the
+   average by genre and decade. Tests for the aggregates.
 
-**Статус:** не начат
+## Stage 5 — Google Drive: sync and backup
 
-1. Google Cloud: проект, Drive API, consent screen, Android OAuth-клиенты на
-   все ключи подписи (см. [operations.md](operations.md)).
-2. Формат файла и слияние — чистые функции; property-based тесты на
-   сходимость при случайном порядке синхронизаций.
-3. Транспорт Drive: поиск/создание файла в `appDataFolder`, скачивание,
-   загрузка, повтор при изменившемся `modifiedTime`, склейка дублей.
-4. Триггеры: запуск, возврат в приложение, debounce после изменений, кнопка.
-5. Диалог первого входа со счётчиками; выход; удаление данных из Drive.
-6. Дневные копии (последние 7) и восстановление из них.
-7. Экспорт и импорт в файл (слияние / замена).
-8. Проверка на двух телефонах: офлайн-правки одного фильма на обоих →
-   синхронизация в разном порядке → одинаковый результат.
+**Status:** not started
 
-## Этап 6 — Полировка и раздача
+1. Google Cloud: a project, the Drive API, the consent screen, Android OAuth
+   clients for every signing key (see [operations.md](operations.md)).
+2. The file format and merging — pure functions; property-based tests for
+   convergence under a random order of syncs.
+3. The Drive transport: finding/creating the file in `appDataFolder`,
+   download, upload, a retry when `modifiedTime` changed, merging duplicates.
+4. Triggers: launch, returning to the app, a debounce after changes, a
+   button.
+5. The first sign-in dialog with counters; sign-out; deleting the data from
+   Drive.
+6. Daily copies (the last 7) and restoring from them.
+7. Export and import to a file (merge / replace).
+8. A check on two phones: offline edits of the same film on both → syncs in
+   different orders → the same result.
 
-**Статус:** не начат
+## Stage 6 — Polish and distribution
 
-1. Пустые состояния, ошибки без сырого текста исключений, офлайн-сообщения.
-2. Иконка, название, сплэш.
-3. Перевод OAuth-приложения в Production (или решение остаться в Testing —
-   см. [operations.md](operations.md)).
-4. README со скриншотами, первый релиз на GitHub Releases, установка у
-   друзей.
+**Status:** not started
+
+1. Empty states, errors without raw exception text, offline messages.
+2. Icon, name, splash screen.
+3. Moving the OAuth app to Production (or deciding to stay in Testing — see
+   [operations.md](operations.md)).
+4. A README with screenshots, installing at friends'. (The first GitHub
+   release already happened at 0.1.0.)

@@ -1,26 +1,26 @@
 #!/bin/sh
-# Снимает живые ответы TMDB, ПоискКино и OMDb в app/test/fixtures/ — Этап 0,
-# пункт 2 (docs/implementation-plan.md). Тесты потом работают только на этих
-# файлах и во внешние API не ходят.
+# Captures live TMDB, PoiskKino and OMDb responses into app/test/fixtures/ —
+# Stage 0, item 2 (docs/implementation-plan.md). The tests then run only on
+# these files and never call the external APIs.
 #
-# Ключи читаются из файла ВНЕ репозитория (по умолчанию
+# Keys are read from a file OUTSIDE the repository (by default
 # ~/.config/framebook/keys.env):
 #
 #   TMDB_TOKEN=eyJ...        # API Read Access Token (v4)
-#   POISKKINO_KEY=...        # необязательно
-#   OMDB_KEY=...             # необязательно
+#   POISKKINO_KEY=...        # optional
+#   OMDB_KEY=...             # optional
 #
-# Источник без ключа пропускается. ПоискКино: скрипт тратит 8 из 200
-# суточных запросов.
+# A source without a key is skipped. PoiskKino: the script spends 8 of the
+# 200 daily requests.
 #
-# Ключи передаются только в заголовке или в query и в сохранённые файлы не
-# попадают: в конце скрипт проверяет, что ни одно значение ключа не
-# встречается в fixtures, и падает, если встречается.
+# Keys travel only in a header or the query and never reach the saved files:
+# at the end the script checks that no key value appears in the fixtures, and
+# fails if one does.
 set -eu
 
 keys_file=${FRAMEBOOK_KEYS:-$HOME/.config/framebook/keys.env}
 [ -f "$keys_file" ] || {
-	echo "Нет файла с ключами: $keys_file" >&2
+	echo "No keys file: $keys_file" >&2
 	exit 1
 }
 # shellcheck disable=SC1090
@@ -30,7 +30,7 @@ repo_root=$(git rev-parse --show-toplevel)
 out="$repo_root/app/test/fixtures"
 mkdir -p "$out/tmdb" "$out/poiskkino" "$out/omdb"
 
-# fetch <файл> <url> [заголовок]
+# fetch <file> <url> [header]
 fetch() {
 	file=$1
 	url=$2
@@ -63,28 +63,29 @@ if [ -n "${TMDB_TOKEN:-}" ]; then
 	fetch "$out/tmdb/genre_tv_ru.json" "$t/genre/tv/list?language=ru-RU" "$h"
 	fetch "$out/tmdb/movie_not_found.json" "$t/movie/999999999" "$h"
 else
-	echo "TMDB_TOKEN не задан — пропускаю TMDB"
+	echo "TMDB_TOKEN not set — skipping TMDB"
 fi
 
 if [ -n "${POISKKINO_KEY:-}" ]; then
 	p="https://api.poiskkino.dev/v1.5"
 	h="X-API-KEY: $POISKKINO_KEY"
-	# Матрица: tmdb 603, imdb tt0133093, kp 301. Игра престолов: tmdb 1399, kp 464963.
-	# Без фильтра по типу tmdb 603 находит и фильм, и сериал с тем же номером
-	# (у TMDB раздельная нумерация movie и tv) — фикстура это фиксирует.
+	# The Matrix: tmdb 603, imdb tt0133093, kp 301. Game of Thrones: tmdb 1399,
+	# kp 464963. Without a type filter tmdb 603 finds both a film and a series
+	# with the same number (TMDB numbers movie and tv separately) — the fixture
+	# records that.
 	fetch "$out/poiskkino/movie_by_tmdb_603.json" "$p/movie?externalId.tmdb=603" "$h"
 	fetch "$out/poiskkino/movie_by_tmdb_603_type_movie.json" "$p/movie?externalId.tmdb=603&type=movie" "$h"
 	fetch "$out/poiskkino/movie_by_imdb_tt0133093.json" "$p/movie?externalId.imdb=tt0133093" "$h"
 	fetch "$out/poiskkino/movie_301.json" "$p/movie/301" "$h"
 	fetch "$out/poiskkino/tv_by_tmdb_1399.json" "$p/movie?externalId.tmdb=1399&type=tv-series" "$h"
-	# Есть ли у сезонов/серий рейтинг КП — ради этого и запрос (проверить).
+	# Do seasons/episodes have a Kinopoisk rating — this request is for that.
 	fetch "$out/poiskkino/season_464963.json" "$p/season?movieId=464963&limit=2" "$h"
-	# tmdb id вне 1..2000000 ПоискКино отбивает 400 (ошибка валидации) —
-	# честное «не найдено» снимаем по несуществующему imdb id.
+	# PoiskKino rejects a tmdb id outside 1..2000000 with a 400 (a validation
+	# error), so an honest "not found" is captured with a nonexistent imdb id.
 	fetch "$out/poiskkino/movie_by_tmdb_out_of_range.json" "$p/movie?externalId.tmdb=999999999" "$h"
 	fetch "$out/poiskkino/movie_by_imdb_not_found.json" "$p/movie?externalId.imdb=tt9999999" "$h"
 else
-	echo "POISKKINO_KEY не задан — пропускаю ПоискКино"
+	echo "POISKKINO_KEY not set — skipping PoiskKino"
 fi
 
 if [ -n "${OMDB_KEY:-}" ]; then
@@ -97,16 +98,16 @@ if [ -n "${OMDB_KEY:-}" ]; then
 	fetch "$out/omdb/not_found.json" "$o&i=tt9999999"
 	fetch "$out/omdb/invalid_key.json" "https://www.omdbapi.com/?apikey=invalid&i=tt0133093"
 else
-	echo "OMDB_KEY не задан — пропускаю OMDb"
+	echo "OMDB_KEY not set — skipping OMDb"
 fi
 
 leak=0
 for key in "${TMDB_TOKEN:-}" "${POISKKINO_KEY:-}" "${OMDB_KEY:-}"; do
 	[ -n "$key" ] || continue
 	if grep -rqF -- "$key" "$out"; then
-		echo "ОШИБКА: значение ключа найдено в $out — не коммитить!" >&2
+		echo "ERROR: a key value was found in $out — do not commit!" >&2
 		leak=1
 	fi
 done
 [ "$leak" -eq 0 ] || exit 1
-echo "Готово, ключей в фикстурах нет."
+echo "Done, no keys in the fixtures."

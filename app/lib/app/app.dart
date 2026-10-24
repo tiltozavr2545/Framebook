@@ -5,8 +5,8 @@ import '../l10n/app_localizations.dart';
 import 'preferences.dart';
 import 'router.dart';
 
-// Строятся один раз: ColorScheme.fromSeed считает тональную палитру, а
-// приложение перестраивается на каждую смену темы и маршрута.
+// Built once: ColorScheme.fromSeed computes a tonal palette, and the app
+// rebuilds on every theme and route change.
 final _lightTheme = ThemeData(
   colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
 );
@@ -30,9 +30,8 @@ class FramebookApp extends ConsumerWidget {
       locale: ref.watch(localeProvider),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      // Как в Amicus: системный масштаб шрифта пропускается, но с потолком —
-      // иначе крупный шрифт растягивает строки сверх того, на что рассчитана
-      // вёрстка.
+      // As in Amicus: the system font scale is honoured, but capped — otherwise
+      // a large font stretches lines beyond what the layout is made for.
       builder: (context, child) => MediaQuery.withClampedTextScaling(
         minScaleFactor: 1.0,
         maxScaleFactor: 1.3,

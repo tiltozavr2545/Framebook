@@ -5,25 +5,25 @@ import 'api_source.dart';
 import 'db/database.dart';
 import 'db/database_provider.dart';
 import 'http.dart';
+import 'sources/tmdb/tmdb_client.dart';
 
-/// Результат пробного запроса с ключом.
+/// The result of a trial request with a key.
 enum KeyCheck {
-  /// Сервис принял ключ.
+  /// The service accepted the key.
   valid,
 
-  /// Ключ рабочий, но суточный лимит исчерпан — сохранять можно.
+  /// The key works, but the daily limit is used up — it can be saved.
   limitReached,
 
-  /// Сервис отверг ключ — не сохранять.
+  /// The service rejected the key — don't save it.
   invalid,
 
-  /// До сервиса не достучались — сохранить с пометкой «не проверен».
+  /// The service wasn't reached — save it marked "not checked".
   offline,
 }
 
-/// Проверка ключа одним запросом (docs/external-sources.md, «Проверка
-/// ключей»). Ответы, на которые опирается разбор, лежат в фикстурах
-/// `test/fixtures/`.
+/// Checks a key with one request (docs/external-sources.md, "Key checks"). The
+/// responses the parsing relies on are in the fixtures under `test/fixtures/`.
 final class KeyValidator {
   KeyValidator(this._dio, this._db, {DateTime Function()? clock})
     : _clock = clock ?? DateTime.now;
@@ -32,10 +32,10 @@ final class KeyValidator {
   final AppDatabase _db;
   final DateTime Function() _clock;
 
-  /// «Матрица» на Кинопоиске — заведомо существующий фильм.
+  /// The Matrix on Kinopoisk — a film that surely exists.
   static const _probeKpId = 301;
 
-  /// «Матрица» на IMDb.
+  /// The Matrix on IMDb.
   static const _probeImdbId = 'tt0133093';
 
   Future<KeyCheck> check(ApiSource source, String key) async {
@@ -53,16 +53,8 @@ final class KeyValidator {
     }
   }
 
-  /// Принимает и API Read Access Token (`eyJ…`, заголовок), и короткий API
-  /// key v3 (параметр запроса) — docs/api-keys.md.
-  static ({Map<String, String> headers, Map<String, String> query}) tmdbAuth(
-    String key,
-  ) => key.startsWith('eyJ')
-      ? (headers: {'Authorization': 'Bearer $key'}, query: const {})
-      : (headers: const {}, query: {'api_key': key});
-
   Future<KeyCheck> _checkTmdb(String key) async {
-    final auth = tmdbAuth(key);
+    final auth = TmdbClient.auth(key);
     final response = await _dio.get<Object?>(
       'https://api.themoviedb.org/3/configuration',
       queryParameters: auth.query,
@@ -71,13 +63,14 @@ final class KeyValidator {
     return switch (response.statusCode) {
       200 => KeyCheck.valid,
       401 => KeyCheck.invalid,
-      // 429 и 5xx — ответ есть, но про ключ он ничего не говорит.
+      // 429 and 5xx are answers, but they say nothing about the key.
       _ => KeyCheck.offline,
     };
   }
 
   Future<KeyCheck> _checkPoiskkino(String key) async {
-    // Пробный запрос тратит 1 из 200 суточных — и учитывается в бюджете.
+    // The trial request spends 1 of the 200 daily ones, and is counted in the
+    // budget.
     await _db.consumeBudget(
       ApiSource.poiskkino,
       AppDatabase.budgetDay(_clock()),
@@ -102,7 +95,7 @@ final class KeyValidator {
     );
     final body = response.data;
     final error = body is Map<String, Object?> ? body['Error'] : null;
-    // Ошибки OMDb различаются только текстом (docs/external-sources.md).
+    // OMDb errors differ only by their text (docs/external-sources.md).
     if (error == 'Invalid API key!') return KeyCheck.invalid;
     if (error == 'Request limit reached!') return KeyCheck.limitReached;
     if (response.statusCode == 200 &&

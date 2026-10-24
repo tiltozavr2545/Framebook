@@ -1,227 +1,240 @@
-# Схема данных
+# Data schema
 
-Локальная схема SQLite (через drift) и её инварианты. Сервера нет, поэтому
-это единственная схема в проекте: всё, что пользователь создал, лежит здесь, а
-всё, что пришло из внешних API, — либо мини-снимок, либо вытесняемый кэш.
+The local SQLite schema (through drift) and its invariants. There is no
+server, so this is the project's only schema: everything the user created
+lives here, and everything that came from external APIs is either a mini
+snapshot or an evictable cache.
 
-**Статус: реализовано на Этапе 1.** Источник истины — таблицы drift в
-`app/lib/data/db/tables.dart`; снимки схемы по версиям — в
-`app/drift_schemas/`. Этот файл — для быстрой ориентации и «почему»; при
-расхождении прав код. CHECK-ограничения (диапазон `score_half`, допустимые
-`kind`/`source`/`status`/`scale`, номера сезонов и серий) и внешние ключи
-`ratings`/`watchlist` → `works` держит сама база — это покрыто
-`test/data/database_test.dart`.
+**Status: implemented in Stage 1.** The source of truth is the drift tables
+in `app/lib/data/db/tables.dart`; schema snapshots per version are in
+`app/drift_schemas/`. This file is for quick orientation and the "why"; when
+they disagree, the code is right. CHECK constraints (the `score_half` range,
+the allowed `kind`/`source`/`status`/`scale` values, season and episode
+numbers) and the `ratings`/`watchlist` → `works` foreign keys are enforced by
+the database itself — covered by `test/data/database_test.dart`.
 
-Как эти данные переезжают между устройствами — в [sync.md](sync.md); откуда
-берутся внешние данные — в [external-sources.md](external-sources.md).
+How this data moves between devices is in [sync.md](sync.md); where the
+external data comes from is in [external-sources.md](external-sources.md).
 
-Таблицы: `works`, `ratings`, `watchlist` — синхронизируются;
-`external_ratings`, `api_budget`, `sync_state` — только локальные.
+Tables: `works`, `ratings`, `watchlist` are synced; `external_ratings`,
+`api_budget`, `sync_state` are local only.
 
 ---
 
-## Три слоя данных
+## Three layers of data
 
-| Слой | Что | Где живёт | Синхронизируется | Можно потерять |
+| Layer | What | Where it lives | Synced | Can be lost |
 |---|---|---|---|---|
-| Пользовательские данные | оценки, заметки, «Хочу посмотреть» | `ratings`, `watchlist` | да | **нет** |
-| Мини-снимок | название, год, постер, жанры, внешние id | `works` | да, вместе со ссылающимися строками | да — перезагружается из API |
-| Кэш | внешние рейтинги, HTTP-ответы, картинки | `external_ratings`, дисковый кэш | нет | да — по TTL и по нехватке места |
+| User data | ratings, notes, watchlist | `ratings`, `watchlist` | yes | **no** |
+| Mini snapshot | title, year, poster, genres, external ids | `works` | yes, along with the rows referencing it | yes — reloaded from the API |
+| Cache | external ratings, HTTP responses, images | `external_ratings`, disk cache | no | yes — by TTL and when space runs low |
 
-Граница между снимком и каталогом: в `works` попадает только то, без чего не
-работает **офлайн-список своих оценок** — показать строку, отсортировать по
-названию/году, посчитать статистику по жанрам и десятилетиям, построить
-запрос к другому источнику. Описание, актёры, длительность, полный список
-серий сезона — нет: их показывает карточка, и берутся они из API (через
-HTTP-кэш). Если новая фича захочет поле в `works`, вопрос к ней тот же: нужно
-ли оно без сети для уже оценённого.
-
----
-
-## `work_key` — ключ произведения
-
-Естественный строковый ключ, выведенный из идентификаторов TMDB:
-
-| Тип | Ключ | Пример |
-|---|---|---|
-| фильм | `tmdb:movie:{tmdb_id}` | `tmdb:movie:603` |
-| сериал | `tmdb:tv:{tmdb_id}` | `tmdb:tv:1399` |
-| сезон | `tmdb:tv:{tmdb_id}:s{season}` | `tmdb:tv:1399:s1` |
-| серия | `tmdb:tv:{tmdb_id}:s{season}:e{episode}` | `tmdb:tv:1399:s1:e3` |
-
-Почему естественный, а не UUID: два устройства, оценившие один фильм без
-сети, должны породить **одну** строку с конфликтом версий, а не две строки,
-которые потом придётся склеивать эвристикой. Ключ из источника даёт это
-бесплатно.
-
-Почему сезон и серия — по номерам, а не по собственным id TMDB: номера —
-это то, чем оперируют остальные источники (OMDb спрашивает
-`Season=1&Episode=3`), и их видит человек. Сезон 0 — спецвыпуски, как в TMDB.
-
-Префикс `tmdb:` — задел на случай, если каталог придётся брать из другого
-источника (риск доступности TMDB, см. [project-brief.md](project-brief.md)).
-Сборка и разбор ключа — одна чистая функция в одном месте
-(`lib/data/work_key.dart`), с тестами; строку руками нигде не склеивать.
-
-Известное ограничение: TMDB изредка перенумеровывает серии (переносит
-спецвыпуски, склеивает двойные эпизоды). Тогда оценка остаётся на старом
-номере. В MVP не лечится — см. [future-development.md](future-development.md).
+The line between the snapshot and the catalog: `works` gets only what the
+**offline list of your own ratings** can't work without — showing a row,
+sorting by title/year, computing statistics by genre and decade, building a
+request to another source. Overview, cast, runtime, a season's full episode
+list — no: the card shows them, and they come from the API (through the HTTP
+cache). If a new feature wants a field in `works`, the question to it is the
+same: is it needed offline for what is already rated.
 
 ---
 
-## Синхронизируемые таблицы
+## `work_key` — a title's key
 
-### `works` — мини-снимок
+A natural string key derived from TMDB ids:
 
-| Колонка | Тип | Комментарий |
+| Kind | Key | Example |
 |---|---|---|
-| `work_key` | text PK | см. выше |
+| film | `tmdb:movie:{tmdb_id}` | `tmdb:movie:603` |
+| series | `tmdb:tv:{tmdb_id}` | `tmdb:tv:1399` |
+| season | `tmdb:tv:{tmdb_id}:s{season}` | `tmdb:tv:1399:s1` |
+| episode | `tmdb:tv:{tmdb_id}:s{season}:e{episode}` | `tmdb:tv:1399:s1:e3` |
+
+Why natural rather than a UUID: two devices that rated the same film offline
+must produce **one** row with a version conflict, not two rows that later
+have to be glued together heuristically. A key from the source gives that for
+free.
+
+Why seasons and episodes go by number rather than by their own TMDB ids:
+numbers are what the other sources use (OMDb asks `Season=1&Episode=3`), and
+what a person sees. Season 0 is specials, as in TMDB.
+
+The `tmdb:` prefix leaves room for the case where the catalog has to come
+from another source (the TMDB availability risk, see
+[project-brief.md](project-brief.md)). Building and parsing the key is one
+pure function in one place (`lib/data/work_key.dart`), with tests; never glue
+the string by hand anywhere.
+
+A known limitation: TMDB occasionally renumbers episodes (moves specials,
+merges double episodes). The rating then stays on the old number. Not handled
+in the MVP — see [future-development.md](future-development.md).
+
+---
+
+## Synced tables
+
+### `works` — the mini snapshot
+
+| Column | Type | Comment |
+|---|---|---|
+| `work_key` | text PK | see above |
 | `kind` | text | `movie` / `tv` / `season` / `episode`, CHECK |
-| `parent_key` | text null | сезон → сериал, серия → сезон; у фильма и сериала NULL |
-| `tmdb_id` | int | id объекта в TMDB (у сезона/серии — их собственный, справочно) |
-| `season_number` | int null | у сезона и серии |
-| `episode_number` | int null | у серии |
-| `imdb_id` | text null | `tt…`; у серии свой, если TMDB его знает |
-| `kp_id` | int null | id Кинопоиска; NULL — ещё не искали или не нашли (см. `external_ratings.status`) |
-| `title` | text | в локали на момент снятия снимка |
+| `parent_key` | text null | season → series, episode → season; NULL for a film and a series |
+| `tmdb_id` | int | the object's TMDB id (for a season/episode, their own, for reference) |
+| `season_number` | int null | for a season and an episode |
+| `episode_number` | int null | for an episode |
+| `imdb_id` | text null | `tt…`; an episode has its own if TMDB knows it |
+| `kp_id` | int null | Kinopoisk id; NULL means not looked up yet or not found (see `external_ratings.status`) |
+| `title` | text | in the locale at the moment the snapshot was taken |
 | `original_title` | text null | |
-| `release_date` | text null | `YYYY-MM-DD` как пришло из API, без часового пояса |
-| `year` | int null | производное от `release_date`, ради индекса и сортировки |
-| `poster_path` | text null | относительный путь TMDB (`/abc.jpg`), не URL — базовый адрес CDN берётся из конфигурации |
-| `genre_ids` | text | JSON-массив id жанров TMDB; у сезона и серии пусто, жанры берутся у сериала |
-| `snapshot_updated_at` | int | мс UTC, когда снимок последний раз обновлялся из API |
+| `release_date` | text null | `YYYY-MM-DD` as it came from the API, without a time zone |
+| `year` | int null | derived from `release_date`, for the index and sorting |
+| `poster_path` | text null | a TMDB relative path (`/abc.jpg`), not a URL — the CDN base address comes from the configuration |
+| `genre_ids` | text | JSON array of TMDB genre ids; empty for a season and an episode, which take the series' genres |
+| `snapshot_updated_at` | int | UTC ms, when the snapshot was last refreshed from the API |
 
-Инварианты:
+Invariants:
 
-- **Снимок есть у всего, на что ссылается пользовательская строка, и у всех
-  его предков.** Оценили серию — в `works` лежат серия, её сезон и сериал.
-  Иначе офлайн-список не может показать «Игра престолов · S1E3».
-- Снимок обновляется фоном (раз в 30 дней и при открытии карточки) —
-  обновление трогает только `snapshot_updated_at`, не `updated_at` оценки.
-- Строки `works`, на которые не ссылается ни одна живая строка `ratings` /
-  `watchlist` (включая через потомков), удаляются локально при уборке. У
-  снимка нет tombstone: это производные данные, их не надо «удалять на
-  других устройствах» — в файл синхронизации он просто перестаёт попадать.
+- **Everything a user row refers to, and all its ancestors, has a snapshot.**
+  Rate an episode, and `works` holds the episode, its season and the series.
+  Otherwise the offline list can't show "Game of Thrones · S1E3".
+- The snapshot is refreshed in the background (every 30 days and when the
+  card is opened); the refresh touches only `snapshot_updated_at`, never a
+  rating's `updated_at`.
+- `works` rows that no live `ratings` / `watchlist` row refers to (including
+  through descendants) are deleted locally on cleanup. A snapshot has no
+  tombstone: it is derived data, there is nothing to "delete on other
+  devices" — it simply stops being written to the sync file.
 
-### `ratings` — оценки
+### `ratings` — scores
 
-| Колонка | Тип | Комментарий |
+| Column | Type | Comment |
 |---|---|---|
-| `work_key` | text PK, FK → `works` | одна оценка на произведение |
-| `score_half` | int | 2…20, CHECK; оценка × 2 (7.5 → 15) |
-| `note` | text null | заметка/рецензия, до 10 000 символов |
-| `created_at` | int | мс UTC, первая оценка |
-| `scored_at` | int | мс UTC, последнее изменение **оценки** (не заметки) — сортировка «по дате» и «недавние» в окне калибровки |
-| `updated_at` | int | мс UTC, последнее любое пользовательское изменение — по нему идёт слияние |
-| `updated_by` | text | `device_id` последнего изменившего — разрешает ничью при равных `updated_at` |
-| `deleted_at` | int null | tombstone; строка с ним не показывается нигде |
+| `work_key` | text PK, FK → `works` | one rating per title |
+| `score_half` | int | 2…20, CHECK; score × 2 (7.5 → 15) |
+| `note` | text null | note/review, up to 10,000 characters |
+| `created_at` | int | UTC ms, the first rating |
+| `scored_at` | int | UTC ms, the last change of the **score** (not the note) — for "by date" sorting and "recent" in the calibration sheet |
+| `updated_at` | int | UTC ms, the last user change of any kind — merging goes by it |
+| `updated_by` | text | `device_id` of the last writer — breaks ties on equal `updated_at` |
+| `deleted_at` | int null | tombstone; a row with it is never shown |
 
-Почему целые полубаллы: окно калибровки ищет «точно такую же» оценку, а
-`7.5` в `double` после пары конвертаций в JSON и обратно — не гарантированно
-`7.5`. Целое сравнивается без сюрпризов. Перевод в 1–10 — только при
-отображении.
+Why integer half points: the calibration sheet looks for "exactly the same"
+score, and `7.5` as a `double` after a couple of round trips through JSON is
+not guaranteed to be `7.5`. An integer compares without surprises. It becomes
+1–10 only for display.
 
-Почему оценка и заметка — одна строка: заметка без оценки в MVP не
-предусмотрена, а одна строка — один конфликт при слиянии вместо двух
-связанных. Цена — правка заметки на одном устройстве и оценки на другом
-разрешается целой строкой (побеждает более поздняя); для одного человека
-это приемлемо.
+Why the score and the note are one row: a note without a score isn't planned
+in the MVP, and one row means one conflict in merging instead of two linked
+ones. The price: editing the note on one device and the score on another is
+resolved for the whole row (the later one wins); for one person that is
+acceptable.
 
-Повторная оценка удалённого (tombstone) произведения — это UPDATE той же
-строки: `deleted_at = NULL`, новые `score_half`, `scored_at`, `updated_at`.
+Rating a title again after deletion (tombstone) is an UPDATE of the same row:
+`deleted_at = NULL`, new `score_half`, `scored_at`, `updated_at`.
 
-### `watchlist` — «Хочу посмотреть»
+### `watchlist` — "Watchlist"
 
-| Колонка | Тип | Комментарий |
+| Column | Type | Comment |
 |---|---|---|
-| `work_key` | text PK, FK → `works` | в MVP — только `movie` и `tv` |
-| `added_at` | int | мс UTC |
-| `updated_at` | int | мс UTC |
+| `work_key` | text PK, FK → `works` | in the MVP, only `movie` and `tv` |
+| `added_at` | int | UTC ms |
+| `updated_at` | int | UTC ms |
 | `updated_by` | text | `device_id` |
 | `deleted_at` | int null | tombstone |
 
-Оценка произведения в одной транзакции ставит `deleted_at` его строке в
-`watchlist`. Обратного нет: удаление оценки не возвращает фильм в список.
+Rating a title sets `deleted_at` on its `watchlist` row in the same
+transaction. Not the other way round: deleting a rating doesn't put the film
+back on the list.
 
 ---
 
-## Локальные таблицы
+## Local tables
 
-### `external_ratings` — кэш внешних рейтингов
+### `external_ratings` — cache of external ratings
 
-| Колонка | Тип | Комментарий |
+| Column | Type | Comment |
 |---|---|---|
 | `work_key` | text | |
 | `source` | text | `kp` / `imdb` / `tmdb` / `rt` / `metacritic` |
 | `status` | text | `ok` / `notFound` / `error` |
-| `value` | real null | как отдал источник |
-| `scale` | int | 10 или 100 (RT в процентах, Metacritic 0–100) |
+| `value` | real null | as the source gave it |
+| `scale` | int | 10 or 100 (RT in percent, Metacritic 0–100) |
 | `votes` | int null | |
-| `via` | text | какой API это отдал (`omdb`, `poiskkino`, `tmdb`) — IMDb может прийти из двух |
-| `fetched_at` | int | мс UTC |
+| `via` | text | which API returned it (`omdb`, `poiskkino`, `tmdb`) — IMDb can come from two |
+| `fetched_at` | int | UTC ms |
 
-PK — (`work_key`, `source`). `notFound` кэшируется так же, как `ok`: иначе
-фильм, которого нет на Кинопоиске, сжигал бы лимит ПоискКино при каждом
-открытии. `error` живёт коротко (час) — это сбой, а не ответ. TTL и бюджет —
-в [external-sources.md](external-sources.md).
+PK is (`work_key`, `source`). `notFound` is cached just like `ok`: otherwise a
+film missing from Kinopoisk would burn the PoiskKino limit on every open.
+`error` lives briefly (an hour) — it is a failure, not an answer. TTLs and
+the budget are in [external-sources.md](external-sources.md).
 
-Не синхронизируется: это чужие данные, которые устаревают, и каждое
-устройство с ключами пользователя добудет их само. Новое устройство после
-синхронизации видит список оценок сразу, а колонку расхождения —
-постепенно.
+As implemented in Stage 2: an `error` row is written only where the title had
+no row yet, and never replaces an `ok` or `notFound` one; the one-hour retry
+pause is kept in memory by the ratings service, so a new key retries at once.
+`via` matters: an IMDb row from PoiskKino counts as missing once an OMDb key
+is added, and gets replaced by OMDb's value.
 
-### `api_budget` — расход лимитов
+`works.kp_id` is remembered only for titles that have a snapshot (rated or on
+the watchlist). Everything else is matched again on refresh — a lookup by
+imdb id costs the same one request as a refresh by kp id, and returns the
+ratings too.
 
-| Колонка | Тип | Комментарий |
+Not synced: this is other people's data that goes stale, and every device
+with the user's keys fetches it on its own. A new device sees the list of
+ratings right after sync, and the divergence column fills in gradually.
+
+### `api_budget` — limit spending
+
+| Column | Type | Comment |
 |---|---|---|
 | `source` | text | `poiskkino` / `omdb` / `tmdb` |
 | `day` | text | `YYYY-MM-DD` UTC |
 | `used` | int | |
 
-PK — (`source`, `day`). Счётчик увеличивается **до** запроса. Строки старше
-недели удаляются.
+PK is (`source`, `day`). The counter goes up **before** the request. Rows
+older than a week are deleted (on app start).
 
-### `sync_state` — ключ-значение
+### `sync_state` — key-value
 
-`device_id` (UUID, создаётся на первом запуске и не меняется),
+`device_id` (a UUID created on first launch and never changed),
 `drive_file_id`, `last_sync_at`, `last_remote_modified_time`,
-`last_sync_error`. Подробно — в [sync.md](sync.md).
+`last_sync_error`. Details are in [sync.md](sync.md).
 
 ---
 
-## Вне БД
+## Outside the database
 
-- **API-ключи** — `flutter_secure_storage`, никогда в SQLite и в файл
-  синхронизации.
-- **Настройки** (тема, язык, источник по умолчанию для сортировки по
-  расхождению) — `shared_preferences`. В MVP не синхронизируются.
-- **HTTP-кэш ответов API и картинки** — на диске, вытесняемые; см.
+- **API keys** — `flutter_secure_storage`, never in SQLite or the sync file.
+- **Settings** (theme, language, the default source for the divergence sort)
+  — `shared_preferences`. Not synced in the MVP.
+- **The HTTP cache of API responses, and images** — on disk, evictable; see
   [client-architecture.md](client-architecture.md).
 
 ---
 
-## Ключевые запросы
+## Key queries
 
-**Окно калибровки** — после сохранения оценки `S` для произведения типа `K`
-(все запросы — по живым строкам, `deleted_at is null`, тот же `kind`,
-без текущего произведения):
+**The calibration sheet** — after saving score `S` for a title of kind `K`
+(all queries over live rows, `deleted_at is null`, the same `kind`, without
+the current title):
 
-1. «Так же» — `score_half = S`, по `scored_at desc`, до 6 строк.
-2. «Сосед сверху» — `score_half = (select min(score_half) … where score_half > S)`,
-   до 3 строк.
-3. «Сосед снизу» — симметрично с `max(…) < S`.
+1. "The same" — `score_half = S`, by `scored_at desc`, up to 6 rows.
+2. "Neighbour above" — `score_half = (select min(score_half) … where score_half > S)`,
+   up to 3 rows.
+3. "Neighbour below" — symmetric, with `max(…) < S`.
 
-Пустая группа просто не показывается; если пусто всё (первая оценка этого
-типа), окно не открывается.
+An empty group simply isn't shown; if everything is empty (the first rating
+of this kind), the sheet doesn't open.
 
-**Подсказка у сериала и сезона** — среднее `score_half / 2.0` по живым
-оценкам детей (`parent_key = X`). У сериала — по сезонам; если оценённых
-сезонов нет, а серии есть — по сериям всех сезонов. Показывается с числом
-оценённых частей («по 4 сериям: 7.8»).
+**The hint for a series and a season** — the average of `score_half / 2.0`
+over the live ratings of its children (`parent_key = X`). For a series, over
+its seasons; if no season is rated but episodes are, over the episodes of all
+seasons. Shown with the number of rated parts ("over 4 episodes: 7.8").
 
-**Сортировка по расхождению** — `score_half / 2.0 − value` по выбранному
-источнику (`kp` или `imdb`), по модулю или со знаком. Строки без значения в
-кэше уходят в конец списка с пометкой «нет данных», а не выпадают.
+**Sorting by divergence** — `score_half / 2.0 − value` for the chosen source
+(`kp` or `imdb`), absolute or signed. Rows with no cached value go to the end
+of the list marked "no data" rather than dropping out.
 
-Индексы: `ratings(deleted_at, score_half)`, `ratings(scored_at)`,
+Indexes: `ratings(deleted_at, score_half)`, `ratings(scored_at)`,
 `works(kind)`, `works(parent_key)`, `works(year)`.

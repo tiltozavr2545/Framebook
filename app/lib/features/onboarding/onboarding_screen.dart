@@ -8,9 +8,9 @@ import '../../data/api_source.dart';
 import '../../l10n/app_localizations.dart';
 import '../settings/api_keys_form.dart';
 
-/// Первый запуск: без ключа TMDB дальше не пускает роутер
-/// (app/router.dart). Уходит отсюда человек сам, кнопкой, — чтобы успеть
-/// добавить и необязательные ключи.
+/// First launch: without a TMDB key the router lets no one further
+/// (app/router.dart). The user leaves on their own, with a button, so there is
+/// time to add the optional keys as well.
 class OnboardingScreen extends ConsumerWidget {
   const OnboardingScreen({super.key});
 

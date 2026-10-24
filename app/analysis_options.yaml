@@ -1,37 +1,38 @@
-# Настройки анализатора. Перенесены из Amicus вместе с причинами — там
-# каждое правило ниже уже однажды поймало настоящий баг.
+# Analyzer settings. Carried over from Amicus along with the reasons — there
+# every rule below has already caught a real bug once.
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
-  # Ключ `analyzer` в этом файле обязан быть ОДИН: YAML на дубль ключа молча
-  # оставляет последний, и при слиянии двух веток пропадает либо exclude,
-  # либо strict-режимы (поймано в Amicus).
+  # There must be ONE `analyzer` key in this file: on a duplicate key YAML
+  # silently keeps the last one, and merging two branches loses either the
+  # exclude list or the strict modes (caught in Amicus).
   exclude:
     - build/**
     - android/**
     - ios/**
-    # `*.g.dart` (drift, json_serializable) НЕ исключать: это part-файлы
-    # библиотек, и исключение прятало не стиль, а ошибку компиляции —
-    # сгенерированный код ссылался на тип, импорт которого убрали из
-    # database.dart, а `flutter analyze` отвечал «No issues found».
+    # Do NOT exclude `*.g.dart` (drift, json_serializable): they are part
+    # files of libraries, and the exclusion hid not style but a compile
+    # error — the generated code referred to a type whose import was removed
+    # from database.dart, and `flutter analyze` said "No issues found".
 
-  # Весь внешний мир здесь приходит как `Map<String, dynamic>` — ответы TMDB,
-  # ПоискКино, OMDb и файл синхронизации. Без strict-casts `json['vote_average']`
-  # молча сходит за `double` и падает в рантайме на первом `int`, а OMDb ещё
-  # и присылает числа строками (`"8.7"`, `"N/A"`). Разбор — только явный.
+  # The whole outside world arrives here as `Map<String, dynamic>` — TMDB,
+  # PoiskKino and OMDb responses and the sync file. Without strict-casts
+  # `json['vote_average']` silently passes for a `double` and fails at runtime
+  # on the first `int`, and OMDb even sends numbers as strings (`"8.7"`,
+  # `"N/A"`). Parsing is explicit only.
   language:
     strict-casts: true
     strict-raw-types: true
 
   errors:
-    # Забытый `await` уходит в `FlutterError.onError` необработанным — в
-    # Amicus так «тихо не работала» запись пуш-токена; здесь так же тихо
-    # не работала бы запись синхронизации.
+    # A forgotten `await` goes to `FlutterError.onError` unhandled — in Amicus
+    # that is how saving the push token "quietly didn't work"; here saving
+    # the sync would quietly not work the same way.
     unawaited_futures: error
     use_build_context_synchronously: error
 
 linter:
-  # Только то, что ловит ошибки: форматирование отдано `dart format`.
+  # Only what catches bugs: formatting is left to `dart format`.
   rules:
     - always_declare_return_types
     - avoid_dynamic_calls

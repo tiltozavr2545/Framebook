@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Контекст для Claude Code при работе в этом репозитории.
+Context for Claude Code when working in this repository.
 
-Весь контент — в @AGENTS.md, общем для любого агента (Codex, Claude Code и
-т.д.). Отличий для Claude Code сейчас нет.
+All of it is in @AGENTS.md, shared by every agent (Codex, Claude Code and so
+on). There are no Claude Code specifics at the moment.

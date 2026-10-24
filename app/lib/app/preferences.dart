@@ -1,11 +1,13 @@
+import 'dart:ui' show PlatformDispatcher;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../l10n/app_localizations.dart';
 
-/// Читается в `main()` до `runApp`, чтобы тема и язык были верными с первого
-/// кадра, а не переключались после загрузки.
+/// Read in `main()` before `runApp`, so theme and language are right from the
+/// first frame instead of switching after loading.
 final sharedPreferencesProvider = Provider<SharedPreferences>(
   (ref) => throw UnimplementedError('Overridden in main()'),
 );
@@ -37,8 +39,8 @@ final themeModeProvider = NotifierProvider<ThemeModeNotifier, ThemeMode>(
   ThemeModeNotifier.new,
 );
 
-/// `null` — как в системе: Flutter сам выберет первую поддерживаемую локаль
-/// из списка устройства, иначе en.
+/// `null` means system: Flutter picks the first supported locale from the
+/// device's list, or en.
 class LocaleNotifier extends Notifier<Locale?> {
   @override
   Locale? build() {
@@ -63,3 +65,21 @@ class LocaleNotifier extends Notifier<Locale?> {
 final localeProvider = NotifierProvider<LocaleNotifier, Locale?>(
   LocaleNotifier.new,
 );
+
+/// Language of TMDB titles and overviews: `ru-RU` or `en-US`, same as the UI.
+/// "System" is the first supported language in the device's list, the same
+/// way Flutter itself picks it.
+final contentLanguageProvider = Provider<String>((ref) {
+  final chosen = ref.watch(localeProvider);
+  final code =
+      chosen?.languageCode ??
+      PlatformDispatcher.instance.locales
+          .map((l) => l.languageCode)
+          .firstWhere(
+            (code) => AppLocalizations.supportedLocales.any(
+              (l) => l.languageCode == code,
+            ),
+            orElse: () => 'en',
+          );
+  return code == 'ru' ? 'ru-RU' : 'en-US';
+});

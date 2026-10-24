@@ -398,14 +398,14 @@ class Work extends DataClass implements Insertable<Work> {
   final String title;
   final String? originalTitle;
 
-  /// `YYYY-MM-DD` как пришло из API, без часового пояса.
+  /// `YYYY-MM-DD` as the API sent it, without a time zone.
   final String? releaseDate;
   final int? year;
 
-  /// Относительный путь TMDB (`/abc.jpg`), не URL.
+  /// A TMDB relative path (`/abc.jpg`), not a URL.
   final String? posterPath;
 
-  /// JSON-массив id жанров TMDB.
+  /// JSON array of TMDB genre ids.
   final String genreIds;
   final int snapshotUpdatedAt;
   const Work({
@@ -1124,20 +1124,19 @@ class $RatingsTable extends Ratings with TableInfo<$RatingsTable, Rating> {
 class Rating extends DataClass implements Insertable<Rating> {
   final String workKey;
 
-  /// Оценка × 2: 2…20 = 1.0…10.0. Целое, чтобы «та же оценка» в окне
-  /// калибровки сравнивалась точно.
+  /// Score × 2: 2…20 = 1.0…10.0. An integer, so that "the same score" in the
+  /// calibration sheet compares exactly.
   final int scoreHalf;
   final String? note;
   final int createdAt;
 
-  /// Последнее изменение именно оценки, не заметки.
+  /// The last change of the score itself, not of the note.
   final int scoredAt;
 
-  /// Последнее любое пользовательское изменение — по нему идёт слияние.
+  /// The last user change of any kind; merging goes by it.
   final int updatedAt;
 
-  /// `device_id` последнего изменившего — разрешает ничью при равном
-  /// `updated_at`.
+  /// `device_id` of the last writer; breaks ties on equal `updated_at`.
   final String updatedBy;
   final int? deletedAt;
   const Rating({
@@ -2007,7 +2006,7 @@ class ExternalRating extends DataClass implements Insertable<ExternalRating> {
   final RatingStatus status;
   final double? value;
 
-  /// 10 или 100: RT в процентах, Metacritic 0–100.
+  /// 10 or 100: RT in percent, Metacritic 0–100.
   final int scale;
   final int? votes;
   final ApiSource via;
@@ -2419,7 +2418,7 @@ class $ApiBudgetTable extends ApiBudget
 class ApiBudgetRow extends DataClass implements Insertable<ApiBudgetRow> {
   final ApiSource source;
 
-  /// `YYYY-MM-DD`, сутки по UTC.
+  /// `YYYY-MM-DD`, a UTC day.
   final String day;
   final int used;
   const ApiBudgetRow({

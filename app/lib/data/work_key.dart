@@ -1,18 +1,18 @@
-/// Тип произведения. Имена совпадают со значениями колонки `works.kind` и
-/// с полем `kind` в файле синхронизации — не переименовывать.
+/// A title's kind. The names match the values of the `works.kind` column and
+/// the `kind` field in the sync file — don't rename them.
 enum WorkKind { movie, tv, season, episode }
 
-/// Ключ произведения: `tmdb:movie:603`, `tmdb:tv:1399`, `tmdb:tv:1399:s1`,
+/// A title's key: `tmdb:movie:603`, `tmdb:tv:1399`, `tmdb:tv:1399:s1`,
 /// `tmdb:tv:1399:s1:e3`.
 ///
-/// Естественный, а не случайный: две офлайн-оценки одного фильма на двух
-/// устройствах должны стать одной строкой с конфликтом, а не двумя дублями
-/// (docs/data-model.md). Тип обязателен: у TMDB фильмы и сериалы нумеруются
-/// раздельно, и `603` без типа — это два разных произведения (см. «Грабли» в
-/// AGENTS.md).
+/// Natural, not random: two offline ratings of the same film on two devices
+/// must become one row with a conflict, not two duplicates
+/// (docs/data-model.md). The type is required: TMDB numbers films and series
+/// separately, and `603` without a type is two different titles (see the
+/// pitfalls in AGENTS.md).
 ///
-/// Это единственное место, где ключ собирается и разбирается: строку руками
-/// нигде не склеивать.
+/// This is the only place a key is built and parsed: never glue the string by
+/// hand.
 final class WorkKey {
   const WorkKey._(this.kind, this.tmdbId, this.season, this.episode);
 
@@ -20,7 +20,7 @@ final class WorkKey {
 
   const WorkKey.tv(int tmdbId) : this._(WorkKind.tv, tmdbId, null, null);
 
-  /// Сезон 0 — спецвыпуски, как в TMDB.
+  /// Season 0 is specials, as in TMDB.
   const WorkKey.season(int seriesTmdbId, int season)
     : this._(WorkKind.season, seriesTmdbId, season, null);
 
@@ -29,7 +29,7 @@ final class WorkKey {
 
   final WorkKind kind;
 
-  /// Для сезона и серии — id сериала, а не их собственный id в TMDB.
+  /// For a season and an episode, the series' id, not their own TMDB id.
   final int tmdbId;
   final int? season;
   final int? episode;
@@ -40,8 +40,8 @@ final class WorkKey {
     r'^tmdb:(movie|tv):([1-9][0-9]{0,9})(?::s(0|[1-9][0-9]{0,3})(?::e([1-9][0-9]{0,4}))?)?$',
   );
 
-  /// Разбирает строковый ключ. Бросает [FormatException] на всё, что не
-  /// собрал бы [toString]: лишние нули, пробелы, сезон у фильма.
+  /// Parses a string key. Throws [FormatException] on anything [toString] would
+  /// not have produced: leading zeros, spaces, a season on a film.
   static WorkKey parse(String source) {
     final match = _pattern.firstMatch(source);
     if (match == null) {
@@ -70,16 +70,16 @@ final class WorkKey {
     }
   }
 
-  /// Сериал для сезона, сезон для серии; у фильма и сериала — `null`.
-  /// Совпадает с колонкой `works.parent_key`.
+  /// The series for a season, the season for an episode; `null` for a film and
+  /// a series. Matches the `works.parent_key` column.
   WorkKey? get parent => switch (kind) {
     WorkKind.movie || WorkKind.tv => null,
     WorkKind.season => WorkKey.tv(tmdbId),
     WorkKind.episode => WorkKey.season(tmdbId, season!),
   };
 
-  /// Сам ключ и все его предки, от сериала вниз. Снимок обязан лежать в
-  /// `works` у каждого из них (инвариант из docs/data-model.md).
+  /// The key itself and all its ancestors, from the series down. Each of them
+  /// must have a snapshot in `works` (an invariant from docs/data-model.md).
   List<WorkKey> get lineage {
     final chain = <WorkKey>[this];
     var current = parent;

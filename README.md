@@ -1,59 +1,60 @@
 # Framebook
 
-> Личный дневник оценок фильмов и сериалов: ставишь свою оценку и сразу видишь, как она соотносится с Кинопоиском, IMDb и остальными.
+> A personal diary of film and TV ratings: give your own score and see right away how it compares with Kinopoisk, IMDb and the rest.
 
-Каталог фильмов приложение у себя не хранит — он загружается из сторонних источников (TMDB, Кинопоиск через ПоискКино API, OMDb) по запросу. Своё у приложения — только оценки, заметки и список «Хочу посмотреть», и живут они на устройстве. Сервера нет, регистрации нет: резервная копия и синхронизация между устройствами идут через Google Drive самого пользователя.
+The app doesn't keep a film catalog of its own — it is loaded on demand from third-party sources (TMDB, Kinopoisk through the PoiskKino API, OMDb). All the app owns is your ratings, notes and watchlist, and they live on the device. There is no server and no sign-up: backup and sync between devices go through the user's own Google Drive.
 
-Проект для себя и пары друзей. Исходная идея и решения, принятые до старта, — в [docs/project-brief.md](docs/project-brief.md); локальная схема данных — в [docs/data-model.md](docs/data-model.md).
+A project for myself and a couple of friends. The original idea and the decisions made before the start are in [docs/project-brief.md](docs/project-brief.md); the local data schema is in [docs/data-model.md](docs/data-model.md).
 
-## Статус
+## Status
 
-В разработке, версия 0.1.0. Готов каркас: локальная база, онбординг с вводом
-и проверкой ключей API, настройки языка и темы, вкладки-заглушки. Поиск и
-карточки — следующий этап. Ход работы — в
-[docs/implementation-plan.md](docs/implementation-plan.md). Первая целевая
-платформа — Android (APK для себя и друзей), iOS отложен
+In development, version 0.2.0. Working: API keys onboarding, search, film
+and series cards down to single episodes, and ratings from Kinopoisk, IMDb,
+Rotten Tomatoes, Metacritic and TMDB on every card. Your own ratings come
+next (Stage 3). Progress is tracked in
+[docs/implementation-plan.md](docs/implementation-plan.md). The first target
+platform is Android (an APK for myself and friends); iOS is postponed
 ([docs/future-development.md](docs/future-development.md)).
 
-## Что будет уметь (MVP)
+## What the MVP will do
 
-- Поиск фильмов и сериалов; карточка с постером, описанием, сезонами и сериями
-- Своя оценка от 1 до 10 с шагом 0.5 — фильму, сериалу, отдельному сезону и отдельной серии; оценки независимы, у сериала и сезона рядом подсказкой показывается среднее по уже оценённым частям
-- Текстовая заметка к оценке
-- Окно калибровки сразу после оценки: что ещё ты оценил так же, и соседи на шаг выше и ниже — всегда в пределах того же типа (фильм с фильмами, серия с сериями)
-- Рейтинги рядом со своей оценкой: Кинопоиск, IMDb, TMDB, Rotten Tomatoes, Metacritic — с разницей «моя − их»
-- Список «Мои оценки» с сортировкой по расхождению с Кинопоиском или IMDb
-- Список «Хочу посмотреть»
-- Статистика: распределение своих оценок, среднее отклонение от КП/IMDb, разрез по жанрам и десятилетиям
-- Работа без сети по уже оценённому: список, сортировки, статистика
-- Синхронизация и бэкап через Google Drive (скрытая папка приложения), плюс экспорт/импорт в файл
-- Две локали (en/ru), тёмная тема
+- Search for films and series; a card with poster, overview, seasons and episodes
+- Your own score from 1 to 10 in steps of 0.5 — for a film, a series, a single season and a single episode; the scores are independent, and a series or season shows the average of its already rated parts as a hint
+- A text note with the score
+- A calibration sheet right after rating: what else you rated the same, and the neighbours one step above and below — always within the same kind (films with films, episodes with episodes)
+- Ratings next to yours: Kinopoisk, IMDb, TMDB, Rotten Tomatoes, Metacritic — with the "mine − theirs" difference
+- "My ratings" sortable by divergence from Kinopoisk or IMDb
+- A watchlist
+- Statistics: the distribution of your scores, the average deviation from Kinopoisk/IMDb, a breakdown by genre and decade
+- Offline use for what is already rated: the list, sorting, statistics
+- Sync and backup through Google Drive (the app's hidden folder), plus export/import to a file
+- Two locales (en/ru), a dark theme
 
-## Стек
+## Stack
 
-- **Клиент:** Flutter / Dart (Android; iOS отложен)
+- **Client:** Flutter / Dart (Android; iOS postponed)
 - **State management:** Riverpod
-- **Навигация:** go_router
-- **Локальная БД:** SQLite через drift
-- **Внешние данные:** TMDB API (каталог, поиск, постеры), ПоискКино API (рейтинг Кинопоиска), OMDb API (IMDb, Rotten Tomatoes, Metacritic) — подробно в [docs/external-sources.md](docs/external-sources.md)
-- **Синхронизация:** Google Drive API v3, `appDataFolder`, вход через Google Sign-In — подробно в [docs/sync.md](docs/sync.md)
-- **CI:** GitHub Actions — `dart format`, `flutter analyze`, `flutter test` на каждый push/PR
+- **Navigation:** go_router
+- **Local database:** SQLite through drift
+- **External data:** TMDB API (catalog, search, posters), PoiskKino API (Kinopoisk rating), OMDb API (IMDb, Rotten Tomatoes, Metacritic) — details in [docs/external-sources.md](docs/external-sources.md)
+- **Sync:** Google Drive API v3, `appDataFolder`, Google Sign-In — details in [docs/sync.md](docs/sync.md)
+- **CI:** GitHub Actions — `dart format`, `flutter analyze`, `flutter test` on every push/PR; a signed APK in a GitHub Release for every `v*` tag
 
-API-ключи сторонних сервисов приложение не содержит: каждый пользователь получает свои (бесплатно) и вводит их в настройках. Ключ TMDB обязателен — без него нет поиска; ключи ПоискКино и OMDb необязательны, без них на карточке просто меньше рейтингов. Почему так — в [docs/project-brief.md](docs/project-brief.md).
+The app contains no third-party API keys: every user gets their own (free) and enters them in settings. The TMDB key is required — without it there is no search; the PoiskKino and OMDb keys are optional, and without them a card simply shows fewer ratings. Why it works this way is in [docs/project-brief.md](docs/project-brief.md).
 
-## Структура репозитория
+## Repository layout
 
 ```
-app/                     — Flutter-приложение (появится на Этапе 0)
+app/                     — the Flutter app
   lib/features/          — search, title, ratings, watchlist, stats, sync, settings
-  lib/data/              — drift-схема, клиенты внешних API, кэш
-  lib/shared/            — то, чем пользуются несколько фич сразу
-  test/                  — юнит- и виджет-тесты
-docs/                    — бриф, схема данных, источники, синхронизация,
-                           устройство клиента, эксплуатация, отложенное
+  lib/data/              — drift schema, external API clients, caches
+  lib/shared/            — what several features use at once
+  test/                  — unit and widget tests
+docs/                    — brief, data schema, sources, sync,
+                           client design, operations, postponed work
 ```
 
-## Запуск локально
+## Running locally
 
 ```bash
 cd app
@@ -61,25 +62,26 @@ flutter pub get
 flutter run
 ```
 
-Секретов в сборке нет: ключи API вводятся в самом приложении на первом
-запуске ([как получить](docs/api-keys.md)). После правки таблиц drift или
-строк локализации — `make codegen`. Для синхронизации с Google Drive нужен OAuth-клиент под свой
-`applicationId` и SHA-1 ключа подписи — см. [docs/operations.md](docs/operations.md).
+There are no secrets in the build: API keys are entered in the app itself on
+first launch ([how to get them](docs/api-keys.md)). After changing drift tables
+or localization strings, run `make codegen`. Syncing with Google Drive needs
+an OAuth client for your own `applicationId` and signing key SHA-1 — see
+[docs/operations.md](docs/operations.md).
 
-## Документация
+## Documentation
 
-Актуальное:
+Current:
 
-- [Схема данных](docs/data-model.md) — локальные таблицы, ключи, инварианты; главный документ, если разбираешься в устройстве
-- [Внешние источники](docs/external-sources.md) — какие API, что из них берём, сопоставление id, кэш, лимиты
-- [Синхронизация и бэкап](docs/sync.md) — формат файла в Google Drive, алгоритм слияния, экспорт/импорт
-- [Устройство клиента](docs/client-architecture.md) — чем собрано приложение и решения по умолчанию
-- [Как получить ключи API](docs/api-keys.md) — TMDB, ПоискКино, OMDb: пошагово, что вписывать в каждое поле
-- [Эксплуатация](docs/operations.md) — ключи, Google Cloud OAuth, подпись и раздача APK
-- [Отложенные фичи](docs/future-development.md) — iOS, импорт из других сервисов, открытые вопросы
-- [План реализации](docs/implementation-plan.md) — этапы MVP и прогресс по ним
-- [Changelog](CHANGELOG.md) — что появилось в какой версии
+- [Data schema](docs/data-model.md) — local tables, keys, invariants; the main document for understanding how things work
+- [External sources](docs/external-sources.md) — which APIs, what we take from them, id matching, cache, limits
+- [Sync and backup](docs/sync.md) — the Google Drive file format, the merge algorithm, export/import
+- [Client design](docs/client-architecture.md) — what the app is built with, and default decisions
+- [Getting the API keys](docs/api-keys.md) — TMDB, PoiskKino, OMDb step by step, what goes in each field ([in Russian](docs/api-keys.ru.md))
+- [Operations](docs/operations.md) — keys, Google Cloud OAuth, signing and distributing the APK
+- [Postponed features](docs/future-development.md) — iOS, importing from other services, open questions
+- [Implementation plan](docs/implementation-plan.md) — MVP stages and their progress
+- [Changelog](CHANGELOG.md) — what appeared in which version
 
-Историческое — как проект задумывался:
+Historical — how the project was conceived:
 
-- [Бриф проекта](docs/project-brief.md) — исходная идея, MVP-скоуп и решения, принятые до старта
+- [Project brief](docs/project-brief.md) — the original idea, MVP scope and decisions made before the start

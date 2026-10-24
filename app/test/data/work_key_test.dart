@@ -33,7 +33,7 @@ void main() {
 
     test('movie 603 and series 603 are different works', () {
       // The whole reason the type is part of the key: TMDB numbers movies
-      // and series separately (AGENTS.md, «Грабли»).
+      // and series separately (AGENTS.md, pitfalls).
       expect(
         WorkKey.parse('tmdb:movie:603'),
         isNot(WorkKey.parse('tmdb:tv:603')),

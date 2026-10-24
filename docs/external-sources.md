@@ -1,239 +1,262 @@
-# Внешние источники
+# External sources
 
-Откуда приложение берёт всё, что не создал сам пользователь: каталог,
-постеры, чужие рейтинги. Что из этого и как долго хранится локально — в
+Where the app gets everything the user didn't create: the catalog, posters,
+other people's ratings. What of it is stored locally, and for how long, is in
 [data-model.md](data-model.md).
 
-**Статус: эндпоинты и поля подтверждены живыми запросами 2026-10-23.**
-Записанные ответы — в `app/test/fixtures/`, снимаются
-`scripts/capture-fixtures.sh` (см. [operations.md](operations.md)). Если
-что-то ниже расходится с фикстурой, права фикстура.
+**Status: endpoints and fields confirmed with live requests on 2026-10-23.**
+The recorded responses are in `app/test/fixtures/`, captured with
+`scripts/capture-fixtures.sh` (see [operations.md](operations.md)). If
+anything below disagrees with a fixture, the fixture is right.
 
 ---
 
-## Сводка
+## Summary
 
-| Источник | Роль | Ключ | Бесплатный лимит | Обязателен |
+| Source | Role | Key | Free limit | Required |
 |---|---|---|---|---|
-| [TMDB](https://developer.themoviedb.org) | каталог, поиск, сезоны и серии, постеры, жанры, `imdb_id`, рейтинг TMDB | API Read Access Token (v4) или API key (v3) | дневного лимита нет, ограничение по частоте (порядка десятков запросов в секунду) | **да** |
-| [ПоискКино API](https://poiskkino.dev) (бывший kinopoisk.dev) | рейтинг Кинопоиска, `kp_id`; запасной источник рейтинга IMDb | `X-API-KEY`, выдаёт Telegram-бот `@poiskkinodev_bot` | **200 запросов в сутки** | нет |
-| [OMDb](https://www.omdbapi.com) | рейтинг IMDb, Rotten Tomatoes, Metacritic; IMDb для серий | `apikey`, выдаётся по email | 1000 запросов в сутки | нет |
+| [TMDB](https://developer.themoviedb.org) | catalog, search, seasons and episodes, posters, genres, `imdb_id`, TMDB rating | API Read Access Token (v4) or API key (v3) | no daily limit, a rate limit (a few dozen requests a second) | **yes** |
+| [PoiskKino API](https://poiskkino.dev) (formerly kinopoisk.dev) | Kinopoisk rating, `kp_id`; fallback source of the IMDb rating | `X-API-KEY`, issued by the Telegram bot `@poiskkinodev_bot` | **200 requests a day** | no |
+| [OMDb](https://www.omdbapi.com) | IMDb rating, Rotten Tomatoes, Metacritic; IMDb for episodes | `apikey`, issued by email | 1,000 requests a day | no |
 
-Без ключа ПоискКино на карточке нет рейтинга КП и не работает сортировка по
-расхождению с КП. Без ключа OMDb нет RT и Metacritic, а IMDb для фильмов и
-сериалов берётся из ПоискКино (если есть его ключ). Без обоих остаётся
-рейтинг TMDB. Приложение не считает это ошибкой: на карточке на месте
-недоступного рейтинга — подсказка «добавьте ключ в настройках».
+Without a PoiskKino key a card has no Kinopoisk rating, and sorting by
+divergence from Kinopoisk doesn't work. Without an OMDb key there is no RT or
+Metacritic, and IMDb for films and series comes from PoiskKino (if its key is
+set). Without both, the TMDB rating remains. The app doesn't treat this as an
+error: in place of an unavailable rating the card says "add a key", and a tap
+opens Sources.
 
-Почему ключи у пользователя, а не в сборке, — в
-[project-brief.md](project-brief.md). Что важно здесь: **лимиты — на
-пользователя**, и 200 запросов в сутки к ПоискКино — это весь бюджет одного
-человека, а не приложения.
+Why the keys belong to the user rather than the build is in
+[project-brief.md](project-brief.md). What matters here: **the limits are per
+user**, and 200 PoiskKino requests a day is one person's whole budget, not the
+app's.
 
 ---
 
-## TMDB — каталог
+## TMDB — the catalog
 
-База: `https://api.themoviedb.org/3`. Язык ответа — параметр
-`language=ru-RU` / `en-US` по локали приложения.
+Base: `https://api.themoviedb.org/3`. The response language is the
+`language=ru-RU` / `en-US` parameter, following the app's locale.
 
-| Что | Запрос |
+| What | Request |
 |---|---|
-| поиск | `GET /search/multi?query=…` — из результатов берутся только `media_type` `movie` и `tv` |
-| фильм | `GET /movie/{id}?append_to_response=external_ids` |
-| сериал | `GET /tv/{id}?append_to_response=external_ids` — включает список сезонов |
-| сезон | `GET /tv/{id}/season/{n}` — включает все серии с их `vote_average` |
-| id серии во внешних базах | `GET /tv/{id}/season/{n}/episode/{m}/external_ids` |
-| жанры | `GET /genre/movie/list`, `GET /genre/tv/list` |
-| конфигурация картинок | `GET /configuration` — базовый URL и размеры постеров |
+| search | `GET /search/multi?query=…` — only `media_type` `movie` and `tv` are kept |
+| film | `GET /movie/{id}?append_to_response=external_ids` |
+| series | `GET /tv/{id}?append_to_response=external_ids` — includes the season list |
+| season | `GET /tv/{id}/season/{n}` — includes every episode with its `vote_average` |
+| an episode's ids in other databases | `GET /tv/{id}/season/{n}/episode/{m}/external_ids` |
+| genres | `GET /genre/movie/list`, `GET /genre/tv/list` (not used yet — statistics by genre, Stage 4) |
+| image configuration | `GET /configuration` — base URL and poster sizes |
 
-Постеры: `{secure_base_url}{size}{poster_path}`, в списке — `w185`, на
-карточке — `w500` (оба размера есть в `poster_sizes`).
+Posters: `{secure_base_url}{size}{poster_path}`; `w185` in lists, `w342` in
+a card's header, `w500` for an episode still (all present in `poster_sizes` /
+`still_sizes`).
 
-Что подтвердили фикстуры:
+What the fixtures confirmed:
 
-- У фильма `imdb_id` есть и в корне ответа, и в `external_ids` — брать из
-  корня, `external_ids` нужен ради сериалов.
-- `imdb_id` серии из `episode/{m}/external_ids` совпадает с тем, что
-  OMDb отдаёт для той же серии (`tt1829962` = «Игра престолов» S1E3).
-- Сезон 0 (спецвыпуски) приходит в списке сезонов сериала с
-  `vote_average: 0.0`. **Ноль у TMDB — это «нет голосов», а не оценка 0**:
-  `vote_average == 0` читается как `not_found`.
-- `/search/multi` по-русски находит и фильмы, и сериалы вперемешку
-  (по «Матрице» — четыре фильма и сериал); персоны отбрасываются по
-  `media_type`.
-- Несуществующий id — HTTP 404 с `status_code: 34`; неверный ключ —
+- A film has `imdb_id` both at the root of the response and in
+  `external_ids` — take the root one; `external_ids` is there for series.
+- An episode's `imdb_id` from `episode/{m}/external_ids` matches what OMDb
+  returns for that episode (`tt1829962` = Game of Thrones S1E3).
+- Season 0 (specials) comes in a series' season list with
+  `vote_average: 0.0`. **Zero on TMDB means "no votes", not a score of 0**:
+  `vote_average == 0` is read as `not_found`.
+- `/search/multi` in Russian finds films and series mixed together (four
+  films and a series for «Матрица»); people are dropped by `media_type`.
+- A nonexistent id is HTTP 404 with `status_code: 34`; a wrong key is
   `status_code: 7`.
 
-Атрибуция обязательна: в «О приложении» — логотип TMDB и текст «This product
-uses the TMDB API but is not endorsed or certified by TMDB».
+Attribution is mandatory: the About screen shows the TMDB logo and the text
+"This product uses the TMDB API but is not endorsed or certified by TMDB".
 
-**Доступность TMDB из России — не вопрос для этого проекта** (решено
-2026-10-20). По сообщениям пользователей `api.themoviedb.org` и
-`image.tmdb.org` из РФ местами недоступны, но никто из пользователей
-приложения не выходит в сеть с российского IP. Поэтому TMDB остаётся
-основой каталога без запасного варианта. С машины разработки все четыре
-API отвечают.
+**TMDB availability from Russia is not an issue for this project** (decided
+2026-10-20). Users report that `api.themoviedb.org` and `image.tmdb.org` are
+unreachable from Russia in places, but none of the app's users go online from
+a Russian IP. So TMDB stays the base of the catalog with no fallback. From the
+development machine all four APIs answer.
 
 ---
 
-## ПоискКино — рейтинг Кинопоиска
+## PoiskKino — the Kinopoisk rating
 
-База: `https://api.poiskkino.dev/v1.5`, ключ в заголовке `X-API-KEY`.
-Неофициальный сервис поверх данных Кинопоиска; уже менял домен и версию API,
-поэтому клиент изолирован за интерфейсом и замена источника — это новый
-класс, а не правка по всему коду.
+Base: `https://api.poiskkino.dev/v1.5`, the key in the `X-API-KEY` header. An
+unofficial service over Kinopoisk data; it has already changed its domain and
+API version, so the client is isolated behind an interface, and replacing the
+source is a new class, not edits all over the code.
 
-| Что | Запрос |
+| What | Request |
 |---|---|
-| первое сопоставление, если известен `imdb_id` | `GET /movie?externalId.imdb={imdb_id}` |
-| первое сопоставление без `imdb_id` | `GET /movie?externalId.tmdb={tmdb_id}` + фильтр результатов по `isSeries` (см. ниже) |
-| обновление по известному `kp_id` | `GET /movie/{kp_id}` |
+| first match when `imdb_id` is known | `GET /movie?externalId.imdb={imdb_id}` |
+| first match without `imdb_id` | `GET /movie?externalId.tmdb={tmdb_id}` + filtering the results by `isSeries` (see below) |
+| refresh by a known `kp_id` | `GET /movie/{kp_id}` |
 
-Из ответа берутся `id` (→ `works.kp_id`), `rating.kp`, `votes.kp`,
-`rating.imdb`, `votes.imdb`. Одним запросом приходят и КП, и IMDb. Список
-(`/movie?…`) — это `{docs: [...], hasNext, …}`; внешних id в элементах
-списка нет, они есть только в `/movie/{kp_id}`.
+From the response we take `id` (→ `works.kp_id`), `rating.kp`, `votes.kp`,
+`rating.imdb`, `votes.imdb`. Kinopoisk and IMDb come in one request. A list
+(`/movie?…`) is `{docs: [...], hasNext, …}`; list items carry no external
+ids, only `/movie/{kp_id}` has them.
 
-**Поиск по tmdb id неоднозначен.** У TMDB фильмы и сериалы нумеруются
-раздельно: фильм 603 («Матрица») и сериал 603 — разные произведения. ПоискКино
-хранит tmdb id без типа, и `externalId.tmdb=603` возвращает оба — первым
-шёл сериал «Салон Вероники» 1997 года (фикстура `movie_by_tmdb_603.json`).
-Поэтому:
+**A search by tmdb id is ambiguous.** TMDB numbers films and series
+separately: film 603 (The Matrix) and series 603 are different titles.
+PoiskKino stores the tmdb id without a type, and `externalId.tmdb=603`
+returns both — the first was a 1997 series, «Салон Вероники» (fixture
+`movie_by_tmdb_603.json`). Therefore:
 
-1. Есть `imdb_id` (почти всегда) — искать по нему: imdb id глобально
-   уникален.
-2. Нет — искать по tmdb id и оставить элементы, у которых `isSeries`
-   совпадает с типом TMDB (`movie` → `false`, `tv` → `true`). Фильтровать
-   по `isSeries`, а не по `type`: `type` дробится на `movie`, `cartoon`,
-   `anime`, `tv-series`, `animated-series`, и фильтр `type=movie` потерял бы
-   мультфильмы. Остался ровно один — это он; ноль или несколько —
-   `not_found`.
+1. There is an `imdb_id` (almost always) — search by it: an imdb id is
+   globally unique. A single result is taken even if the two databases
+   disagree on the type (a TMDB miniseries can be a film on Kinopoisk).
+2. There isn't — search by tmdb id and keep the items whose `isSeries`
+   matches the TMDB type (`movie` → `false`, `tv` → `true`). Filter by
+   `isSeries`, not `type`: `type` splits into `movie`, `cartoon`, `anime`,
+   `tv-series`, `animated-series`, and a `type=movie` filter would lose
+   cartoons. Exactly one left — that's it; zero or several — `not_found`.
 
-Ровно по этой причине и действует правило «никакого сопоставления
-наугад» (раздел «Сопоставление id»): взяв первый результат, приложение
-показало бы у «Матрицы» рейтинг КП 5.9.
+This is exactly why the "no guessing" rule applies (section "Matching ids"):
+taking the first result, the app would have shown a Kinopoisk rating of 5.9
+for The Matrix.
 
-Прочее из фикстур:
+Other things from the fixtures:
 
-- Пустой результат — HTTP 200 с `docs: []`, это `not_found`.
-- tmdb id вне диапазона 1…2 000 000 — HTTP 400 с ошибкой валидации. Это не
-  «не найдено», а ошибка запроса; до сети такой id не доводить.
-- **Рейтинга Кинопоиска у сезонов и серий нет**: `/season` отдаёт номера,
-  названия, даты и описания серий, но ни одного поля рейтинга. Для
-  `season`/`episode` к ПоискКино не ходим.
+- An empty result is HTTP 200 with `docs: []`, which is `not_found`.
+- A tmdb id outside 1…2,000,000 is HTTP 400 with a validation error. That is
+  a bad request, not "not found"; such an id is never sent.
+- **Seasons and episodes have no Kinopoisk rating**: `/season` returns
+  episode numbers, titles, dates and overviews, but not a single rating
+  field. PoiskKino is never asked about a `season`/`episode`.
 
 ---
 
 ## OMDb — IMDb, Rotten Tomatoes, Metacritic
 
-База: `https://www.omdbapi.com/?apikey=…`.
+Base: `https://www.omdbapi.com/?apikey=…`.
 
-| Что | Запрос |
+| What | Request |
 |---|---|
-| фильм / сериал | `?i={imdb_id}` |
-| серия | `?i={imdb_id серии}`; если TMDB не знает id серии — `?i={imdb_id сериала}&Season={n}&Episode={m}` |
-| сезон | `?i={imdb_id сериала}&Season={n}` — список серий с `imdbRating`; у сезона своего рейтинга IMDb нет, показывается **среднее по сериям** с явной подписью |
+| film / series | `?i={imdb_id}` |
+| episode | `?i={episode imdb_id}`; if TMDB doesn't know the episode's id — `?i={series imdb_id}&Season={n}&Episode={m}` |
+| season | `?i={series imdb_id}&Season={n}` — the episode list with `imdbRating`; a season has no IMDb rating of its own, so the **episode average** is shown, clearly labelled |
 
-Из ответа: `imdbRating` (строка `"8.7"`) + `imdbVotes` (строка с
-запятыми, `"2,284,373"`), массив `Ratings` (`Rotten Tomatoes` как `"83%"`,
-`Metacritic` как `"73/100"`). Числа приходят **строками** — разбор только
-явный. `"N/A"` — это `not_found`, не ноль.
+From the response: `imdbRating` (the string `"8.7"`) + `imdbVotes` (a string
+with commas, `"2,284,373"`), the `Ratings` array (`Rotten Tomatoes` as
+`"83%"`, `Metacritic` as `"73/100"`). Numbers come **as strings** — parsing is
+explicit only. `"N/A"` is `not_found`, not zero.
 
-У сериала и серии в `Ratings` есть только IMDb: RT и Metacritic OMDb отдаёт
-для фильмов.
+For a series and an episode `Ratings` holds only IMDb: OMDb has RT and
+Metacritic for films.
 
-Среднее по сезону считается по сериям с числовым `imdbRating`; `"N/A"`
-пропускаются. В списке серий сезона бывают лишние элементы — у «Игры
-престолов» в сезоне 1 есть «серия 0» без рейтинга.
+A season's average is taken over episodes with a numeric `imdbRating`; `"N/A"`
+ones are skipped. A season's episode list can contain extra items — Game of
+Thrones season 1 has an unrated "episode 0".
 
-Ошибки приходят как `Response: "False"` с текстом в `Error`, и различаются
-только текстом:
+Errors come as `Response: "False"` with a text in `Error`, and differ only by
+that text:
 
-| `Error` | HTTP | Значит |
+| `Error` | HTTP | Means |
 |---|---|---|
-| `Error getting data.` | 200 | `not_found` — id корректный, такого нет |
-| `Incorrect IMDb ID.` | 200 | `not_found` — id неверного формата |
-| `Movie not found!` | 200 | `not_found` (поиск по названию, у нас не используется) |
-| `Invalid API key!` | 401 | `error`, ключ неверный или не активирован |
-| `Request limit reached!` | 401 (по документации, фикстурой не снято) | `error`, лимит на сутки |
+| `Error getting data.` | 200 | `not_found` — the id is valid, there is no such title |
+| `Incorrect IMDb ID.` | 200 | `not_found` — the id is malformed |
+| `Movie not found!` | 200 | `not_found` (search by title, which we don't use) |
+| `Invalid API key!` | 401 | `error`, the key is wrong or not activated |
+| `Request limit reached!` | 401 (per the docs, no fixture captured) | `error`, the daily limit |
 
-Ключ OMDb бывает и 7, и 8 символов — длину при вводе не проверять.
+An OMDb key can be 7 or 8 characters — don't check the length on entry.
 
 ---
 
-## Сопоставление id
+## Matching ids
 
-Опорный id — TMDB (из него строится `work_key`). Остальные выводятся по
-цепочке и сохраняются в `works`, чтобы не искать повторно:
+The anchor id is TMDB's (`work_key` is built from it). The others are derived
+along a chain and stored in `works`, so they aren't looked up again:
 
 ```
 TMDB id ──external_ids──▶ imdb_id ──▶ OMDb
    │                         │
-   │                         └──externalId.imdb──▶ ПоискКино ──▶ kp_id
+   │                         └──externalId.imdb──▶ PoiskKino ──▶ kp_id
    │                                                  ▲
-   └──externalId.tmdb + фильтр по isSeries (если imdb_id нет)
+   └──externalId.tmdb + isSeries filter (when there is no imdb_id)
 ```
 
-Правило: **никакого сопоставления по названию и году.** Неверно
-подставленный рейтинг хуже отсутствующего — он молча портит сортировку по
-расхождению и статистику. Не нашлось по id — `not_found`, и всё.
+The rule: **never match by title and year.** A wrongly attached rating is
+worse than a missing one — it silently spoils the divergence sort and the
+statistics. Not found by id is `not_found`, period.
 
-Ручная привязка («это не тот фильм на КП») — в
+Manual linking ("this is the wrong film on Kinopoisk") is in
 [future-development.md](future-development.md).
 
 ---
 
-## Кэш и сроки жизни
+## Cache and lifetimes
 
-| Что | Где | TTL |
+| What | Where | TTL |
 |---|---|---|
-| ответы поиска TMDB | HTTP-кэш | 1 сутки |
-| карточки фильма/сериала/сезона TMDB | HTTP-кэш | 7 суток |
-| жанры, конфигурация TMDB | HTTP-кэш | 30 суток |
-| постеры | кэш картинок | по вытеснению (LRU, лимит размера) |
-| внешний рейтинг, `ok` | `external_ratings` | 14 суток для фона; на открытой карточке — перезапрос, если старше 7 суток и бюджет позволяет |
-| внешний рейтинг, `not_found` | `external_ratings` | 30 суток |
-| внешний рейтинг, `error` | `external_ratings` | 1 час |
-| мини-снимок | `works` | обновляется раз в 30 суток и при открытии карточки |
+| TMDB search responses | HTTP cache | 1 day |
+| TMDB film/series/season cards | HTTP cache | 7 days |
+| TMDB genres, configuration, an episode's external ids | HTTP cache | 30 days |
+| posters | image cache | by eviction (1,500 files, 90 days) |
+| external rating, `ok` | `external_ratings` | 14 days for background refresh; an open card asks again if it is older than 7 days and the budget allows |
+| external rating, `not_found` | `external_ratings` | 30 days |
+| external rating, `error` | `external_ratings` + the service's memory | 1 hour (see below) |
+| mini snapshot | `works` | refreshed every 30 days and when the card is opened |
 
-Устаревшее значение **показывается**, а не прячется: на карточке у рейтинга
-видна его давность, если она больше TTL. Рейтинг фильма за две недели почти
-не меняется, а пустое место вместо него — меняет всё.
+A stale value is **shown**, not hidden: the card shows a rating's age when it
+is past its TTL. A film's rating barely changes in two weeks, while an empty
+space in its place changes everything.
+
+How failures are handled (as implemented in Stage 2,
+`lib/data/ratings_service.dart`):
+
+- A failure never overwrites an earlier value. An `error` row is written
+  only where there was no row at all, so the card shows "source error"
+  instead of an endless spinner.
+- The one-hour pause before retrying lives in the service's memory, not in
+  the table: changing a key recreates the service, and the retry should
+  happen right away, not an hour later. An `error` row in the table is
+  therefore always considered stale.
+- Offline is not the source's answer: nothing is written and nothing is
+  remembered, so the next card open retries.
+- The HTTP cache (TMDB only) serves a stale entry when the network is down
+  or TMDB answers with an error — an old overview beats an error screen.
 
 ---
 
-## Бюджет запросов
+## Request budget
 
-Каждый запрос к ПоискКино и OMDb сначала увеличивает счётчик в `api_budget`
-(UTC-сутки), потом уходит. Сутки у самих сервисов могут считаться по
-другому часовому поясу. UTC — консервативное приближение: счётчик может
-обнулиться раньше настоящего, поэтому потолки ниже оставляют запас.
+Every request to PoiskKino and OMDb first increments the counter in
+`api_budget` (UTC days), then goes out. The services themselves may count
+days in another time zone. UTC is a conservative approximation: the counter
+may reset before the real one does, so the ceilings below leave a reserve.
 
-| Источник | Интерактивные запросы (открыта карточка) | Фоновое обновление | Запас |
+| Source | Interactive requests (a card is open) | Background refresh | Reserve |
 |---|---|---|---|
-| ПоискКино (200) | до 120 | до 60 | 20 |
-| OMDb (1000) | до 600 | до 300 | 100 |
+| PoiskKino (200) | up to 120 | up to 60 | 20 |
+| OMDb (1000) | up to 600 | up to 300 | 100 |
 
-**Фоновое обновление** — пока приложение открыто (без фоновых задач ОС в
-MVP): очередь из оценённых произведений, у которых рейтинга нет вовсе, затем
-самые старые. Идёт с паузами, без параллелизма. Библиотека в 1000 фильмов
-наполняется рейтингом КП примерно за две-три недели обычного пользования. Это
-ожидаемо и видно пользователю: в статистике указано, по скольким оценкам
-посчитано расхождение.
+There is one counter per source, so the split is enforced with ceilings on
+that shared counter (`lib/data/budget.dart`): background refresh runs only
+while less than its share (60 / 300) has been spent today, and requests from
+an open card run while less than `daily − reserve` (180 / 900) has. The card
+is guaranteed at least the "interactive" column, and gets more on days when
+background refresh didn't run. When the ceiling is reached the cell keeps its
+cached value and says "daily limit used up".
 
-Ответ «лимит исчерпан» от самого сервиса ставит потолок на остаток суток
-сразу, вне зависимости от счётчика.
+**Background refresh** runs while the app is open (no OS background tasks in
+the MVP): a queue of rated titles that have no rating at all, then the
+oldest. It goes with pauses, without parallelism. A library of 1,000 films
+fills up with Kinopoisk ratings in about two to three weeks of normal use.
+That is expected and visible to the user: the statistics say how many
+ratings the divergence was computed over.
+
+A "limit reached" answer from the service itself caps the rest of the day at
+once, whatever the counter says.
 
 ---
 
-## Проверка ключей
+## Key checks
 
-При вводе ключа — один пробный запрос:
+When a key is entered, one trial request:
 
 - TMDB — `GET /configuration`;
-- OMDb — `?i=tt0133093` (заведомо существующий фильм);
-- ПоискКино — `GET /movie/{известный kp_id}`; списывается из бюджета.
+- OMDb — `?i=tt0133093` (a film that surely exists);
+- PoiskKino — `GET /movie/{a known kp_id}`; it is charged to the budget.
 
-Невалидный ключ не сохраняется; сеть недоступна — ключ сохраняется с
-пометкой «не проверен».
+An invalid key isn't saved; with no network the key is saved marked "not
+checked".

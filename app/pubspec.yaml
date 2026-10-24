@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.1.0+3
+version: 0.2.0+4
 
 environment:
   sdk: ^3.8.1
@@ -41,9 +41,9 @@ dependencies:
   path_provider: ^2.1.5
   path: ^1.9.1
   dio: ^5.11.1
-  dio_cache_interceptor: ^4.0.7
-  http_cache_file_store: ^2.0.2
+  crypto: ^3.0.7
   cached_network_image: ^3.4.1
+  flutter_cache_manager: ^3.4.5
   flutter_secure_storage: ^10.3.4
   shared_preferences: ^2.5.3
   google_sign_in: ^7.2.0
@@ -82,6 +82,11 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  # The TMDB logo for the attribution on the About screen — a TMDB
+  # requirement (docs/external-sources.md).
+  assets:
+    - assets/tmdb_logo.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

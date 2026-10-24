@@ -1,6 +1,7 @@
-// `kind.isIn(...)` внутри `get kind` — документированный в drift способ
-// задать CHECK колонки: геттер здесь не вызывается рекурсивно, его читает
-// генератор. Линтер этого не знает.
+// `kind.isIn(...)` inside `get kind` is drift's documented way to declare a
+// column CHECK: the getter isn't called recursively here, the generator reads
+// it. The linter doesn't know that.
+//
 // ignore_for_file: recursive_getters
 
 import 'package:drift/drift.dart';
@@ -8,16 +9,17 @@ import 'package:drift/drift.dart';
 import '../api_source.dart';
 import '../work_key.dart';
 
-// Схема — docs/data-model.md, там же «почему». Время везде — мс UTC в int,
-// а не DateTime: формат хранения должен совпадать с файлом синхронизации
-// байт в байт (docs/sync.md), и решать его за нас драйвер не должен.
+// The schema is in docs/data-model.md, along with the "why". Time is UTC
+// milliseconds in an int everywhere, not DateTime: the storage format must
+// match the sync file byte for byte (docs/sync.md), and the driver shouldn't
+// decide it for us.
 //
-// CHECK-ограничения дублируют инварианты, которые держит и код: поломанный
-// клиент или кривой импорт должны упасть на вставке, а не тихо записать
-// оценку 0 или тип «film».
+// CHECK constraints duplicate invariants the code also keeps: a broken client
+// or a bad import must fail on insert, not silently store a score of 0 or a
+// kind "film".
 
-/// Мини-снимок произведения. Синхронизируется вместе со ссылающимися
-/// строками; tombstone у него нет — это производные данные.
+/// A title's mini snapshot. Synced along with the rows that reference it; it
+/// has no tombstone, since it is derived data.
 @DataClassName('Work')
 @TableIndex(name: 'works_kind', columns: {#kind})
 @TableIndex(name: 'works_parent_key', columns: {#parentKey})
@@ -38,14 +40,14 @@ class Works extends Table {
   TextColumn get title => text()();
   TextColumn get originalTitle => text().nullable()();
 
-  /// `YYYY-MM-DD` как пришло из API, без часового пояса.
+  /// `YYYY-MM-DD` as the API sent it, without a time zone.
   TextColumn get releaseDate => text().nullable()();
   IntColumn get year => integer().nullable()();
 
-  /// Относительный путь TMDB (`/abc.jpg`), не URL.
+  /// A TMDB relative path (`/abc.jpg`), not a URL.
   TextColumn get posterPath => text().nullable()();
 
-  /// JSON-массив id жанров TMDB.
+  /// JSON array of TMDB genre ids.
   TextColumn get genreIds => text().withDefault(const Constant('[]'))();
   IntColumn get snapshotUpdatedAt => integer()();
 
@@ -53,29 +55,28 @@ class Works extends Table {
   Set<Column<Object>> get primaryKey => {workKey};
 }
 
-/// Оценки. Синхронизируются; удаление — только `deleted_at`.
+/// Ratings. Synced; deletion is only ever `deleted_at`.
 @DataClassName('Rating')
 @TableIndex(name: 'ratings_live_score', columns: {#deletedAt, #scoreHalf})
 @TableIndex(name: 'ratings_scored_at', columns: {#scoredAt})
 class Ratings extends Table {
   TextColumn get workKey => text().references(Works, #workKey)();
 
-  /// Оценка × 2: 2…20 = 1.0…10.0. Целое, чтобы «та же оценка» в окне
-  /// калибровки сравнивалась точно.
+  /// Score × 2: 2…20 = 1.0…10.0. An integer, so that "the same score" in the
+  /// calibration sheet compares exactly.
   IntColumn get scoreHalf =>
       integer().check(scoreHalf.isBetweenValues(2, 20))();
   TextColumn get note =>
       text().nullable().check(note.length.isSmallerOrEqualValue(10000))();
   IntColumn get createdAt => integer()();
 
-  /// Последнее изменение именно оценки, не заметки.
+  /// The last change of the score itself, not of the note.
   IntColumn get scoredAt => integer()();
 
-  /// Последнее любое пользовательское изменение — по нему идёт слияние.
+  /// The last user change of any kind; merging goes by it.
   IntColumn get updatedAt => integer()();
 
-  /// `device_id` последнего изменившего — разрешает ничью при равном
-  /// `updated_at`.
+  /// `device_id` of the last writer; breaks ties on equal `updated_at`.
   TextColumn get updatedBy => text()();
   IntColumn get deletedAt => integer().nullable()();
 
@@ -83,7 +84,7 @@ class Ratings extends Table {
   Set<Column<Object>> get primaryKey => {workKey};
 }
 
-/// «Хочу посмотреть». Синхронизируется; удаление — только `deleted_at`.
+/// Watchlist. Synced; deletion is only ever `deleted_at`.
 @DataClassName('WatchlistEntry')
 class Watchlist extends Table {
   TextColumn get workKey => text().references(Works, #workKey)();
@@ -96,8 +97,8 @@ class Watchlist extends Table {
   Set<Column<Object>> get primaryKey => {workKey};
 }
 
-/// Кэш внешних рейтингов. Только локальный; без внешнего ключа на `works`,
-/// потому что кэшируется и то, что открывали, но не оценивали.
+/// Cache of external ratings. Local only; no foreign key to `works`, because
+/// titles that were opened but never rated are cached too.
 @DataClassName('ExternalRating')
 class ExternalRatings extends Table {
   TextColumn get workKey => text()();
@@ -109,7 +110,7 @@ class ExternalRatings extends Table {
   )();
   RealColumn get value => real().nullable()();
 
-  /// 10 или 100: RT в процентах, Metacritic 0–100.
+  /// 10 or 100: RT in percent, Metacritic 0–100.
   IntColumn get scale => integer().check(scale.isIn(const [10, 100]))();
   IntColumn get votes => integer().nullable()();
   TextColumn get via => textEnum<ApiSource>().check(
@@ -121,14 +122,14 @@ class ExternalRatings extends Table {
   Set<Column<Object>> get primaryKey => {workKey, source};
 }
 
-/// Расход суточных лимитов внешних API.
+/// Daily limit spending of the external APIs.
 @DataClassName('ApiBudgetRow')
 class ApiBudget extends Table {
   TextColumn get source => textEnum<ApiSource>().check(
     source.isIn(ApiSource.values.map((s) => s.name)),
   )();
 
-  /// `YYYY-MM-DD`, сутки по UTC.
+  /// `YYYY-MM-DD`, a UTC day.
   TextColumn get day => text()();
   IntColumn get used => integer()
       .withDefault(const Constant(0))
@@ -138,7 +139,7 @@ class ApiBudget extends Table {
   Set<Column<Object>> get primaryKey => {source, day};
 }
 
-/// Ключ-значение: `device_id`, состояние синхронизации.
+/// Key-value: `device_id`, sync state.
 @DataClassName('SyncStateEntry')
 class SyncState extends Table {
   TextColumn get key => text()();
