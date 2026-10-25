@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../response_cache.dart';
 import '../../source_failure.dart';
+import '../../work_key.dart';
 import 'tmdb_models.dart';
 
 /// The catalog: search, cards, seasons, images. Errors are [SourceException].
@@ -15,6 +16,10 @@ abstract interface class TmdbApi {
   /// The episode's `imdb_id`, if TMDB knows it. The season response lacks it.
   Future<String?> episodeImdbId(int tvId, int season, int episode);
   Future<ImageConfig> imageConfig();
+
+  /// The names of the genres for films ([WorkKind.movie]) or series
+  /// ([WorkKind.tv]); the two lists share most ids.
+  Future<List<Genre>> genres(WorkKind kind);
 }
 
 /// Lifetimes of responses in the HTTP cache (docs/external-sources.md, "Cache
@@ -23,6 +28,9 @@ abstract final class TmdbTtl {
   static const search = Duration(days: 1);
   static const details = Duration(days: 7);
   static const configuration = Duration(days: 30);
+
+  /// Genre names hardly ever change.
+  static const genres = Duration(days: 30);
 
   /// An episode's external ids don't change: kept as long as configuration.
   static const externalIds = Duration(days: 30);
@@ -127,6 +135,20 @@ final class TmdbClient implements TmdbApi {
       const {},
       TmdbTtl.configuration,
       localized: false,
+    ),
+  );
+
+  @override
+  Future<List<Genre>> genres(WorkKind kind) async => parseGenres(
+    await _get(
+      switch (kind) {
+        WorkKind.movie => '/genre/movie/list',
+        WorkKind.tv => '/genre/tv/list',
+        WorkKind.season ||
+        WorkKind.episode => throw ArgumentError.value(kind, 'kind'),
+      },
+      const {},
+      TmdbTtl.genres,
     ),
   );
 

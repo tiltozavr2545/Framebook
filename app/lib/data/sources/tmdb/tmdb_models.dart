@@ -384,6 +384,10 @@ final class ImageConfig {
 /// Sizes present in the configuration's `poster_sizes` / `still_sizes`.
 enum ImageSize { w92, w185, w300, w342, w500 }
 
+/// A `{"genres": [{"id", "name"}]}` list: a card's genres, or the whole
+/// list from `genre/movie/list`.
+List<Genre> parseGenres(Json json) => _genres(json);
+
 List<Genre> _genres(Json json) => [
   for (final genre in json.objects('genres'))
     if ((genre.integer('id'), genre.string('name')) case (

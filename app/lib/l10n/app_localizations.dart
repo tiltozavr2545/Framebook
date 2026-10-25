@@ -128,12 +128,6 @@ abstract class AppLocalizations {
   /// **'Stats'**
   String get tabStats;
 
-  /// No description provided for @tabStatsPlaceholder.
-  ///
-  /// In en, this message translates to:
-  /// **'Statistics will be here once you have ratings.'**
-  String get tabStatsPlaceholder;
-
   /// No description provided for @settingsTitle.
   ///
   /// In en, this message translates to:
@@ -859,6 +853,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Episodes'**
   String get kindEpisodes;
+
+  /// No description provided for @ratingsSortDivergence.
+  ///
+  /// In en, this message translates to:
+  /// **'By divergence'**
+  String get ratingsSortDivergence;
+
+  /// No description provided for @ratingDivergence.
+  ///
+  /// In en, this message translates to:
+  /// **'mine minus theirs: {value}'**
+  String ratingDivergence(String value);
+
+  /// No description provided for @divergenceFurthest.
+  ///
+  /// In en, this message translates to:
+  /// **'Furthest apart'**
+  String get divergenceFurthest;
+
+  /// No description provided for @divergenceHigher.
+  ///
+  /// In en, this message translates to:
+  /// **'I rate higher'**
+  String get divergenceHigher;
+
+  /// No description provided for @divergenceLower.
+  ///
+  /// In en, this message translates to:
+  /// **'I rate lower'**
+  String get divergenceLower;
+
+  /// No description provided for @coverageLoaded.
+  ///
+  /// In en, this message translates to:
+  /// **'{source} ratings loaded for {loaded} of {total}'**
+  String coverageLoaded(String source, int loaded, int total);
+
+  /// No description provided for @coverageNeedsKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a key in Sources to compare with {source}'**
+  String coverageNeedsKey(String source);
+
+  /// No description provided for @statsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Statistics will be here once you have ratings.'**
+  String get statsEmpty;
+
+  /// No description provided for @statsRatingCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} rating} other{{count} ratings}}'**
+  String statsRatingCount(int count);
+
+  /// No description provided for @statsAverage.
+  ///
+  /// In en, this message translates to:
+  /// **'average {value}'**
+  String statsAverage(String value);
+
+  /// No description provided for @statsDistribution.
+  ///
+  /// In en, this message translates to:
+  /// **'Your scores'**
+  String get statsDistribution;
+
+  /// No description provided for @statsCompared.
+  ///
+  /// In en, this message translates to:
+  /// **'Compared with others'**
+  String get statsCompared;
+
+  /// No description provided for @statsComparedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your score minus theirs: “+” means you rate higher.'**
+  String get statsComparedHint;
+
+  /// No description provided for @statsDeviationOnAverage.
+  ///
+  /// In en, this message translates to:
+  /// **'on average'**
+  String get statsDeviationOnAverage;
+
+  /// No description provided for @statsDeviationAbsolute.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} apart either way'**
+  String statsDeviationAbsolute(String value);
+
+  /// No description provided for @statsDeviationCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{over {count} rating} other{over {count} ratings}}'**
+  String statsDeviationCount(int count);
+
+  /// No description provided for @statsDeviationNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to compare with yet: no {source} ratings.'**
+  String statsDeviationNone(String source);
+
+  /// No description provided for @statsGenres.
+  ///
+  /// In en, this message translates to:
+  /// **'By genre'**
+  String get statsGenres;
+
+  /// No description provided for @statsGenresOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Genre names come from TMDB, and there is no connection right now.'**
+  String get statsGenresOffline;
+
+  /// No description provided for @statsDecades.
+  ///
+  /// In en, this message translates to:
+  /// **'By decade'**
+  String get statsDecades;
+
+  /// No description provided for @statsDecade.
+  ///
+  /// In en, this message translates to:
+  /// **'{decade}s'**
+  String statsDecade(String decade);
 }
 
 class _AppLocalizationsDelegate

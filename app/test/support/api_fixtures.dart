@@ -20,6 +20,8 @@ Reply? apiFixtures(RequestOptions request) {
     case 'api.themoviedb.org':
       return switch (uri.path) {
         '/3/configuration' => ok('tmdb/configuration.json'),
+        '/3/genre/movie/list' => ok('tmdb/genre_movie_ru.json'),
+        '/3/genre/tv/list' => ok('tmdb/genre_tv_ru.json'),
         '/3/search/multi' => ok('tmdb/search_multi_matrix_ru.json'),
         '/3/movie/603' => ok('tmdb/movie_603_ru.json'),
         '/3/tv/1399' => ok('tmdb/tv_1399_ru.json'),

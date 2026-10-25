@@ -45,7 +45,7 @@ Base: `https://api.themoviedb.org/3`. The response language is the
 | series | `GET /tv/{id}?append_to_response=external_ids` — includes the season list |
 | season | `GET /tv/{id}/season/{n}` — includes every episode with its `vote_average` |
 | an episode's ids in other databases | `GET /tv/{id}/season/{n}/episode/{m}/external_ids` |
-| genres | `GET /genre/movie/list`, `GET /genre/tv/list` (not used yet — statistics by genre, Stage 4) |
+| genres | `GET /genre/movie/list`, `GET /genre/tv/list` — names for the statistics by genre; the lists share most ids |
 | image configuration | `GET /configuration` — base URL and poster sizes |
 
 Posters: `{secure_base_url}{size}{poster_path}`; `w185` in lists, `w342` in
@@ -244,6 +244,13 @@ oldest. It goes with pauses, without parallelism. A library of 1,000 films
 fills up with Kinopoisk ratings in about two to three weeks of normal use.
 That is expected and visible to the user: the statistics say how many
 ratings the divergence was computed over.
+
+As implemented in Stage 4 (`lib/data/background_refresh.dart`): the first
+pass starts ten seconds after launch, then one every half hour while the app
+is in the foreground; three seconds between titles that cost a request. The
+TTL is the background one (14 days for a value), and TMDB is left as is —
+without a card there is no TMDB vote to record. A pass ends when the network
+is gone, or once every source with a key has spent its background share.
 
 A "limit reached" answer from the service itself caps the rest of the day at
 once, whatever the counter says.

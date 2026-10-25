@@ -24,10 +24,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabStats => 'Stats';
 
   @override
-  String get tabStatsPlaceholder =>
-      'Statistics will be here once you have ratings.';
-
-  @override
   String get settingsTitle => 'Settings';
 
   @override
@@ -463,4 +459,99 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get kindEpisodes => 'Episodes';
+
+  @override
+  String get ratingsSortDivergence => 'By divergence';
+
+  @override
+  String ratingDivergence(String value) {
+    return 'mine minus theirs: $value';
+  }
+
+  @override
+  String get divergenceFurthest => 'Furthest apart';
+
+  @override
+  String get divergenceHigher => 'I rate higher';
+
+  @override
+  String get divergenceLower => 'I rate lower';
+
+  @override
+  String coverageLoaded(String source, int loaded, int total) {
+    return '$source ratings loaded for $loaded of $total';
+  }
+
+  @override
+  String coverageNeedsKey(String source) {
+    return 'Add a key in Sources to compare with $source';
+  }
+
+  @override
+  String get statsEmpty => 'Statistics will be here once you have ratings.';
+
+  @override
+  String statsRatingCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ratings',
+      one: '$count rating',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String statsAverage(String value) {
+    return 'average $value';
+  }
+
+  @override
+  String get statsDistribution => 'Your scores';
+
+  @override
+  String get statsCompared => 'Compared with others';
+
+  @override
+  String get statsComparedHint =>
+      'Your score minus theirs: “+” means you rate higher.';
+
+  @override
+  String get statsDeviationOnAverage => 'on average';
+
+  @override
+  String statsDeviationAbsolute(String value) {
+    return '$value apart either way';
+  }
+
+  @override
+  String statsDeviationCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'over $count ratings',
+      one: 'over $count rating',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String statsDeviationNone(String source) {
+    return 'Nothing to compare with yet: no $source ratings.';
+  }
+
+  @override
+  String get statsGenres => 'By genre';
+
+  @override
+  String get statsGenresOffline =>
+      'Genre names come from TMDB, and there is no connection right now.';
+
+  @override
+  String get statsDecades => 'By decade';
+
+  @override
+  String statsDecade(String decade) {
+    return '${decade}s';
+  }
 }

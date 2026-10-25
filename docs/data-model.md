@@ -216,8 +216,8 @@ older than a week are deleted (on app start).
 ## Outside the database
 
 - **API keys** — `flutter_secure_storage`, never in SQLite or the sync file.
-- **Settings** (theme, language, the default source for the divergence sort)
-  — `shared_preferences`. Not synced in the MVP.
+- **Settings** (theme, language, the default source for the divergence sort,
+  `divergence_source`) — `shared_preferences`. Not synced in the MVP.
 - **The HTTP cache of API responses, and images** — on disk, evictable; see
   [client-architecture.md](client-architecture.md).
 
@@ -244,7 +244,9 @@ seasons. Shown with the number of rated parts ("over 4 episodes: 7.8").
 
 **Sorting by divergence** — `score_half / 2.0 − value` for the chosen source
 (`kp` or `imdb`), absolute or signed. Rows with no cached value go to the end
-of the list marked "no data" rather than dropping out.
+of the list marked "no data" rather than dropping out. As implemented in
+Stage 4, the `ok` value is joined into "My ratings" from `external_ratings`
+and the sort itself is a pure function (`arrangeRatings`).
 
 Indexes: `ratings(deleted_at, score_half)`, `ratings(scored_at)`,
 `works(kind)`, `works(parent_key)`, `works(year)`.

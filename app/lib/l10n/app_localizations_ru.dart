@@ -24,9 +24,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get tabStats => 'Статистика';
 
   @override
-  String get tabStatsPlaceholder => 'Статистика появится, когда будут оценки.';
-
-  @override
   String get settingsTitle => 'Настройки';
 
   @override
@@ -465,4 +462,101 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get kindEpisodes => 'Серии';
+
+  @override
+  String get ratingsSortDivergence => 'По расхождению';
+
+  @override
+  String ratingDivergence(String value) {
+    return 'моя минус их: $value';
+  }
+
+  @override
+  String get divergenceFurthest => 'Сильнее всего';
+
+  @override
+  String get divergenceHigher => 'Я выше';
+
+  @override
+  String get divergenceLower => 'Я ниже';
+
+  @override
+  String coverageLoaded(String source, int loaded, int total) {
+    return 'Рейтинги $source загружены для $loaded из $total';
+  }
+
+  @override
+  String coverageNeedsKey(String source) {
+    return 'Чтобы сравнивать с $source, добавь ключ в «Источниках»';
+  }
+
+  @override
+  String get statsEmpty => 'Статистика появится, когда будут оценки.';
+
+  @override
+  String statsRatingCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count оценки',
+      many: '$count оценок',
+      few: '$count оценки',
+      one: '$count оценка',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String statsAverage(String value) {
+    return 'в среднем $value';
+  }
+
+  @override
+  String get statsDistribution => 'Твои оценки';
+
+  @override
+  String get statsCompared => 'В сравнении с другими';
+
+  @override
+  String get statsComparedHint =>
+      'Твоя оценка минус их: «+» значит, ты оцениваешь выше.';
+
+  @override
+  String get statsDeviationOnAverage => 'в среднем';
+
+  @override
+  String statsDeviationAbsolute(String value) {
+    return 'в среднем на $value в любую сторону';
+  }
+
+  @override
+  String statsDeviationCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'по $count оценкам',
+      one: 'по $count оценке',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String statsDeviationNone(String source) {
+    return 'Пока не с чем сравнивать: рейтингов $source нет.';
+  }
+
+  @override
+  String get statsGenres => 'По жанрам';
+
+  @override
+  String get statsGenresOffline =>
+      'Названия жанров приходят из TMDB, а сейчас нет связи.';
+
+  @override
+  String get statsDecades => 'По десятилетиям';
+
+  @override
+  String statsDecade(String decade) {
+    return '$decade-е';
+  }
 }

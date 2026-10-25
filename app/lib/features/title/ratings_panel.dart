@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/router.dart';
 import '../../data/api_source.dart';
+import '../../data/library/divergence.dart';
+import '../../data/library/library.dart';
 import '../../data/ratings_service.dart';
 import '../../data/source_failure.dart';
 import '../../data/work_key.dart';
@@ -12,7 +14,8 @@ import '../../shared/format.dart';
 import 'title_ratings.dart';
 
 /// A card's external rating cells. Each source is its own cell with its own
-/// state: one failing never breaks the others.
+/// state: one failing never breaks the others. Once you have rated the title,
+/// a 1–10 cell also shows "mine − theirs".
 class RatingsPanel extends ConsumerWidget {
   const RatingsPanel({super.key, required this.target});
 
@@ -22,6 +25,7 @@ class RatingsPanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final view = ref.watch(titleRatingsProvider(target));
     final service = ref.watch(ratingsServiceProvider);
+    final mine = ref.watch(myRatingProvider(target.key)).value?.scoreHalf;
     final kind = target.key.kind;
     final now = DateTime.now().toUtc().millisecondsSinceEpoch;
     return Wrap(
@@ -39,6 +43,7 @@ class RatingsPanel extends ConsumerWidget {
               provider: service.providerOf(source, kind),
               nowMillis: now,
             ),
+            myScoreHalf: mine,
           ),
       ],
     );
@@ -50,10 +55,14 @@ class _RatingCell extends StatelessWidget {
     required this.source,
     required this.state,
     required this.seasonAverage,
+    required this.myScoreHalf,
   });
 
   final RatingSource source;
   final RatingCellState state;
+
+  /// Your own score, `null` if the title isn't rated.
+  final int? myScoreHalf;
 
   /// A season's IMDb is the episode average, not a rating of the season.
   final bool seasonAverage;
@@ -69,12 +78,34 @@ class _RatingCell extends StatelessWidget {
 
     final (Widget value, String? caption) = switch (state) {
       RatingShown(:final row, :final stale) => (
-        Text(
-          _value(row.value!, source),
-          style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: stale ? scheme.outline : null,
-          ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Text(
+              _value(row.value!, source),
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: stale ? scheme.outline : null,
+              ),
+            ),
+            if (myScoreHalf case final mine?)
+              if (divergence(mine, row) case final d?) ...[
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    formatDivergence(d),
+                    maxLines: 1,
+                    overflow: TextOverflow.fade,
+                    softWrap: false,
+                    semanticsLabel: l10n.ratingDivergence(formatDivergence(d)),
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: scheme.primary,
+                    ),
+                  ),
+                ),
+              ],
+          ],
         ),
         stale
             ? l10n.ratingAsOf(context.formatTimestamp(row.fetchedAt))
@@ -128,7 +159,7 @@ class _RatingCell extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  _label(l10n, source),
+                  ratingSourceLabel(l10n, source),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.labelMedium,
@@ -180,13 +211,4 @@ class _RatingCell extends StatelessWidget {
     RatingSource.imdb ||
     RatingSource.tmdb => formatScore(value),
   };
-
-  static String _label(AppLocalizations l10n, RatingSource source) =>
-      switch (source) {
-        RatingSource.kp => l10n.ratingKinopoisk,
-        RatingSource.imdb => 'IMDb',
-        RatingSource.tmdb => 'TMDB',
-        RatingSource.rt => 'Rotten Tomatoes',
-        RatingSource.metacritic => 'Metacritic',
-      };
 }

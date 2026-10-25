@@ -11,7 +11,7 @@ import '../features/settings/about_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/settings/sources_screen.dart';
 import '../features/shell/shell_screen.dart';
-import '../features/shell/tab_placeholder.dart';
+import '../features/stats/stats_screen.dart';
 import '../features/title/title_routes.dart';
 import '../features/watchlist/watchlist_screen.dart';
 
@@ -64,7 +64,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                     AppTab.search => const SearchScreen(),
                     AppTab.ratings => const RatingsScreen(),
                     AppTab.watchlist => const WatchlistScreen(),
-                    AppTab.stats => TabPlaceholder(tab: tab),
+                    AppTab.stats => const StatsScreen(),
                   },
                   // Cards open inside the tab they were opened from.
                   routes: tab == AppTab.stats ? const [] : TitleRoutes.routes(),

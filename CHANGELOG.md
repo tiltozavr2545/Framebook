@@ -80,3 +80,21 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
 - Watchlist tab: add from a film or series card, remove with undo; rating a
   title takes it off the list.
 - Opening a card refreshes the snapshots of titles you have rated or listed.
+
+## 0.4.0 — Stage 4 (build 6)
+
+- "Mine − theirs" next to Kinopoisk, IMDb and TMDB on the card of a rated
+  title. Rotten Tomatoes and Metacritic are other scales and get none.
+- My ratings sorts by divergence from Kinopoisk or IMDb: furthest apart,
+  "I rate higher", "I rate lower"; titles without the value go last. The
+  source chosen is remembered.
+- Background refresh: while the app is open, the external ratings of rated
+  titles are fetched within the background share of the daily budget, with
+  "ratings loaded for N of M" in the divergence sort and the statistics.
+- Stats tab: count and average, the distribution of your scores, the
+  average deviation from Kinopoisk and IMDb (signed and absolute, and over
+  how many ratings), the average by genre and by decade; a kind filter.
+  Works offline, except genre names the first time.
+- Releases: the workflow verifies the APK's signature and certificate before
+  publishing and adds a `.sha256` next to it — 0.3.0 failing to install was
+  a download corrupted on the way, not a broken release.

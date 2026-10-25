@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 
+import '../data/api_source.dart';
 import '../l10n/app_localizations.dart';
 
 /// Formatting for display — only here, at the moment of display.
@@ -45,3 +46,22 @@ String formatScore(double value) => value.toStringAsFixed(1);
 /// of 0.5, so a trailing ".0" would only be noise.
 String formatMyScore(int scoreHalf) =>
     scoreHalf.isEven ? '${scoreHalf ~/ 2}' : '${scoreHalf ~/ 2}.5';
+
+/// "Mine − theirs" with its sign: "+0.7", "−1.2", "±0". One decimal, like
+/// the ratings it is computed from; a true minus sign, not a hyphen.
+String formatDivergence(double value) {
+  final rounded = (value * 10).round();
+  if (rounded == 0) return '±0';
+  final digits = (rounded.abs() / 10).toStringAsFixed(1);
+  return rounded > 0 ? '+$digits' : '−$digits';
+}
+
+/// A rating source's name as the user sees it.
+String ratingSourceLabel(AppLocalizations l10n, RatingSource source) =>
+    switch (source) {
+      RatingSource.kp => l10n.ratingKinopoisk,
+      RatingSource.imdb => 'IMDb',
+      RatingSource.tmdb => 'TMDB',
+      RatingSource.rt => 'Rotten Tomatoes',
+      RatingSource.metacritic => 'Metacritic',
+    };

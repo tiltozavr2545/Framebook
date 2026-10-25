@@ -7,7 +7,6 @@
   "tabRatings": "Мои оценки",
   "tabWatchlist": "Хочу посмотреть",
   "tabStats": "Статистика",
-  "tabStatsPlaceholder": "Статистика появится, когда будут оценки.",
 
   "settingsTitle": "Настройки",
   "settingsSources": "Источники и ключи API",
@@ -143,5 +142,28 @@
   "kindMovies": "Фильмы",
   "kindSeries": "Сериалы",
   "kindSeasons": "Сезоны",
-  "kindEpisodes": "Серии"
+  "kindEpisodes": "Серии",
+
+  "ratingsSortDivergence": "По расхождению",
+  "ratingDivergence": "моя минус их: {value}",
+  "divergenceFurthest": "Сильнее всего",
+  "divergenceHigher": "Я выше",
+  "divergenceLower": "Я ниже",
+  "coverageLoaded": "Рейтинги {source} загружены для {loaded} из {total}",
+  "coverageNeedsKey": "Чтобы сравнивать с {source}, добавь ключ в «Источниках»",
+
+  "statsEmpty": "Статистика появится, когда будут оценки.",
+  "statsRatingCount": "{count, plural, one{{count} оценка} few{{count} оценки} many{{count} оценок} other{{count} оценки}}",
+  "statsAverage": "в среднем {value}",
+  "statsDistribution": "Твои оценки",
+  "statsCompared": "В сравнении с другими",
+  "statsComparedHint": "Твоя оценка минус их: «+» значит, ты оцениваешь выше.",
+  "statsDeviationOnAverage": "в среднем",
+  "statsDeviationAbsolute": "в среднем на {value} в любую сторону",
+  "statsDeviationCount": "{count, plural, one{по {count} оценке} other{по {count} оценкам}}",
+  "statsDeviationNone": "Пока не с чем сравнивать: рейтингов {source} нет.",
+  "statsGenres": "По жанрам",
+  "statsGenresOffline": "Названия жанров приходят из TMDB, а сейчас нет связи.",
+  "statsDecades": "По десятилетиям",
+  "statsDecade": "{decade}-е"
 }

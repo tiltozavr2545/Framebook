@@ -134,15 +134,28 @@ Building:
   [../CHANGELOG.md](../CHANGELOG.md), commit, then
   `git tag v0.2.0 && git push origin v0.2.0`. The `release-apk.yml` workflow
   checks that the tag matches the version in `pubspec.yaml`, runs analyze and
-  the tests, builds the signed APK `framebook-0.2.0.apk` and creates a GitHub
-  Release with it.
+  the tests, builds the signed APK `framebook-0.2.0.apk`, verifies its
+  signature and that the certificate is the release one (the SHA-1 above),
+  and creates a GitHub Release with the APK and its `framebook-0.2.0.apk.sha256`.
+- A release is done when the workflow is green and both files are in the
+  release's assets. The published APK isn't downloaded back to check it:
+  the workflow has already verified it, and GitHub keeps the asset's SHA-256
+  (`gh release view vX.Y.Z --json assets`).
 - The workflow fills the release body with GitHub's generated notes; replace
   them with written ones (`gh release edit vX.Y.Z --notes-file …`) — in
   English, like all repository text: what is new, how to install, the
-  signing certificate's SHA-1, the TMDB attribution line.
+  signing certificate's SHA-1, the APK's SHA-256, the TMDB attribution line.
 - Installing at a friend's: download the APK from the release page, allow
   installs from that source, install. An update is a new APK over the old
   one, and the data stays (the same signing key, a higher `versionCode`).
+- **"The package is invalid or damaged"** on a fresh install is almost
+  always a download corrupted on the way (it happened with 0.3.0): the file
+  has the right size but a different SHA-256, and Android reports the failed
+  v2 signature digest as an invalid package. Delete the file and download it
+  again. With the phone on USB: `adb shell sha256sum
+  /sdcard/Download/framebook-X.Y.Z.apk` against the `.sha256` asset, and
+  `adb shell pm install` on a copy in `/data/local/tmp` names the exact
+  reason (`INSTALL_PARSE_FAILED_NO_CERTIFICATES … did not verify`).
 - Checking for updates inside the app is in
   [future-development.md](future-development.md); in the MVP it is a message
   in a chat.

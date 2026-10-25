@@ -85,6 +85,27 @@ jobs:
       - name: Build signed universal APK
         run: flutter build apk --release
 
+      # A broken signature or a wrong key fails here, not on a friend's phone.
+      # The certificate is public (it is in every release's notes); comparing
+      # with it keeps an APK signed with another key from being published.
+      - name: Verify the APK signature and certificate
+        env:
+          EXPECTED_SHA1: f4077f14a136ff0170f1cbc64a1af420514c0afd
+        run: |
+          set -eu
+          apk=build/app/outputs/flutter-apk/app-release.apk
+          apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          certs=$("$apksigner" verify --print-certs "$apk")
+          echo "$certs" | grep -E '^Signer #1 certificate (DN|SHA-1)'
+          sha1=$(echo "$certs" | awk -F': ' '/^Signer #1 certificate SHA-1 digest/ { print $2 }')
+          if [ "$sha1" != "$EXPECTED_SHA1" ]; then
+            echo "::error title=Wrong signing key::certificate SHA-1 $sha1, expected $EXPECTED_SHA1"
+            exit 1
+          fi
+
+      # The .sha256 file next to the APK lets anyone check a download: a
+      # file corrupted on the way has the right size but the wrong checksum,
+      # and Android only says "the package is invalid" (docs/operations.md).
       - name: Create GitHub release with the APK
         env:
           GH_TOKEN: ${{ github.token }}
@@ -92,9 +113,11 @@ jobs:
           NAME: ${{ steps.version.outputs.name }}
         run: |
           set -eu
-          out="build/app/outputs/flutter-apk/framebook-$NAME.apk"
-          mv build/app/outputs/flutter-apk/app-release.apk "$out"
-          gh release create "$TAG" "$out" --title "Framebook $NAME" --generate-notes
+          dir=build/app/outputs/flutter-apk
+          apk="framebook-$NAME.apk"
+          mv "$dir/app-release.apk" "$dir/$apk"
+          (cd "$dir" && sha256sum "$apk" > "$apk.sha256" && cat "$apk.sha256")
+          gh release create "$TAG" "$dir/$apk" "$dir/$apk.sha256" --title "Framebook $NAME" --generate-notes
 
       - name: Remove signing files
         if: always()

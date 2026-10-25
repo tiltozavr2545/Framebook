@@ -1,9 +1,11 @@
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../api_source.dart';
 import '../db/database.dart';
 import '../db/database_provider.dart';
 import '../work_key.dart';
+import 'divergence.dart';
 import 'work_snapshot.dart';
 
 /// A live rating with its title's snapshot and, for a season or an episode,
@@ -15,10 +17,15 @@ final class RatedTitle {
     required this.work,
     this.series,
     this.season,
+    this.external = const {},
   });
 
   final Rating rating;
   final Work work;
+
+  /// The cached Kinopoisk and IMDb rows, of any status — what "My ratings"
+  /// and the statistics compare with. Only [watchRatings] fills them.
+  final Map<RatingSource, ExternalRating> external;
 
   /// The series of a season or an episode.
   final Work? series;
@@ -32,6 +39,14 @@ final class RatedTitle {
   /// or the series' is used.
   String? get posterPath =>
       work.posterPath ?? season?.posterPath ?? series?.posterPath;
+
+  /// "Mine − theirs" against [source], `null` without a cached value.
+  double? divergenceFrom(RatingSource source) =>
+      divergence(rating.scoreHalf, external[source]);
+
+  /// The genres a title counts under: a season and an episode take the
+  /// series' (docs/data-model.md, `works.genre_ids`).
+  List<int> get genreIds => WorkSnapshot.fromWork(series ?? work).genreIds;
 }
 
 /// A live watchlist entry with its title's snapshot (films and series only).
@@ -336,7 +351,7 @@ final class Library {
               .get();
       return _withAncestors([
         for (final row in rows)
-          (row.readTable(_db.ratings), row.readTable(_db.works)),
+          (row.readTable(_db.ratings), row.readTable(_db.works), const {}),
       ]);
     }
 
@@ -376,15 +391,37 @@ final class Library {
 
   /// Every live rating with its snapshots, for "My ratings". Sorting and
   /// filtering are [arrangeRatings], so they are testable without a database.
-  Stream<List<RatedTitle>> watchRatings() =>
-      (_db.select(_db.ratings).join([
-        innerJoin(_db.works, _db.works.workKey.equalsExp(_db.ratings.workKey)),
-      ])..where(_db.ratings.deletedAt.isNull())).watch().asyncMap(
-        (rows) => _withAncestors([
-          for (final row in rows)
-            (row.readTable(_db.ratings), row.readTable(_db.works)),
-        ]),
-      );
+  ///
+  /// The Kinopoisk and IMDb rows are joined in, so the list re-emits when
+  /// background refresh brings a new value.
+  Stream<List<RatedTitle>> watchRatings() {
+    final compared = {
+      for (final source in compareSources)
+        source: _db.alias(_db.externalRatings, source.name),
+    };
+    return (_db.select(_db.ratings).join([
+      innerJoin(_db.works, _db.works.workKey.equalsExp(_db.ratings.workKey)),
+      for (final MapEntry(key: source, value: table) in compared.entries)
+        leftOuterJoin(
+          table,
+          table.workKey.equalsExp(_db.ratings.workKey) &
+              table.source.equalsValue(source),
+        ),
+    ])..where(_db.ratings.deletedAt.isNull())).watch().asyncMap(
+      (rows) => _withAncestors([
+        for (final row in rows)
+          (
+            row.readTable(_db.ratings),
+            row.readTable(_db.works),
+            {
+              for (final MapEntry(key: source, value: table)
+                  in compared.entries)
+                if (row.readTableOrNull(table) case final found?) source: found,
+            },
+          ),
+      ]),
+    );
+  }
 
   /// The live watchlist, most recently added first.
   Stream<List<WatchlistTitle>> watchWatchlist() =>
@@ -440,9 +477,11 @@ final class Library {
   }
 
   /// Attaches the series (and, for an episode, the season) snapshots.
-  Future<List<RatedTitle>> _withAncestors(List<(Rating, Work)> rows) async {
+  Future<List<RatedTitle>> _withAncestors(
+    List<(Rating, Work, Map<RatingSource, ExternalRating>)> rows,
+  ) async {
     final ancestorKeys = {
-      for (final (_, work) in rows)
+      for (final (_, work, _) in rows)
         for (final ancestor in WorkKey.parse(work.workKey).lineage)
           if (ancestor.kind != work.kind) ancestor.toString(),
     };
@@ -455,19 +494,21 @@ final class Library {
               work.workKey: work,
           };
     return [
-      for (final (rating, work) in rows)
-        _rated(rating, work, WorkKey.parse(work.workKey), ancestors),
+      for (final (rating, work, external) in rows)
+        _rated(rating, work, external, WorkKey.parse(work.workKey), ancestors),
     ];
   }
 
   static RatedTitle _rated(
     Rating rating,
     Work work,
+    Map<RatingSource, ExternalRating> external,
     WorkKey key,
     Map<String, Work> ancestors,
   ) => RatedTitle(
     rating: rating,
     work: work,
+    external: external,
     series: key.kind == WorkKind.season || key.kind == WorkKind.episode
         ? ancestors[WorkKey.tv(key.tmdbId).toString()]
         : null,
@@ -478,17 +519,46 @@ final class Library {
 }
 
 /// How "My ratings" is ordered.
-enum RatingsSort { scoredAt, score, year, title }
+enum RatingsSort { scoredAt, score, year, title, divergence }
+
+/// The direction of the divergence sort.
+enum DivergenceOrder {
+  /// The largest gap either way first.
+  furthest,
+
+  /// Where I rate higher than [compareWith] first.
+  higher,
+
+  /// Where I rate lower first.
+  lower,
+}
 
 /// Filters "My ratings" by kind (`null` — all) and sorts it. Ties are broken
-/// by the most recent score, so the order is stable.
+/// by the most recent score, so the order is stable. Sorting by divergence
+/// compares with [compareWith]; titles without its value go to the end rather
+/// than dropping out (docs/data-model.md, "Key queries").
 List<RatedTitle> arrangeRatings(
   Iterable<RatedTitle> titles, {
   WorkKind? kind,
   RatingsSort sort = RatingsSort.scoredAt,
+  RatingSource compareWith = RatingSource.kp,
+  DivergenceOrder order = DivergenceOrder.furthest,
 }) {
   int byRecent(RatedTitle a, RatedTitle b) =>
       b.rating.scoredAt.compareTo(a.rating.scoredAt);
+  int byDivergence(RatedTitle a, RatedTitle b) {
+    final da = a.divergenceFrom(compareWith);
+    final db = b.divergenceFrom(compareWith);
+    if (da == null || db == null) {
+      return da == db ? 0 : (da == null ? 1 : -1);
+    }
+    return switch (order) {
+      DivergenceOrder.furthest => db.abs().compareTo(da.abs()),
+      DivergenceOrder.higher => db.compareTo(da),
+      DivergenceOrder.lower => da.compareTo(db),
+    };
+  }
+
   final list = [
     for (final title in titles)
       if (kind == null || title.work.kind == kind) title,
@@ -509,6 +579,7 @@ List<RatedTitle> arrangeRatings(
         sortTitle(a).compareTo(sortTitle(b)),
         () => byRecent(a, b),
       ),
+      RatingsSort.divergence => _then(byDivergence(a, b), () => byRecent(a, b)),
     },
   );
   return list;

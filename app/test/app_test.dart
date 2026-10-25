@@ -7,6 +7,7 @@ import 'package:framebook/app/preferences.dart';
 import 'package:framebook/app/router.dart';
 import 'package:framebook/data/api_keys.dart';
 import 'package:framebook/data/api_source.dart';
+import 'package:framebook/data/background_refresh.dart';
 import 'package:framebook/data/db/database.dart';
 import 'package:framebook/data/db/database_provider.dart';
 import 'package:framebook/data/http.dart';
@@ -53,6 +54,8 @@ void main() {
         overrides: [
           databaseProvider.overrideWithValue(db),
           deviceIdProvider.overrideWithValue('test'),
+          // Its passes run on timers; it has tests of its own.
+          backgroundRefreshEnabledProvider.overrideWithValue(false),
           sharedPreferencesProvider.overrideWithValue(prefs),
           apiKeyStoreProvider.overrideWithValue(ApiKeyStore(storage)),
           initialApiKeysProvider.overrideWithValue(keys),
@@ -70,6 +73,16 @@ void main() {
 
   FilledButton continueButton(WidgetTester tester) => tester
       .widget<FilledButton>(find.widgetWithText(FilledButton, 'Continue'));
+
+  /// A scenario with a card open. The tree is unmounted inside the test: when
+  /// closing a `watch()` stream drift schedules a Timer, and the pending
+  /// timers check runs before addTearDown.
+  void cardTest(String description, Future<void> Function(WidgetTester) body) =>
+      testWidgets(description, (tester) async {
+        await body(tester);
+        await tester.pumpWidget(const SizedBox());
+        await tester.pump(const Duration(milliseconds: 1));
+      });
 
   testWidgets('without a TMDB key the app opens on onboarding', (tester) async {
     await pumpApp(tester);
@@ -98,7 +111,7 @@ void main() {
     expect(find.text('Find a film or series by title.'), findsOneWidget);
   });
 
-  testWidgets('with a TMDB key the app opens on the tabs', (tester) async {
+  cardTest('with a TMDB key the app opens on the tabs', (tester) async {
     await pumpApp(
       tester,
       keys: ApiKeys.empty.withKey(
@@ -155,16 +168,6 @@ void main() {
     EnginePhase.sendSemanticsUpdate,
     const Duration(seconds: 10),
   );
-
-  /// A scenario with a card open. The tree is unmounted inside the test: when
-  /// closing a `watch()` stream drift schedules a Timer, and the pending
-  /// timers check runs before addTearDown.
-  void cardTest(String description, Future<void> Function(WidgetTester) body) =>
-      testWidgets(description, (tester) async {
-        await body(tester);
-        await tester.pumpWidget(const SizedBox());
-        await tester.pump(const Duration(milliseconds: 1));
-      });
 
   final allKeys = ApiKeys.empty
       .withKey(ApiSource.tmdb, const StoredKey('eyJ', verified: true))
@@ -445,5 +448,133 @@ void main() {
     await tester.tap(find.widgetWithText(ChoiceChip, 'Episodes'));
     await settle(tester);
     expect(find.text('Nothing of this kind is rated yet.'), findsOneWidget);
+  });
+
+  /// The Matrix, rated before the test starts.
+  Future<void> matrixRated(Library library, int scoreHalf) => library.rate(
+    [
+      const WorkSnapshot(
+        key: WorkKey.movie(603),
+        tmdbId: 603,
+        title: 'Матрица',
+        releaseDate: '1999-03-31',
+        imdbId: 'tt0133093',
+      ),
+    ],
+    scoreHalf: scoreHalf,
+    note: null,
+  );
+
+  cardTest('the card shows mine minus theirs on the 1–10 ratings', (
+    tester,
+  ) async {
+    await pumpApp(
+      tester,
+      keys: allKeys,
+      seed: (library) => matrixRated(library, 18),
+    );
+    go(tester, '/search/movie/603');
+    await settle(tester);
+
+    expect(find.text('+0.5'), findsOneWidget); // 9 − Kinopoisk 8.501
+    expect(find.text('+0.3'), findsOneWidget); // 9 − IMDb 8.7
+    expect(find.text('+0.7'), findsOneWidget); // 9 − TMDB 8.261
+    // Rotten Tomatoes and Metacritic are other scales: no difference.
+    expect(find.textContaining('+'), findsNWidgets(3));
+  });
+
+  cardTest('My ratings sorts by divergence from Kinopoisk', (tester) async {
+    await pumpApp(
+      tester,
+      keys: allKeys,
+      seed: (library) async {
+        await matrixRated(library, 18);
+        await inceptionRated(library, 17);
+      },
+    );
+    // Opening the card fetches the Matrix's ratings; Inception's stay
+    // unknown (background refresh is off in tests).
+    go(tester, '/search/movie/603');
+    await settle(tester);
+    await tester.tap(tab('My ratings'));
+    await settle(tester);
+
+    await tester.tap(find.byTooltip('Sort'));
+    await settle(tester);
+    await tester.tap(find.text('By divergence'));
+    await settle(tester);
+
+    expect(find.text('Kinopoisk ratings loaded for 1 of 2'), findsOneWidget);
+    expect(inList('8.5 · +0.5'), findsOneWidget);
+    expect(inList('no data'), findsOneWidget);
+    // Rows without data go last.
+    expect(
+      tester.getTopLeft(inList('Матрица')).dy,
+      lessThan(tester.getTopLeft(inList('Начало')).dy),
+    );
+
+    await tester.tap(find.widgetWithText(ChoiceChip, 'IMDb'));
+    await settle(tester);
+    expect(find.text('IMDb ratings loaded for 1 of 2'), findsOneWidget);
+    expect(inList('8.7 · +0.3'), findsOneWidget);
+  });
+
+  cardTest('Stats: distribution, comparison, genres and decades', (
+    tester,
+  ) async {
+    await pumpApp(
+      tester,
+      keys: tmdbOnly,
+      seed: (library) async {
+        await matrixRated(library, 15);
+        await library.rate(
+          [
+            const WorkSnapshot(
+              key: WorkKey.movie(27205),
+              tmdbId: 27205,
+              title: 'Начало',
+              releaseDate: '2010-07-15',
+              genreIds: [28, 878],
+            ),
+          ],
+          scoreHalf: 17,
+          note: null,
+        );
+      },
+    );
+    await tester.tap(tab('Stats'));
+    await settle(tester);
+    // The list, not the chip row that also scrolls.
+    final statsList = find.descendant(
+      of: find.byType(ListView),
+      matching: find.byType(Scrollable),
+    );
+
+    expect(find.text('2 ratings · average 8.0'), findsOneWidget);
+    expect(find.text('Your scores'), findsOneWidget);
+    // Without a PoiskKino key there is nothing to compare with.
+    await tester.scrollUntilVisible(
+      find.text('Nothing to compare with yet: no Kinopoisk ratings.'),
+      200,
+      scrollable: statsList,
+    );
+    expect(
+      find.text('Add a key in Sources to compare with Kinopoisk'),
+      findsOneWidget,
+    );
+
+    await tester.scrollUntilVisible(
+      find.text('By genre'),
+      200,
+      scrollable: statsList,
+    );
+    await settle(tester);
+    await tester.scrollUntilVisible(
+      find.text('1990s · 1 rating'),
+      200,
+      scrollable: statsList,
+    );
+    expect(find.text('Боевик · 1 rating'), findsOneWidget);
+    expect(find.text('2010s · 1 rating'), findsOneWidget);
   });
 }

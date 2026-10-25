@@ -8,10 +8,12 @@ A project for myself and a couple of friends. The original idea and the decision
 
 ## Status
 
-In development, version 0.3.0. Working: search, film and series cards down
+In development, version 0.4.0. Working: search, film and series cards down
 to single episodes with ratings from Kinopoisk, IMDb, Rotten Tomatoes,
 Metacritic and TMDB; your own ratings with notes and the calibration sheet,
-My ratings and the watchlist. Comparison and statistics come next (Stage 4).
+My ratings (including the sort by divergence from Kinopoisk or IMDb) and
+the watchlist; background refresh of ratings and statistics. Sync through
+Google Drive comes next (Stage 5).
 Progress is tracked in
 [docs/implementation-plan.md](docs/implementation-plan.md). The first target
 platform is Android (an APK for myself and friends); iOS is postponed

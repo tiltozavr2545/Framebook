@@ -6,8 +6,9 @@ schema" as in Amicus. The data schema is in [data-model.md](data-model.md),
 the external APIs in [external-sources.md](external-sources.md), sync in
 [sync.md](sync.md).
 
-**Status: Stage 3.** Your own ratings, notes, the watchlist and the
-calibration sheet sit on top of search, title cards and external ratings
+**Status: Stage 4.** Comparison with others (the difference on the card,
+the divergence sort, background refresh) and statistics sit on top of your
+own ratings and lists (Stage 3), search, title cards and external ratings
 (Stage 2) and the Stage 1 skeleton (database, keys, settings, navigation). The list below
 is the default decisions; if something is replaced along the way (drift by
 something else, say), it is recorded right here, so that the document doesn't
@@ -77,7 +78,7 @@ silently drift away from the code.
 | shared_preferences | 2.5.3 | |
 | google_sign_in | 7.2.0 | the new authorization API |
 | googleapis / extension_google_sign_in_as_googleapis_auth | 15.0.0 / 3.0.0 | |
-| fl_chart | 1.1.0 | |
+| fl_chart | 1.0.0 | **ceiling**: 1.1 needs vector_math 2.2 (`Matrix4.translateByDouble`), Flutter 3.32 pins 2.1.4 |
 | uuid / intl | 4.6.0 / 0.20.2 | |
 
 `flutter pub upgrade --major-versions` is not a tool here: "newer" almost
@@ -246,6 +247,40 @@ All writes of the user's own data go through `Library`
   instant with "Undo" in a snackbar; rating a title removes it by itself.
 - Both read the database through `watch()` streams, so they work offline and
   update by themselves. A row opens the card inside its own tab.
+
+## Comparison and statistics (Stage 4)
+
+- **"Mine − theirs"** is `divergence()` (`lib/data/library/divergence.dart`):
+  your score minus the source's value, for the 1–10 sources only —
+  Kinopoisk, IMDb, TMDB. Shown with its sign and one decimal ("+0.5",
+  "−1.2", "±0"), next to the value in the card's cell once the title is
+  rated.
+- **My ratings** joins the cached Kinopoisk and IMDb rows into every row
+  (`Library.watchRatings`), so the list re-sorts by itself when background
+  refresh brings a value. The divergence sort compares with Kinopoisk or
+  IMDb — the choice is remembered (`divergence_source` in
+  `shared_preferences`) — in three orders: furthest apart, "I rate higher",
+  "I rate lower". Rows without the value go last, most recent first, and
+  say "no data".
+- **Background refresh** (`lib/data/background_refresh.dart`) runs while the
+  tabs are on screen and the app is in the foreground: a first pass ten
+  seconds after start, then every half hour; a key change restarts it. A
+  pass goes through rated titles that need asking — no rating at all first,
+  then the oldest (`RatingsService.backgroundDue`) — one at a time, three
+  seconds apart, within the background share of the budget
+  ([external-sources.md](external-sources.md)). It stops when offline,
+  when every source's share is spent, or when the app goes to the
+  background. "Kinopoisk ratings loaded for N of M" counts the titles a
+  source covers with the current keys that have its answer — a value or a
+  definite "not there".
+- **Statistics** is `computeStats` (`lib/data/library/stats.dart`), a pure
+  function over the live ratings: count and average, the distribution by
+  half points (an fl_chart bar chart), the deviation from Kinopoisk and IMDb
+  (signed and absolute, over the titles that have the value), the average
+  by genre (a season and an episode count under the series' genres) and by
+  decade. A kind filter on top, as in My ratings. Genre names come from
+  TMDB's genre lists through the HTTP cache; without them (offline, nothing
+  cached) the genre section says so and the rest still works.
 
 ---
 

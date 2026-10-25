@@ -15,7 +15,7 @@ import 'work_key.dart';
 final class RatingTarget {
   const RatingTarget({
     required this.key,
-    required this.tmdbVote,
+    this.tmdbVote,
     this.imdbId,
     this.seriesImdbId,
   });
@@ -23,7 +23,8 @@ final class RatingTarget {
   final WorkKey key;
 
   /// The TMDB rating comes with the card; there is no separate request.
-  final TmdbVote tmdbVote;
+  /// Background refresh has no card, so it has none and leaves TMDB as is.
+  final TmdbVote? tmdbVote;
 
   /// The title's own imdb id: a film's, series' or episode's. Seasons have
   /// none.
@@ -51,7 +52,7 @@ abstract final class RatingTtl {
   /// An open card asks again when a row is older than this.
   static const interactive = Duration(days: 7);
 
-  /// Background refresh (Stage 4).
+  /// Background refresh asks again when a row is older than this.
   static const background = Duration(days: 14);
   static const notFound = Duration(days: 30);
 
@@ -122,6 +123,12 @@ final class RatingsService {
     };
   }
 
+  /// The sources with a daily budget that have a key now.
+  Set<ApiSource> get budgetedSources => {
+    if (_poiskkino != null) ApiSource.poiskkino,
+    if (_omdb != null) ApiSource.omdb,
+  };
+
   /// Which key to add for the rating to appear.
   static ApiSource keyFor(RatingSource source) => switch (source) {
     RatingSource.tmdb => ApiSource.tmdb,
@@ -147,7 +154,9 @@ final class RatingsService {
     };
 
     // TMDB comes from the card that has just loaded, so it is always fresh.
-    await _db.putExternalRatings([_tmdbRow(key, target.tmdbVote, now)]);
+    if (target.tmdbVote case final vote?) {
+      await _db.putExternalRatings([_tmdbRow(key, vote, now)]);
+    }
 
     final outcomes = <ApiSource, SourceFailure?>{};
     for (final api in const [ApiSource.poiskkino, ApiSource.omdb]) {
@@ -184,6 +193,31 @@ final class RatingsService {
       onDone?.call(api, failure);
     }
     return outcomes;
+  }
+
+  /// How overdue a title is for background refresh: `null` when nothing
+  /// needs asking (all fresh, no key, a recent failure), otherwise the
+  /// `fetched_at` of its oldest stale row, `0` when a row is missing. The
+  /// queue goes by it: no rating at all first, then the oldest
+  /// (docs/external-sources.md, "Request budget").
+  int? backgroundDue(WorkKey key, List<ExternalRating> rows, {int? now}) {
+    final at = now ?? _clock().toUtc().millisecondsSinceEpoch;
+    final existing = {for (final row in rows) row.source: row};
+    int? due;
+    for (final api in const [ApiSource.poiskkino, ApiSource.omdb]) {
+      final recent = _failures[(key.toString(), api)];
+      if (recent != null && at - recent.$2 < RatingTtl.failure.inMilliseconds) {
+        continue;
+      }
+      for (final source in shownFor(key.kind)) {
+        if (providerOf(source, key.kind) != api) continue;
+        final row = existing[source];
+        if (!_stale(row, api, at, true)) continue;
+        final since = row == null || row.via != api ? 0 : row.fetchedAt;
+        if (due == null || since < due) due = since;
+      }
+    }
+    return due;
   }
 
   bool _stale(ExternalRating? row, ApiSource api, int now, bool background) {

@@ -15,7 +15,7 @@ are settled before anything is built on top of them.
 - [x] Stage 1 — Local database, keys, settings
 - [x] Stage 2 — Search and title card
 - [x] Stage 3 — Ratings, notes, watchlist, calibration
-- [ ] Stage 4 — Comparison and statistics
+- [x] Stage 4 — Comparison and statistics
 - [ ] Stage 5 — Google Drive: sync and backup
 - [ ] Stage 6 — Polish and distribution
 
@@ -154,16 +154,40 @@ Along the way:
 
 ## Stage 4 — Comparison and statistics
 
-**Status:** not started
+**Status:** done (0.4.0)
 
-1. The "mine − theirs" difference next to every rating on the card.
-2. Sorting "My ratings" by divergence from Kinopoisk or IMDb (signed and
-   absolute), rows without data at the end.
-3. Background refresh of external ratings within the budget while the app is
-   open; an indicator "ratings loaded for N of M".
-4. Statistics: the distribution of your scores, the average deviation from
-   Kinopoisk and IMDb (saying how many ratings it was computed over), the
-   average by genre and decade. Tests for the aggregates.
+1. ✅ The "mine − theirs" difference next to every 1–10 rating on the card
+   (Kinopoisk, IMDb, TMDB).
+2. ✅ Sorting "My ratings" by divergence from Kinopoisk or IMDb: furthest
+   apart, "I rate higher", "I rate lower"; rows without data at the end.
+3. ✅ Background refresh of external ratings within the budget while the app
+   is open (`lib/data/background_refresh.dart`); "ratings loaded for N of M"
+   in the divergence sort and in the statistics.
+4. ✅ Statistics: the distribution of your scores, the average deviation from
+   Kinopoisk and IMDb (signed and absolute, with how many ratings it was
+   computed over), the average by genre and decade, with a kind filter.
+   Tests for the aggregates (`test/data/comparison_test.dart`).
+
+Along the way:
+- No difference next to Rotten Tomatoes and Metacritic: RT is a share of
+  positive reviews and Metacritic a 0–100 score, so a difference with them
+  would be a conversion, not a comparison (the brief: "a plain difference
+  with no conversion").
+- "Signed and absolute" became three orders: furthest apart (absolute), and
+  signed in both directions — "I rate higher" and "I rate lower" — since
+  signed descending alone would bury the other end under the "no data" rows.
+- Background refresh asks about rated titles only, leaves TMDB alone (there
+  is no card, so no TMDB vote to record), pauses only after titles that cost
+  a request, and stops a pass when offline or when every source has spent
+  its background share. It is off in widget tests: its passes run on timers.
+- fl_chart is pinned at 1.0.0: 1.1 calls `Matrix4.translateByDouble` from
+  vector_math 2.2, and Flutter 3.32 pins 2.1.4.
+- 0.3.0 "would not install, the package is invalid" turned out to be a
+  download corrupted on the way to the phone: the right size, a different
+  SHA-256, and Android reports a failed v2 signature digest as an invalid
+  package. The release workflow now verifies the signature and the
+  certificate before publishing and puts a `.sha256` next to the APK
+  (operations.md, "Distribution").
 
 ## Stage 5 — Google Drive: sync and backup
 
