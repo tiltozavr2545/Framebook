@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/library/work_snapshot.dart';
 import '../../data/ratings_service.dart';
 import '../../data/source_failure.dart';
 import '../../data/sources/tmdb/tmdb_models.dart';
@@ -9,6 +10,7 @@ import '../../l10n/app_localizations.dart';
 import '../../shared/failure_view.dart';
 import '../../shared/format.dart';
 import '../../shared/poster.dart';
+import 'my_rating.dart';
 import 'ratings_panel.dart';
 import 'title_layout.dart';
 import 'title_providers.dart';
@@ -71,6 +73,14 @@ class EpisodeScreen extends ConsumerWidget {
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
+          ),
+          const SizedBox(height: 16),
+          MyRatingSection(
+            lineage: [
+              WorkSnapshot.tv(tv),
+              WorkSnapshot.season(season),
+              WorkSnapshot.episode(episode, imdbId: imdbId.value),
+            ],
           ),
           const SizedBox(height: 16),
           switch (imdbId) {

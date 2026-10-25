@@ -63,3 +63,20 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
 - Repository text (docs, comments) is now in English. The key guide the app
   opens comes in the UI's language: `docs/api-keys.md` in English,
   `docs/api-keys.ru.md` in Russian.
+
+## 0.3.0 — Stage 3 (build 5)
+
+- Your own ratings, 1–10 in steps of 0.5, with a note, on a film, a series,
+  a season or an episode — independently. Saved in one transaction with the
+  snapshots of the title and its ancestors; deletion is a tombstone, with a
+  confirmation.
+- The calibration sheet after a new or changed score: what else of the same
+  kind you rated the same, and the nearest scores above and below; −/+
+  nudges the score by half a point right there.
+- A series and a season show the average of their rated parts; season and
+  episode lists show your score next to each.
+- My ratings tab: filter by kind, sort by date rated, score, year or title;
+  works offline. Rows open the card inside the tab.
+- Watchlist tab: add from a film or series card, remove with undo; rating a
+  title takes it off the list.
+- Opening a card refreshes the snapshots of titles you have rated or listed.

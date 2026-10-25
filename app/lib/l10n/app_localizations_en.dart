@@ -24,12 +24,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabStats => 'Stats';
 
   @override
-  String get tabRatingsPlaceholder => 'Your ratings will be here.';
-
-  @override
-  String get tabWatchlistPlaceholder => 'Films you want to watch will be here.';
-
-  @override
   String get tabStatsPlaceholder =>
       'Statistics will be here once you have ratings.';
 
@@ -327,4 +321,146 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aboutLicenses => 'Open-source licenses';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get done => 'Done';
+
+  @override
+  String get undo => 'Undo';
+
+  @override
+  String get ratingRate => 'Rate';
+
+  @override
+  String get ratingMine => 'My rating';
+
+  @override
+  String get ratingEdit => 'Change';
+
+  @override
+  String get ratingDelete => 'Delete';
+
+  @override
+  String get ratingDeleteTitle => 'Delete your rating?';
+
+  @override
+  String get ratingDeleteBody =>
+      'The score and the note will be deleted on all your devices.';
+
+  @override
+  String get ratingEditorTitle => 'Your rating';
+
+  @override
+  String get ratingNote => 'Note';
+
+  @override
+  String get ratingSave => 'Save';
+
+  @override
+  String partsAverageSeasons(int count, String average) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Your average over $count seasons: $average',
+      one: 'Your score for $count season: $average',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String partsAverageEpisodes(int count, String average) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Your average over $count episodes: $average',
+      one: 'Your score for $count episode: $average',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get calibrationTitle => 'How it compares';
+
+  @override
+  String get calibrationHigher => 'Half a point higher';
+
+  @override
+  String get calibrationLower => 'Half a point lower';
+
+  @override
+  String calibrationSame(String score) {
+    return 'Also $score';
+  }
+
+  @override
+  String calibrationAbove(String score) {
+    return 'A step above · $score';
+  }
+
+  @override
+  String calibrationBelow(String score) {
+    return 'A step below · $score';
+  }
+
+  @override
+  String get calibrationNothing =>
+      'Nothing else of this kind is rated near this score.';
+
+  @override
+  String get watchlistAdd => 'Want to watch';
+
+  @override
+  String get watchlistListed => 'On the watchlist';
+
+  @override
+  String get watchlistRemove => 'Remove from the watchlist';
+
+  @override
+  String watchlistRemoved(String title) {
+    return '“$title” removed from the watchlist';
+  }
+
+  @override
+  String get watchlistEmpty =>
+      'Nothing here yet. Open a film or a series and tap “Want to watch”.';
+
+  @override
+  String get ratingsSort => 'Sort';
+
+  @override
+  String get ratingsSortDate => 'By date rated';
+
+  @override
+  String get ratingsSortScore => 'By my score';
+
+  @override
+  String get ratingsSortYear => 'By year';
+
+  @override
+  String get ratingsSortTitle => 'By title';
+
+  @override
+  String get ratingsEmpty =>
+      'You haven\'t rated anything yet. Find a film in Search and give it a score.';
+
+  @override
+  String get ratingsEmptyKind => 'Nothing of this kind is rated yet.';
+
+  @override
+  String get kindAll => 'All';
+
+  @override
+  String get kindMovies => 'Films';
+
+  @override
+  String get kindSeries => 'Series';
+
+  @override
+  String get kindSeasons => 'Seasons';
+
+  @override
+  String get kindEpisodes => 'Episodes';
 }

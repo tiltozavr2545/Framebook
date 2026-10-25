@@ -159,7 +159,7 @@ class _ResultTile extends StatelessWidget {
         : l10n.kindTv;
     return InkWell(
       onTap: () =>
-          context.go('${Routes.search}/${TitleRoutes.segment(title.key)}'),
+          context.go('${Routes.search}/${TitleRoutes.path(title.key)}'),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(

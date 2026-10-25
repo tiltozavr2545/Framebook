@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../data/api_keys.dart';
 import '../data/api_source.dart';
 import '../features/onboarding/onboarding_screen.dart';
+import '../features/ratings/ratings_screen.dart';
 import '../features/search/search_screen.dart';
 import '../features/settings/about_screen.dart';
 import '../features/settings/settings_screen.dart';
@@ -12,6 +13,7 @@ import '../features/settings/sources_screen.dart';
 import '../features/shell/shell_screen.dart';
 import '../features/shell/tab_placeholder.dart';
 import '../features/title/title_routes.dart';
+import '../features/watchlist/watchlist_screen.dart';
 
 abstract final class Routes {
   static const onboarding = '/onboarding';
@@ -56,17 +58,17 @@ final routerProvider = Provider<GoRouter>((ref) {
           for (final tab in AppTab.values)
             StatefulShellBranch(
               routes: [
-                switch (tab) {
-                  AppTab.search => GoRoute(
-                    path: tab.path,
-                    builder: (context, state) => const SearchScreen(),
-                    routes: TitleRoutes.routes(),
-                  ),
-                  _ => GoRoute(
-                    path: tab.path,
-                    builder: (context, state) => TabPlaceholder(tab: tab),
-                  ),
-                },
+                GoRoute(
+                  path: tab.path,
+                  builder: (context, state) => switch (tab) {
+                    AppTab.search => const SearchScreen(),
+                    AppTab.ratings => const RatingsScreen(),
+                    AppTab.watchlist => const WatchlistScreen(),
+                    AppTab.stats => TabPlaceholder(tab: tab),
+                  },
+                  // Cards open inside the tab they were opened from.
+                  routes: tab == AppTab.stats ? const [] : TitleRoutes.routes(),
+                ),
               ],
             ),
         ],

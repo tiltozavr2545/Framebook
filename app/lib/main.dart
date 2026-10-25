@@ -12,6 +12,7 @@ import 'app/preferences.dart';
 import 'data/api_keys.dart';
 import 'data/db/database.dart';
 import 'data/db/database_provider.dart';
+import 'data/library/library.dart';
 import 'data/response_cache.dart';
 import 'data/sources/tmdb/tmdb_client.dart';
 
@@ -23,7 +24,7 @@ Future<void> main() async {
   // whether to show onboarding.
   final db = AppDatabase.open();
   // device_id is created on first launch and never changes (docs/sync.md).
-  await db.deviceId();
+  final deviceId = await db.deviceId();
   final prefs = await SharedPreferences.getInstance();
   final keyStore = ApiKeyStore(SecureKeyStorage());
   final keys = await keyStore.load();
@@ -43,6 +44,7 @@ Future<void> main() async {
       retry: (_, _) => null,
       overrides: [
         databaseProvider.overrideWithValue(db),
+        deviceIdProvider.overrideWithValue(deviceId),
         sharedPreferencesProvider.overrideWithValue(prefs),
         apiKeyStoreProvider.overrideWithValue(keyStore),
         initialApiKeysProvider.overrideWithValue(keys),

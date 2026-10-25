@@ -128,18 +128,6 @@ abstract class AppLocalizations {
   /// **'Stats'**
   String get tabStats;
 
-  /// No description provided for @tabRatingsPlaceholder.
-  ///
-  /// In en, this message translates to:
-  /// **'Your ratings will be here.'**
-  String get tabRatingsPlaceholder;
-
-  /// No description provided for @tabWatchlistPlaceholder.
-  ///
-  /// In en, this message translates to:
-  /// **'Films you want to watch will be here.'**
-  String get tabWatchlistPlaceholder;
-
   /// No description provided for @tabStatsPlaceholder.
   ///
   /// In en, this message translates to:
@@ -643,6 +631,234 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open-source licenses'**
   String get aboutLicenses;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @done.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get done;
+
+  /// No description provided for @undo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get undo;
+
+  /// No description provided for @ratingRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate'**
+  String get ratingRate;
+
+  /// No description provided for @ratingMine.
+  ///
+  /// In en, this message translates to:
+  /// **'My rating'**
+  String get ratingMine;
+
+  /// No description provided for @ratingEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get ratingEdit;
+
+  /// No description provided for @ratingDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get ratingDelete;
+
+  /// No description provided for @ratingDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete your rating?'**
+  String get ratingDeleteTitle;
+
+  /// No description provided for @ratingDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The score and the note will be deleted on all your devices.'**
+  String get ratingDeleteBody;
+
+  /// No description provided for @ratingEditorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your rating'**
+  String get ratingEditorTitle;
+
+  /// No description provided for @ratingNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get ratingNote;
+
+  /// No description provided for @ratingSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get ratingSave;
+
+  /// No description provided for @partsAverageSeasons.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Your score for {count} season: {average}} other{Your average over {count} seasons: {average}}}'**
+  String partsAverageSeasons(int count, String average);
+
+  /// No description provided for @partsAverageEpisodes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Your score for {count} episode: {average}} other{Your average over {count} episodes: {average}}}'**
+  String partsAverageEpisodes(int count, String average);
+
+  /// No description provided for @calibrationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How it compares'**
+  String get calibrationTitle;
+
+  /// No description provided for @calibrationHigher.
+  ///
+  /// In en, this message translates to:
+  /// **'Half a point higher'**
+  String get calibrationHigher;
+
+  /// No description provided for @calibrationLower.
+  ///
+  /// In en, this message translates to:
+  /// **'Half a point lower'**
+  String get calibrationLower;
+
+  /// No description provided for @calibrationSame.
+  ///
+  /// In en, this message translates to:
+  /// **'Also {score}'**
+  String calibrationSame(String score);
+
+  /// No description provided for @calibrationAbove.
+  ///
+  /// In en, this message translates to:
+  /// **'A step above · {score}'**
+  String calibrationAbove(String score);
+
+  /// No description provided for @calibrationBelow.
+  ///
+  /// In en, this message translates to:
+  /// **'A step below · {score}'**
+  String calibrationBelow(String score);
+
+  /// No description provided for @calibrationNothing.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing else of this kind is rated near this score.'**
+  String get calibrationNothing;
+
+  /// No description provided for @watchlistAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Want to watch'**
+  String get watchlistAdd;
+
+  /// No description provided for @watchlistListed.
+  ///
+  /// In en, this message translates to:
+  /// **'On the watchlist'**
+  String get watchlistListed;
+
+  /// No description provided for @watchlistRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from the watchlist'**
+  String get watchlistRemove;
+
+  /// No description provided for @watchlistRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'“{title}” removed from the watchlist'**
+  String watchlistRemoved(String title);
+
+  /// No description provided for @watchlistEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here yet. Open a film or a series and tap “Want to watch”.'**
+  String get watchlistEmpty;
+
+  /// No description provided for @ratingsSort.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get ratingsSort;
+
+  /// No description provided for @ratingsSortDate.
+  ///
+  /// In en, this message translates to:
+  /// **'By date rated'**
+  String get ratingsSortDate;
+
+  /// No description provided for @ratingsSortScore.
+  ///
+  /// In en, this message translates to:
+  /// **'By my score'**
+  String get ratingsSortScore;
+
+  /// No description provided for @ratingsSortYear.
+  ///
+  /// In en, this message translates to:
+  /// **'By year'**
+  String get ratingsSortYear;
+
+  /// No description provided for @ratingsSortTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'By title'**
+  String get ratingsSortTitle;
+
+  /// No description provided for @ratingsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'You haven\'t rated anything yet. Find a film in Search and give it a score.'**
+  String get ratingsEmpty;
+
+  /// No description provided for @ratingsEmptyKind.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing of this kind is rated yet.'**
+  String get ratingsEmptyKind;
+
+  /// No description provided for @kindAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get kindAll;
+
+  /// No description provided for @kindMovies.
+  ///
+  /// In en, this message translates to:
+  /// **'Films'**
+  String get kindMovies;
+
+  /// No description provided for @kindSeries.
+  ///
+  /// In en, this message translates to:
+  /// **'Series'**
+  String get kindSeries;
+
+  /// No description provided for @kindSeasons.
+  ///
+  /// In en, this message translates to:
+  /// **'Seasons'**
+  String get kindSeasons;
+
+  /// No description provided for @kindEpisodes.
+  ///
+  /// In en, this message translates to:
+  /// **'Episodes'**
+  String get kindEpisodes;
 }
 
 class _AppLocalizationsDelegate

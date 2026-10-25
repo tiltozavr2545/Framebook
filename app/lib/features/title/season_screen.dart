@@ -2,16 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../data/library/work_snapshot.dart';
 import '../../data/ratings_service.dart';
 import '../../data/sources/tmdb/tmdb_models.dart';
 import '../../data/work_key.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/format.dart';
+import '../../shared/title_text.dart';
+import 'my_rating.dart';
 import 'ratings_panel.dart';
 import 'title_layout.dart';
 import 'title_providers.dart';
 import 'title_routes.dart';
-import 'tv_screen.dart';
 
 class SeasonScreen extends ConsumerWidget {
   const SeasonScreen({
@@ -53,6 +55,10 @@ class SeasonScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 16),
+          MyRatingSection(
+            lineage: [WorkSnapshot.tv(tv), WorkSnapshot.season(season)],
+          ),
+          const SizedBox(height: 16),
           RatingsPanel(
             target: RatingTarget(
               key: season.key,
@@ -75,7 +81,10 @@ class SeasonScreen extends ConsumerWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               subtitle: Text(context.formatDate(episode.airDate) ?? ''),
-              trailing: TmdbScore(episode.vote),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [MyScoreBadge(episode.key), TmdbScore(episode.vote)],
+              ),
               onTap: () => context.go(
                 '$location/${TitleRoutes.episodeSegment(episode.number)}',
               ),

@@ -10,7 +10,10 @@ import 'package:framebook/data/api_source.dart';
 import 'package:framebook/data/db/database.dart';
 import 'package:framebook/data/db/database_provider.dart';
 import 'package:framebook/data/http.dart';
+import 'package:framebook/data/library/library.dart';
+import 'package:framebook/data/library/work_snapshot.dart';
 import 'package:framebook/data/response_cache.dart';
+import 'package:framebook/data/work_key.dart';
 import 'package:framebook/shared/poster.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -24,6 +27,7 @@ void main() {
   Future<void> pumpApp(
     WidgetTester tester, {
     ApiKeys keys = ApiKeys.empty,
+    Future<void> Function(Library library)? seed,
   }) async {
     // A phone-sized screen (360×780 dp) instead of the default 800×600: the
     // layouts are made for a phone, and a narrow screen catches overflows.
@@ -38,12 +42,17 @@ void main() {
     // /configuration, which the fixtures have.
     final dio = createDio()..httpClientAdapter = FakeHttpAdapter(apiFixtures);
     storage = MemoryKeyStorage();
+    if (seed != null) {
+      // Real async: these database writes shouldn't run under fake time.
+      await tester.runAsync(() => seed(Library(db, deviceId: 'test')));
+    }
 
     await tester.pumpWidget(
       ProviderScope(
         retry: (_, _) => null,
         overrides: [
           databaseProvider.overrideWithValue(db),
+          deviceIdProvider.overrideWithValue('test'),
           sharedPreferencesProvider.overrideWithValue(prefs),
           apiKeyStoreProvider.overrideWithValue(ApiKeyStore(storage)),
           initialApiKeysProvider.overrideWithValue(keys),
@@ -237,6 +246,8 @@ void main() {
 
     expect(find.text('2011–2019 · ended'), findsOneWidget);
     expect(find.text('8 seasons · 73 episodes'), findsOneWidget);
+    // The ratings sit below "My rating", past the first screen.
+    await tester.scrollUntilVisible(find.text('Kinopoisk'), 200);
     expect(find.text('9.0'), findsOneWidget); // Kinopoisk 9.009
     expect(find.text('9.2'), findsOneWidget); // IMDb
 
@@ -265,5 +276,174 @@ void main() {
     container.read(routerProvider).go('/search/movie/42');
     await settle(tester);
     expect(find.text('TMDB has no such title.'), findsOneWidget);
+  });
+
+  // Stage 3: own ratings, the calibration sheet, the watchlist.
+
+  final tmdbOnly = ApiKeys.empty.withKey(
+    ApiSource.tmdb,
+    const StoredKey('eyJ', verified: true),
+  );
+
+  void go(WidgetTester tester, String location) => ProviderScope.containerOf(
+    tester.element(find.byType(FramebookApp)),
+  ).read(routerProvider).go(location);
+
+  Finder tab(String label) => find.descendant(
+    of: find.byType(NavigationBar),
+    matching: find.text(label),
+  );
+
+  /// Inception, rated before the test starts.
+  Future<void> inceptionRated(Library library, int scoreHalf) => library.rate(
+    [
+      const WorkSnapshot(
+        key: WorkKey.movie(27205),
+        tmdbId: 27205,
+        title: 'Начало',
+        releaseDate: '2010-07-15',
+      ),
+    ],
+    scoreHalf: scoreHalf,
+    note: null,
+  );
+
+  cardTest('rating a film with a note; it appears in My ratings', (
+    tester,
+  ) async {
+    await pumpApp(tester, keys: tmdbOnly);
+    go(tester, '/search/movie/603');
+    await settle(tester);
+
+    await tester.tap(find.text('Rate'));
+    await settle(tester);
+    await tester.tap(find.widgetWithText(ChoiceChip, '8.5'));
+    await tester.enterText(find.widgetWithText(TextField, 'Note'), 'Классика');
+    await tester.tap(find.text('Save'));
+    await settle(tester);
+
+    // The first film rated: nothing to compare with, so no sheet.
+    expect(find.text('How it compares'), findsNothing);
+    expect(find.text('My rating'), findsOneWidget);
+    expect(find.text('8.5'), findsOneWidget);
+    expect(find.text('Классика'), findsOneWidget);
+
+    await tester.tap(tab('My ratings'));
+    await settle(tester);
+    expect(inList('Матрица'), findsOneWidget);
+    expect(inList('Film · 1999'), findsOneWidget);
+    expect(inList('8.5'), findsOneWidget);
+
+    // A row opens the card inside this tab.
+    await tester.tap(inList('Матрица'));
+    await settle(tester);
+    expect(find.text('Классика'), findsOneWidget);
+  });
+
+  cardTest('the calibration sheet shows what is rated the same, and nudges', (
+    tester,
+  ) async {
+    await pumpApp(
+      tester,
+      keys: tmdbOnly,
+      seed: (library) => inceptionRated(library, 17),
+    );
+    go(tester, '/search/movie/603');
+    await settle(tester);
+
+    await tester.tap(find.text('Rate'));
+    await settle(tester);
+    await tester.tap(find.widgetWithText(ChoiceChip, '8.5'));
+    // Save is enabled only after the chip's rebuild.
+    await tester.pump();
+    await tester.tap(find.text('Save'));
+    await settle(tester);
+
+    expect(find.text('How it compares'), findsOneWidget);
+    expect(find.text('Also 8.5'), findsOneWidget);
+    expect(find.text('Начало'), findsOneWidget);
+
+    // Half a point higher: Inception becomes the neighbour below.
+    await tester.tap(find.byTooltip('Half a point higher'));
+    await settle(tester);
+    expect(find.text('Also 9'), findsNothing);
+    expect(find.text('A step below · 8.5'), findsOneWidget);
+    expect(find.text('Начало'), findsOneWidget);
+
+    await tester.tap(find.text('Done'));
+    await settle(tester);
+    // The card shows the nudged score.
+    expect(find.text('9'), findsOneWidget);
+  });
+
+  cardTest('the watchlist: add from the card, remove and undo in the tab', (
+    tester,
+  ) async {
+    await pumpApp(tester, keys: tmdbOnly);
+    go(tester, '/search/movie/603');
+    await settle(tester);
+
+    await tester.tap(find.text('Want to watch'));
+    await settle(tester);
+    expect(find.text('On the watchlist'), findsOneWidget);
+
+    await tester.tap(tab('Watchlist'));
+    await settle(tester);
+    expect(inList('Матрица'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Remove from the watchlist'));
+    await settle(tester);
+    expect(inList('Матрица'), findsNothing);
+    await tester.tap(find.text('Undo'));
+    await settle(tester);
+    expect(inList('Матрица'), findsOneWidget);
+  });
+
+  cardTest('deleting a rating asks first', (tester) async {
+    await pumpApp(
+      tester,
+      keys: tmdbOnly,
+      seed: (library) => library.rate(
+        [
+          const WorkSnapshot(
+            key: WorkKey.movie(603),
+            tmdbId: 603,
+            title: 'Матрица',
+          ),
+        ],
+        scoreHalf: 16,
+        note: null,
+      ),
+    );
+    go(tester, '/search/movie/603');
+    await settle(tester);
+    expect(find.text('My rating'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Delete'));
+    await settle(tester);
+    expect(find.text('Delete your rating?'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+    await settle(tester);
+
+    expect(find.text('My rating'), findsNothing);
+    expect(find.text('Rate'), findsOneWidget);
+  });
+
+  cardTest('My ratings filters by kind', (tester) async {
+    await pumpApp(
+      tester,
+      keys: tmdbOnly,
+      seed: (library) => inceptionRated(library, 17),
+    );
+    await tester.tap(tab('My ratings'));
+    await settle(tester);
+    expect(inList('Начало'), findsOneWidget);
+
+    // The chip row scrolls sideways on a phone.
+    await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'Episodes'));
+    await settle(tester);
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Episodes'));
+    await settle(tester);
+    expect(find.text('Nothing of this kind is rated yet.'), findsOneWidget);
   });
 }

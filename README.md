@@ -8,10 +8,11 @@ A project for myself and a couple of friends. The original idea and the decision
 
 ## Status
 
-In development, version 0.2.0. Working: API keys onboarding, search, film
-and series cards down to single episodes, and ratings from Kinopoisk, IMDb,
-Rotten Tomatoes, Metacritic and TMDB on every card. Your own ratings come
-next (Stage 3). Progress is tracked in
+In development, version 0.3.0. Working: search, film and series cards down
+to single episodes with ratings from Kinopoisk, IMDb, Rotten Tomatoes,
+Metacritic and TMDB; your own ratings with notes and the calibration sheet,
+My ratings and the watchlist. Comparison and statistics come next (Stage 4).
+Progress is tracked in
 [docs/implementation-plan.md](docs/implementation-plan.md). The first target
 platform is Android (an APK for myself and friends); iOS is postponed
 ([docs/future-development.md](docs/future-development.md)).

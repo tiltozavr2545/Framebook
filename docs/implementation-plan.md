@@ -14,7 +14,7 @@ are settled before anything is built on top of them.
 - [x] Stage 0 — Preparation, API checks, CI skeleton
 - [x] Stage 1 — Local database, keys, settings
 - [x] Stage 2 — Search and title card
-- [ ] Stage 3 — Ratings, notes, watchlist, calibration
+- [x] Stage 3 — Ratings, notes, watchlist, calibration
 - [ ] Stage 4 — Comparison and statistics
 - [ ] Stage 5 — Google Drive: sync and backup
 - [ ] Stage 6 — Polish and distribution
@@ -121,17 +121,36 @@ Along the way:
 
 ## Stage 3 — Ratings, notes, watchlist, calibration
 
-**Status:** not started
+**Status:** done (0.3.0)
 
-1. Entering a 1–10 / 0.5 score and a note on a card of any kind; saving in one
-   transaction together with the snapshot and its ancestors.
-2. The average hint for a series and a season.
-3. The calibration sheet: "The same", neighbours above and below, the same
+1. ✅ Entering a 1–10 / 0.5 score and a note on a card of any kind; saving in
+   one transaction together with the snapshot and its ancestors
+   (`lib/data/library/`).
+2. ✅ The average hint for a series and a season.
+3. ✅ The calibration sheet: "The same", neighbours above and below, the same
    kind, editing the score from the sheet. Tests for choosing neighbours.
-4. "My ratings": a filter by kind, sorting by date, score, year, title;
+4. ✅ "My ratings": a filter by kind, sorting by date, score, year, title;
    works offline.
-5. Watchlist: adding from a card, removal on rating.
-6. Deleting a rating (tombstone) with a confirmation.
+5. ✅ Watchlist: adding from a card, removal on rating.
+6. ✅ Deleting a rating (tombstone) with a confirmation.
+
+Along the way:
+- The snapshot refresh on card open (deferred from Stage 2) is in: opening a
+  card rewrites the snapshots that already exist, never creating new ones and
+  never touching a rating's `updated_at`.
+- The calibration sheet nudges the score with −/+ half-point buttons in its
+  header rather than a row of every score: "a bit higher / lower" is what it
+  is for, and it fits a phone.
+- Seasons and episodes show your score next to them in the series' and the
+  season's lists.
+- Removing from the watchlist is instant with "Undo" instead of a
+  confirmation dialog; deleting a rating does ask.
+- Not done: a card opened offline that isn't in the HTTP cache still shows
+  the error screen rather than its snapshot from `works` (step 1 of "Title
+  card" in client-architecture.md) — moved to Stage 6, polish.
+- Deleting orphan `works` rows (data-model.md) is a no-op for now: tombstoned
+  rows keep referring to their snapshots, and tombstones are kept forever
+  (sync.md). It comes together with tombstone cleanup.
 
 ## Stage 4 — Comparison and statistics
 
@@ -169,7 +188,8 @@ Along the way:
 
 **Status:** not started
 
-1. Empty states, errors without raw exception text, offline messages.
+1. Empty states, errors without raw exception text, offline messages; a
+   card opened offline shows its snapshot from `works` instead of an error.
 2. Icon, name, splash screen.
 3. Moving the OAuth app to Production (or deciding to stay in Testing — see
    [operations.md](operations.md)).

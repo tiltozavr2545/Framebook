@@ -277,6 +277,7 @@ final class SeasonDetails {
     required this.posterPath,
     required this.episodes,
     required this.vote,
+    this.tmdbId,
   });
 
   factory SeasonDetails.fromJson(int tvId, Json json) {
@@ -286,6 +287,7 @@ final class SeasonDetails {
     }
     return SeasonDetails(
       key: WorkKey.season(tvId, number),
+      tmdbId: _positive(json.integer('id')),
       name: json.string('name'),
       overview: json.string('overview'),
       airDate: json.string('air_date'),
@@ -300,6 +302,9 @@ final class SeasonDetails {
   }
 
   final WorkKey key;
+
+  /// The season's own TMDB id (not the series'), kept for reference.
+  final int? tmdbId;
   final String? name;
   final String? overview;
   final String? airDate;
@@ -322,6 +327,7 @@ final class EpisodeSummary {
     required this.runtime,
     required this.stillPath,
     required this.vote,
+    this.tmdbId,
   });
 
   static EpisodeSummary? fromJson(int tvId, int season, Json json) {
@@ -329,6 +335,7 @@ final class EpisodeSummary {
     if (number == null || number <= 0) return null;
     return EpisodeSummary(
       key: WorkKey.episode(tvId, season, number),
+      tmdbId: _positive(json.integer('id')),
       name: json.string('name'),
       overview: json.string('overview'),
       airDate: json.string('air_date'),
@@ -339,6 +346,9 @@ final class EpisodeSummary {
   }
 
   final WorkKey key;
+
+  /// The episode's own TMDB id (not the series'), kept for reference.
+  final int? tmdbId;
   final String? name;
   final String? overview;
   final String? airDate;

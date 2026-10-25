@@ -5,8 +5,8 @@ import '../../app/router.dart';
 import '../../l10n/app_localizations.dart';
 import 'shell_screen.dart';
 
-/// Placeholder for a tab until its stage (docs/implementation-plan.md): my
-/// ratings and the watchlist come in Stage 3, statistics in Stage 4.
+/// Placeholder for a tab until its stage (docs/implementation-plan.md):
+/// statistics come in Stage 4.
 class TabPlaceholder extends StatelessWidget {
   const TabPlaceholder({super.key, required this.tab});
 
@@ -16,10 +16,10 @@ class TabPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final text = switch (tab) {
-      AppTab.search => throw StateError('Search has its own screen'),
-      AppTab.ratings => l10n.tabRatingsPlaceholder,
-      AppTab.watchlist => l10n.tabWatchlistPlaceholder,
       AppTab.stats => l10n.tabStatsPlaceholder,
+      AppTab.search ||
+      AppTab.ratings ||
+      AppTab.watchlist => throw StateError('$tab has its own screen'),
     };
     return Scaffold(
       appBar: AppBar(

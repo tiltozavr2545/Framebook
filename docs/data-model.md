@@ -98,13 +98,23 @@ Invariants:
 - **Everything a user row refers to, and all its ancestors, has a snapshot.**
   Rate an episode, and `works` holds the episode, its season and the series.
   Otherwise the offline list can't show "Game of Thrones · S1E3".
-- The snapshot is refreshed in the background (every 30 days and when the
-  card is opened); the refresh touches only `snapshot_updated_at`, never a
-  rating's `updated_at`.
-- `works` rows that no live `ratings` / `watchlist` row refers to (including
-  through descendants) are deleted locally on cleanup. A snapshot has no
+- The snapshot is refreshed when the card is opened (Stage 3) and, later,
+  in the background every 30 days; the refresh rewrites the snapshot's own
+  columns and `snapshot_updated_at`, never a rating's `updated_at`. An upsert
+  never wipes a `kp_id` or an `imdb_id` found earlier: an unknown one is left
+  out of the write rather than written as NULL.
+- `works` rows that no `ratings` / `watchlist` row refers to (including
+  through descendants) can be deleted locally on cleanup. A snapshot has no
   tombstone: it is derived data, there is nothing to "delete on other
-  devices" — it simply stops being written to the sync file.
+  devices" — it simply stops being written to the sync file. In practice
+  nothing is deleted yet: a tombstoned row still refers to its snapshot (the
+  foreign key and the sync file need it), and tombstones are kept forever
+  ([sync.md](sync.md)). Cleanup comes with tombstone cleanup.
+- A season's and an episode's `tmdb_id` is their own TMDB id; when TMDB
+  didn't send it, the series' id stands in (the column must be positive).
+  `title` is TMDB's own name for the season ("Сезон 1"), possibly empty —
+  lists show the series' title with it. An episode has no `poster_path`;
+  lists use the season's or the series' poster.
 
 ### `ratings` — scores
 

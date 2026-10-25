@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../data/library/work_snapshot.dart';
 import '../../data/ratings_service.dart';
 import '../../data/sources/tmdb/tmdb_models.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/poster.dart';
+import '../../shared/title_text.dart';
+import 'my_rating.dart';
 import 'ratings_panel.dart';
 import 'title_layout.dart';
 import 'title_providers.dart';
@@ -44,6 +47,8 @@ class TvScreen extends ConsumerWidget {
           tagline: tv.tagline,
         ),
         const SizedBox(height: 16),
+        MyRatingSection(lineage: [WorkSnapshot.tv(tv)]),
+        const SizedBox(height: 16),
         RatingsPanel(
           target: RatingTarget(
             key: tv.key,
@@ -69,7 +74,10 @@ class TvScreen extends ConsumerWidget {
                 season.year?.toString(),
               ]),
             ),
-            trailing: TmdbScore(season.vote),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [MyScoreBadge(season.key), TmdbScore(season.vote)],
+            ),
             onTap: () => context.go(
               '$location/${TitleRoutes.seasonSegment(season.number)}',
             ),
@@ -99,8 +107,3 @@ class TvScreen extends ConsumerWidget {
         TvStatus.unknown => null,
       };
 }
-
-/// TMDB names seasons itself ("Season 1", "Specials"), but the name can be
-/// empty.
-String seasonName(AppLocalizations l10n, int number, String? name) =>
-    name ?? (number == 0 ? l10n.seasonSpecials : l10n.seasonNumber(number));

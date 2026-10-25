@@ -12,17 +12,18 @@ import 'tv_screen.dart';
 /// Cards nest inside the branch of the tab they were opened from:
 /// `…/movie/603`, `…/tv/1399`, `…/tv/1399/s/1`, `…/tv/1399/s/1/e/3`. The bottom
 /// navigation stays in place, and back leads to the season, the series, the
-/// search, in that order. Stage 3 hangs the same routes under "My ratings".
+/// list, in that order. The same routes hang under Search, My ratings and
+/// Watchlist.
 abstract final class TitleRoutes {
-  /// Path to a film or series relative to the branch.
-  static String segment(WorkKey key) => switch (key.kind) {
+  /// Path to a title of any kind relative to the branch. Opening an episode
+  /// from a list builds the whole stack: series → season → episode.
+  static String path(WorkKey key) => switch (key.kind) {
     WorkKind.movie => 'movie/${key.tmdbId}',
     WorkKind.tv => 'tv/${key.tmdbId}',
-    WorkKind.season || WorkKind.episode => throw ArgumentError.value(
-      key,
-      'key',
-      'seasons and episodes open from their series',
-    ),
+    WorkKind.season => 'tv/${key.tmdbId}/${seasonSegment(key.season!)}',
+    WorkKind.episode =>
+      'tv/${key.tmdbId}/${seasonSegment(key.season!)}/'
+          '${episodeSegment(key.episode!)}',
   };
 
   static String seasonSegment(int season) => 's/$season';

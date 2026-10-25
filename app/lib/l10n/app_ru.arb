@@ -7,8 +7,6 @@
   "tabRatings": "Мои оценки",
   "tabWatchlist": "Хочу посмотреть",
   "tabStats": "Статистика",
-  "tabRatingsPlaceholder": "Здесь будут твои оценки.",
-  "tabWatchlistPlaceholder": "Здесь будут фильмы, которые хочешь посмотреть.",
   "tabStatsPlaceholder": "Статистика появится, когда будут оценки.",
 
   "settingsTitle": "Настройки",
@@ -102,5 +100,48 @@
   "aboutPoiskkino": "Рейтинг Кинопоиска. Неофициальный сервис, с Кинопоиском не связан.",
   "aboutOmdb": "Рейтинги IMDb, Rotten Tomatoes и Metacritic.",
   "aboutSource": "Исходный код",
-  "aboutLicenses": "Лицензии открытого ПО"
+  "aboutLicenses": "Лицензии открытого ПО",
+
+  "cancel": "Отмена",
+  "done": "Готово",
+  "undo": "Вернуть",
+
+  "ratingRate": "Оценить",
+  "ratingMine": "Моя оценка",
+  "ratingEdit": "Изменить",
+  "ratingDelete": "Удалить",
+  "ratingDeleteTitle": "Удалить оценку?",
+  "ratingDeleteBody": "Оценка и заметка удалятся на всех твоих устройствах.",
+  "ratingEditorTitle": "Твоя оценка",
+  "ratingNote": "Заметка",
+  "ratingSave": "Сохранить",
+  "partsAverageSeasons": "{count, plural, one{Средняя по {count} сезону: {average}} other{Средняя по {count} сезонам: {average}}}",
+  "partsAverageEpisodes": "{count, plural, one{Средняя по {count} серии: {average}} other{Средняя по {count} сериям: {average}}}",
+
+  "calibrationTitle": "С чем это в одном ряду",
+  "calibrationHigher": "На полбалла выше",
+  "calibrationLower": "На полбалла ниже",
+  "calibrationSame": "Тоже {score}",
+  "calibrationAbove": "Ступенькой выше · {score}",
+  "calibrationBelow": "Ступенькой ниже · {score}",
+  "calibrationNothing": "Рядом с этой оценкой больше ничего такого же типа нет.",
+
+  "watchlistAdd": "Хочу посмотреть",
+  "watchlistListed": "В списке",
+  "watchlistRemove": "Убрать из списка",
+  "watchlistRemoved": "«{title}» убран из списка",
+  "watchlistEmpty": "Пока пусто. Открой фильм или сериал и нажми «Хочу посмотреть».",
+
+  "ratingsSort": "Сортировка",
+  "ratingsSortDate": "По дате оценки",
+  "ratingsSortScore": "По моей оценке",
+  "ratingsSortYear": "По году",
+  "ratingsSortTitle": "По названию",
+  "ratingsEmpty": "Ты ещё ничего не оценил. Найди фильм в поиске и поставь оценку.",
+  "ratingsEmptyKind": "Такого пока ничего не оценено.",
+  "kindAll": "Всё",
+  "kindMovies": "Фильмы",
+  "kindSeries": "Сериалы",
+  "kindSeasons": "Сезоны",
+  "kindEpisodes": "Серии"
 }

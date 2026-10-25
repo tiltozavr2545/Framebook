@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/library/work_snapshot.dart';
 import '../../data/ratings_service.dart';
 import '../../shared/format.dart';
+import 'my_rating.dart';
 import 'ratings_panel.dart';
 import 'title_layout.dart';
 import 'title_providers.dart';
@@ -33,6 +35,8 @@ class MovieScreen extends ConsumerWidget {
           ],
           tagline: movie.tagline,
         ),
+        const SizedBox(height: 16),
+        MyRatingSection(lineage: [WorkSnapshot.movie(movie)]),
         const SizedBox(height: 16),
         RatingsPanel(
           target: RatingTarget(

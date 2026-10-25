@@ -6,8 +6,9 @@ schema" as in Amicus. The data schema is in [data-model.md](data-model.md),
 the external APIs in [external-sources.md](external-sources.md), sync in
 [sync.md](sync.md).
 
-**Status: Stage 2.** Search, title cards and external ratings sit on top of
-the Stage 1 skeleton (database, keys, settings, navigation). The list below
+**Status: Stage 3.** Your own ratings, notes, the watchlist and the
+calibration sheet sit on top of search, title cards and external ratings
+(Stage 2) and the Stage 1 skeleton (database, keys, settings, navigation). The list below
 is the default decisions; if something is replaced along the way (drift by
 something else, say), it is recorded right here, so that the document doesn't
 silently drift away from the code.
@@ -102,6 +103,7 @@ lib/
     budget.dart         — daily limits and ceilings (api_budget)
     response_cache.dart — on-disk HTTP cache for TMDB
     source_failure.dart — why a source failed; JSON reading
+    library/            — the user's ratings and watchlist; title snapshots
     work_key.dart       — building and parsing work_key
   sync/                 — file format, merging (pure functions), Drive transport
   features/
@@ -173,7 +175,9 @@ pointless. The error screen has a retry button.
 The loading order, so that the screen is useful right away:
 
 1. The mini snapshot from `works`, if there is one: title, year, poster, your
-   own score — instantly and without a network.
+   own score — instantly and without a network. *(Not yet: today a card
+   that isn't in the HTTP cache shows the error screen offline; planned for
+   Stage 6.)*
 2. The TMDB card (through the HTTP cache): overview, seasons, TMDB rating.
 3. External ratings from `external_ratings`: shown at once, even stale ones.
    In parallel, if they are older than 7 days and the budget allows, they are
@@ -200,18 +204,48 @@ a series — Kinopoisk, IMDb, TMDB; a season and an episode — IMDb and TMDB
 
 ---
 
-## Rating
+## Rating (Stage 3)
 
-- Input is a row of 19 values, 1.0…10.0 in steps of 0.5 (a snapping slider
-  or a grid of buttons — decided on the mockup). Tapping the current score
-  again doesn't delete it; deletion is a separate action with a confirmation.
+All writes of the user's own data go through `Library`
+(`lib/data/library/library.dart`); the screens never touch the tables.
+
+- Every card has a "My rating" block between the header and the external
+  ratings. It is built from the card's **lineage** — `WorkSnapshot`s of the
+  title and all its ancestors, series first — because a rating is saved with
+  all of them.
+- Input is a bottom sheet with 19 chips, 1…10 in steps of 0.5, and a note.
+  There is no pre-selected score: a default 7 would nudge the choice.
+  Tapping the selected chip keeps it; deletion is a separate action with a
+  confirmation. Your own score is shown as "8" or "8.5", without a trailing
+  ".0".
 - Saving is one transaction: `works` (the snapshot with all its ancestors) +
-  `ratings` + a tombstone in `watchlist`.
-- After saving — the **calibration sheet** (a bottom sheet): "The same",
-  "A bit higher", "A bit lower"; the queries are in
-  [data-model.md](data-model.md). Tapping another score in the sheet's header
-  changes the one just given, and the sheet rebuilds. The sheet doesn't open
-  if there are no other ratings of this kind.
+  `ratings` + a tombstone in `watchlist`. Saving the same score and note
+  again writes no new version — it would needlessly win a merge.
+- After a **new or changed score** — the **calibration sheet**: "A step
+  above", "Also N", "A step below"; the queries are in
+  [data-model.md](data-model.md). The −/+ buttons in its header move the
+  score just given by half a point, and the sheet rebuilds. The sheet doesn't
+  open if there are no other ratings of this kind; editing only the note
+  doesn't open it.
+- A series and a season show the average of their rated parts under the
+  score ("Your average over 4 episodes: 7.8"); seasons and episodes show
+  your score next to them in the lists.
+- Opening a card refreshes the snapshots that already exist (title in the
+  current language, poster) — never creating new ones and never touching a
+  rating's `updated_at`.
+
+## Lists (Stage 3)
+
+- **My ratings** — every live rating, joined with its snapshot and, for a
+  season or an episode, the series' and season's snapshots, so a row reads
+  "Game of Thrones · S1 · E3 · Lord Snow" with the season's poster. Filter by
+  kind, sort by date rated, score, year or title (`arrangeRatings`, a pure
+  function with tests; a season or an episode sorts under its series, in
+  number order). The chosen filter and order last while the app is open.
+- **Watchlist** — films and series, most recently added first. Removing is
+  instant with "Undo" in a snackbar; rating a title removes it by itself.
+- Both read the database through `watch()` streams, so they work offline and
+  update by themselves. A row opens the card inside its own tab.
 
 ---
 

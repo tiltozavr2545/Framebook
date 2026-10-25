@@ -40,3 +40,8 @@ extension Formatting on BuildContext {
 
 /// A 10-point rating with one decimal: Kinopoisk sends 8.501, TMDB 8.261.
 String formatScore(double value) => value.toStringAsFixed(1);
+
+/// Your own score from half points: "8" or "8.5" — the scale goes in steps
+/// of 0.5, so a trailing ".0" would only be noise.
+String formatMyScore(int scoreHalf) =>
+    scoreHalf.isEven ? '${scoreHalf ~/ 2}' : '${scoreHalf ~/ 2}.5';
