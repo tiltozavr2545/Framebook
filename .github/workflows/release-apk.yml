@@ -96,8 +96,11 @@ jobs:
           apk=build/app/outputs/flutter-apk/app-release.apk
           apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
           certs=$("$apksigner" verify --print-certs "$apk")
-          echo "$certs" | grep -E '^Signer #1 certificate (DN|SHA-1)'
-          sha1=$(echo "$certs" | awk -F': ' '/^Signer #1 certificate SHA-1 digest/ { print $2 }')
+          # The line prefix depends on the build-tools version ("Signer #1
+          # certificate …" in 35, "V2 Signer: certificate …" in 37), so only
+          # the part after it is matched. Exactly one certificate is allowed.
+          echo "$certs" | grep -E 'certificate (DN|SHA-1 digest): ' || true
+          sha1=$(echo "$certs" | sed -n 's/.*certificate SHA-1 digest: //p' | sort -u)
           if [ "$sha1" != "$EXPECTED_SHA1" ]; then
             echo "::error title=Wrong signing key::certificate SHA-1 $sha1, expected $EXPECTED_SHA1"
             exit 1
