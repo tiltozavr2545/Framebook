@@ -25,6 +25,12 @@ class SettingsScreen extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(Routes.sources),
           ),
+          ListTile(
+            leading: const Icon(Icons.cloud_sync_outlined),
+            title: Text(l10n.settingsSync),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(Routes.sync),
+          ),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.language),

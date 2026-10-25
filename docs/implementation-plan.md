@@ -189,22 +189,34 @@ Along the way:
 
 ## Stage 5 — Google Drive: sync and backup
 
-**Status:** not started
+**Status:** in progress — the code is done and tested; the Google Cloud
+project and the check on two phones are left.
 
 1. Google Cloud: a project, the Drive API, the consent screen, Android OAuth
-   clients for every signing key (see [operations.md](operations.md)).
-2. The file format and merging — pure functions; property-based tests for
-   convergence under a random order of syncs.
-3. The Drive transport: finding/creating the file in `appDataFolder`,
-   download, upload, a retry when `modifiedTime` changed, merging duplicates.
-4. Triggers: launch, returning to the app, a debounce after changes, a
-   button.
-5. The first sign-in dialog with counters; sign-out; deleting the data from
-   Drive.
-6. Daily copies (the last 7) and restoring from them.
-7. Export and import to a file (merge / replace).
+   clients for every signing key, and a Web client whose id the app signs
+   in with (see [operations.md](operations.md)).
+2. ✅ The file format and merging — pure functions
+   (`lib/data/sync/sync_file.dart`, `merge.dart`); property-based tests for
+   the merge's algebra and for convergence of three devices under random
+   edits and a random order of syncs (`test/data/sync_test.dart`).
+3. ✅ The Drive transport (`drive_remote.dart`) behind an interface, and the
+   pass itself (`sync_engine.dart`): finding/creating the file in
+   `appDataFolder`, download, upload, a retry when `modifiedTime` changed,
+   merging duplicates. Tested on an in-memory Drive.
+4. ✅ Triggers: launch, returning to the app, 30 s after a change, a button
+   (`sync_controller.dart`).
+5. ✅ The first sign-in dialog with counters; sign-out; deleting the data
+   from Drive (Settings → Sync and backup).
+6. ✅ Daily copies (the last 7) and restoring from them.
+7. ✅ Export and import to a file (merge / replace).
 8. A check on two phones: offline edits of the same film on both → syncs in
    different orders → the same result.
+
+Along the way:
+- The convergence test caught drift writing a data class with
+  `nullToAbsent`: an upsert left null columns out, so a winning version
+  with no note, or a revived tombstone, kept the stale local value. Rows are
+  written as full companions now — in sync and in the rating cache.
 
 ## Stage 6 — Polish and distribution
 

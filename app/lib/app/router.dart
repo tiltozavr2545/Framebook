@@ -10,6 +10,7 @@ import '../features/search/search_screen.dart';
 import '../features/settings/about_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/settings/sources_screen.dart';
+import '../features/settings/sync_screen.dart';
 import '../features/shell/shell_screen.dart';
 import '../features/stats/stats_screen.dart';
 import '../features/title/title_routes.dart';
@@ -24,6 +25,7 @@ abstract final class Routes {
   static const settings = '/settings';
   static const sources = '/settings/sources';
   static const about = '/settings/about';
+  static const sync = '/settings/sync';
 }
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -80,6 +82,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'sources',
             builder: (context, state) => const SourcesScreen(),
+          ),
+          GoRoute(
+            path: 'sync',
+            builder: (context, state) => const SyncScreen(),
           ),
           GoRoute(
             path: 'about',

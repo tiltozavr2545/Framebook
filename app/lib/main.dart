@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -15,6 +16,7 @@ import 'data/db/database_provider.dart';
 import 'data/library/library.dart';
 import 'data/response_cache.dart';
 import 'data/sources/tmdb/tmdb_client.dart';
+import 'data/sync/sync_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +30,7 @@ Future<void> main() async {
   final prefs = await SharedPreferences.getInstance();
   final keyStore = ApiKeyStore(SecureKeyStorage());
   final keys = await keyStore.load();
+  final package = await PackageInfo.fromPlatform();
   final cache = FileResponseCache(
     Directory(p.join((await getApplicationCacheDirectory()).path, 'http')),
   );
@@ -49,6 +52,10 @@ Future<void> main() async {
         apiKeyStoreProvider.overrideWithValue(keyStore),
         initialApiKeysProvider.overrideWithValue(keys),
         responseCacheProvider.overrideWithValue(cache),
+        // Written into the sync file (docs/sync.md, "File format").
+        appVersionProvider.overrideWithValue(
+          '${package.version}+${package.buildNumber}',
+        ),
       ],
       child: const FramebookApp(),
     ),

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/router.dart';
 import '../../data/background_refresh.dart';
+import '../../data/sync/sync_controller.dart';
 import '../../l10n/app_localizations.dart';
 
 /// Bottom navigation tabs, in display order.
@@ -33,10 +34,12 @@ class ShellScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Background refresh lives as long as the tabs do: not on onboarding,
+    // Background refresh and sync live as long as the tabs do: not on onboarding,
     // where there are no keys to refresh with. Listened to, not watched, so
     // its passes don't rebuild the shell.
     ref.listen(backgroundRefreshProvider, (_, _) {});
+    // Sync too: on launch, on returning to the app, after changes.
+    ref.listen(syncControllerProvider, (_, _) {});
     final l10n = AppLocalizations.of(context);
     return Scaffold(
       body: shell,

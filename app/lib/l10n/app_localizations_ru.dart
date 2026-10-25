@@ -559,4 +559,170 @@ class AppLocalizationsRu extends AppLocalizations {
   String statsDecade(String decade) {
     return '$decade-е';
   }
+
+  @override
+  String get settingsSync => 'Синхронизация и копии';
+
+  @override
+  String get syncDrive => 'Google Диск';
+
+  @override
+  String get syncIntro =>
+      'Оценки, заметки и список «Хочу посмотреть» хранятся в скрытой папке твоего Google Диска и объединяются между устройствами. Приложение видит только эту папку.';
+
+  @override
+  String get syncNotConfigured =>
+      'В этой сборке приложения вход через Google не настроен.';
+
+  @override
+  String get syncSignIn => 'Войти через Google';
+
+  @override
+  String syncSignedInAs(String email) {
+    return 'Вход выполнен: $email';
+  }
+
+  @override
+  String get syncNow => 'Синхронизировать';
+
+  @override
+  String get syncInProgress => 'Синхронизация…';
+
+  @override
+  String syncLast(String when) {
+    return 'Последняя синхронизация: $when';
+  }
+
+  @override
+  String get syncNever => 'Ещё не синхронизировано';
+
+  @override
+  String get syncErrorUnauthorized =>
+      'Доступ к Google Диску истёк. Войди заново.';
+
+  @override
+  String get syncErrorQuota =>
+      'Google Диск заполнен, синхронизация приостановлена. На этом устройстве всё работает.';
+
+  @override
+  String get syncErrorBroken =>
+      'Файл на Google Диске не читается. Его не трогали; можно восстановить ежедневную копию.';
+
+  @override
+  String get syncErrorTooNew =>
+      'Файл на Google Диске записан более новой версией Framebook. Обнови приложение, чтобы синхронизироваться.';
+
+  @override
+  String get syncErrorFailed =>
+      'Google Диск ответил с ошибкой. Синхронизация попробует позже.';
+
+  @override
+  String get syncSignInAgain => 'Войти заново';
+
+  @override
+  String get syncSignOut => 'Выйти';
+
+  @override
+  String get syncSignInFailed =>
+      'Не получилось войти в Google. Попробуй ещё раз.';
+
+  @override
+  String get syncOffline => 'Нет связи. Попробуй, когда появится интернет.';
+
+  @override
+  String get syncFirstTitle => 'Объединить с Google Диском?';
+
+  @override
+  String syncFirstBody(int device, int drive, int merged) {
+    return 'Оценок на устройстве: $device. На Google Диске: $drive. После объединения: $merged. Ничего не потеряется: для каждого тайтла побеждает последнее изменение.';
+  }
+
+  @override
+  String get syncMerge => 'Объединить';
+
+  @override
+  String get syncBackups => 'Ежедневные копии';
+
+  @override
+  String get syncBackupsHint =>
+      'Google Диск хранит копию за каждый из последних 7 дней. Восстановление копии заменяет всё на всех твоих устройствах.';
+
+  @override
+  String get syncBackupsEmpty =>
+      'Копий пока нет: копия делается при первой синхронизации за день.';
+
+  @override
+  String get syncRestore => 'Восстановить';
+
+  @override
+  String syncRestoreTitle(String date) {
+    return 'Восстановить копию от $date?';
+  }
+
+  @override
+  String get syncRestoreBody =>
+      'Всё, что оценено или изменено после неё, откатится на всех твоих устройствах.';
+
+  @override
+  String get syncRestored => 'Копия восстановлена';
+
+  @override
+  String get syncDelete => 'Удалить данные с Google Диска';
+
+  @override
+  String get syncDeleteTitle => 'Удалить данные с Google Диска?';
+
+  @override
+  String get syncDeleteBody =>
+      'Файл и ежедневные копии будут удалены, а это устройство выйдет из аккаунта. Оценки на устройствах останутся. Другое устройство, где вход ещё выполнен, вернёт свои данные при следующей синхронизации.';
+
+  @override
+  String get syncDeleted => 'Удалено с Google Диска';
+
+  @override
+  String get backupFile => 'Экспорт и импорт';
+
+  @override
+  String get exportFile => 'Экспорт в файл';
+
+  @override
+  String get exportFileHint =>
+      'Всё, что ты оценил, в одном файле. Работает без Google.';
+
+  @override
+  String get exportDone => 'Сохранено';
+
+  @override
+  String get importFile => 'Импорт из файла';
+
+  @override
+  String get importTitle => 'Импорт оценок';
+
+  @override
+  String importBody(int device, int inFile, int merged) {
+    return 'Оценок на устройстве: $device. В файле: $inFile. После объединения: $merged.';
+  }
+
+  @override
+  String get importMerge => 'Объединить';
+
+  @override
+  String get importReplace => 'Заменить всё';
+
+  @override
+  String get importReplaceTitle => 'Заменить всё содержимым файла?';
+
+  @override
+  String get importReplaceBody =>
+      'Оценки, которых нет в файле, будут удалены на всех твоих устройствах.';
+
+  @override
+  String get importBroken => 'Этот файл не читается.';
+
+  @override
+  String get importTooNew =>
+      'Файл записан более новой версией Framebook. Обнови приложение, чтобы его импортировать.';
+
+  @override
+  String get importDone => 'Импортировано';
 }

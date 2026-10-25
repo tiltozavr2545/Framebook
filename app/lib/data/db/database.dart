@@ -111,8 +111,13 @@ class AppDatabase extends _$AppDatabase {
   Future<List<ExternalRating>> externalRatingsFor(String workKey) =>
       (select(externalRatings)..where((r) => r.workKey.equals(workKey))).get();
 
-  Future<void> putExternalRatings(List<ExternalRating> rows) =>
-      batch((b) => b.insertAllOnConflictUpdate(externalRatings, rows));
+  /// Whole rows, nulls included: a data class passed as is would leave a
+  /// null `value` out of the update and keep an old one under a new status.
+  Future<void> putExternalRatings(List<ExternalRating> rows) => batch(
+    (b) => b.insertAllOnConflictUpdate(externalRatings, [
+      for (final row in rows) row.toCompanion(false),
+    ]),
+  );
 
   /// A known Kinopoisk id exists only for what is in `works` (rated or on
   /// the watchlist). Everything else is matched again: a lookup by imdb id

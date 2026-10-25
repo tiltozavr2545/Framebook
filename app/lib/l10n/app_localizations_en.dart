@@ -554,4 +554,169 @@ class AppLocalizationsEn extends AppLocalizations {
   String statsDecade(String decade) {
     return '${decade}s';
   }
+
+  @override
+  String get settingsSync => 'Sync and backup';
+
+  @override
+  String get syncDrive => 'Google Drive';
+
+  @override
+  String get syncIntro =>
+      'Your ratings, notes and watchlist are kept in a hidden folder of your own Google Drive and merged between your devices. The app sees only that folder.';
+
+  @override
+  String get syncNotConfigured =>
+      'Google sign-in isn\'t set up in this build of the app.';
+
+  @override
+  String get syncSignIn => 'Sign in with Google';
+
+  @override
+  String syncSignedInAs(String email) {
+    return 'Signed in as $email';
+  }
+
+  @override
+  String get syncNow => 'Sync now';
+
+  @override
+  String get syncInProgress => 'Syncing…';
+
+  @override
+  String syncLast(String when) {
+    return 'Last synced $when';
+  }
+
+  @override
+  String get syncNever => 'Not synced yet';
+
+  @override
+  String get syncErrorUnauthorized =>
+      'Access to Google Drive has expired. Sign in again.';
+
+  @override
+  String get syncErrorQuota =>
+      'Your Google Drive is full, so sync is paused. Everything still works on this device.';
+
+  @override
+  String get syncErrorBroken =>
+      'The file in Google Drive can\'t be read. It was left as it is; you can restore a daily copy.';
+
+  @override
+  String get syncErrorTooNew =>
+      'The file in Google Drive was written by a newer Framebook. Update the app to sync.';
+
+  @override
+  String get syncErrorFailed =>
+      'Google Drive didn\'t answer properly. Sync will try again later.';
+
+  @override
+  String get syncSignInAgain => 'Sign in again';
+
+  @override
+  String get syncSignOut => 'Sign out';
+
+  @override
+  String get syncSignInFailed => 'Couldn\'t sign in to Google. Try again.';
+
+  @override
+  String get syncOffline => 'No connection. Try again when you\'re online.';
+
+  @override
+  String get syncFirstTitle => 'Merge with Google Drive?';
+
+  @override
+  String syncFirstBody(int device, int drive, int merged) {
+    return 'Ratings on this device: $device. In Google Drive: $drive. After merging: $merged. Nothing is lost: for every title the latest change wins.';
+  }
+
+  @override
+  String get syncMerge => 'Merge';
+
+  @override
+  String get syncBackups => 'Daily copies';
+
+  @override
+  String get syncBackupsHint =>
+      'Google Drive keeps a copy for each of the last 7 days. Restoring one replaces everything on all your devices.';
+
+  @override
+  String get syncBackupsEmpty =>
+      'No copies yet: one is made on the first sync of each day.';
+
+  @override
+  String get syncRestore => 'Restore';
+
+  @override
+  String syncRestoreTitle(String date) {
+    return 'Restore the copy of $date?';
+  }
+
+  @override
+  String get syncRestoreBody =>
+      'Everything rated or changed after it will be undone on all your devices.';
+
+  @override
+  String get syncRestored => 'Copy restored';
+
+  @override
+  String get syncDelete => 'Delete data from Google Drive';
+
+  @override
+  String get syncDeleteTitle => 'Delete the data from Google Drive?';
+
+  @override
+  String get syncDeleteBody =>
+      'The file and the daily copies will be deleted, and this device will sign out. Your ratings stay on your devices. Another device that is still signed in will put its data back on its next sync.';
+
+  @override
+  String get syncDeleted => 'Deleted from Google Drive';
+
+  @override
+  String get backupFile => 'Export and import';
+
+  @override
+  String get exportFile => 'Export to a file';
+
+  @override
+  String get exportFileHint =>
+      'Everything you rated, in one file. Works without Google.';
+
+  @override
+  String get exportDone => 'Saved';
+
+  @override
+  String get importFile => 'Import from a file';
+
+  @override
+  String get importTitle => 'Import ratings';
+
+  @override
+  String importBody(int device, int inFile, int merged) {
+    return 'Ratings on this device: $device. In the file: $inFile. After merging: $merged.';
+  }
+
+  @override
+  String get importMerge => 'Merge';
+
+  @override
+  String get importReplace => 'Replace everything';
+
+  @override
+  String get importReplaceTitle => 'Replace everything with the file?';
+
+  @override
+  String get importReplaceBody =>
+      'Ratings that aren\'t in the file will be deleted on all your devices.';
+
+  @override
+  String get importBroken => 'This file can\'t be read.';
+
+  @override
+  String get importTooNew =>
+      'This file was written by a newer Framebook. Update the app to import it.';
+
+  @override
+  String get importDone => 'Imported';
 }

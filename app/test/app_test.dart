@@ -14,22 +14,30 @@ import 'package:framebook/data/http.dart';
 import 'package:framebook/data/library/library.dart';
 import 'package:framebook/data/library/work_snapshot.dart';
 import 'package:framebook/data/response_cache.dart';
+import 'package:framebook/data/sync/google_account.dart';
+import 'package:framebook/data/sync/sync_file.dart';
+import 'package:framebook/data/sync/sync_store.dart';
 import 'package:framebook/data/work_key.dart';
 import 'package:framebook/shared/poster.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'support/api_fixtures.dart';
+import 'support/fake_google.dart';
 import 'support/fake_http.dart';
+import 'support/memory_remote.dart';
 import 'support/memory_key_storage.dart';
 
 void main() {
   late MemoryKeyStorage storage;
+  late MemoryRemote drive;
 
   Future<void> pumpApp(
     WidgetTester tester, {
     ApiKeys keys = ApiKeys.empty,
     Future<void> Function(Library library)? seed,
+    GoogleAccount? google,
   }) async {
+    drive = MemoryRemote();
     // A phone-sized screen (360×780 dp) instead of the default 800×600: the
     // layouts are made for a phone, and a narrow screen catches overflows.
     tester.view.physicalSize = const Size(1080, 2340);
@@ -56,6 +64,9 @@ void main() {
           deviceIdProvider.overrideWithValue('test'),
           // Its passes run on timers; it has tests of its own.
           backgroundRefreshEnabledProvider.overrideWithValue(false),
+          googleAccountProvider.overrideWithValue(
+            google ?? FakeGoogleAccount(drive, configured: false),
+          ),
           sharedPreferencesProvider.overrideWithValue(prefs),
           apiKeyStoreProvider.overrideWithValue(ApiKeyStore(storage)),
           initialApiKeysProvider.overrideWithValue(keys),
@@ -576,5 +587,72 @@ void main() {
     );
     expect(find.text('Боевик · 1 rating'), findsOneWidget);
     expect(find.text('2010s · 1 rating'), findsOneWidget);
+  });
+
+  cardTest('signing in merges with Google Drive after a dialog', (
+    tester,
+  ) async {
+    // Another device already put the Matrix in Drive.
+    final other = MemoryRemote();
+    await tester.runAsync(() async {
+      final db = AppDatabase(NativeDatabase.memory());
+      await matrixRated(Library(db, deviceId: 'other'), 18);
+      other.put(
+        SyncFile.name,
+        SyncFile.encode(
+          await SyncStore(db).read(),
+          writtenAt: 1,
+          writtenBy: 'other',
+          appVersion: 'test',
+        ),
+      );
+      await db.close();
+    });
+    await pumpApp(
+      tester,
+      keys: tmdbOnly,
+      seed: (library) => inceptionRated(library, 17),
+      google: FakeGoogleAccount(other),
+    );
+
+    go(tester, Routes.sync);
+    await settle(tester);
+    await tester.tap(find.text('Sign in with Google'));
+    await settle(tester);
+
+    expect(find.text('Merge with Google Drive?'), findsOneWidget);
+    expect(
+      find.textContaining(
+        'Ratings on this device: 1. In Google Drive: 1. After merging: 2.',
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Merge'));
+    await settle(tester);
+    expect(find.text('Signed in as me@example.com'), findsOneWidget);
+    expect(find.textContaining('Last synced'), findsOneWidget);
+
+    // Both films are here now, and Drive has both too.
+    go(tester, Routes.ratings);
+    await settle(tester);
+    expect(inList('Матрица'), findsOneWidget);
+    expect(inList('Начало'), findsOneWidget);
+    final file = SyncFile.decode(
+      other.files.values.firstWhere((f) => f.name == SyncFile.name).bytes,
+    );
+    expect(file.liveRatings, 2);
+  });
+
+  cardTest('without a Google setup the screen says so', (tester) async {
+    await pumpApp(tester, keys: tmdbOnly);
+    await tester.tap(find.byTooltip('Settings'));
+    await settle(tester);
+    await tester.tap(find.text('Sync and backup'));
+    await settle(tester);
+    expect(
+      find.text("Google sign-in isn't set up in this build of the app."),
+      findsOneWidget,
+    );
+    expect(find.text('Export to a file'), findsOneWidget);
   });
 }

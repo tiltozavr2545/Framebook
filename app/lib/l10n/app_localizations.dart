@@ -979,6 +979,288 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{decade}s'**
   String statsDecade(String decade);
+
+  /// No description provided for @settingsSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync and backup'**
+  String get settingsSync;
+
+  /// No description provided for @syncDrive.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Drive'**
+  String get syncDrive;
+
+  /// No description provided for @syncIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Your ratings, notes and watchlist are kept in a hidden folder of your own Google Drive and merged between your devices. The app sees only that folder.'**
+  String get syncIntro;
+
+  /// No description provided for @syncNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Google sign-in isn\'t set up in this build of the app.'**
+  String get syncNotConfigured;
+
+  /// No description provided for @syncSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Google'**
+  String get syncSignIn;
+
+  /// No description provided for @syncSignedInAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in as {email}'**
+  String syncSignedInAs(String email);
+
+  /// No description provided for @syncNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync now'**
+  String get syncNow;
+
+  /// No description provided for @syncInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing…'**
+  String get syncInProgress;
+
+  /// No description provided for @syncLast.
+  ///
+  /// In en, this message translates to:
+  /// **'Last synced {when}'**
+  String syncLast(String when);
+
+  /// No description provided for @syncNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Not synced yet'**
+  String get syncNever;
+
+  /// No description provided for @syncErrorUnauthorized.
+  ///
+  /// In en, this message translates to:
+  /// **'Access to Google Drive has expired. Sign in again.'**
+  String get syncErrorUnauthorized;
+
+  /// No description provided for @syncErrorQuota.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Google Drive is full, so sync is paused. Everything still works on this device.'**
+  String get syncErrorQuota;
+
+  /// No description provided for @syncErrorBroken.
+  ///
+  /// In en, this message translates to:
+  /// **'The file in Google Drive can\'t be read. It was left as it is; you can restore a daily copy.'**
+  String get syncErrorBroken;
+
+  /// No description provided for @syncErrorTooNew.
+  ///
+  /// In en, this message translates to:
+  /// **'The file in Google Drive was written by a newer Framebook. Update the app to sync.'**
+  String get syncErrorTooNew;
+
+  /// No description provided for @syncErrorFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Drive didn\'t answer properly. Sync will try again later.'**
+  String get syncErrorFailed;
+
+  /// No description provided for @syncSignInAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in again'**
+  String get syncSignInAgain;
+
+  /// No description provided for @syncSignOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get syncSignOut;
+
+  /// No description provided for @syncSignInFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t sign in to Google. Try again.'**
+  String get syncSignInFailed;
+
+  /// No description provided for @syncOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'No connection. Try again when you\'re online.'**
+  String get syncOffline;
+
+  /// No description provided for @syncFirstTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge with Google Drive?'**
+  String get syncFirstTitle;
+
+  /// No description provided for @syncFirstBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Ratings on this device: {device}. In Google Drive: {drive}. After merging: {merged}. Nothing is lost: for every title the latest change wins.'**
+  String syncFirstBody(int device, int drive, int merged);
+
+  /// No description provided for @syncMerge.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge'**
+  String get syncMerge;
+
+  /// No description provided for @syncBackups.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily copies'**
+  String get syncBackups;
+
+  /// No description provided for @syncBackupsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Drive keeps a copy for each of the last 7 days. Restoring one replaces everything on all your devices.'**
+  String get syncBackupsHint;
+
+  /// No description provided for @syncBackupsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No copies yet: one is made on the first sync of each day.'**
+  String get syncBackupsEmpty;
+
+  /// No description provided for @syncRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get syncRestore;
+
+  /// No description provided for @syncRestoreTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore the copy of {date}?'**
+  String syncRestoreTitle(String date);
+
+  /// No description provided for @syncRestoreBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything rated or changed after it will be undone on all your devices.'**
+  String get syncRestoreBody;
+
+  /// No description provided for @syncRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy restored'**
+  String get syncRestored;
+
+  /// No description provided for @syncDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete data from Google Drive'**
+  String get syncDelete;
+
+  /// No description provided for @syncDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the data from Google Drive?'**
+  String get syncDeleteTitle;
+
+  /// No description provided for @syncDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The file and the daily copies will be deleted, and this device will sign out. Your ratings stay on your devices. Another device that is still signed in will put its data back on its next sync.'**
+  String get syncDeleteBody;
+
+  /// No description provided for @syncDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted from Google Drive'**
+  String get syncDeleted;
+
+  /// No description provided for @backupFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Export and import'**
+  String get backupFile;
+
+  /// No description provided for @exportFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Export to a file'**
+  String get exportFile;
+
+  /// No description provided for @exportFileHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything you rated, in one file. Works without Google.'**
+  String get exportFileHint;
+
+  /// No description provided for @exportDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get exportDone;
+
+  /// No description provided for @importFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Import from a file'**
+  String get importFile;
+
+  /// No description provided for @importTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import ratings'**
+  String get importTitle;
+
+  /// No description provided for @importBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Ratings on this device: {device}. In the file: {inFile}. After merging: {merged}.'**
+  String importBody(int device, int inFile, int merged);
+
+  /// No description provided for @importMerge.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge'**
+  String get importMerge;
+
+  /// No description provided for @importReplace.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace everything'**
+  String get importReplace;
+
+  /// No description provided for @importReplaceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace everything with the file?'**
+  String get importReplaceTitle;
+
+  /// No description provided for @importReplaceBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Ratings that aren\'t in the file will be deleted on all your devices.'**
+  String get importReplaceBody;
+
+  /// No description provided for @importBroken.
+  ///
+  /// In en, this message translates to:
+  /// **'This file can\'t be read.'**
+  String get importBroken;
+
+  /// No description provided for @importTooNew.
+  ///
+  /// In en, this message translates to:
+  /// **'This file was written by a newer Framebook. Update the app to import it.'**
+  String get importTooNew;
+
+  /// No description provided for @importDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported'**
+  String get importDone;
 }
 
 class _AppLocalizationsDelegate

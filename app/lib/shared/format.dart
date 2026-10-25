@@ -24,6 +24,11 @@ extension Formatting on BuildContext {
     _locale,
   ).format(DateTime.fromMillisecondsSinceEpoch(millis, isUtc: true).toLocal());
 
+  /// UTC ms → a date and time in local time: "Oct 25, 14:32".
+  String formatDateTime(int millis) => DateFormat.MMMd(_locale).add_Hm().format(
+    DateTime.fromMillisecondsSinceEpoch(millis, isUtc: true).toLocal(),
+  );
+
   /// 816869 → "817K" / "817 тыс.".
   String formatCount(int count) =>
       NumberFormat.compact(locale: _locale).format(count);

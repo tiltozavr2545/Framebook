@@ -78,6 +78,9 @@ silently drift away from the code.
 | shared_preferences | 2.5.3 | |
 | google_sign_in | 7.2.0 | the new authorization API |
 | googleapis / extension_google_sign_in_as_googleapis_auth | 15.0.0 / 3.0.0 | |
+| googleapis_auth / http | 2.0.0 / 1.6.0 | direct since Stage 5: Drive errors and the authenticated client |
+| file_picker | 11.0.3 | export ("Save to…") and import of the sync file |
+| package_info_plus | 9.0.1 | the app version written into the sync file |
 | fl_chart | 1.0.0 | **ceiling**: 1.1 needs vector_math 2.2 (`Matrix4.translateByDouble`), Flutter 3.32 pins 2.1.4 |
 | uuid / intl | 4.6.0 / 0.20.2 | |
 
