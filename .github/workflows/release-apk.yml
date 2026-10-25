@@ -106,9 +106,6 @@ jobs:
             exit 1
           fi
 
-      # The .sha256 file next to the APK lets anyone check a download: a
-      # file corrupted on the way has the right size but the wrong checksum,
-      # and Android only says "the package is invalid" (docs/operations.md).
       - name: Create GitHub release with the APK
         env:
           GH_TOKEN: ${{ github.token }}
@@ -116,11 +113,9 @@ jobs:
           NAME: ${{ steps.version.outputs.name }}
         run: |
           set -eu
-          dir=build/app/outputs/flutter-apk
-          apk="framebook-$NAME.apk"
-          mv "$dir/app-release.apk" "$dir/$apk"
-          (cd "$dir" && sha256sum "$apk" > "$apk.sha256" && cat "$apk.sha256")
-          gh release create "$TAG" "$dir/$apk" "$dir/$apk.sha256" --title "Framebook $NAME" --generate-notes
+          out="build/app/outputs/flutter-apk/framebook-$NAME.apk"
+          mv build/app/outputs/flutter-apk/app-release.apk "$out"
+          gh release create "$TAG" "$out" --title "Framebook $NAME" --generate-notes
 
       - name: Remove signing files
         if: always()

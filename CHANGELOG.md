@@ -96,5 +96,4 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
   how many ratings), the average by genre and by decade; a kind filter.
   Works offline, except genre names the first time.
 - Releases: the workflow verifies the APK's signature and certificate before
-  publishing and adds a `.sha256` next to it — 0.3.0 failing to install was
-  a download corrupted on the way, not a broken release.
+  publishing.

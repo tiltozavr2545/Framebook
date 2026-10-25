@@ -182,12 +182,10 @@ Along the way:
   its background share. It is off in widget tests: its passes run on timers.
 - fl_chart is pinned at 1.0.0: 1.1 calls `Matrix4.translateByDouble` from
   vector_math 2.2, and Flutter 3.32 pins 2.1.4.
-- 0.3.0 "would not install, the package is invalid" turned out to be a
-  download corrupted on the way to the phone: the right size, a different
-  SHA-256, and Android reports a failed v2 signature digest as an invalid
-  package. The release workflow now verifies the signature and the
-  certificate before publishing and puts a `.sha256` next to the APK
-  (operations.md, "Distribution").
+- 0.3.0 "would not install, the package is invalid" was a download broken
+  by a network problem, not a broken release; downloading it again fixed it.
+  The release workflow now verifies the APK's signature and certificate
+  before publishing (operations.md, "Distribution").
 
 ## Stage 5 — Google Drive: sync and backup
 
