@@ -107,7 +107,7 @@ abstract class AppLocalizations {
   /// No description provided for @tabSearch.
   ///
   /// In en, this message translates to:
-  /// **'Search'**
+  /// **'Discover'**
   String get tabSearch;
 
   /// No description provided for @tabRatings.
@@ -1255,6 +1255,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your first rating of this kind — nothing to compare with yet.'**
   String get reelFirst;
+
+  /// No description provided for @navDiscover.
+  ///
+  /// In en, this message translates to:
+  /// **'Discover'**
+  String get navDiscover;
+
+  /// No description provided for @navRatings.
+  ///
+  /// In en, this message translates to:
+  /// **'Ratings'**
+  String get navRatings;
+
+  /// No description provided for @navWatchlist.
+  ///
+  /// In en, this message translates to:
+  /// **'Watchlist'**
+  String get navWatchlist;
+
+  /// No description provided for @navStats.
+  ///
+  /// In en, this message translates to:
+  /// **'Stats'**
+  String get navStats;
+
+  /// No description provided for @shelfForYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Like your favourites'**
+  String get shelfForYou;
+
+  /// No description provided for @shelfTrending.
+  ///
+  /// In en, this message translates to:
+  /// **'Trending this week'**
+  String get shelfTrending;
+
+  /// No description provided for @shelfNowPlaying.
+  ///
+  /// In en, this message translates to:
+  /// **'In cinemas now'**
+  String get shelfNowPlaying;
+
+  /// No description provided for @shelfBest.
+  ///
+  /// In en, this message translates to:
+  /// **'Best of all time'**
+  String get shelfBest;
+
+  /// No description provided for @shelvesOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'No connection. The shelves come from TMDB and will be here once you\'re online.'**
+  String get shelvesOffline;
 }
 
 class _AppLocalizationsDelegate

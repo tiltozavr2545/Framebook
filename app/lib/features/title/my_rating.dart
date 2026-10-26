@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/theme.dart';
 import '../../data/db/database.dart';
 import '../../data/library/library.dart';
 import '../../data/library/work_snapshot.dart';
@@ -252,31 +253,37 @@ class _Rated extends StatelessWidget {
   }
 }
 
-/// The user's score next to a season or an episode in a list; nothing if it
-/// isn't rated.
+/// Your score as a grease-pencil mark: next to a season or an episode in a
+/// list, or on a poster ([onPoster]) on a lit tag. Nothing if it isn't rated.
 class MyScoreBadge extends ConsumerWidget {
-  const MyScoreBadge(this.workKey, {super.key});
+  const MyScoreBadge(this.workKey, {super.key, this.onPoster = false});
 
   final WorkKey workKey;
+  final bool onPoster;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final rating = ref.watch(myRatingProvider(workKey)).value;
     if (rating == null) return const SizedBox.shrink();
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final figure = Text(
+      formatMyScore(rating.scoreHalf),
+      style: theme.textTheme.headlineSmall?.copyWith(
+        color: theme.colorScheme.primary,
+        fontWeight: FontWeight.w800,
+        height: 1,
+      ),
+    );
+    if (!onPoster) {
+      return Padding(padding: const EdgeInsets.only(right: 8), child: figure);
+    }
     return Container(
-      margin: const EdgeInsets.only(right: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.fromLTRB(6, 3, 6, 2),
       decoration: BoxDecoration(
-        color: scheme.primaryContainer,
-        borderRadius: BorderRadius.circular(8),
+        color: Reel.of(context).gate,
+        borderRadius: BorderRadius.circular(4),
       ),
-      child: Text(
-        formatMyScore(rating.scoreHalf),
-        style: Theme.of(
-          context,
-        ).textTheme.labelLarge?.copyWith(color: scheme.onPrimaryContainer),
-      ),
+      child: figure,
     );
   }
 }

@@ -12,7 +12,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get appTitle => 'Framebook';
 
   @override
-  String get tabSearch => 'Поиск';
+  String get tabSearch => 'Обзор';
 
   @override
   String get tabRatings => 'Мои оценки';
@@ -724,4 +724,32 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get reelFirst =>
       'Это твоя первая оценка такого типа — сравнивать пока не с чем.';
+
+  @override
+  String get navDiscover => 'Обзор';
+
+  @override
+  String get navRatings => 'Оценки';
+
+  @override
+  String get navWatchlist => 'Посмотреть';
+
+  @override
+  String get navStats => 'Статистика';
+
+  @override
+  String get shelfForYou => 'Похоже на твои любимые';
+
+  @override
+  String get shelfTrending => 'В тренде на неделе';
+
+  @override
+  String get shelfNowPlaying => 'Сейчас в кино';
+
+  @override
+  String get shelfBest => 'Лучшее всех времён';
+
+  @override
+  String get shelvesOffline =>
+      'Нет связи. Подборки приходят из TMDB и появятся, когда будет интернет.';
 }

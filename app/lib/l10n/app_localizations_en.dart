@@ -12,7 +12,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'Framebook';
 
   @override
-  String get tabSearch => 'Search';
+  String get tabSearch => 'Discover';
 
   @override
   String get tabRatings => 'My ratings';
@@ -718,4 +718,32 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get reelFirst =>
       'Your first rating of this kind — nothing to compare with yet.';
+
+  @override
+  String get navDiscover => 'Discover';
+
+  @override
+  String get navRatings => 'Ratings';
+
+  @override
+  String get navWatchlist => 'Watchlist';
+
+  @override
+  String get navStats => 'Stats';
+
+  @override
+  String get shelfForYou => 'Like your favourites';
+
+  @override
+  String get shelfTrending => 'Trending this week';
+
+  @override
+  String get shelfNowPlaying => 'In cinemas now';
+
+  @override
+  String get shelfBest => 'Best of all time';
+
+  @override
+  String get shelvesOffline =>
+      'No connection. The shelves come from TMDB and will be here once you\'re online.';
 }

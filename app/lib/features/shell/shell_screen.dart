@@ -9,7 +9,7 @@ import '../../l10n/app_localizations.dart';
 
 /// Bottom navigation tabs, in display order.
 enum AppTab {
-  search(Routes.search, Icons.search),
+  search(Routes.search, Icons.explore_outlined),
   ratings(Routes.ratings, Icons.star_outline),
   watchlist(Routes.watchlist, Icons.bookmark_outline),
   stats(Routes.stats, Icons.insights_outlined);
@@ -19,11 +19,12 @@ enum AppTab {
   final String path;
   final IconData icon;
 
+  /// The short name under the icon; screens carry the full one.
   String label(AppLocalizations l10n) => switch (this) {
-    AppTab.search => l10n.tabSearch,
-    AppTab.ratings => l10n.tabRatings,
-    AppTab.watchlist => l10n.tabWatchlist,
-    AppTab.stats => l10n.tabStats,
+    AppTab.search => l10n.navDiscover,
+    AppTab.ratings => l10n.navRatings,
+    AppTab.watchlist => l10n.navWatchlist,
+    AppTab.stats => l10n.navStats,
   };
 }
 

@@ -3,7 +3,7 @@
 
   "appTitle": "Framebook",
 
-  "tabSearch": "Search",
+  "tabSearch": "Discover",
   "tabRatings": "My ratings",
   "tabWatchlist": "Watchlist",
   "tabStats": "Stats",
@@ -245,5 +245,15 @@
   "importDone": "Imported",
 
   "reelHint": "Pull the film to choose a score. Your other ratings of this kind show up here as it moves.",
-  "reelFirst": "Your first rating of this kind — nothing to compare with yet."
+  "reelFirst": "Your first rating of this kind — nothing to compare with yet.",
+
+  "navDiscover": "Discover",
+  "navRatings": "Ratings",
+  "navWatchlist": "Watchlist",
+  "navStats": "Stats",
+  "shelfForYou": "Like your favourites",
+  "shelfTrending": "Trending this week",
+  "shelfNowPlaying": "In cinemas now",
+  "shelfBest": "Best of all time",
+  "shelvesOffline": "No connection. The shelves come from TMDB and will be here once you're online."
 }

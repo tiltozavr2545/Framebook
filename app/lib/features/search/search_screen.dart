@@ -12,7 +12,10 @@ import '../../shared/poster.dart';
 import '../title/title_layout.dart';
 import '../title/title_routes.dart';
 import 'search_controller.dart';
+import 'shelves.dart';
 
+/// The Discover tab (Stage 6): a search field on top and, while it is empty,
+/// shelves to browse; typing turns the shelves into search results.
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
 
@@ -34,60 +37,80 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
     final search = ref.watch(searchProvider);
     final notifier = ref.read(searchProvider.notifier);
 
     return Scaffold(
-      appBar: AppBar(
-        title: TextField(
-          controller: _controller,
-          textInputAction: TextInputAction.search,
-          decoration: InputDecoration(
-            hintText: l10n.searchHint,
-            border: InputBorder.none,
-          ),
-          onChanged: notifier.typed,
-          onSubmitted: notifier.submit,
-        ),
-        actions: [
-          ListenableBuilder(
-            listenable: _controller,
-            builder: (context, _) => _controller.text.isEmpty
-                ? const SizedBox.shrink()
-                : IconButton(
-                    icon: const Icon(Icons.close),
-                    tooltip: l10n.searchClear,
-                    onPressed: () {
-                      _controller.clear();
-                      notifier.typed('');
-                    },
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 8, 0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l10n.tabSearch,
+                      style: theme.textTheme.headlineLarge,
+                    ),
                   ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: l10n.settingsTitle,
-            onPressed: () => context.push(Routes.settings),
-          ),
-        ],
+                  IconButton(
+                    icon: const Icon(Icons.settings_outlined),
+                    tooltip: l10n.settingsTitle,
+                    onPressed: () => context.push(Routes.settings),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              child: TextField(
+                controller: _controller,
+                textInputAction: TextInputAction.search,
+                decoration: InputDecoration(
+                  hintText: l10n.searchHint,
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: ListenableBuilder(
+                    listenable: _controller,
+                    builder: (context, _) => _controller.text.isEmpty
+                        ? const SizedBox.shrink()
+                        : IconButton(
+                            icon: const Icon(Icons.close),
+                            tooltip: l10n.searchClear,
+                            onPressed: () {
+                              _controller.clear();
+                              notifier.typed('');
+                            },
+                          ),
+                  ),
+                ),
+                onChanged: notifier.typed,
+                onSubmitted: notifier.submit,
+              ),
+            ),
+            Expanded(
+              child: switch (search) {
+                SearchState(query: '') => const Shelves(),
+                SearchState(results: [], loading: true) => const Center(
+                  child: CircularProgressIndicator(),
+                ),
+                SearchState(results: [], :final failure?) => FailureView(
+                  error: SourceException(failure),
+                  onRetry: notifier.retry,
+                ),
+                SearchState(results: [], hasMore: false) => _Message(
+                  icon: Icons.search_off,
+                  text: l10n.searchNothing(search.query),
+                ),
+                _ => _Results(search: search),
+              },
+            ),
+          ],
+        ),
       ),
-      body: switch (search) {
-        SearchState(query: '') => _Message(
-          icon: Icons.search,
-          text: l10n.searchEmpty,
-        ),
-        SearchState(results: [], loading: true) => const Center(
-          child: CircularProgressIndicator(),
-        ),
-        SearchState(results: [], :final failure?) => FailureView(
-          error: SourceException(failure),
-          onRetry: notifier.retry,
-        ),
-        SearchState(results: [], hasMore: false) => _Message(
-          icon: Icons.search_off,
-          text: l10n.searchNothing(search.query),
-        ),
-        _ => _Results(search: search),
-      },
     );
   }
 }

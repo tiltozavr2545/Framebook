@@ -86,9 +86,10 @@ void main() {
   FilledButton continueButton(WidgetTester tester) => tester
       .widget<FilledButton>(find.widgetWithText(FilledButton, 'Continue'));
 
-  /// A scenario with a card open. The tree is unmounted inside the test: when
-  /// closing a `watch()` stream drift schedules a Timer, and the pending
-  /// timers check runs before addTearDown.
+  /// Every scenario: the tree is unmounted inside the test. When closing a
+  /// `watch()` stream drift schedules a Timer, and the pending timers check
+  /// runs before addTearDown — and since Discover watches your ratings,
+  /// every screen past onboarding has such a stream.
   void cardTest(String description, Future<void> Function(WidgetTester) body) =>
       testWidgets(description, (tester) async {
         await body(tester);
@@ -96,7 +97,7 @@ void main() {
         await tester.pump(const Duration(milliseconds: 1));
       });
 
-  testWidgets('without a TMDB key the app opens on onboarding', (tester) async {
+  cardTest('without a TMDB key the app opens on onboarding', (tester) async {
     await pumpApp(tester);
 
     expect(find.text('Welcome to Framebook'), findsOneWidget);
@@ -105,7 +106,7 @@ void main() {
     expect(find.byType(NavigationBar), findsNothing);
   });
 
-  testWidgets('a checked TMDB key unlocks the app', (tester) async {
+  cardTest('a checked TMDB key unlocks the app', (tester) async {
     await pumpApp(tester);
 
     await tester.enterText(find.byType(TextField).first, 'eyJtoken');
@@ -120,7 +121,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(NavigationBar), findsOneWidget);
-    expect(find.text('Find a film or series by title.'), findsOneWidget);
+    expect(find.text('Trending this week'), findsOneWidget);
   });
 
   cardTest('with a TMDB key the app opens on the tabs', (tester) async {
@@ -133,7 +134,7 @@ void main() {
     );
 
     expect(find.byType(NavigationBar), findsOneWidget);
-    for (final label in ['Search', 'My ratings', 'Watchlist', 'Stats']) {
+    for (final label in ['Discover', 'Ratings', 'Watchlist', 'Stats']) {
       expect(
         find.descendant(
           of: find.byType(NavigationBar),
@@ -151,7 +152,7 @@ void main() {
     );
   });
 
-  testWidgets('removing the TMDB key in settings returns to onboarding', (
+  cardTest('removing the TMDB key in settings returns to onboarding', (
     tester,
   ) async {
     await pumpApp(
@@ -380,7 +381,7 @@ void main() {
     expect(find.text('8.5'), findsOneWidget);
     expect(find.text('Классика'), findsOneWidget);
 
-    await tester.tap(tab('My ratings'));
+    await tester.tap(tab('Ratings'));
     await settle(tester);
     expect(inList('Матрица'), findsOneWidget);
     expect(inList('Film · 1999'), findsOneWidget);
@@ -477,7 +478,7 @@ void main() {
       keys: tmdbOnly,
       seed: (library) => inceptionRated(library, 17),
     );
-    await tester.tap(tab('My ratings'));
+    await tester.tap(tab('Ratings'));
     await settle(tester);
     expect(inList('Начало'), findsOneWidget);
 
@@ -535,7 +536,7 @@ void main() {
     // unknown (background refresh is off in tests).
     go(tester, '/search/movie/603');
     await settle(tester);
-    await tester.tap(tab('My ratings'));
+    await tester.tap(tab('Ratings'));
     await settle(tester);
 
     await tester.tap(find.byTooltip('Sort'));
@@ -682,5 +683,37 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Export to a file'), findsOneWidget);
+  });
+
+  cardTest('Discover: the shelves, with one like your favourites', (
+    tester,
+  ) async {
+    await pumpApp(tester, keys: tmdbOnly);
+    // Nothing rated 8+ yet: no "like your favourites".
+    expect(find.text('Like your favourites'), findsNothing);
+    expect(find.text('Trending this week'), findsOneWidget);
+    expect(find.text('In cinemas now'), findsOneWidget);
+    // Start over with a film rated 9.
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(milliseconds: 1));
+
+    await pumpApp(
+      tester,
+      keys: tmdbOnly,
+      seed: (library) => matrixRated(library, 18),
+    );
+    expect(find.text('Like your favourites'), findsOneWidget);
+    expect(find.text('Матрица: Революция'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Best of all time'),
+      300,
+      scrollable: find
+          .descendant(
+            of: find.byType(ListView),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    expect(find.text('Best of all time'), findsOneWidget);
   });
 }
