@@ -250,6 +250,46 @@ void main() {
       await tester.pump(const Duration(milliseconds: 1));
     });
 
+    testWidgets('watchlist $theme', skip: skip != null, (tester) async {
+      await pump(
+        tester,
+        brightness: brightness,
+        seed: (library, db) async {
+          for (final (id, title, date) in [
+            (603, 'Матрица', '1999-03-31'),
+            (157336, 'Интерстеллар', '2014-11-05'),
+            (1399, 'Игра престолов', '2011-04-17'),
+          ]) {
+            await library.addToWatchlist([
+              WorkSnapshot(
+                key: id == 1399 ? const WorkKey.tv(1399) : WorkKey.movie(id),
+                tmdbId: id,
+                title: title,
+                releaseDate: date,
+                posterPath: '/w$id.jpg',
+              ),
+            ]);
+          }
+        },
+      );
+      go(tester, Routes.watchlist);
+      await shoot(tester, 'watchlist-$theme');
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(milliseconds: 1));
+    });
+
+    testWidgets('settings $theme', skip: skip != null, (tester) async {
+      await pump(tester, brightness: brightness);
+      go(tester, Routes.settings);
+      await shoot(tester, 'settings-$theme');
+      go(tester, Routes.sync);
+      await shoot(tester, 'sync-$theme');
+      go(tester, Routes.about);
+      await shoot(tester, 'about-$theme');
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(milliseconds: 1));
+    });
+
     testWidgets('search $theme', skip: skip != null, (tester) async {
       await pump(tester, brightness: brightness);
       await shoot(tester, 'search-$theme');

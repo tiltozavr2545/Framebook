@@ -406,8 +406,9 @@ class _Section extends StatelessWidget {
     padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
     child: Text(
       text,
+      // Muted, not red: red is kept for your own score and actions.
       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-        color: Theme.of(context).colorScheme.primary,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
       ),
     ),
   );

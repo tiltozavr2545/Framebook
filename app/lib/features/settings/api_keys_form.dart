@@ -157,7 +157,7 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
                   required ? l10n.sourceRequired : l10n.sourceOptional,
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: required
-                        ? theme.colorScheme.primary
+                        ? theme.colorScheme.tertiary
                         : theme.colorScheme.outline,
                   ),
                 ),
