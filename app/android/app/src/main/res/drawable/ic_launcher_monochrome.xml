@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The same shapes in one colour, for Android 13+ themed icons. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M10,24h7v6h-7z M24,24h7v6h-7z M38,24h7v6h-7z M52,24h7v6h-7z M66,24h7v6h-7z M80,24h7v6h-7z M10,78h7v6h-7z M24,78h7v6h-7z M38,78h7v6h-7z M52,78h7v6h-7z M66,78h7v6h-7z M80,78h7v6h-7z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M44,36 H66 V43.5 H52.5 V51 H63 V58 H52.5 V71 H44 Z" />
+    <path
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="3.6"
+        android:strokeLineCap="round"
+        android:pathData="M40,75.5 C50,73.5 60,74.5 70,72.5" />
+</vector>

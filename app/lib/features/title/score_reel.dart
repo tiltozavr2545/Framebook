@@ -134,13 +134,12 @@ class _Frame extends StatelessWidget {
     final reel = Reel.of(context);
     final theme = Theme.of(context);
     final half = this.half;
-    final whole = half != null && half.isEven;
-    final style =
-        (whole ? theme.textTheme.displaySmall : theme.textTheme.headlineSmall)
-            ?.copyWith(
-              color: inGate ? theme.colorScheme.primary : reel.onFrame,
-              fontWeight: FontWeight.w800,
-            );
+    // Every frame prints its score the same size: "7" and "7.5" are equal
+    // steps, and should look it.
+    final style = theme.textTheme.headlineMedium?.copyWith(
+      color: inGate ? theme.colorScheme.primary : reel.onFrame,
+      fontWeight: FontWeight.w800,
+    );
     return CustomPaint(
       painter: _StripPainter(strip: reel.strip, sprocket: reel.sprocket),
       child: Padding(
@@ -152,7 +151,16 @@ class _Frame extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
           ),
           alignment: Alignment.center,
-          child: Text(half == null ? '—' : formatMyScore(half), style: style),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                half == null ? '—' : formatMyScore(half),
+                style: style,
+              ),
+            ),
+          ),
         ),
       ),
     );

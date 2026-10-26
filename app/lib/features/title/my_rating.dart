@@ -400,21 +400,25 @@ class _RatingEditorState extends State<RatingEditor> {
                 style: theme.textTheme.headlineMedium,
               ),
             ),
-            const SizedBox(height: 12),
+            // The comparison sits above the reel in a box of its own fixed
+            // height: whatever it shows, the reel under the thumb stays put.
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+              child: SizedBox(
+                height: _Comparison.height,
+                child: score == null
+                    ? Text(
+                        l10n.reelHint,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      )
+                    : _Comparison(shown: _shown),
+              ),
+            ),
             ScoreReel(
               initialScoreHalf: widget.initialScoreHalf,
               onChanged: _changed,
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-              child: score == null
-                  ? Text(
-                      l10n.reelHint,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    )
-                  : _Comparison(shown: _shown),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
@@ -456,7 +460,7 @@ class _RatingEditorState extends State<RatingEditor> {
   }
 }
 
-/// Under the reel: what you rated the same, and the nearest scores below and
+/// Above the reel: what you rated the same, and the nearest scores below and
 /// above, laid out the way the strip runs — lower on the left.
 class _Comparison extends StatelessWidget {
   const _Comparison({required this.shown});
@@ -466,13 +470,14 @@ class _Comparison extends StatelessWidget {
   /// Tall enough for a label, a poster and a line of title, so the panel
   /// keeps its height while the reel moves.
   static const _rowHeight = 156.0;
+  static const height = _rowHeight * 2;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final shown = this.shown;
-    if (shown == null) return const SizedBox(height: _rowHeight * 2);
+    if (shown == null) return const SizedBox.shrink();
     final c = shown.calibration;
     if (c.isEmpty) {
       return Text(
