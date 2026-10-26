@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../data/source_failure.dart';
 import '../../data/work_key.dart';
 import '../../shared/failure_view.dart';
+import '../person/person_screen.dart';
 import 'episode_screen.dart';
 import 'movie_screen.dart';
 import 'season_screen.dart';
@@ -26,10 +27,26 @@ abstract final class TitleRoutes {
           '${episodeSegment(key.episode!)}',
   };
 
+  /// The tab a screen lives in — `/search`, `/ratings`… — for opening a
+  /// person or a title from it without leaving the tab.
+  static String branchOf(BuildContext context) =>
+      '/${GoRouterState.of(context).uri.pathSegments.first}';
+
   static String seasonSegment(int season) => 's/$season';
   static String episodeSegment(int episode) => 'e/$episode';
 
   static List<RouteBase> routes() => [
+    // A person and a title link to each other without end, so a person is
+    // not nested under a card: it sits at the tab's level and is pushed,
+    // and back walks the pushes.
+    GoRoute(
+      path: 'person/:id',
+      builder: (context, state) =>
+          switch (int.tryParse(state.pathParameters['id'] ?? '')) {
+            final id? when id > 0 => PersonScreen(id: id),
+            _ => const _BadLink(),
+          },
+    ),
     GoRoute(
       path: 'movie/:id',
       builder: (context, state) => switch (_key(state, 'movie')) {

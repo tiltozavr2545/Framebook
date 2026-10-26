@@ -752,4 +752,69 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get shelvesOffline =>
       'Нет связи. Подборки приходят из TMDB и появятся, когда будет интернет.';
+
+  @override
+  String get castTitle => 'В ролях';
+
+  @override
+  String crewCreator(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Создатели',
+      one: 'Создатель',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String crewDirector(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Режиссёры',
+      one: 'Режиссёр',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get crewWriter => 'Сценарий';
+
+  @override
+  String get crewComposer => 'Композитор';
+
+  @override
+  String get crewCinematographer => 'Оператор';
+
+  @override
+  String personBorn(String date) {
+    return 'Дата рождения: $date';
+  }
+
+  @override
+  String personBornIn(String date, String place) {
+    return 'Дата рождения: $date, $place';
+  }
+
+  @override
+  String personDied(String date) {
+    return 'Дата смерти: $date';
+  }
+
+  @override
+  String get personMore => 'Ещё';
+
+  @override
+  String get personFilmography => 'Фильмография';
+
+  @override
+  String personActing(int count) {
+    return 'Роли · $count';
+  }
+
+  @override
+  String personCrew(int count) {
+    return 'За кадром · $count';
+  }
 }

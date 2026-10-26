@@ -271,6 +271,10 @@ abstract final class FramebookTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         side: BorderSide(color: scheme.outlineVariant),
         labelStyle: text.labelLarge,
+        // A selected chip is film-dark; its label is printed light on it.
+        secondaryLabelStyle: text.labelLarge?.copyWith(
+          color: scheme.onSecondary,
+        ),
         selectedColor: scheme.secondary,
         secondarySelectedColor: scheme.secondary,
         checkmarkColor: scheme.onSecondary,

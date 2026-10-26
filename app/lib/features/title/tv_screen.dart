@@ -8,6 +8,7 @@ import '../../data/sources/tmdb/tmdb_models.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/poster.dart';
 import '../../shared/title_text.dart';
+import 'cast_section.dart';
 import 'my_rating.dart';
 import 'ratings_panel.dart';
 import 'title_layout.dart';
@@ -27,7 +28,6 @@ class TvScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     return TitlePage(
       value: ref.watch(tvProvider(id)),
-      title: (tv) => tv.title,
       onRetry: () => ref.invalidate(tvProvider(id)),
       builder: (context, tv) => [
         TitleHeader(
@@ -57,6 +57,7 @@ class TvScreen extends ConsumerWidget {
           ),
         ),
         ...overviewSection(context, tv.overview),
+        ...castSection(context, tv.credits),
         if (tv.seasons.isNotEmpty) SectionTitle(l10n.titleSeasons),
         for (final season in tv.seasons)
           ListTile(

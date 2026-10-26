@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/theme.dart';
 import '../../data/sources/tmdb/tmdb_models.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/failure_view.dart';
@@ -12,27 +13,20 @@ class TitlePage<T> extends ConsumerWidget {
   const TitlePage({
     super.key,
     required this.value,
-    required this.title,
     required this.onRetry,
     required this.builder,
   });
 
   final AsyncValue<T> value;
 
-  /// The app bar title once the data is there.
-  final String? Function(T data) title;
   final VoidCallback onRetry;
   final List<Widget> Function(BuildContext context, T data) builder;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final data = value.value;
     return Scaffold(
-      appBar: AppBar(
-        title: data == null
-            ? null
-            : Text(title(data) ?? '', overflow: TextOverflow.ellipsis),
-      ),
+      // The header carries the title, large; the bar only takes you back.
+      appBar: AppBar(),
       body: switch (value) {
         AsyncValue(value: final data?) => ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
@@ -78,39 +72,62 @@ class TitleHeader extends StatelessWidget {
       color: theme.colorScheme.onSurfaceVariant,
     );
     final original = originalTitle;
-    return Row(
+    final lines = [
+      for (final fact in facts)
+        if (fact != null && fact.isNotEmpty) fact,
+    ];
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Poster(posterPath, size: ImageSize.w342, width: 116, icon: posterIcon),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: theme.textTheme.titleLarge),
-              if (original != null && original != title)
-                Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child: Text(original, style: muted),
-                ),
-              const SizedBox(height: 8),
-              for (final fact in facts)
-                if (fact != null && fact.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 2),
-                    child: Text(fact, style: muted),
-                  ),
-              if (tagline case final tagline?)
-                Padding(
-                  padding: const EdgeInsets.only(top: 6),
-                  child: Text(
-                    tagline,
-                    style: muted?.copyWith(fontStyle: FontStyle.italic),
-                  ),
-                ),
-            ],
-          ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Poster(
+              posterPath,
+              size: ImageSize.w342,
+              width: 128,
+              icon: posterIcon,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: theme.textTheme.headlineMedium),
+                  if (original != null && original != title)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(original, style: muted),
+                    ),
+                  const SizedBox(height: 10),
+                  // The first line is the edge print: year, length.
+                  for (final (i, line) in lines.indexed)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 3),
+                      child: Text(
+                        line,
+                        style: i == 0
+                            ? theme.textTheme.labelLarge?.copyWith(
+                                color: Reel.of(context).edge,
+                              )
+                            : muted,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
         ),
+        if (tagline case final tagline?)
+          Padding(
+            padding: const EdgeInsets.only(top: 14),
+            child: Text(
+              tagline,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -124,8 +141,8 @@ class SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(top: 24, bottom: 8),
-    child: Text(text, style: Theme.of(context).textTheme.titleMedium),
+    padding: const EdgeInsets.only(top: 28, bottom: 10),
+    child: Text(text, style: Theme.of(context).textTheme.headlineSmall),
   );
 }
 

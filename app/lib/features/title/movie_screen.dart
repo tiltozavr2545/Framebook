@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/library/work_snapshot.dart';
 import '../../data/ratings_service.dart';
 import '../../shared/format.dart';
+import 'cast_section.dart';
 import 'my_rating.dart';
 import 'ratings_panel.dart';
 import 'title_layout.dart';
@@ -18,7 +19,6 @@ class MovieScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return TitlePage(
       value: ref.watch(movieProvider(id)),
-      title: (movie) => movie.title,
       onRetry: () => ref.invalidate(movieProvider(id)),
       builder: (context, movie) => [
         TitleHeader(
@@ -46,6 +46,7 @@ class MovieScreen extends ConsumerWidget {
           ),
         ),
         ...overviewSection(context, movie.overview),
+        ...castSection(context, movie.credits),
       ],
     );
   }

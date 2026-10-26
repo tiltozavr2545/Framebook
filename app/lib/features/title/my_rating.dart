@@ -54,12 +54,8 @@ class _MyRatingSectionState extends ConsumerState<MyRatingSection> {
         ? ref.watch(partsAverageProvider(_key)).value
         : null;
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -167,22 +163,30 @@ class _Unrated extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Wrap(
-      spacing: 8,
-      runSpacing: 4,
-      crossAxisAlignment: WrapCrossAlignment.center,
+    return Row(
       children: [
-        FilledButton.icon(
-          onPressed: onRate,
-          icon: const Icon(Icons.star_outline),
-          label: Text(l10n.ratingRate),
-        ),
-        if (watchlistable)
-          OutlinedButton.icon(
-            onPressed: () => onToggleWatchlist(listed),
-            icon: Icon(listed ? Icons.bookmark_added : Icons.bookmark_outline),
-            label: Text(listed ? l10n.watchlistListed : l10n.watchlistAdd),
+        Expanded(
+          child: FilledButton.icon(
+            onPressed: onRate,
+            icon: const Icon(Icons.edit_outlined),
+            label: Text(l10n.ratingRate),
           ),
+        ),
+        if (watchlistable) ...[
+          const SizedBox(width: 8),
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: () => onToggleWatchlist(listed),
+              icon: Icon(
+                listed ? Icons.bookmark_added : Icons.bookmark_outline,
+              ),
+              label: Text(
+                listed ? l10n.watchlistListed : l10n.watchlistAdd,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -208,27 +212,39 @@ class _Rated extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text(
-              formatMyScore(rating.scoreHalf),
-              style: theme.textTheme.displaySmall?.copyWith(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.w600,
+            // The grease-pencil mark: your score is the loudest thing here.
+            // It shrinks rather than overflows with a large system font.
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.bottomLeft,
+                child: Text(
+                  formatMyScore(rating.scoreHalf),
+                  style: theme.textTheme.displayLarge?.copyWith(
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 14),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(l10n.ratingMine, style: theme.textTheme.titleSmall),
-                  Text(
-                    context.formatTimestamp(rating.scoredAt),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(l10n.ratingMine, style: theme.textTheme.titleSmall),
+                    Text(
+                      context.formatTimestamp(rating.scoredAt),
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: Reel.of(context).edge,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             IconButton(
@@ -243,10 +259,17 @@ class _Rated extends StatelessWidget {
             ),
           ],
         ),
+        // A note sits in the margin, marked with the same red.
         if (note != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8, right: 8),
-            child: Text(note, style: theme.textTheme.bodyMedium),
+          Container(
+            margin: const EdgeInsets.only(top: 8),
+            padding: const EdgeInsets.only(left: 12),
+            decoration: BoxDecoration(
+              border: Border(
+                left: BorderSide(color: theme.colorScheme.primary, width: 2),
+              ),
+            ),
+            child: Text(note, style: theme.textTheme.bodyLarge),
           ),
       ],
     );

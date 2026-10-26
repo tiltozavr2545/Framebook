@@ -18,6 +18,8 @@ import 'package:framebook/data/sync/google_account.dart';
 import 'package:framebook/data/sync/sync_file.dart';
 import 'package:framebook/data/sync/sync_store.dart';
 import 'package:framebook/data/work_key.dart';
+import 'package:framebook/features/person/person_screen.dart';
+import 'package:framebook/features/title/movie_screen.dart';
 import 'package:framebook/features/title/score_reel.dart';
 import 'package:framebook/shared/poster.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -263,11 +265,19 @@ void main() {
     expect(find.text('2011–2019 · ended'), findsOneWidget);
     expect(find.text('8 seasons · 73 episodes'), findsOneWidget);
     // The ratings sit below "My rating", past the first screen.
-    await tester.scrollUntilVisible(find.text('Kinopoisk'), 200);
+    await tester.scrollUntilVisible(
+      find.text('Kinopoisk'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('9.0'), findsOneWidget); // Kinopoisk 9.009
     expect(find.text('9.2'), findsOneWidget); // IMDb
 
-    await tester.scrollUntilVisible(find.text('Сезон 1'), 200);
+    await tester.scrollUntilVisible(
+      find.text('Сезон 1'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('Сезон 1'));
     await settle(tester);
 
@@ -275,7 +285,11 @@ void main() {
     expect(find.text('9.0'), findsOneWidget); // IMDb episode average 8.97
     expect(find.text('Kinopoisk'), findsNothing);
 
-    await tester.scrollUntilVisible(find.text('Лорд Сноу'), 200);
+    await tester.scrollUntilVisible(
+      find.text('Лорд Сноу'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('Лорд Сноу'));
     await settle(tester);
 
@@ -715,5 +729,50 @@ void main() {
           .first,
     );
     expect(find.text('Best of all time'), findsOneWidget);
+  });
+
+  cardTest('the cast opens a person, their filmography opens a card', (
+    tester,
+  ) async {
+    await pumpApp(tester, keys: tmdbOnly);
+    go(tester, '/search/movie/603');
+    await settle(tester);
+    expect(find.text('Cast'), findsNothing); // below the fold
+    await tester.scrollUntilVisible(
+      find.text('Киану Ривз'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Neo'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Don Davis'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Directors'), findsOneWidget);
+
+    await tester.tap(find.text('Киану Ривз'));
+    await settle(tester);
+    expect(find.text('Filmography'), findsOneWidget);
+    expect(find.textContaining('Born'), findsOneWidget);
+
+    // Back in 1999, the film this started from.
+    await tester.scrollUntilVisible(
+      find.text('Матрица').hitTestable(),
+      600,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Матрица'));
+    await settle(tester);
+    expect(find.text('The Matrix'), findsOneWidget);
+
+    // Back walks the pushes: the person, then the first card.
+    await tester.tap(find.byTooltip('Back'));
+    await settle(tester);
+    expect(find.byType(PersonScreen), findsOneWidget);
+    await tester.tap(find.byTooltip('Back'));
+    await settle(tester);
+    expect(find.byType(PersonScreen), findsNothing);
+    expect(find.byType(MovieScreen), findsOneWidget);
   });
 }

@@ -746,4 +746,69 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get shelvesOffline =>
       'No connection. The shelves come from TMDB and will be here once you\'re online.';
+
+  @override
+  String get castTitle => 'Cast';
+
+  @override
+  String crewCreator(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Creators',
+      one: 'Creator',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String crewDirector(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Directors',
+      one: 'Director',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get crewWriter => 'Written by';
+
+  @override
+  String get crewComposer => 'Music';
+
+  @override
+  String get crewCinematographer => 'Cinematography';
+
+  @override
+  String personBorn(String date) {
+    return 'Born $date';
+  }
+
+  @override
+  String personBornIn(String date, String place) {
+    return 'Born $date in $place';
+  }
+
+  @override
+  String personDied(String date) {
+    return 'Died $date';
+  }
+
+  @override
+  String get personMore => 'More';
+
+  @override
+  String get personFilmography => 'Filmography';
+
+  @override
+  String personActing(int count) {
+    return 'Acting · $count';
+  }
+
+  @override
+  String personCrew(int count) {
+    return 'Behind the camera · $count';
+  }
 }

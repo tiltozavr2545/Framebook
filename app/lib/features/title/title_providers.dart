@@ -35,3 +35,16 @@ final episodeImdbIdProvider = FutureProvider.autoDispose
         return null;
       }
     });
+
+/// An episode's cast and crew; empty if they fail to load — the card is
+/// complete without them.
+final episodeCreditsProvider = FutureProvider.autoDispose
+    .family<Credits, WorkKey>((ref, key) async {
+      try {
+        return await ref
+            .watch(tmdbProvider)
+            .episodeCredits(key.tmdbId, key.season!, key.episode!);
+      } on SourceException {
+        return const Credits();
+      }
+    });

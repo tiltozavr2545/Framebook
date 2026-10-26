@@ -10,6 +10,7 @@ import '../../l10n/app_localizations.dart';
 import '../../shared/failure_view.dart';
 import '../../shared/format.dart';
 import '../../shared/poster.dart';
+import 'cast_section.dart';
 import 'my_rating.dart';
 import 'ratings_panel.dart';
 import 'title_layout.dart';
@@ -31,7 +32,6 @@ class EpisodeScreen extends ConsumerWidget {
     final imdbId = ref.watch(episodeImdbIdProvider(episodeKey));
     return TitlePage<(SeasonDetails, TvDetails)>(
       value: combineAsync(season, tv),
-      title: (data) => data.$2.title,
       onRetry: () {
         ref.invalidate(seasonProvider(seasonKey));
         ref.invalidate(tvProvider(episodeKey.tmdbId));
@@ -98,6 +98,11 @@ class EpisodeScreen extends ConsumerWidget {
             ),
           },
           ...overviewSection(context, episode.overview),
+          ...castSection(
+            context,
+            ref.watch(episodeCreditsProvider(episodeKey)).value ??
+                const Credits(),
+          ),
         ];
       },
     );

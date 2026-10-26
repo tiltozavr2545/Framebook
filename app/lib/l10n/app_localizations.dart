@@ -1309,6 +1309,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No connection. The shelves come from TMDB and will be here once you\'re online.'**
   String get shelvesOffline;
+
+  /// No description provided for @castTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cast'**
+  String get castTitle;
+
+  /// No description provided for @crewCreator.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Creator} other{Creators}}'**
+  String crewCreator(int count);
+
+  /// No description provided for @crewDirector.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Director} other{Directors}}'**
+  String crewDirector(int count);
+
+  /// No description provided for @crewWriter.
+  ///
+  /// In en, this message translates to:
+  /// **'Written by'**
+  String get crewWriter;
+
+  /// No description provided for @crewComposer.
+  ///
+  /// In en, this message translates to:
+  /// **'Music'**
+  String get crewComposer;
+
+  /// No description provided for @crewCinematographer.
+  ///
+  /// In en, this message translates to:
+  /// **'Cinematography'**
+  String get crewCinematographer;
+
+  /// No description provided for @personBorn.
+  ///
+  /// In en, this message translates to:
+  /// **'Born {date}'**
+  String personBorn(String date);
+
+  /// No description provided for @personBornIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Born {date} in {place}'**
+  String personBornIn(String date, String place);
+
+  /// No description provided for @personDied.
+  ///
+  /// In en, this message translates to:
+  /// **'Died {date}'**
+  String personDied(String date);
+
+  /// No description provided for @personMore.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get personMore;
+
+  /// No description provided for @personFilmography.
+  ///
+  /// In en, this message translates to:
+  /// **'Filmography'**
+  String get personFilmography;
+
+  /// No description provided for @personActing.
+  ///
+  /// In en, this message translates to:
+  /// **'Acting · {count}'**
+  String personActing(int count);
+
+  /// No description provided for @personCrew.
+  ///
+  /// In en, this message translates to:
+  /// **'Behind the camera · {count}'**
+  String personCrew(int count);
 }
 
 class _AppLocalizationsDelegate

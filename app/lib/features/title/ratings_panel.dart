@@ -30,7 +30,7 @@ class RatingsPanel extends ConsumerWidget {
     final now = DateTime.now().toUtc().millisecondsSinceEpoch;
     return Wrap(
       spacing: 8,
-      runSpacing: 8,
+      runSpacing: 12,
       children: [
         for (final source in RatingsService.shownFor(kind))
           _RatingCell(
@@ -145,12 +145,14 @@ class _RatingCell extends StatelessWidget {
       _ => false,
     };
 
+    // A column of the readout, ruled on top like a table — no plate.
     final cell = Container(
       width: width,
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+      padding: const EdgeInsets.fromLTRB(0, 8, 4, 4),
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(12),
+        border: Border(
+          top: BorderSide(color: scheme.outlineVariant, width: 1.5),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

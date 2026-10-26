@@ -255,5 +255,26 @@
   "shelfTrending": "Trending this week",
   "shelfNowPlaying": "In cinemas now",
   "shelfBest": "Best of all time",
-  "shelvesOffline": "No connection. The shelves come from TMDB and will be here once you're online."
+  "shelvesOffline": "No connection. The shelves come from TMDB and will be here once you're online.",
+
+  "castTitle": "Cast",
+  "crewCreator": "{count, plural, one{Creator} other{Creators}}",
+  "@crewCreator": {"placeholders": {"count": {"type": "int"}}},
+  "crewDirector": "{count, plural, one{Director} other{Directors}}",
+  "@crewDirector": {"placeholders": {"count": {"type": "int"}}},
+  "crewWriter": "Written by",
+  "crewComposer": "Music",
+  "crewCinematographer": "Cinematography",
+  "personBorn": "Born {date}",
+  "@personBorn": {"placeholders": {"date": {"type": "String"}}},
+  "personBornIn": "Born {date} in {place}",
+  "@personBornIn": {"placeholders": {"date": {"type": "String"}, "place": {"type": "String"}}},
+  "personDied": "Died {date}",
+  "@personDied": {"placeholders": {"date": {"type": "String"}}},
+  "personMore": "More",
+  "personFilmography": "Filmography",
+  "personActing": "Acting · {count}",
+  "@personActing": {"placeholders": {"count": {"type": "int"}}},
+  "personCrew": "Behind the camera · {count}",
+  "@personCrew": {"placeholders": {"count": {"type": "int"}}}
 }

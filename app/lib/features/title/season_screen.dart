@@ -9,6 +9,7 @@ import '../../data/work_key.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/format.dart';
 import '../../shared/title_text.dart';
+import 'cast_section.dart';
 import 'my_rating.dart';
 import 'ratings_panel.dart';
 import 'title_layout.dart';
@@ -34,7 +35,6 @@ class SeasonScreen extends ConsumerWidget {
     final tv = ref.watch(tvProvider(seasonKey.tmdbId));
     return TitlePage<(SeasonDetails, TvDetails)>(
       value: combineAsync(season, tv),
-      title: (data) => data.$2.title,
       onRetry: () {
         ref.invalidate(seasonProvider(seasonKey));
         ref.invalidate(tvProvider(seasonKey.tmdbId));
@@ -67,6 +67,7 @@ class SeasonScreen extends ConsumerWidget {
             ),
           ),
           ...overviewSection(context, season.overview),
+          ...castSection(context, season.credits),
           if (season.episodes.isNotEmpty) SectionTitle(l10n.titleEpisodes),
           for (final episode in season.episodes)
             ListTile(

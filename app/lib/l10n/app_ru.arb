@@ -224,5 +224,19 @@
   "shelfTrending": "В тренде на неделе",
   "shelfNowPlaying": "Сейчас в кино",
   "shelfBest": "Лучшее всех времён",
-  "shelvesOffline": "Нет связи. Подборки приходят из TMDB и появятся, когда будет интернет."
+  "shelvesOffline": "Нет связи. Подборки приходят из TMDB и появятся, когда будет интернет.",
+
+  "castTitle": "В ролях",
+  "crewCreator": "{count, plural, one{Создатель} other{Создатели}}",
+  "crewDirector": "{count, plural, one{Режиссёр} other{Режиссёры}}",
+  "crewWriter": "Сценарий",
+  "crewComposer": "Композитор",
+  "crewCinematographer": "Оператор",
+  "personBorn": "Дата рождения: {date}",
+  "personBornIn": "Дата рождения: {date}, {place}",
+  "personDied": "Дата смерти: {date}",
+  "personMore": "Ещё",
+  "personFilmography": "Фильмография",
+  "personActing": "Роли · {count}",
+  "personCrew": "За кадром · {count}"
 }

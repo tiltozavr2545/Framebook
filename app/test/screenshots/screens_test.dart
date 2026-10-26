@@ -212,6 +212,28 @@ void main() {
       await tester.pump(const Duration(milliseconds: 1));
     });
 
+    testWidgets('cast $theme', skip: skip != null, (tester) async {
+      await pump(tester, brightness: brightness, seed: library);
+      go(tester, '/search/movie/603');
+      await settle(tester);
+      await tester.scrollUntilVisible(
+        find.text('Композитор'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await shoot(tester, 'cast-$theme');
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(milliseconds: 1));
+    });
+
+    testWidgets('person $theme', skip: skip != null, (tester) async {
+      await pump(tester, brightness: brightness, seed: library);
+      go(tester, '/search/person/6384');
+      await shoot(tester, 'person-$theme');
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(milliseconds: 1));
+    });
+
     testWidgets('ratings $theme', skip: skip != null, (tester) async {
       await pump(tester, brightness: brightness, seed: library);
       go(tester, Routes.ratings);
