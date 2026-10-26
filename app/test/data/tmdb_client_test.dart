@@ -35,9 +35,9 @@ void main() {
       final page = await client().search('Матрица');
       expect(page.results.map((r) => r.key.toString()).take(4), [
         'tmdb:movie:603',
-        'tmdb:movie:604',
         'tmdb:tv:711',
-        'tmdb:movie:605',
+        'tmdb:movie:604',
+        'tmdb:movie:624860',
       ]);
       final matrix = page.results.first;
       expect(matrix.title, 'Матрица');
@@ -46,7 +46,7 @@ void main() {
       expect(matrix.posterPath, '/kEDbym5htJgDQNenjUtSJxAHysB.jpg');
       expect(matrix.vote.average, closeTo(8.261, 1e-9));
 
-      final series = page.results[2];
+      final series = page.results[1];
       expect(series.title, 'Матрица: Угроза');
       expect(series.originalTitle, 'Threat Matrix');
       expect(series.year, 2003);
@@ -105,7 +105,7 @@ void main() {
       expect(movie.runtime, 136);
       expect(movie.genres.map((g) => g.name), ['боевик', 'фантастика']);
       expect(movie.tagline, '«Добро пожаловать в реальный мир»');
-      expect(movie.vote.count, 29028);
+      expect(movie.vote.count, 29070);
     });
 
     test('series: imdb id from external_ids, seasons with specials', () async {
@@ -136,7 +136,7 @@ void main() {
       expect(third.name, 'Лорд Сноу');
       expect(third.airDate, '2011-05-01');
       expect(third.runtime, 58);
-      expect(third.vote.average, closeTo(8.061, 1e-9));
+      expect(third.vote.average, closeTo(8.1, 1e-9));
     });
 
     test('episode imdb id matches what OMDb knows', () async {
@@ -246,7 +246,7 @@ void main() {
       expect(cache.entries.keys.single, isNot(contains('short-v3-key')));
       expect(
         cache.entries.keys.single,
-        'tmdb:/movie/603?append_to_response=external_ids&language=ru-RU',
+        'tmdb:/movie/603?append_to_response=external_ids%2Ccredits&language=ru-RU',
       );
     });
 
@@ -261,6 +261,120 @@ void main() {
       ).movie(603);
       expect(http.requests, hasLength(2));
       expect(cache.entries, hasLength(2));
+    });
+  });
+
+  group('cast and crew', () {
+    test('a film: cast in billing order, the key crew by role', () async {
+      final credits = (await client().movie(603)).credits;
+      expect(credits.cast.first.name, 'Киану Ривз');
+      expect(credits.cast.first.character, 'Neo');
+      expect(credits.cast.first.personId, 6384);
+      final crew = credits.crewByRole;
+      expect(crew.keys, [
+        CrewRole.director,
+        CrewRole.writer,
+        CrewRole.composer,
+        CrewRole.cinematographer,
+      ]);
+      expect(crew[CrewRole.director]!.map((c) => c.name), [
+        'Лана Вачовски',
+        'Энди Вачовски',
+      ]);
+      expect(crew[CrewRole.composer]!.single.name, 'Don Davis');
+      // Producers, grips and the rest stay out.
+      expect(credits.crew.every((c) => c.name != 'Joel Silver'), isTrue);
+    });
+
+    test('a series: its creators, and the cast', () async {
+      final credits = (await client().tv(1399)).credits;
+      expect(credits.crewByRole[CrewRole.creator]!.map((c) => c.name), [
+        'Дэвид Бениофф',
+        'Д. Б. Уайс',
+      ]);
+      expect(credits.cast.first.name, 'Питер Динклэйдж');
+    });
+
+    test('a season has its own cast', () async {
+      final season = await client().season(1399, 1);
+      expect(season.credits.cast.take(3).map((c) => c.name), [
+        'Питер Динклэйдж',
+        'Кит Харингтон',
+        'Шон Бин',
+      ]);
+    });
+
+    test('an episode: guest stars after the cast, its director', () async {
+      final credits = await client().episodeCredits(1399, 1, 3);
+      expect(credits.cast, hasLength(19 + 24));
+      expect(credits.crewByRole[CrewRole.director]!.single.name, 'Брайан Кирк');
+      expect(credits.crewByRole[CrewRole.writer], hasLength(2));
+    });
+  });
+
+  group('a person', () {
+    test('who they are, and what they made', () async {
+      final person = await client().person(6384);
+      expect(person.name, 'Киану Ривз');
+      expect(person.birthday, '1964-09-02');
+      final matrix = person.acting.firstWhere(
+        (c) => c.title.key == const WorkKey.movie(603),
+      );
+      expect(matrix.roles, ['Neo']);
+      expect(person.crew.any((c) => c.roles.contains('Director')), isTrue);
+    });
+
+    test(
+      'talk shows and news where they appear as themselves are left out',
+      () async {
+        final person = await client().person(6384);
+        expect(
+          person.acting.map((c) => c.title.title),
+          isNot(contains(startsWith('Джимми Киммел'))),
+        );
+      },
+    );
+
+    test('newest first, undated titles on top', () async {
+      final acting = (await client().person(6384)).acting;
+      final dates = [for (final c in acting) c.title.releaseDate];
+      final dated = dates.whereType<String>().toList();
+      expect(dated, [...dated]..sort((a, b) => b.compareTo(a)));
+      final firstDated = dates.indexWhere((d) => d != null);
+      expect(dates.skip(firstDated).every((d) => d != null), isTrue);
+    });
+  });
+
+  group('shelves', () {
+    test('trending mixes films and series', () async {
+      final titles = await client().trending();
+      expect(titles, isNotEmpty);
+      expect(titles.map((t) => t.key.kind).toSet(), {
+        WorkKind.movie,
+        WorkKind.tv,
+      });
+    });
+
+    test('now playing is films', () async {
+      final titles = await client().nowPlaying();
+      expect(titles, isNotEmpty);
+      expect(titles.every((t) => t.key.kind == WorkKind.movie), isTrue);
+    });
+
+    test('the best of all time, by kind', () async {
+      final films = await client().best(WorkKind.movie);
+      expect(films.first.title, 'Побег из Шоушенка');
+      final series = await client().best(WorkKind.tv);
+      expect(series.first.title, 'Во все тяжкие');
+      expect(series.every((t) => t.key.kind == WorkKind.tv), isTrue);
+      final request = http.requests.last.uri.queryParameters;
+      expect(request['sort_by'], 'vote_average.desc');
+      expect(request['vote_count.gte'], '3000');
+    });
+
+    test('recommendations for a film', () async {
+      final titles = await client().recommendations(const WorkKey.movie(603));
+      expect(titles.first.title, 'Матрица: Революция');
     });
   });
 }

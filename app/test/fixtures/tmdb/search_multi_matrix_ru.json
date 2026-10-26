@@ -15,12 +15,35 @@
         28,
         878
       ],
-      "popularity": 45.5085,
+      "popularity": 51.7268,
       "release_date": "1999-03-31",
       "softcore": false,
       "video": false,
       "vote_average": 8.261,
-      "vote_count": 29028
+      "vote_count": 29070
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/Ams57f2bNSwWsoQWCfD5u3xQjgS.jpg",
+      "id": 711,
+      "name": "Матрица: Угроза",
+      "original_name": "Threat Matrix",
+      "overview": "В глубоком подземном бункере в Вашингтоне совместно работают группы ЦРУ, ФБР и АНБ как часть сил Национальной безопасности США. Их задача – сдерживать террористическую угрозу. Руководитель этого подразделения - специальный агент Джон Килмер, 42-летний бывший служащий ФБР, обладающий мощнейшими техническими навыками и имеющий в полном распоряжении любое оружие и лучших специалистов.\n\nЕдинственное, что смущает Килмера – присутствие в команде его бывшей жены Фрэнки, специального агента ЦРУ, безжалостной и хорошо обученной профессионалки, чьи навыки позволяют ей быстро взламывать любые замки.",
+      "poster_path": "/xOeA42Rc9EiIe0dGnwywLqYKetG.jpg",
+      "media_type": "tv",
+      "original_language": "en",
+      "genre_ids": [
+        18,
+        10759
+      ],
+      "popularity": 17.7725,
+      "first_air_date": "2003-09-18",
+      "softcore": false,
+      "vote_average": 6.2,
+      "vote_count": 6,
+      "origin_country": [
+        "US"
+      ]
     },
     {
       "adult": false,
@@ -37,57 +60,12 @@
         53,
         878
       ],
-      "popularity": 20.724,
+      "popularity": 19.69,
       "release_date": "2003-05-15",
       "softcore": false,
       "video": false,
-      "vote_average": 7.086,
-      "vote_count": 12448
-    },
-    {
-      "adult": false,
-      "backdrop_path": "/Ams57f2bNSwWsoQWCfD5u3xQjgS.jpg",
-      "id": 711,
-      "name": "Матрица: Угроза",
-      "original_name": "Threat Matrix",
-      "overview": "В глубоком подземном бункере в Вашингтоне совместно работают группы ЦРУ, ФБР и АНБ как часть сил Национальной безопасности США. Их задача – сдерживать террористическую угрозу. Руководитель этого подразделения - специальный агент Джон Килмер, 42-летний бывший служащий ФБР, обладающий мощнейшими техническими навыками и имеющий в полном распоряжении любое оружие и лучших специалистов.\n\nЕдинственное, что смущает Килмера – присутствие в команде его бывшей жены Фрэнки, специального агента ЦРУ, безжалостной и хорошо обученной профессионалки, чьи навыки позволяют ей быстро взламывать любые замки.",
-      "poster_path": "/xOeA42Rc9EiIe0dGnwywLqYKetG.jpg",
-      "media_type": "tv",
-      "original_language": "en",
-      "genre_ids": [
-        18,
-        10759
-      ],
-      "popularity": 15.0871,
-      "first_air_date": "2003-09-18",
-      "softcore": false,
-      "vote_average": 6.2,
-      "vote_count": 6,
-      "origin_country": [
-        "US"
-      ]
-    },
-    {
-      "adult": false,
-      "backdrop_path": "/533xAMhhVyjTy8hwMUFEt5TuDfR.jpg",
-      "id": 605,
-      "title": "Матрица: Революция",
-      "original_title": "The Matrix Revolutions",
-      "overview": "Пока армия машин пытается уничтожить Зион, его жители из последних сил держат оборону.",
-      "poster_path": "/19LNhQz4nwbwS95CQ9LHLxAUAXB.jpg",
-      "media_type": "movie",
-      "original_language": "en",
-      "genre_ids": [
-        28,
-        53,
-        878
-      ],
-      "popularity": 18.3915,
-      "release_date": "2003-11-05",
-      "softcore": false,
-      "video": false,
-      "vote_average": 6.76,
-      "vote_count": 11247
+      "vote_average": 7.085,
+      "vote_count": 12468
     },
     {
       "adult": false,
@@ -104,12 +82,34 @@
         28,
         12
       ],
-      "popularity": 15.6161,
+      "popularity": 15.6969,
       "release_date": "2021-12-16",
       "softcore": false,
       "video": false,
-      "vote_average": 6.3,
-      "vote_count": 6808
+      "vote_average": 6.295,
+      "vote_count": 6819
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/533xAMhhVyjTy8hwMUFEt5TuDfR.jpg",
+      "id": 605,
+      "title": "Матрица: Революция",
+      "original_title": "The Matrix Revolutions",
+      "overview": "Пока армия машин пытается уничтожить Зион, его жители из последних сил держат оборону.",
+      "poster_path": "/19LNhQz4nwbwS95CQ9LHLxAUAXB.jpg",
+      "media_type": "movie",
+      "original_language": "en",
+      "genre_ids": [
+        28,
+        53,
+        878
+      ],
+      "popularity": 13.7183,
+      "release_date": "2003-11-05",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.76,
+      "vote_count": 11262
     },
     {
       "adult": false,
@@ -125,12 +125,12 @@
         18,
         14
       ],
-      "popularity": 6.2847,
+      "popularity": 5.4247,
       "release_date": "2017-03-02",
       "softcore": false,
       "video": false,
       "vote_average": 6.966,
-      "vote_count": 3604
+      "vote_count": 3605
     },
     {
       "adult": false,
@@ -149,7 +149,7 @@
         878,
         12
       ],
-      "popularity": 4.3092,
+      "popularity": 4.8657,
       "release_date": "2002-03-22",
       "softcore": false,
       "video": false,
@@ -170,7 +170,7 @@
         878,
         10749
       ],
-      "popularity": 1.3915,
+      "popularity": 1.2122,
       "release_date": "2000-04-01",
       "softcore": false,
       "video": false,
@@ -190,7 +190,7 @@
       "genre_ids": [
         16
       ],
-      "popularity": 1.2789,
+      "popularity": 1.32,
       "release_date": "1971-05-18",
       "softcore": false,
       "video": false,
@@ -210,7 +210,7 @@
       "genre_ids": [
         35
       ],
-      "popularity": 2.1352,
+      "popularity": 2.7951,
       "release_date": "2000-06-03",
       "softcore": false,
       "video": false,

@@ -21,6 +21,20 @@ Reply? apiFixtures(RequestOptions request) {
       return switch (uri.path) {
         '/3/configuration' => ok('tmdb/configuration.json'),
         '/3/genre/movie/list' => ok('tmdb/genre_movie_ru.json'),
+        '/3/tv/1399/season/1/episode/3/credits' => ok(
+          'tmdb/tv_1399_s1e3_credits_ru.json',
+        ),
+        '/3/person/6384' => ok('tmdb/person_6384_ru.json'),
+        '/3/trending/all/week' => ok('tmdb/trending_all_week_ru.json'),
+        '/3/movie/now_playing' => ok('tmdb/movie_now_playing_ru.json'),
+        '/3/discover/movie' => ok('tmdb/discover_movie_best_ru.json'),
+        '/3/discover/tv' => ok('tmdb/discover_tv_best_ru.json'),
+        '/3/movie/603/recommendations' => ok(
+          'tmdb/movie_603_recommendations_ru.json',
+        ),
+        '/3/tv/1399/recommendations' => ok(
+          'tmdb/tv_1399_recommendations_ru.json',
+        ),
         '/3/genre/tv/list' => ok('tmdb/genre_tv_ru.json'),
         '/3/search/multi' => ok('tmdb/search_multi_matrix_ru.json'),
         '/3/movie/603' => ok('tmdb/movie_603_ru.json'),

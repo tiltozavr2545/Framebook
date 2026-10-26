@@ -20,6 +20,24 @@ abstract interface class TmdbApi {
   /// The names of the genres for films ([WorkKind.movie]) or series
   /// ([WorkKind.tv]); the two lists share most ids.
   Future<List<Genre>> genres(WorkKind kind);
+
+  /// Films and series trending this week.
+  Future<List<TitleSummary>> trending();
+
+  /// Films in cinemas now.
+  Future<List<TitleSummary>> nowPlaying();
+
+  /// The best rated films or series with enough votes to mean it.
+  Future<List<TitleSummary>> best(WorkKind kind);
+
+  /// TMDB's recommendations for a film or a series.
+  Future<List<TitleSummary>> recommendations(WorkKey key);
+
+  /// An episode's cast, guest stars included, and its crew.
+  Future<Credits> episodeCredits(int tvId, int season, int episode);
+
+  /// A person with their filmography.
+  Future<Person> person(int id);
 }
 
 /// Lifetimes of responses in the HTTP cache (docs/external-sources.md, "Cache
@@ -31,6 +49,12 @@ abstract final class TmdbTtl {
 
   /// Genre names hardly ever change.
   static const genres = Duration(days: 30);
+
+  /// Trending and now playing change daily.
+  static const shelf = Duration(days: 1);
+
+  /// The best of all time and recommendations hardly move in a week.
+  static const slowShelf = Duration(days: 7);
 
   /// An episode's external ids don't change: kept as long as configuration.
   static const externalIds = Duration(days: 30);
@@ -98,14 +122,14 @@ final class TmdbClient implements TmdbApi {
   @override
   Future<MovieDetails> movie(int id) async => MovieDetails.fromJson(
     await _get('/movie/$id', {
-      'append_to_response': 'external_ids',
+      'append_to_response': 'external_ids,credits',
     }, TmdbTtl.details),
   );
 
   @override
   Future<TvDetails> tv(int id) async => TvDetails.fromJson(
     await _get('/tv/$id', {
-      'append_to_response': 'external_ids',
+      'append_to_response': 'external_ids,credits',
     }, TmdbTtl.details),
   );
 
@@ -113,7 +137,9 @@ final class TmdbClient implements TmdbApi {
   Future<SeasonDetails> season(int tvId, int season) async =>
       SeasonDetails.fromJson(
         tvId,
-        await _get('/tv/$tvId/season/$season', const {}, TmdbTtl.details),
+        await _get('/tv/$tvId/season/$season', const {
+          'append_to_response': 'credits',
+        }, TmdbTtl.details),
       );
 
   @override
@@ -151,6 +177,69 @@ final class TmdbClient implements TmdbApi {
       TmdbTtl.genres,
     ),
   );
+
+  @override
+  Future<List<TitleSummary>> trending() async =>
+      _titles(await _get('/trending/all/week', const {}, TmdbTtl.shelf));
+
+  @override
+  Future<List<TitleSummary>> nowPlaying() async => _titles(
+    await _get('/movie/now_playing', const {'page': '1'}, TmdbTtl.shelf),
+    kind: WorkKind.movie,
+  );
+
+  @override
+  Future<List<TitleSummary>> best(WorkKind kind) async {
+    final movie = kind == WorkKind.movie;
+    // /top_rated is crowded with new titles that have a handful of votes.
+    return _titles(
+      await _get(movie ? '/discover/movie' : '/discover/tv', {
+        'sort_by': 'vote_average.desc',
+        'vote_count.gte': movie ? '10000' : '3000',
+        'page': '1',
+      }, TmdbTtl.slowShelf),
+      kind: kind,
+    );
+  }
+
+  @override
+  Future<List<TitleSummary>> recommendations(WorkKey key) async => _titles(
+    await _get(
+      key.kind == WorkKind.movie
+          ? '/movie/${key.tmdbId}/recommendations'
+          : '/tv/${key.tmdbId}/recommendations',
+      const {'page': '1'},
+      TmdbTtl.slowShelf,
+    ),
+  );
+
+  @override
+  Future<Credits> episodeCredits(int tvId, int season, int episode) async =>
+      Credits.fromJson(
+        await _get(
+          '/tv/$tvId/season/$season/episode/$episode/credits',
+          const {},
+          TmdbTtl.details,
+        ),
+        guestStars: true,
+      );
+
+  @override
+  Future<Person> person(int id) async => Person.fromJson(
+    await _get('/person/$id', const {
+      'append_to_response': 'combined_credits',
+    }, TmdbTtl.details),
+  );
+
+  /// A list of titles: of one [kind], or mixed with `media_type`.
+  static List<TitleSummary> _titles(Json json, {WorkKind? kind}) => [
+    for (final item in json.objects('results'))
+      if ((kind == null
+              ? TitleSummary.fromSearchJson(item)
+              : TitleSummary.fromListJson(item, kind))
+          case final title?)
+        title,
+  ];
 
   /// Cache → network → stale cache. A fresh entry is returned without a
   /// request; if the request fails because of the network or the service, a

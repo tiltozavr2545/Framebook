@@ -1,0 +1,417 @@
+{
+  "page": 1,
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/pNjh59JSxChQktamG3LMp9ZoQzp.jpg",
+      "genre_ids": [
+        18,
+        80
+      ],
+      "id": 278,
+      "title": "Побег из Шоушенка",
+      "original_language": "en",
+      "original_title": "The Shawshank Redemption",
+      "overview": "Бухгалтер Энди Дюфрейн обвинён в убийстве собственной жены и её любовника. Оказавшись в тюрьме под названием Шоушенк, он сталкивается с жестокостью и беззаконием, царящими по обе стороны решётки. Каждый, кто попадает в эти стены, становится их рабом до конца жизни. Но Энди, обладающий живым умом и доброй душой, находит подход как к заключённым, так и к охранникам, добиваясь их особого к себе расположения.",
+      "popularity": 58.5755,
+      "poster_path": "/yvmKPlTIi0xdcFQIFcQKQJcI63W.jpg",
+      "release_date": "1994-09-23",
+      "softcore": false,
+      "video": false,
+      "vote_average": 8.734,
+      "vote_count": 31683
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/ejdD20cdHNFAYAN2DlqPToXKyzx.jpg",
+      "genre_ids": [
+        18,
+        80
+      ],
+      "id": 238,
+      "title": "Крёстный отец",
+      "original_language": "en",
+      "original_title": "The Godfather",
+      "overview": "Криминальная сага, повествующая о нью-йоркской сицилийской мафиозной семье Корлеоне. Фильм охватывает период 1945-1955 годов. Глава семьи, Дон Вито Корлеоне, выдаёт замуж свою дочь. В это время со Второй мировой войны возвращается его любимый сын Майкл. Майкл, герой войны, гордость семьи, не выражает желания заняться жестоким семейным бизнесом. Дон Корлеоне ведёт дела по старым правилам, но наступают иные времена, и появляются люди, желающие изменить сложившиеся порядки. На Дона Корлеоне совершается покушение.",
+      "popularity": 54.7724,
+      "poster_path": "/hoowzozsn0XQGtgH8nyivAMZfPN.jpg",
+      "release_date": "1972-03-14",
+      "softcore": false,
+      "video": false,
+      "vote_average": 8.689,
+      "vote_count": 23854
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/qqHQsStV6exghCM7zbObuYBiYxw.jpg",
+      "genre_ids": [
+        18
+      ],
+      "id": 389,
+      "title": "12 разгневанных мужчин",
+      "original_language": "en",
+      "original_title": "12 Angry Men",
+      "overview": "Юношу обвиняют в убийстве собственного отца, ему грозит электрический стул. Двенадцать присяжных собираются чтобы вынести вердикт: виновен или нет.С начала заседания почти все склонились к тому, что виновен, и лишь только один из двенадцати позволил себе усомниться. Счет голосов присяжных по принципу «виновен — невиновен» был 11:1. К концу собрания мнения судей кардинально изменились…",
+      "popularity": 29.972,
+      "poster_path": "/uDFEvhvKrH61KuGWWozRtbw2Rjv.jpg",
+      "release_date": "1957-04-10",
+      "softcore": false,
+      "video": false,
+      "vote_average": 8.576,
+      "vote_count": 10530
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/pGzqRKrYeK4LogoysNro0vG8d8N.jpg",
+      "genre_ids": [
+        18,
+        80
+      ],
+      "id": 240,
+      "title": "Крёстный отец 2",
+      "original_language": "en",
+      "original_title": "The Godfather Part II",
+      "overview": "В центре драмы представители нового поколения гангстерского клана — дона Корлеоне и его сына, для которых не существует моральных преград на пути достижения поставленых целей. Они превращают мафию, построенную по патриархальным, еще сицилийским законам, в весьма прагматичную, жесткую корпорацию, плавно интегрирующуюся в большой бизнес Америки.",
+      "popularity": 34.5036,
+      "poster_path": "/tOLQ3iRDfbwhVaw3QjDzIOS7zcu.jpg",
+      "release_date": "1974-12-20",
+      "softcore": false,
+      "video": false,
+      "vote_average": 8.572,
+      "vote_count": 14524
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/zb6fM1CX41D9rF9hdgclu0peUmy.jpg",
+      "genre_ids": [
+        18,
+        36,
+        10752
+      ],
+      "id": 424,
+      "title": "Список Шиндлера",
+      "original_language": "en",
+      "original_title": "Schindler's List",
+      "overview": "Оскар Шиндлер, член национал-социалистической немецкой рабочей партии и преуспевающий промышленник, во время Второй мировой войны спасает евреев от ужасной смерти в концлагерях.",
+      "popularity": 38.089,
+      "poster_path": "/dB7edCQIuExWErWXFVqR7ORnZRS.jpg",
+      "release_date": "1993-12-15",
+      "softcore": false,
+      "video": false,
+      "vote_average": 8.57,
+      "vote_count": 18104
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/9FE5eD92WfVCiivM9Pq9GVSrlWk.jpg",
+      "genre_ids": [
+        28,
+        53,
+        80
+      ],
+      "id": 155,
+      "title": "Тёмный рыцарь",
+      "original_language": "en",
+      "original_title": "The Dark Knight",
+      "overview": "Бэтмен поднимает ставки в войне с криминалом. С помощью лейтенанта Джима Гордона и прокурора Харви Дента он намерен очистить улицы от преступности, отравляющей город. Сотрудничество оказывается эффективным, но скоро они обнаружат себя посреди хаоса, развязанного восходящим криминальным гением, известным испуганным горожанам под именем Джокер.",
+      "popularity": 56.0453,
+      "poster_path": "/aPtN76OjnNKLqCJ2FJBnQOIL031.jpg",
+      "release_date": "2008-07-16",
+      "softcore": false,
+      "video": false,
+      "vote_average": 8.539,
+      "vote_count": 37091
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/m4TUa2ciEWSlk37rOsjiSIvZDXE.jpg",
+      "genre_ids": [
+        16,
+        10751,
+        14
+      ],
+      "id": 129,
+      "title": "Унесённые призраками",
+      "original_language": "ja",
+      "original_title": "千と千尋の神隠し",
+      "overview": "Тихиро с мамой и папой переезжает в новый дом. Заблудившись по дороге, они оказываются в странном пустынном городе, где их ждет великолепный пир. Родители с жадностью набрасываются на еду и к ужасу девочки превращаются в свиней, став пленниками злой колдуньи Юбабы. Теперь, оказавшись одна среди волшебных существ и загадочных видений, Тихиро должна придумать, как избавить своих родителей от чар коварной старухи.",
+      "popularity": 51.2824,
+      "poster_path": "/txaVo4whnSduKuczZiJexhLDVQC.jpg",
+      "release_date": "2001-07-20",
+      "softcore": false,
+      "video": false,
+      "vote_average": 8.536,
+      "vote_count": 19120
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/amZavErrjrdgDwhsIdpWxHNenIx.jpg",
+      "genre_ids": [
+        14,
+        18,
+        80
+      ],
+      "id": 497,
+      "title": "Зелёная миля",
+      "original_language": "en",
+      "original_title": "The Green Mile",
+      "overview": "Пол Эджкомб — начальник блока смертников в тюрьме «Холодная гора», каждый из узников которого однажды проходит «зеленую милю» по пути к месту казни. Пол повидал много заключённых и надзирателей за время работы. Однако гигант Джон Коффи, обвинённый в страшном преступлении, стал одним из самых необычных обитателей блока.",
+      "popularity": 35.1911,
+      "poster_path": "/lHxe8t4B0CKv4DO0C0B4rsuiG95.jpg",
+      "release_date": "1999-12-10",
+      "softcore": false,
+      "video": false,
+      "vote_average": 8.506,
+      "vote_count": 20038
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/ctiw6FZK4N36LmkjSklWEbuvlq9.jpg",
+      "genre_ids": [
+        12,
+        14,
+        28
+      ],
+      "id": 122,
+      "title": "Властелин колец: возвращение короля",
+      "original_language": "en",
+      "original_title": "The Lord of the Rings: The Return of the King",
+      "overview": "Арагорн оказывается наследником древних королей. Вместе с Гэндальфом и другими участниками распавшегося Братства кольца он борется за спасение Гондора.",
+      "popularity": 49.1476,
+      "poster_path": "/60q19ii6RRIWHzVREeLtXUEM42B.jpg",
+      "release_date": "2003-12-17",
+      "softcore": false,
+      "video": false,
+      "vote_average": 8.505,
+      "vote_count": 27674
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/mMtUybQ6hL24FXo0F3Z4j2KG7kZ.jpg",
+      "genre_ids": [
+        16,
+        10749,
+        18
+      ],
+      "id": 372058,
+      "title": "Твоё имя",
+      "original_language": "ja",
+      "original_title": "君の名は。",
+      "overview": "Токийский парень Таки и провинциальная девушка Мицуха обнаруживают, что между ними существует странная связь. Во сне они меняются телами и проживают жизни друг друга. Но однажды эта способность исчезает так же внезапно, как появилась. Таки решает во что бы то ни стало отыскать Мицуху.",
+      "popularity": 35.7757,
+      "poster_path": "/iH2WDCYLIUjc7oPWRT7Kxgxza6k.jpg",
+      "release_date": "2016-07-01",
+      "softcore": false,
+      "video": false,
+      "vote_average": 8.492,
+      "vote_count": 13141
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/8sNiAPPYU14PUepFNeSNGUTiHW.jpg",
+      "genre_ids": [
+        12,
+        18,
+        878
+      ],
+      "id": 157336,
+      "title": "Интерстеллар",
+      "original_language": "en",
+      "original_title": "Interstellar",
+      "overview": "Когда засуха, пыльные бури и вымирание растений приводят человечество к продовольственному кризису, коллектив исследователей и учёных отправляется сквозь червоточину в путешествие, чтобы превзойти прежние ограничения для космических путешествий человека и найти планету с подходящими для человечества условиями.",
+      "popularity": 76.523,
+      "poster_path": "/vReLRjDV9XPhiOSEW7QWow4DXwf.jpg",
+      "release_date": "2014-11-04",
+      "softcore": false,
+      "video": false,
+      "vote_average": 8.492,
+      "vote_count": 41654
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/TU9NIjwzjoKPwQHoHshkFcQUCG.jpg",
+      "genre_ids": [
+        35,
+        53,
+        18
+      ],
+      "id": 496243,
+      "title": "Паразиты",
+      "original_language": "ko",
+      "original_title": "기생충",
+      "overview": "Обычное корейское семейство Кимов жизнь не балует. Приходится жить в сыром грязном полуподвале, воровать интернет у соседей и перебиваться случайными подработками. Однажды друг сына семейства, уезжая на стажировку за границу, предлагает тому заменить его и поработать репетитором у старшеклассницы в богатой семье Пак. Подделав диплом о высшем образовании, парень отправляется в шикарный дизайнерский особняк и производит на хозяйку дома хорошее впечатление. Тут же ему в голову приходит необычный план по трудоустройству сестры.",
+      "popularity": 41.9537,
+      "poster_path": "/9xL2PwIOerz8jld06J9cxwuJfoD.jpg",
+      "release_date": "2019-05-30",
+      "softcore": false,
+      "video": false,
+      "vote_average": 8.489,
+      "vote_count": 21579
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/suaEOtk1N1sgg2MTM7oZd2cfVp3.jpg",
+      "genre_ids": [
+        53,
+        80,
+        35
+      ],
+      "id": 680,
+      "title": "Криминальное чтиво",
+      "original_language": "en",
+      "original_title": "Pulp Fiction",
+      "overview": "Пути двух наемных убийц, профессионального бойца, двух бандитов и жены гангстера пересекаются в этом закрученном кровавом путешествии по злачному центру Лос-Анджелеса.",
+      "popularity": 39.5514,
+      "poster_path": "/qvbfoyW2zaI15c0quUfF6CRGH4H.jpg",
+      "release_date": "1994-09-10",
+      "softcore": false,
+      "video": false,
+      "vote_average": 8.481,
+      "vote_count": 31185
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/x4biAVdPVCghBlsVIzB6NmbghIz.jpg",
+      "genre_ids": [
+        37
+      ],
+      "id": 429,
+      "title": "Хороший, плохой, злой",
+      "original_language": "it",
+      "original_title": "Il buono, il brutto, il cattivo",
+      "overview": "В разгар гражданской войны таинственный стрелок скитается по просторам Дикого Запада. У него нет ни дома, ни друзей, ни компаньонов, пока он не встречает двоих незнакомцев, таких же безжалостных и циничных. По воле судьбы трое мужчин вынуждены объединить свои усилия в поисках украденного золота. Но совместная работа — не самое подходящее занятие для таких отъявленных бандитов, как они. Компаньоны вскоре понимают, что в их дерзком и опасном путешествии по разорённой войной стране самое важное — никому не доверять и держать пистолет наготове, если хочешь остаться в живых.",
+      "popularity": 25.3509,
+      "poster_path": "/fGDK72duT0YbdORyNo1QVuzDYzE.jpg",
+      "release_date": "1966-12-23",
+      "softcore": false,
+      "video": false,
+      "vote_average": 8.469,
+      "vote_count": 10081
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/66Kn4XWhkuPkJxOJyPEx4U2CUfN.jpg",
+      "genre_ids": [
+        35,
+        18,
+        10749
+      ],
+      "id": 13,
+      "title": "Форрест Гамп",
+      "original_language": "en",
+      "original_title": "Forrest Gump",
+      "overview": "Сидя на автобусной остановке, Форрест Гамп — не очень умный, но добрый и открытый парень — рассказывает случайным встречным историю своей необыкновенной жизни. С самого малолетства парень страдал от заболевания ног, соседские мальчишки дразнили его, но в один прекрасный день Форрест открыл в себе невероятные способности к бегу. Подруга детства Дженни всегда его поддерживала и защищала, но вскоре дороги их разошлись.",
+      "popularity": 42.3166,
+      "poster_path": "/6fAVi5Iic2I1mvTW8vfp5kZPJjJ.jpg",
+      "release_date": "1994-06-23",
+      "softcore": false,
+      "video": false,
+      "vote_average": 8.462,
+      "vote_count": 30750
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/gILte6Zd7m1YneIr6MVhh30S9pr.jpg",
+      "genre_ids": [
+        18,
+        80
+      ],
+      "id": 769,
+      "title": "Славные парни",
+      "original_language": "en",
+      "original_title": "GoodFellas",
+      "overview": "От экстравагантной воплотившейся мечты до настоящего кошмара: бывший мафиози Генри Хилл вспоминает свои яркие годы в качестве члена нью-йоркского преступного клана.",
+      "popularity": 29.0303,
+      "poster_path": "/ft6opiB2onxZe8PhSTba53wYpFb.jpg",
+      "release_date": "1990-09-12",
+      "softcore": false,
+      "video": false,
+      "vote_average": 8.5,
+      "vote_count": 14948
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/oiwc338EoBgS4sEI2ixAny4KQKg.jpg",
+      "genre_ids": [
+        12,
+        14,
+        28
+      ],
+      "id": 120,
+      "title": "Властелин колец: братство кольца",
+      "original_language": "en",
+      "original_title": "The Lord of the Rings: The Fellowship of the Ring",
+      "overview": "Фродо Бэггинс отправляется в необыкновенное путешествие, чтобы уничтожить кольцо Саурона. Он пройдет путь от безмятежной деревни хоббитов до дымящихся пустошей Мордора.",
+      "popularity": 64.643,
+      "poster_path": "/k66mInzxbRSMCBousQwSnXWuo4G.jpg",
+      "release_date": "2001-12-18",
+      "softcore": false,
+      "video": false,
+      "vote_average": 8.448,
+      "vote_count": 28686
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/c6OLXfKAk5BKeR6broC8pYiCquX.jpg",
+      "genre_ids": [
+        18,
+        53
+      ],
+      "id": 550,
+      "title": "Бойцовский клуб",
+      "original_language": "en",
+      "original_title": "Fight Club",
+      "overview": "Сотрудник страховой компании страдает хронической бессонницей и отчаянно пытается вырваться из мучительно скучной жизни. Однажды в очередной командировке он встречает некоего Тайлера Дёрдена — харизматического торговца мылом с извращенной философией. Тайлер уверен, что самосовершенствование — удел слабых, а единственное, ради чего стоит жить, — саморазрушение.\r Проходит немного времени, и вот уже новые друзья лупят друг друга почем зря на стоянке перед баром, и очищающий мордобой доставляет им высшее блаженство. Приобщая других мужчин к простым радостям физической жестокости, они основывают тайный Бойцовский клуб, который начинает пользоваться невероятной популярностью.",
+      "popularity": 41.3287,
+      "poster_path": "/66RvLrRJTm4J8l3uHXWF09AICol.jpg",
+      "release_date": "1999-10-15",
+      "softcore": false,
+      "video": false,
+      "vote_average": 8.438,
+      "vote_count": 33137
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/6aNKD81RHR1DqUUa8kOZ1TBY1Lp.jpg",
+      "genre_ids": [
+        35,
+        18
+      ],
+      "id": 637,
+      "title": "Жизнь прекрасна",
+      "original_language": "it",
+      "original_title": "La vita è bella",
+      "overview": "Во время Второй мировой войны из Италии в концлагерь были отправлены евреи - отец с маленьким сыном. Жена-итальянка добровольно последовала за ними. В лагере отец сказал мальчику, что всё происходящее вокруг является большой интересной игрой за приз в виде настоящего танка. И этот классный приз достанется тому мальчику, который сможет не попасться на глаза надзирателям.",
+      "popularity": 21.1522,
+      "poster_path": "/seSip2zebLmHzDHfLstRF6yyqqq.jpg",
+      "release_date": "1997-12-20",
+      "softcore": false,
+      "video": false,
+      "vote_average": 8.436,
+      "vote_count": 14355
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/6G73mNyooWAEQTpckPSnFxFoNmc.jpg",
+      "genre_ids": [
+        12,
+        14,
+        28
+      ],
+      "id": 121,
+      "title": "Властелин колец: две крепости",
+      "original_language": "en",
+      "original_title": "The Lord of the Rings: The Two Towers",
+      "overview": "Фродо и Сэм идутв Мордор, чтобы уничтожить Кольцо Всевластия. Тем временем Гимли, Леголас и Арагорн отправляются на поиски Мерри и Пиппина, которых схватили орки.",
+      "popularity": 45.0924,
+      "poster_path": "/fl7QZlAoZ4MLcxvgOaBjeUxlpQt.jpg",
+      "release_date": "2002-12-18",
+      "softcore": false,
+      "video": false,
+      "vote_average": 8.432,
+      "vote_count": 24837
+    }
+  ],
+  "total_pages": 20,
+  "total_results": 396
+}

@@ -1,5 +1,8 @@
 import '../../source_failure.dart';
 import '../../work_key.dart';
+import 'tmdb_people.dart';
+
+export 'tmdb_people.dart';
 
 // Catalog domain values. Parsed by hand, not with json_serializable: a film
 // and a series name the same field differently (`title`/`name`,
@@ -49,21 +52,24 @@ final class TitleSummary {
   });
 
   /// `null` for anything that is not a film or a series (a person), or has
-  /// no id.
-  static TitleSummary? fromSearchJson(Json json) {
+  /// no id. The kind comes from `media_type`: search, trending,
+  /// recommendations and a person's credits mix films and series.
+  static TitleSummary? fromSearchJson(Json json) =>
+      switch (json.string('media_type')) {
+        'movie' => fromListJson(json, WorkKind.movie),
+        'tv' => fromListJson(json, WorkKind.tv),
+        _ => null,
+      };
+
+  /// A list of one kind (now playing, discover), without `media_type`.
+  static TitleSummary? fromListJson(Json json, WorkKind kind) {
     final id = json.integer('id');
     if (id == null || id <= 0) return null;
-    final key = switch (json.string('media_type')) {
-      'movie' => WorkKey.movie(id),
-      'tv' => WorkKey.tv(id),
-      _ => null,
-    };
-    if (key == null) return null;
-    final movie = key.kind == WorkKind.movie;
+    final movie = kind == WorkKind.movie;
     final title = json.string(movie ? 'title' : 'name');
     if (title == null) return null;
     return TitleSummary(
-      key: key,
+      key: movie ? WorkKey.movie(id) : WorkKey.tv(id),
       title: title,
       originalTitle: json.string(movie ? 'original_title' : 'original_name'),
       releaseDate: json.string(movie ? 'release_date' : 'first_air_date'),
@@ -105,6 +111,7 @@ final class MovieDetails {
     required this.runtime,
     required this.imdbId,
     required this.vote,
+    this.credits = const Credits(),
   });
 
   factory MovieDetails.fromJson(Json json) {
@@ -128,6 +135,7 @@ final class MovieDetails {
           _imdb(json.string('imdb_id')) ??
           _imdb(json.object('external_ids')?.string('imdb_id')),
       vote: TmdbVote.fromJson(json),
+      credits: Credits.fromJson(json.object('credits')),
     );
   }
 
@@ -144,6 +152,9 @@ final class MovieDetails {
   final int? runtime;
   final String? imdbId;
   final TmdbVote vote;
+
+  /// Cast and key crew, when the request appended `credits`.
+  final Credits credits;
 
   int? get year => yearOf(releaseDate);
 }
@@ -164,6 +175,7 @@ final class TvDetails {
     required this.seasons,
     required this.imdbId,
     required this.vote,
+    this.credits = const Credits(),
   });
 
   factory TvDetails.fromJson(Json json) {
@@ -189,6 +201,10 @@ final class TvDetails {
       ],
       imdbId: _imdb(json.object('external_ids')?.string('imdb_id')),
       vote: TmdbVote.fromJson(json),
+      credits: Credits.fromJson(
+        json.object('credits'),
+        createdBy: json.objects('created_by'),
+      ),
     );
   }
 
@@ -208,6 +224,9 @@ final class TvDetails {
   final List<SeasonSummary> seasons;
   final String? imdbId;
   final TmdbVote vote;
+
+  /// Cast and key crew, when the request appended `credits`.
+  final Credits credits;
 
   int? get firstYear => yearOf(firstAirDate);
   int? get lastYear => yearOf(lastAirDate);
@@ -278,6 +297,7 @@ final class SeasonDetails {
     required this.episodes,
     required this.vote,
     this.tmdbId,
+    this.credits = const Credits(),
   });
 
   factory SeasonDetails.fromJson(int tvId, Json json) {
@@ -298,6 +318,7 @@ final class SeasonDetails {
             parsed,
       ],
       vote: TmdbVote.fromJson(json),
+      credits: Credits.fromJson(json.object('credits')),
     );
   }
 
@@ -311,6 +332,9 @@ final class SeasonDetails {
   final String? posterPath;
   final List<EpisodeSummary> episodes;
   final TmdbVote vote;
+
+  /// Cast and key crew, when the request appended `credits`.
+  final Credits credits;
 
   int get number => key.season!;
   int? get year => yearOf(airDate);

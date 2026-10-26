@@ -1,0 +1,420 @@
+{
+  "dates": {
+    "maximum": "2026-10-28",
+    "minimum": "2026-09-16"
+  },
+  "page": 1,
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/qqHFLg90IUSoTmSMpKOOW5RyqN3.jpg",
+      "genre_ids": [
+        878,
+        9648,
+        28
+      ],
+      "id": 1058424,
+      "title": "Надежда",
+      "original_language": "ko",
+      "original_title": "호프",
+      "overview": "В небольшом городке Хоуп-Харбор начинают происходить жуткие события: местные жители обнаруживают растерзанных животных, а вскоре появляются и человеческие жертвы. Пока начальник полиции Бом-сок пытается разобраться в происходящем, группа охотников отправляется в лес на поиски загадочного хищника, которого подозревают в нападениях. Однако вскоре становится ясно, что угроза не имеет ничего общего с обычным зверем. Обнаружение таинственного внеземного объекта превращает расследование в отчаянную борьбу за выживание, где жители сталкиваются с существами, чьи возможности превосходят всё, что они могли себе представить.",
+      "popularity": 587.0228,
+      "poster_path": "/2h3a7i3mSd1ZhK7sYEzDRgdtvvl.jpg",
+      "release_date": "2026-07-15",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.784,
+      "vote_count": 343
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/nGau0KBOaRILSK5MqFcuTfv7GMl.jpg",
+      "genre_ids": [
+        53
+      ],
+      "id": 1101412,
+      "title": "Вышка 2",
+      "original_language": "en",
+      "original_title": "Fall 2: Deadpoint",
+      "overview": "После трагической гибели на вышке B67 видео Шайло разлетелись по сети, а сама она стала легендой среди экстремалов. Однако ее сестра Джакс так и не смогла смириться с утратой. Она находит список самых экстремальных мест на планете, которые Шайло мечтала покорить, и решает пройти его до конца. Следующая цель — смертельно опасный маршрут на горе Кван в Таиланде высотой 2070 метров над уровнем моря. Джакс вместе с подругой и местным гидом отправляется наверх, где ей предстоит столкнуться со своим главным страхом — повторить судьбу сестры.",
+      "popularity": 326.8636,
+      "poster_path": "/81FLOOicWMgiT67RiqP42pRcTaw.jpg",
+      "release_date": "2026-09-01",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.292,
+      "vote_count": 669
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/uL4cIrNi2uaUnWIOQQ28EVnkETG.jpg",
+      "genre_ids": [
+        27,
+        53,
+        878
+      ],
+      "id": 1400940,
+      "title": "Клэйфейс",
+      "original_language": "en",
+      "original_title": "Clayface",
+      "overview": "После травмы, обезобразившей его лицо, молодой актёр Мэтт Хейген соглашается пройти особое лечение. Однако научный эксперимент не даёт тех результатов, на которые рассчитывал Мэтт, и в результате его тело и кожа становятся гибкими и податливыми, как глина. Потерявший чувство личности и человечности актёр превращается в движимого жаждой мести монстра.",
+      "popularity": 267.4788,
+      "poster_path": "/r2ib7b2QRLRlb8g7K2QI2rfFgeA.jpg",
+      "release_date": "2026-10-19",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.596,
+      "vote_count": 193
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/qRN8eqYwG6HPSy0i3fKzuLrUOhp.jpg",
+      "genre_ids": [
+        28,
+        14
+      ],
+      "id": 1153576,
+      "title": "Уличный боец",
+      "original_language": "en",
+      "original_title": "Street Fighter",
+      "overview": "Уличные бойцы Рю и Кен встречаются вновь и оказываются втянуты в мир единоборств, когда таинственная Чунь-Ли приглашает их принять участие в новом турнире World Warrior. Однако за зрелищными боями скрывается опасный заговор, который вынуждает бойцов драться друг с другом, а также столкнуться с демонами из их прошлого.",
+      "popularity": 191.7096,
+      "poster_path": "/2qGRXNrhyg3N5KNAZuahmUvf15s.jpg",
+      "release_date": "2026-10-13",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.4,
+      "vote_count": 180
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/jdJsnhHfkIi3J7jwfiCFT4gXNx5.jpg",
+      "genre_ids": [
+        28,
+        35,
+        12
+      ],
+      "id": 1148365,
+      "title": "Matchbox: фильм",
+      "original_language": "en",
+      "original_title": "Matchbox the Movie",
+      "overview": "Встреча бывших друзей детства принимает неожиданный оборот — они случайно узнают об опасном международном заговоре и должны спасти мир.",
+      "popularity": 205.7727,
+      "poster_path": "/dBZBEdsX3C06FlMAJVWq3NAFYaE.jpg",
+      "release_date": "2026-10-05",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.742,
+      "vote_count": 512
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/fAlQZsCOCvxOj0PmFmt4i8IWR2u.jpg",
+      "genre_ids": [
+        28,
+        53
+      ],
+      "id": 1561726,
+      "title": "Гениальный план",
+      "original_language": "en",
+      "original_title": "Masterplan",
+      "overview": "Легендарный вор Роджер задумывает дерзкое ограбление - похитить «Мону Лизу» из Лувра. Для этого он вербует Кьяру, блестящую итальянскую хакершу, и Джея, самоуверенного французского специалиста по взрывчатке. Но незадолго до дела Роджер раскрывает шокирующую правду: наёмники - давно разлученные брат и сестра, а он сам - их отец. Новоиспечённым родственникам предстоит научиться работать вместе ради ограбления века.",
+      "popularity": 189.5685,
+      "poster_path": "/lTKnq9myMke3pIIX28kFUFzaYbL.jpg",
+      "release_date": "2026-10-16",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.029,
+      "vote_count": 172
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/ytoLEl5yDaxB8AtZ52uKWjaQ9ql.jpg",
+      "genre_ids": [
+        27,
+        35,
+        14
+      ],
+      "id": 1514026,
+      "title": "Бадди",
+      "original_language": "en",
+      "original_title": "Buddy",
+      "overview": "Компания весёлых детей живёт в волшебном мире детской телепередачи 1999 года. Их лучший друг — оранжевый единорог Бадди, который всегда готов научить ребят новому и спеть с ними песенку. Когда один мальчик бесследно исчезает, а вместо него появляется новая девочка, ребята с ужасом узнают, что Бадди — хладнокровный убийца. Тем временем обычную домохозяйку, мать двоих сыновей, начинает терзать необъяснимое беспокойство.",
+      "popularity": 201.3916,
+      "poster_path": "/pcKO32lT18769nYgIJQqRPPuQ9T.jpg",
+      "release_date": "2026-08-27",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.049,
+      "vote_count": 184
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/dJTWIecL2vxsCRl5G0lRhPsfrhc.jpg",
+      "genre_ids": [
+        28,
+        53
+      ],
+      "id": 1228834,
+      "title": "Операция «Возмездие»",
+      "original_language": "en",
+      "original_title": "The Fix",
+      "overview": "Разочарованные окончанием войны в Афганистане, группа опальных, потрёпанных войной бывших оперативников ЦРУ направляется в Тегеран, чтобы сорвать большой куш, который навсегда изменит их жизнь.",
+      "popularity": 168.7327,
+      "poster_path": "/1LPzBhF0J0ObYxvMRxyo223UMXO.jpg",
+      "release_date": "2026-09-10",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.253,
+      "vote_count": 77
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/3icyRAqgakNcQn6aDVz9libFmBA.jpg",
+      "genre_ids": [
+        27,
+        878,
+        12
+      ],
+      "id": 1423191,
+      "title": "Обитель зла",
+      "original_language": "en",
+      "original_title": "Resident Evil",
+      "overview": "Медицинский курьер Брайан отправляется выполнить обычную доставку, но внезапно оказывается в центре кошмарной вспышки, охватившей Раккун-Сити. Город погружается в хаос, а на улицах появляются заражённые люди и чудовищные существа. Оказавшись один на один с надвигающейся угрозой, Брайан вынужден искать путь через охваченный катастрофой город, используя всё, что может помочь ему выжить. С каждой минутой ситуация становится всё опаснее, превращая простую доставку в отчаянную борьбу за жизнь.",
+      "popularity": 184.3922,
+      "poster_path": "/vLl5tcuabARqGBefccSsYAYXdgA.jpg",
+      "release_date": "2026-09-16",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.312,
+      "vote_count": 1070
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/shW2jHkQLZVv4Fko2rJDqTGU0gx.jpg",
+      "genre_ids": [
+        53
+      ],
+      "id": 1255833,
+      "title": "Кит: Во тьме глубин",
+      "original_language": "en",
+      "original_title": "Whalefall",
+      "overview": "Калифорния. Молодой аквалангист Джей Гардинер погружается в океан в поисках останков своего отца, однако его проглатывает гигантский кашалот. Теперь у Джея есть час, чтобы выбраться из кита, прежде чем у него закончится запас кислорода. Оказавшись в ловушке на грани смерти, парень вспоминает своего отца и находит в себе силы преодолеть страх и бороться за жизнь.",
+      "popularity": 133.7609,
+      "poster_path": "/sqrx5rMkdSSaXTmd19jAbUx5Cpc.jpg",
+      "release_date": "2026-10-14",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.604,
+      "vote_count": 115
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/7RsPdXLDNugDIlwXPVeeprNfMx.jpg",
+      "genre_ids": [
+        27,
+        14,
+        9648
+      ],
+      "id": 1232569,
+      "title": "Пиноккио: Раскрепощённый",
+      "original_language": "en",
+      "original_title": "Pinocchio: Unstrung",
+      "overview": "Пытаясь вывести внука Джеймса из тяжёлого состояния, Джеппетто дарит ему своё новое творение — деревянную куклу по имени Пиноккио, которая оказывается живой. Сначала необычный подарок становится для мальчика настоящим другом, но вскоре за его привязанностью начинает проступать нечто всё более тревожное.",
+      "popularity": 179.9636,
+      "poster_path": "/Ai7VesRDerUCvER1tnsPnfR3iHg.jpg",
+      "release_date": "2026-07-22",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.5,
+      "vote_count": 145
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/tzoarEu7TsG959upiELyYPm5kO9.jpg",
+      "genre_ids": [
+        53,
+        18,
+        28,
+        80
+      ],
+      "id": 1236045,
+      "title": "Животные",
+      "original_language": "en",
+      "original_title": "Animals",
+      "overview": "Когда их сына похищают, кандидат на пост мэра Лос-Анджелеса и его жена в панике пытаются собрать выкуп, принимая решения, из-за которых их мир может рухнуть.",
+      "popularity": 154.4923,
+      "poster_path": "/tivUBDoIEXHnL5ZjyNca3FMTH86.jpg",
+      "release_date": "2026-10-09",
+      "softcore": false,
+      "video": false,
+      "vote_average": 6.964,
+      "vote_count": 604
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/ncm7djsVTHQQMX2HEbEVxMUFchG.jpg",
+      "genre_ids": [
+        27
+      ],
+      "id": 1400837,
+      "title": "Чужая мама",
+      "original_language": "en",
+      "original_title": "Other Mommy",
+      "overview": "Бэла, 8-милетняя девочка из семьи, переживающей супружеский кризис, сталкивается со зловещей сущностью, появляющейся из её шкафа. Эта сущность, которую она называет \"Другой мамочкой\", становится всё более угрожающей для неё и её семьи.",
+      "popularity": 150.9008,
+      "poster_path": "/xM23YJnhlJgf8gOFE34IZBMxUy3.jpg",
+      "release_date": "2026-10-07",
+      "softcore": false,
+      "video": false,
+      "vote_average": 5.833,
+      "vote_count": 162
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/oIglj0Jy9duG4LnrRUpH8n001Pk.jpg",
+      "genre_ids": [
+        10749,
+        14,
+        35
+      ],
+      "id": 1302904,
+      "title": "Практическая магия 2",
+      "original_language": "en",
+      "original_title": "Practical Magic 2",
+      "overview": "Кайли, старшая дочь Салли Оуэнс, начинает раскрывать семейные тайны и развивает свои собственные тёмные способности. Семья оказывается втянута в многовековую борьбу за то, чтобы наконец снять проклятие, которое преследует их род на протяжении поколений. Женщины из семьи Оуэнс — Салли, Джиллиан, тёти Фрэнсис и Бриджит — должны вновь объединиться и отправиться в Великобританию, чтобы противостоять источнику своей магии и спасти следующее поколение своей семьи.",
+      "popularity": 147.0679,
+      "poster_path": "/sxusbJzNx21lHnwQ1ssBTs2EGwg.jpg",
+      "release_date": "2026-09-09",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.1,
+      "vote_count": 309
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/nhIL3O4W9h5V5JbNQm7yjoDk3So.jpg",
+      "genre_ids": [
+        99,
+        27,
+        18
+      ],
+      "id": 1765072,
+      "title": "Увидеть всё",
+      "original_language": "en",
+      "original_title": "You Can See Everything",
+      "overview": "Элизабет Холмс была одной из самых молодых миллиардерш мира, пока её компания не оказалась в центре крупнейшего мошеннического скандала в истории Кремниевой долины. Потеряв всё своё состояние и получив тюремный срок, за месяц до заключения она приглашает в свой дом съёмочную группу во главе с комиком-авангардистом. Но по мере того как границы между правдой и ложью начинают стираться, камерный портрет загадочной аферистки превращается в головокружительное трёхлетнее путешествие в бездну.",
+      "popularity": 134.1266,
+      "poster_path": "/57tGJt2nHQqrpsrRO9XLxhgGPMd.jpg",
+      "release_date": "2026-10-16",
+      "softcore": false,
+      "video": false,
+      "vote_average": 9.1,
+      "vote_count": 45
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/sl5NJ1vtyhP9Vr88bB4blULsJYp.jpg",
+      "genre_ids": [
+        16,
+        12,
+        14
+      ],
+      "id": 791523,
+      "title": "Ведьмин лес",
+      "original_language": "en",
+      "original_title": "Wildwood",
+      "overview": "Девочка Прю живёт в городе Портленд, пока однажды стая загадочных воронов не похищает её младшего брата Мака и не уносит его в запретный лес, скрывающийся за пределами города. Не желая оставлять брата в опасности, Прю вместе со своим лучшим другом Кёртисом отправляется в таинственную Пустошь - волшебный мир, населённый говорящими животными, необычными существами и могущественными силами. Пробираясь через неизведанные земли, друзья сталкиваются с опасными противниками и раскрывают секреты, скрытые в глубине леса. Чтобы спасти Мака, Прю предстоит проявить смелость, преодолеть собственные страхи и противостоять загадочной Александре, стоящей за похищением. Но вскоре девочка понимает, что от её путешествия зависит не только судьба семьи, но и будущее всего волшебного мира.",
+      "popularity": 140.2165,
+      "poster_path": "/67SHha1PONyP33eCkjnjQXxWIKP.jpg",
+      "release_date": "2026-10-19",
+      "softcore": false,
+      "video": false,
+      "vote_average": 8.852,
+      "vote_count": 54
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/npXZNWjOEYrqdMDPQ11SGBrXqAG.jpg",
+      "genre_ids": [
+        28,
+        35
+      ],
+      "id": 1377237,
+      "title": "Курьер",
+      "original_language": "en",
+      "original_title": "Runner",
+      "overview": "У Хэнка Мэлоуна, элитного курьера, есть 3 часа, чтобы доставить печень и спасти 7-летнюю девочку, которой требуется срочная пересадка. Простая задача превращается в смертельное испытание, когда глава известной преступной группировки решает любой ценой завладеть органом.",
+      "popularity": 119.082,
+      "poster_path": "/vnrrZCe2sDMdEY7xyGSZMpSsZyG.jpg",
+      "release_date": "2026-09-07",
+      "softcore": false,
+      "video": false,
+      "vote_average": 8.343,
+      "vote_count": 727
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/dSfrsjhqC6lYe7LYDYnzWeXZmEl.jpg",
+      "genre_ids": [
+        14,
+        16,
+        10751
+      ],
+      "id": 9479,
+      "title": "Кошмар перед Рождеством",
+      "original_language": "en",
+      "original_title": "The Nightmare Before Christmas",
+      "overview": "Мультфильм рассказывает о царстве Хэллоуин, царстве страхов и кошмаров, где живут мертвецы, уродцы, чудовища во главе с царем ужасов Джеком Скелингтоном. Под рождество Джек случайно попадает в город Рождества, где узнает, что есть где-то радость, добро и веселье.Ему страшно захотелось испытать это чувство — дарить людям счастье — и он похитил Сэнди Клауса и занял его место. Результаты были, правда, самые плачевные, да и подарки его никому, мягко говоря, не понравились. Но он все понял и исправил свою ошибку.",
+      "popularity": 118.5114,
+      "poster_path": "/xvqFn90FxKTJflG4n0spZY7vySu.jpg",
+      "release_date": "1993-10-09",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.853,
+      "vote_count": 10811
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/wXTaGcqX3jvdXSKCJAkl5jZyrKp.jpg",
+      "genre_ids": [
+        18,
+        53
+      ],
+      "id": 1281331,
+      "title": "Социальная расплата",
+      "original_language": "en",
+      "original_title": "The Social Reckoning",
+      "overview": "Фрэнсис Хоген, молодой инженер Facebook, обращается за помощью к Джеффу Хорвицу, репортеру Wall Street Journal, чтобы отправиться в опасное путешествие, которое в конечном итоге раскрывает самые охраняемые секреты социальной сети.",
+      "popularity": 98.5232,
+      "poster_path": "/czurPs34gWH13VSmG2xPbzgakFK.jpg",
+      "release_date": "2026-10-07",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.0,
+      "vote_count": 130
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/vC5IxhgO6cVmw9O4QgkraRzfHvh.jpg",
+      "genre_ids": [
+        35,
+        18
+      ],
+      "id": 1248832,
+      "title": "Диггер",
+      "original_language": "en",
+      "original_title": "Digger",
+      "overview": "Самый могущественный человек в мире отправляется на миссию, чтобы спасти человечество от катастрофы, которую он сам и устроил.",
+      "popularity": 114.0521,
+      "poster_path": "/biovC0fjDUUSGJiR4joGaGERUS3.jpg",
+      "release_date": "2026-09-28",
+      "softcore": false,
+      "video": false,
+      "vote_average": 7.493,
+      "vote_count": 468
+    }
+  ],
+  "total_pages": 374,
+  "total_results": 7465
+}

@@ -1,0 +1,480 @@
+{
+  "page": 1,
+  "results": [
+    {
+      "adult": false,
+      "backdrop_path": "/577eXC8wFQT0eUrJcgznSiFPRmk.jpg",
+      "id": 94997,
+      "name": "Дом Дракона",
+      "original_name": "House of the Dragon",
+      "overview": "После смерти короля Визериса династия Таргариенов начинает бескомпромиссную борьбу за Железный трон. Предводительницей «черной» ветви становится принцесса Рейнира, а на стороне «зеленой» оказывается ее лучшая подруга и дочь десницы короля Алисента. В битве за престол соперницы заручаются поддержкой неожиданных союзников, плетут интриги — и используют разрушительную мощь драконов.",
+      "poster_path": "/hXyYN6LFo7QnKUA3QBx7B3KsnJE.jpg",
+      "media_type": "tv",
+      "original_language": "en",
+      "genre_ids": [
+        10765,
+        18,
+        10759
+      ],
+      "popularity": 114.2679,
+      "first_air_date": "2022-08-21",
+      "softcore": false,
+      "vote_average": 8.381,
+      "vote_count": 7250,
+      "origin_country": [
+        "US"
+      ]
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/8mlPjKqMROLwpuuvKb0qXIFXAwf.jpg",
+      "id": 62417,
+      "name": "Изумрудный город",
+      "original_name": "Emerald City",
+      "overview": "В мгновение ока торнадо уносит 20-летнюю Дороти Гейл и полицейскую собаку в мир, далекий от нашего — мистическую землю, охваченную кровавой войной между конкурирующими королевствами, в страну Оз. Дороти попадает в этот опасный мир и раскрывает свою истинную судьбу.",
+      "poster_path": "/1k4TnvDOwMKQO3aSLjWbBExNuT7.jpg",
+      "media_type": "tv",
+      "original_language": "en",
+      "genre_ids": [
+        10765,
+        18,
+        10759
+      ],
+      "popularity": 9.6546,
+      "first_air_date": "2017-01-06",
+      "softcore": false,
+      "vote_average": 6.594,
+      "vote_count": 217,
+      "origin_country": [
+        "US"
+      ]
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/4XKzTeqiZOvmvs8iSh6GK4l3Hii.jpg",
+      "id": 7704,
+      "name": "Легенда об искателе",
+      "original_name": "Legend of the Seeker",
+      "overview": "Еще вчера юный Ричард Сайфер был обычным лесником, а нынче ему выпал на долю тяжкий жребий Искателя истины. Тяжкий, ибо магия не приносит радости, а за истину, как и за могущество, расплачиваются дорогой ценой. Искателю истины надлежит вступить в смертельную схватку с величайшим из черных магов трех королевств — безжалостным Даркеном Ралом, повелителем Д'Хары. К счастью, у него есть верные союзники в лице бесстрашной исповедницы Кэлен и чудаковатого мага Зеддикуса З'ул Зорандера — вместе им предстоит вернуть мир людям, которые за долгие годы жизни в страхе успели потерять всякую надежду.\n\nСериал «Легенда об Искателе» снят по мотивам первого романа Терри Гудкайнда из цикла «Меч истины» (Sword of Truth) — «Первое правило волшебника» (Wizard's First Rule).",
+      "poster_path": "/tkBcouO4DBS9u5yPPXSaLN6Vptm.jpg",
+      "media_type": "tv",
+      "original_language": "en",
+      "genre_ids": [
+        10765,
+        10759,
+        18
+      ],
+      "popularity": 29.419,
+      "first_air_date": "2008-11-01",
+      "softcore": false,
+      "vote_average": 7.4,
+      "vote_count": 377,
+      "origin_country": [
+        "US"
+      ]
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/foGkPxpw9h8zln81j63mix5B7m8.jpg",
+      "id": 71912,
+      "name": "Ведьмак",
+      "original_name": "The Witcher",
+      "overview": "Геральт из Ривии, наемный охотник за чудовищами, перенесший мутации, идет навстречу своей судьбе в неспокойном мире, где люди часто оказываются куда коварнее чудовищ.",
+      "poster_path": "/rY2c2LhN07CRKlAbRaDZxN2XjvK.jpg",
+      "media_type": "tv",
+      "original_language": "en",
+      "genre_ids": [
+        10765,
+        10759
+      ],
+      "popularity": 63.763,
+      "first_air_date": "2019-12-20",
+      "softcore": false,
+      "vote_average": 7.883,
+      "vote_count": 6979,
+      "origin_country": [
+        "US"
+      ]
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/1P3QtW1IkivqDrKbbwuR0zCYIf8.jpg",
+      "id": 71914,
+      "name": "Колесо Времени",
+      "original_name": "The Wheel of Time",
+      "overview": "В Эмондов Луг приезжают трое чужестранцев: седой менестрель Том Меррилин, прекрасная леди Морейн и её страж Лан. Морейн принадлежит к организации «Айз Седай» и считает, что силы тьмы охотятся за тремя подростками, один из которых — реинкарнация древней могущественной личности. Согласно пророчеству, вернувшись в мир, она спасёт человечество, навредив ему.",
+      "poster_path": "/uz284wKJmoTryrLoWWKkrSncFJc.jpg",
+      "media_type": "tv",
+      "original_language": "en",
+      "genre_ids": [
+        10765,
+        18
+      ],
+      "popularity": 44.2332,
+      "first_air_date": "2021-11-18",
+      "softcore": false,
+      "vote_average": 7.6,
+      "vote_count": 2523,
+      "origin_country": [
+        "US"
+      ]
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/hoVuI69nygLQBJ4FqgRKnukDeKt.jpg",
+      "id": 106541,
+      "name": "Ведьмак: происхождение",
+      "original_name": "The Witcher: Blood Origin",
+      "overview": "Более чем за тысячу лет до появления Геральта из Ривии семь изгоев мира эльфов объединяют свои силы против всемогущей империи.",
+      "poster_path": "/1Q2qXh6ixQe55HyA0onYVS3FKu1.jpg",
+      "media_type": "tv",
+      "original_language": "en",
+      "genre_ids": [
+        10765,
+        10759,
+        18
+      ],
+      "popularity": 9.3482,
+      "first_air_date": "2022-12-25",
+      "softcore": false,
+      "vote_average": 6.484,
+      "vote_count": 830,
+      "origin_country": [
+        "US"
+      ]
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/lBoHzOgft2QfpjkVVvZCqeM4ttT.jpg",
+      "id": 90228,
+      "name": "Дюна: Пророчество",
+      "original_name": "Dune: Prophecy",
+      "overview": "Орден «Бене Гессерит» — тайное женское сообщество было создано после Великого джихада. Благодаря неустанным тренировкам тела и разума, члены организации получают ряд невероятных способностей, которые используют для контроля над развитием человечества. Секретная, но мощная сила, «Бене Гессерит» с помощью селективно-генетической программы пытается вывести Квисатца Хадераха — суперментата, живой компьютер, наделённый пророческими способностями. Для этого орден желает контролировать как можно больше аспектов жизни обитаемой Вселенной, а также влиять и вовремя реагировать на различного рода события.",
+      "poster_path": "/6gZXfuM2y0ui3LA71FymdzFl5wo.jpg",
+      "media_type": "tv",
+      "original_language": "en",
+      "genre_ids": [
+        10765,
+        18,
+        10759
+      ],
+      "popularity": 31.1145,
+      "first_air_date": "2024-11-17",
+      "softcore": false,
+      "vote_average": 7.2,
+      "vote_count": 671,
+      "origin_country": [
+        "US"
+      ]
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/QbtctI8EzlhsyFDMUMyG3fli8B.jpg",
+      "id": 63333,
+      "name": "Последнее королевство",
+      "original_name": "The Last Kingdom",
+      "overview": "Сериал рассказывает о временах правления короля Уэссекса Альфреда Великого, сумевшего отвоевать английские земли у датских викингов — заморских захватчиков. Главным героем повествования выступает ещё в младенчестве похищенный данами Утред — потомок благородного саксонского рода. Воспитанный как викинг, в очень непростой момент жизненного выбора молодой воин должен будет решить для себя, чью сторону он примет в решающих сражениях за судьбу древней Британии.",
+      "poster_path": "/eXRWYkffOq0be8hNlQTNeB0yLPX.jpg",
+      "media_type": "tv",
+      "original_language": "en",
+      "genre_ids": [
+        10759,
+        18,
+        10768
+      ],
+      "popularity": 50.1681,
+      "first_air_date": "2015-10-10",
+      "softcore": false,
+      "vote_average": 8.256,
+      "vote_count": 2070,
+      "origin_country": [
+        "GB"
+      ]
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/wl0DQUT90o3e9gXHEeB5iyK05jb.jpg",
+      "id": 95839,
+      "name": "История Лизи",
+      "original_name": "Lisey's Story",
+      "overview": "Триллер рассказывает историю вдовы Лизи Лэндон. Череда тревожных событий заставляет ее вспомнить о покойном муже и тьме, которая его преследовала.",
+      "poster_path": "/8OFDX67ks40yrmIsFb67sYcmoPo.jpg",
+      "media_type": "tv",
+      "original_language": "en",
+      "genre_ids": [
+        9648,
+        18,
+        10765
+      ],
+      "popularity": 11.771,
+      "first_air_date": "2021-06-04",
+      "softcore": false,
+      "vote_average": 6.0,
+      "vote_count": 138,
+      "origin_country": [
+        "US"
+      ]
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/enRS7bE43q7VmurYqlyroOeZLGa.jpg",
+      "id": 85273,
+      "name": "Страна Рождества",
+      "original_name": "NOS4A2",
+      "overview": "Юная Виктория МакКуин обнаруживает в себе уникальную способность открывать портал в мир потерянных вещей. Погружаясь все глубже в эту скрытую от людских глаз вселенную, она встречает множество других таких же «путешественников» — некоторые из них оказываются вполне благожелательными, а другие безнадежно испорчены своим даром. Однажды Виктория встречает Чарли Мэнкса (Психопата со сверхспособностями, Чарли перевалило за сто, а он молод и здоров, благодаря тому что колесит по стране на своём «Роллс-Ройсе» с номерным знаком NOS4A2, похищает детей из реального мира и отвозит их во вселенную своего воображения, которую называет Страной Рождества): узнав, что он питается детскими душами и благодаря им остается бессмертным, героиня решает избавить мир от этого существа.",
+      "poster_path": "/mI28OMeefzkG6y9t597Itzph20v.jpg",
+      "media_type": "tv",
+      "original_language": "en",
+      "genre_ids": [
+        10765,
+        18
+      ],
+      "popularity": 17.4869,
+      "first_air_date": "2019-06-02",
+      "softcore": false,
+      "vote_average": 7.284,
+      "vote_count": 445,
+      "origin_country": [
+        "US"
+      ]
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/fRwC1fjN1rp1Cw5iE4ObPEpoZWh.jpg",
+      "id": 125116,
+      "name": "Остров фантазий",
+      "original_name": "Fantasy Island",
+      "overview": "Группа из состоятельных туристов прибывает на прекрасный тропический остров, который находится в самом центре океана. Здесь исполняются самые сокровенные мечты и желания. Но есть некоторые нюансы, о которых прибывшим не сообщают.",
+      "poster_path": "/ed44AjGMbq1z22yhlwBWlse44Z8.jpg",
+      "media_type": "tv",
+      "original_language": "en",
+      "genre_ids": [
+        18,
+        10765
+      ],
+      "popularity": 18.7567,
+      "first_air_date": "2021-08-10",
+      "softcore": false,
+      "vote_average": 5.9,
+      "vote_count": 88,
+      "origin_country": [
+        "US"
+      ]
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/jIZTOHGp5jUlzOh7Uaculusrpkc.jpg",
+      "id": 83125,
+      "name": "Проклятая",
+      "original_name": "Cursed",
+      "overview": "После смерти матери Ниму знакомится с молодым наёмником Артуром, занятым поисками загадочного Мерлина, чтобы передать старцу древний меч. Во время странствий с Артуром Ниму превращается в символ храбрости и сопротивления и помогает организовать восстание против красных паладинов и их короля Утера.",
+      "poster_path": "/borzaa1s3tzqWAYEyj5aGdVcgNn.jpg",
+      "media_type": "tv",
+      "original_language": "en",
+      "genre_ids": [
+        10759,
+        10765
+      ],
+      "popularity": 14.6603,
+      "first_air_date": "2020-07-16",
+      "softcore": false,
+      "vote_average": 7.126,
+      "vote_count": 1001,
+      "origin_country": [
+        "GB"
+      ]
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/qhaPuyznsxb13wSQbpqSDqtNuX8.jpg",
+      "id": 128839,
+      "name": "Ла-Брея",
+      "original_name": "La Brea",
+      "overview": "В центре Лос-Анджелеса открывается огромная воронка, затягивающая в свои глубины сотни людей и зданий. Упавшие туда люди попадают в загадочную и опасную первобытную страну, где им не остаётся ничего другого, кроме как объединиться ради выживания. Тем временем остальной мир отчаянно пытается понять, что произошло. В поисках ответов одной семье, разделённой этой катастрофой, придётся раскрыть секреты этого необъяснимого события, чтобы найти путь к воссоединению.",
+      "poster_path": "/pJuJyibPkfXF3zH96pjA3KSCjSO.jpg",
+      "media_type": "tv",
+      "original_language": "en",
+      "genre_ids": [
+        10765,
+        18,
+        10759
+      ],
+      "popularity": 25.9963,
+      "first_air_date": "2021-09-28",
+      "softcore": false,
+      "vote_average": 7.415,
+      "vote_count": 1635,
+      "origin_country": [
+        "US"
+      ]
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/bq28ajZaoMyzEIm6REelqyqtEDZ.jpg",
+      "id": 76479,
+      "name": "Пацаны",
+      "original_name": "The Boys",
+      "overview": "2000-е, мир, где существуют супергерои. Они являются настоящими звёздами, которых все знают и обожают. Но за идеальным фасадом скрывается гораздо более мрачный мир – большинство героев в жизни не самые приятные люди. Для контроля за супергероями ЦРУ создаёт специальный отряд, неофициально известный как «Пацаны» – суровые члены которого всегда готовы поставить зазнавшегося героя на место самым жестоким способом.",
+      "poster_path": "/3NqlBDpWI83TgQ9nmeFwTVxEmtZ.jpg",
+      "media_type": "tv",
+      "original_language": "en",
+      "genre_ids": [
+        10765,
+        10759
+      ],
+      "popularity": 111.8461,
+      "first_air_date": "2019-07-25",
+      "softcore": false,
+      "vote_average": 8.425,
+      "vote_count": 13585,
+      "origin_country": [
+        "US"
+      ]
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/diYVGzRSAJpOCE5Avd5ZKBFUepi.jpg",
+      "id": 70485,
+      "name": "Мистер Мерседес",
+      "original_name": "Mr. Mercedes",
+      "overview": "Отставной полицейский Билл Ходжес возвращается к работе, так как ему не дает покоя нераскрытое дело — жестокое убийство восьми человек. Брейди Хартфилд не может забыть пьянящее чувство, когда на угнанном «мерседесе» он врезался в группу ни в чем не повинных людей. Брейди не хочет останавливаться — он уже планирует новое преступление, на этот раз намного более масштабное. Биллу Ходжесу и его команде необходимо опередить его и спасти жизнь уже не десяткам, а сотням людей.",
+      "poster_path": "/5z0OL7BXqK3IODwDnUIW5LF6Qnp.jpg",
+      "media_type": "tv",
+      "original_language": "en",
+      "genre_ids": [
+        9648,
+        10765,
+        18
+      ],
+      "popularity": 28.848,
+      "first_air_date": "2017-08-09",
+      "softcore": false,
+      "vote_average": 7.158,
+      "vote_count": 433,
+      "origin_country": [
+        "US"
+      ]
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/wsYqM5sRdWglejqm8MugRDRp7D.jpg",
+      "id": 118956,
+      "name": "DOTA: Кровь дракона",
+      "original_name": "DOTA: Dragon's Blood",
+      "overview": "Прославленный драконий рыцарь Дэвион посвятил жизнь борьбе с бедами мира. После встречи с могущественным древним эльдвурмом и с благородной принцессой Мираной, у которой есть своя тайная миссия, Дэвион оказывается в эпицентре событий куда более масштабных, чем он мог себе представить.",
+      "poster_path": "/5WNXorRHIl0il0HPjIFJti9cbyD.jpg",
+      "media_type": "tv",
+      "original_language": "en",
+      "genre_ids": [
+        10765,
+        10759,
+        16
+      ],
+      "popularity": 17.2563,
+      "first_air_date": "2021-03-25",
+      "softcore": false,
+      "vote_average": 7.72,
+      "vote_count": 486,
+      "origin_country": [
+        "US"
+      ]
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/qzSjrYSZAWrjhg6Yf3hCcfJE4o0.jpg",
+      "id": 85720,
+      "name": "Тень и кость",
+      "original_name": "Shadow and Bone",
+      "overview": "В мире, разделенном на две части массивным барьером вечной темноты, где неестественные существа питаются человеческой плотью, молодой солдат раскрывает силу, которая может, наконец, объединить ее страну. Но, когда она борется за свою власть, против нее строят заговоры опасные силы. Бандиты, воры, убийцы и святые сейчас в состоянии войны, и для выживания потребуется больше, чем магия.",
+      "poster_path": "/zMxOK6oRAPATW6vWzvkVfqcq98x.jpg",
+      "media_type": "tv",
+      "original_language": "en",
+      "genre_ids": [
+        18,
+        10765
+      ],
+      "popularity": 19.9555,
+      "first_air_date": "2021-04-23",
+      "softcore": false,
+      "vote_average": 7.737,
+      "vote_count": 1643,
+      "origin_country": [
+        "US"
+      ]
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/i8taDLjpF8cCbp53N8kOFt1LSkW.jpg",
+      "id": 90802,
+      "name": "Песочный человек",
+      "original_name": "The Sandman",
+      "overview": "После долгих лет заключения повелитель снов Морфей отправляется в путешествие по мирам, чтобы отыскать то, что у него украли, и вернуть прежнее могущество.",
+      "poster_path": "/b1pOlDWMOJKdPlAoOKkMUsJRlT1.jpg",
+      "media_type": "tv",
+      "original_language": "en",
+      "genre_ids": [
+        10765,
+        18,
+        10759
+      ],
+      "popularity": 35.0968,
+      "first_air_date": "2022-08-05",
+      "softcore": false,
+      "vote_average": 7.834,
+      "vote_count": 2784,
+      "origin_country": [
+        "US"
+      ]
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/7mkUu1F2hVUNgz24xO8HPx0D6mK.jpg",
+      "id": 224372,
+      "name": "Рыцарь Семи Королевств",
+      "original_name": "A Knight of the Seven Kingdoms",
+      "overview": "Вестерос за 100 лет до борьбы Дейенерис Таргариен за Железный Трон. Наивный, но отважный рыцарь сир Дункан Высокий знакомится с мальчиком по имени Эгг, который скрывает тайну своего происхождения. Сделав мальчишку своим оруженосцем, Дункан вместе с ним отправляется в путешествие по континенту, периодически попадая в различные передряги.",
+      "poster_path": "/2b8iO1xalT46apE20IGS3gt0qjC.jpg",
+      "media_type": "tv",
+      "original_language": "en",
+      "genre_ids": [
+        18,
+        10765,
+        10759
+      ],
+      "popularity": 27.4717,
+      "first_air_date": "2026-01-18",
+      "softcore": false,
+      "vote_average": 8.425,
+      "vote_count": 1251,
+      "origin_country": [
+        "US"
+      ]
+    },
+    {
+      "adult": false,
+      "backdrop_path": "/13kblIK8DnxMurcRDkeyy2sGR7v.jpg",
+      "id": 44217,
+      "name": "Викинги",
+      "original_name": "Vikings",
+      "overview": "Сериал рассказывает об отряде викингов Рагнара Лодброка. Он восстал, чтобы стать королём племён викингов. Норвежская легенда гласит, что он был прямым потомком Одина, бога войны и воинов.",
+      "poster_path": "/1de3R902B5EEMmohBQsExd5V87Y.jpg",
+      "media_type": "tv",
+      "original_language": "en",
+      "genre_ids": [
+        10759,
+        18,
+        10768
+      ],
+      "popularity": 111.2898,
+      "first_air_date": "2013-03-03",
+      "softcore": false,
+      "vote_average": 8.104,
+      "vote_count": 7964,
+      "origin_country": [
+        "CA"
+      ]
+    }
+  ],
+  "total_pages": 25,
+  "total_results": 489
+}

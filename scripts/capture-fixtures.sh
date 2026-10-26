@@ -55,9 +55,23 @@ if [ -n "${TMDB_TOKEN:-}" ]; then
 	h="Authorization: Bearer $TMDB_TOKEN"
 	fetch "$out/tmdb/configuration.json" "$t/configuration" "$h"
 	fetch "$out/tmdb/search_multi_matrix_ru.json" "$t/search/multi?query=%D0%9C%D0%B0%D1%82%D1%80%D0%B8%D1%86%D0%B0&language=ru-RU" "$h"
-	fetch "$out/tmdb/movie_603_ru.json" "$t/movie/603?language=ru-RU&append_to_response=external_ids" "$h"
-	fetch "$out/tmdb/tv_1399_ru.json" "$t/tv/1399?language=ru-RU&append_to_response=external_ids" "$h"
-	fetch "$out/tmdb/tv_1399_season_1_ru.json" "$t/tv/1399/season/1?language=ru-RU" "$h"
+	# Cards carry their cast and crew (Stage 6). `credits`, not
+	# `aggregate_credits`: the aggregate for Game of Thrones is 350 KB.
+	fetch "$out/tmdb/movie_603_ru.json" "$t/movie/603?language=ru-RU&append_to_response=external_ids%2Ccredits" "$h"
+	fetch "$out/tmdb/tv_1399_ru.json" "$t/tv/1399?language=ru-RU&append_to_response=external_ids%2Ccredits" "$h"
+	fetch "$out/tmdb/tv_1399_season_1_ru.json" "$t/tv/1399/season/1?language=ru-RU&append_to_response=credits" "$h"
+	fetch "$out/tmdb/tv_1399_s1e3_credits_ru.json" "$t/tv/1399/season/1/episode/3/credits?language=ru-RU" "$h"
+	# A person: Keanu Reeves, with everything he is in.
+	fetch "$out/tmdb/person_6384_ru.json" "$t/person/6384?language=ru-RU&append_to_response=combined_credits" "$h"
+	# The Discover shelves.
+	fetch "$out/tmdb/trending_all_week_ru.json" "$t/trending/all/week?language=ru-RU" "$h"
+	fetch "$out/tmdb/movie_now_playing_ru.json" "$t/movie/now_playing?language=ru-RU&page=1" "$h"
+	# "Best of all time": /top_rated is crowded with new titles that have a
+	# handful of votes, so it is discover by rating with a votes threshold.
+	fetch "$out/tmdb/discover_movie_best_ru.json" "$t/discover/movie?language=ru-RU&sort_by=vote_average.desc&vote_count.gte=10000&page=1" "$h"
+	fetch "$out/tmdb/discover_tv_best_ru.json" "$t/discover/tv?language=ru-RU&sort_by=vote_average.desc&vote_count.gte=3000&page=1" "$h"
+	fetch "$out/tmdb/movie_603_recommendations_ru.json" "$t/movie/603/recommendations?language=ru-RU&page=1" "$h"
+	fetch "$out/tmdb/tv_1399_recommendations_ru.json" "$t/tv/1399/recommendations?language=ru-RU&page=1" "$h"
 	fetch "$out/tmdb/tv_1399_s1e3_external_ids.json" "$t/tv/1399/season/1/episode/3/external_ids" "$h"
 	fetch "$out/tmdb/genre_movie_ru.json" "$t/genre/movie/list?language=ru-RU" "$h"
 	fetch "$out/tmdb/genre_tv_ru.json" "$t/genre/tv/list?language=ru-RU" "$h"
