@@ -172,8 +172,6 @@
   "statsEmpty": "Statistics will be here once you have ratings.",
   "statsRatingCount": "{count, plural, one{{count} rating} other{{count} ratings}}",
   "@statsRatingCount": {"placeholders": {"count": {"type": "int"}}},
-  "statsAverage": "average {value}",
-  "@statsAverage": {"placeholders": {"value": {"type": "String"}}},
   "statsDistribution": "Your scores",
   "statsCompared": "Compared with others",
   "statsComparedHint": "Your score minus theirs: “+” means you rate higher.",
@@ -276,5 +274,16 @@
   "personActing": "Acting · {count}",
   "@personActing": {"placeholders": {"count": {"type": "int"}}},
   "personCrew": "Behind the camera · {count}",
-  "@personCrew": {"placeholders": {"count": {"type": "int"}}}
+  "@personCrew": {"placeholders": {"count": {"type": "int"}}},
+
+  "statsAverageOver": "{count, plural, one{your score, the only one so far} other{your average over {count} ratings}}",
+  "@statsAverageOver": {"placeholders": {"count": {"type": "int"}}},
+
+  "aboutVersion": "Version {name}, build {build}",
+  "@aboutVersion": {"placeholders": {"name": {"type": "String"}, "build": {"type": "String"}}},
+  "aboutVersionName": "Version {name}",
+  "@aboutVersionName": {"placeholders": {"name": {"type": "String"}}},
+
+  "savedCardOffline": "No connection: this is the saved card. The overview and the cast come back online.",
+  "savedCardFailed": "TMDB didn't answer: this is the saved card."
 }

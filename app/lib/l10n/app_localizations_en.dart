@@ -493,11 +493,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String statsAverage(String value) {
-    return 'average $value';
-  }
-
-  @override
   String get statsDistribution => 'Your scores';
 
   @override
@@ -811,4 +806,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String personCrew(int count) {
     return 'Behind the camera · $count';
   }
+
+  @override
+  String statsAverageOver(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'your average over $count ratings',
+      one: 'your score, the only one so far',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String aboutVersion(String name, String build) {
+    return 'Version $name, build $build';
+  }
+
+  @override
+  String aboutVersionName(String name) {
+    return 'Version $name';
+  }
+
+  @override
+  String get savedCardOffline =>
+      'No connection: this is the saved card. The overview and the cast come back online.';
+
+  @override
+  String get savedCardFailed => 'TMDB didn\'t answer: this is the saved card.';
 }

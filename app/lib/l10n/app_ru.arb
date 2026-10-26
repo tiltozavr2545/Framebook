@@ -151,7 +151,6 @@
 
   "statsEmpty": "Статистика появится, когда будут оценки.",
   "statsRatingCount": "{count, plural, one{{count} оценка} few{{count} оценки} many{{count} оценок} other{{count} оценки}}",
-  "statsAverage": "в среднем {value}",
   "statsDistribution": "Твои оценки",
   "statsCompared": "В сравнении с другими",
   "statsComparedHint": "Твоя оценка минус их: «+» значит, ты оцениваешь выше.",
@@ -238,5 +237,13 @@
   "personMore": "Ещё",
   "personFilmography": "Фильмография",
   "personActing": "Роли · {count}",
-  "personCrew": "За кадром · {count}"
+  "personCrew": "За кадром · {count}",
+
+  "statsAverageOver": "{count, plural, one{твоя средняя по {count} оценке} other{твоя средняя по {count} оценкам}}",
+
+  "aboutVersion": "Версия {name}, сборка {build}",
+  "aboutVersionName": "Версия {name}",
+
+  "savedCardOffline": "Нет связи: это сохранённая карточка. Описание и актёры появятся, когда будет интернет.",
+  "savedCardFailed": "TMDB не ответил: это сохранённая карточка."
 }

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../data/library/work_snapshot.dart';
 import '../../data/ratings_service.dart';
 import '../../data/sources/tmdb/tmdb_models.dart';
+import '../../data/work_key.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/poster.dart';
 import '../../shared/title_text.dart';
@@ -29,6 +30,7 @@ class TvScreen extends ConsumerWidget {
     return TitlePage(
       value: ref.watch(tvProvider(id)),
       onRetry: () => ref.invalidate(tvProvider(id)),
+      savedKey: WorkKey.tv(id),
       builder: (context, tv) => [
         TitleHeader(
           posterPath: tv.posterPath,

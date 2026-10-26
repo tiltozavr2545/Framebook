@@ -275,6 +275,24 @@ final class Library {
         }
       });
 
+  /// The saved snapshots of [key] and its ancestors, series first; `null`
+  /// when the title itself has none (never rated or listed). What a card
+  /// shows offline (docs/client-architecture.md, "Title card").
+  Future<List<Work>?> lineage(WorkKey key) async {
+    final keys = [for (final k in key.lineage) k.toString()];
+    final works = {
+      for (final w in await (_db.select(
+        _db.works,
+      )..where((w) => w.workKey.isIn(keys))).get())
+        w.workKey: w,
+    };
+    if (!works.containsKey(key.toString())) return null;
+    return [
+      for (final k in keys)
+        if (works[k] case final work?) work,
+    ];
+  }
+
   Stream<Rating?> watchRating(WorkKey key) =>
       (_db.select(_db.ratings)..where(
             (r) => r.workKey.equals(key.toString()) & r.deletedAt.isNull(),
@@ -642,4 +660,10 @@ final ratedTitlesProvider = StreamProvider.autoDispose<List<RatedTitle>>(
 final watchlistTitlesProvider =
     StreamProvider.autoDispose<List<WatchlistTitle>>(
       (ref) => ref.watch(libraryProvider).watchWatchlist(),
+    );
+
+/// A title's saved lineage, for a card opened offline.
+final savedLineageProvider = FutureProvider.autoDispose
+    .family<List<Work>?, WorkKey>(
+      (ref, key) => ref.watch(libraryProvider).lineage(key),
     );

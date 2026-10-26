@@ -119,10 +119,27 @@ class _StatsBody extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       children: [
-        Text(
-          '${l10n.statsRatingCount(stats.count)} · '
-          '${l10n.statsAverage(formatScore(stats.average!))}',
-          style: theme.textTheme.titleMedium,
+        // Your average is yours: the big red figure, as on a card.
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              formatScore(stats.average!),
+              style: theme.textTheme.displayLarge?.copyWith(
+                color: theme.colorScheme.primary,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(
+                  l10n.statsAverageOver(stats.count),
+                  style: theme.textTheme.titleMedium,
+                ),
+              ),
+            ),
+          ],
         ),
         _Heading(l10n.statsDistribution),
         _Distribution(counts: stats.distribution),
@@ -162,7 +179,7 @@ class _Heading extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(top: 24, bottom: 8),
-    child: Text(text, style: Theme.of(context).textTheme.titleLarge),
+    child: Text(text, style: Theme.of(context).textTheme.headlineSmall),
   );
 }
 
@@ -258,12 +275,14 @@ class _DeviationTile extends StatelessWidget {
       color: theme.colorScheme.onSurfaceVariant,
     );
     final name = ratingSourceLabel(l10n, source);
+    // Ruled like the ratings on a card, no plate.
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(top: 10),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
+        border: Border(
+          top: BorderSide(color: theme.colorScheme.outlineVariant, width: 1.5),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

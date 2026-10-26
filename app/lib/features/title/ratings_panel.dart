@@ -37,12 +37,19 @@ class RatingsPanel extends ConsumerWidget {
             source: source,
             seasonAverage:
                 kind == WorkKind.season && source == RatingSource.imdb,
-            state: ratingCellState(
-              source: source,
-              view: view,
-              provider: service.providerOf(source, kind),
-              nowMillis: now,
-            ),
+            // TMDB's rating comes only with the card; a card shown from its
+            // saved snapshot has none to wait for.
+            state:
+                source == RatingSource.tmdb &&
+                    target.tmdbVote == null &&
+                    view.rows[RatingSource.tmdb] == null
+                ? const RatingNoData()
+                : ratingCellState(
+                    source: source,
+                    view: view,
+                    provider: service.providerOf(source, kind),
+                    nowMillis: now,
+                  ),
             myScoreHalf: mine,
           ),
       ],

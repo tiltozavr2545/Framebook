@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../app/theme.dart';
+import '../../data/sync/sync_controller.dart';
 import '../../l10n/app_localizations.dart';
 
 /// About the app and where the data comes from. TMDB attribution — the logo
 /// and a fixed sentence — is a condition of their API
 /// (docs/external-sources.md).
-class AboutScreen extends StatelessWidget {
+class AboutScreen extends ConsumerWidget {
   const AboutScreen({super.key});
 
   static final _tmdb = Uri.parse('https://www.themoviedb.org');
@@ -15,16 +18,36 @@ class AboutScreen extends StatelessWidget {
   static final _repo = Uri.parse('https://github.com/tiltozavr2545/Framebook');
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    // "0.5.0+7" as pubspec has it.
+    final [name, build] = '${ref.watch(appVersionProvider)}+'
+        .split('+')
+        .take(2)
+        .toList();
     return Scaffold(
       appBar: AppBar(title: Text(l10n.aboutTitle)),
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Text(l10n.appTitle, style: theme.textTheme.headlineLarge),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 2, 16, 0),
+            child: Text(
+              build.isEmpty
+                  ? l10n.aboutVersionName(name)
+                  : l10n.aboutVersion(name, build),
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: Reel.of(context).edge,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             child: Text(l10n.aboutIntro, style: theme.textTheme.bodyLarge),
           ),
           Padding(
@@ -84,6 +107,7 @@ class AboutScreen extends StatelessWidget {
             onTap: () => showLicensePage(
               context: context,
               applicationName: l10n.appTitle,
+              applicationVersion: name,
             ),
           ),
         ],

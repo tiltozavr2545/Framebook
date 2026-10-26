@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,6 +40,7 @@ void main() {
     ApiKeys keys = ApiKeys.empty,
     Future<void> Function(Library library)? seed,
     GoogleAccount? google,
+    Reply? Function(RequestOptions request) http = apiFixtures,
   }) async {
     drive = MemoryRemote();
     // A phone-sized screen (360×780 dp) instead of the default 800×600: the
@@ -52,7 +54,7 @@ void main() {
     addTearDown(db.close);
     // Every API answers with recorded responses; the TMDB key check is
     // /configuration, which the fixtures have.
-    final dio = createDio()..httpClientAdapter = FakeHttpAdapter(apiFixtures);
+    final dio = createDio()..httpClientAdapter = FakeHttpAdapter(http);
     storage = MemoryKeyStorage();
     if (seed != null) {
       // Real async: these database writes shouldn't run under fake time.
@@ -604,7 +606,8 @@ void main() {
       matching: find.byType(Scrollable),
     );
 
-    expect(find.text('2 ratings · average 8.0'), findsOneWidget);
+    expect(find.text('8.0'), findsOneWidget);
+    expect(find.text('your average over 2 ratings'), findsOneWidget);
     expect(find.text('Your scores'), findsOneWidget);
     // Without a PoiskKino key there is nothing to compare with.
     await tester.scrollUntilVisible(
@@ -774,5 +777,34 @@ void main() {
     await settle(tester);
     expect(find.byType(PersonScreen), findsNothing);
     expect(find.byType(MovieScreen), findsOneWidget);
+  });
+
+  cardTest('offline, a rated title opens from its saved snapshot', (
+    tester,
+  ) async {
+    await pumpApp(
+      tester,
+      keys: tmdbOnly,
+      seed: (library) => matrixRated(library, 18),
+      // TMDB's film cards are out of reach.
+      http: (request) => request.uri.path.startsWith('/3/movie/')
+          ? null
+          : apiFixtures(request),
+    );
+    go(tester, '/search/movie/603');
+    await settle(tester);
+    expect(
+      find.textContaining('No connection: this is the saved card'),
+      findsOneWidget,
+    );
+    expect(find.text('Матрица'), findsOneWidget);
+    expect(find.text('Film · 1999'), findsOneWidget);
+    expect(find.text('9'), findsOneWidget);
+
+    // A title you never rated has nothing saved: the usual error.
+    go(tester, '/search/movie/604');
+    await settle(tester);
+    expect(find.textContaining('saved card'), findsNothing);
+    expect(find.text('Try again'), findsOneWidget);
   });
 }

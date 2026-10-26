@@ -498,11 +498,6 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String statsAverage(String value) {
-    return 'в среднем $value';
-  }
-
-  @override
   String get statsDistribution => 'Твои оценки';
 
   @override
@@ -817,4 +812,32 @@ class AppLocalizationsRu extends AppLocalizations {
   String personCrew(int count) {
     return 'За кадром · $count';
   }
+
+  @override
+  String statsAverageOver(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'твоя средняя по $count оценкам',
+      one: 'твоя средняя по $count оценке',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String aboutVersion(String name, String build) {
+    return 'Версия $name, сборка $build';
+  }
+
+  @override
+  String aboutVersionName(String name) {
+    return 'Версия $name';
+  }
+
+  @override
+  String get savedCardOffline =>
+      'Нет связи: это сохранённая карточка. Описание и актёры появятся, когда будет интернет.';
+
+  @override
+  String get savedCardFailed => 'TMDB не ответил: это сохранённая карточка.';
 }

@@ -32,6 +32,7 @@ class EpisodeScreen extends ConsumerWidget {
     final imdbId = ref.watch(episodeImdbIdProvider(episodeKey));
     return TitlePage<(SeasonDetails, TvDetails)>(
       value: combineAsync(season, tv),
+      savedKey: episodeKey,
       onRetry: () {
         ref.invalidate(seasonProvider(seasonKey));
         ref.invalidate(tvProvider(episodeKey.tmdbId));

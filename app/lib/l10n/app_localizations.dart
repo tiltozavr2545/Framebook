@@ -890,12 +890,6 @@ abstract class AppLocalizations {
   /// **'{count, plural, one{{count} rating} other{{count} ratings}}'**
   String statsRatingCount(int count);
 
-  /// No description provided for @statsAverage.
-  ///
-  /// In en, this message translates to:
-  /// **'average {value}'**
-  String statsAverage(String value);
-
   /// No description provided for @statsDistribution.
   ///
   /// In en, this message translates to:
@@ -1387,6 +1381,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Behind the camera · {count}'**
   String personCrew(int count);
+
+  /// No description provided for @statsAverageOver.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{your score, the only one so far} other{your average over {count} ratings}}'**
+  String statsAverageOver(int count);
+
+  /// No description provided for @aboutVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {name}, build {build}'**
+  String aboutVersion(String name, String build);
+
+  /// No description provided for @aboutVersionName.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {name}'**
+  String aboutVersionName(String name);
+
+  /// No description provided for @savedCardOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'No connection: this is the saved card. The overview and the cast come back online.'**
+  String get savedCardOffline;
+
+  /// No description provided for @savedCardFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'TMDB didn\'t answer: this is the saved card.'**
+  String get savedCardFailed;
 }
 
 class _AppLocalizationsDelegate

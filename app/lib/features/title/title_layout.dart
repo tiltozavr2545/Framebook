@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/theme.dart';
 import '../../data/sources/tmdb/tmdb_models.dart';
+import '../../data/work_key.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/failure_view.dart';
 import '../../shared/format.dart';
 import '../../shared/poster.dart';
+import 'saved_card.dart';
 
 /// Card scaffold: title, loading, error with a retry.
 class TitlePage<T> extends ConsumerWidget {
@@ -15,9 +17,14 @@ class TitlePage<T> extends ConsumerWidget {
     required this.value,
     required this.onRetry,
     required this.builder,
+    this.savedKey,
   });
 
   final AsyncValue<T> value;
+
+  /// A title whose saved snapshot stands in when the card can't load
+  /// (offline, nothing cached).
+  final WorkKey? savedKey;
 
   final VoidCallback onRetry;
   final List<Widget> Function(BuildContext context, T data) builder;
@@ -32,10 +39,10 @@ class TitlePage<T> extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
           children: builder(context, data),
         ),
-        AsyncValue(:final error?) => FailureView(
-          error: error,
-          onRetry: onRetry,
-        ),
+        AsyncValue(:final error?) => switch (savedKey) {
+          final key? => SavedCard(workKey: key, error: error, onRetry: onRetry),
+          null => FailureView(error: error, onRetry: onRetry),
+        },
         _ => const Center(child: CircularProgressIndicator()),
       },
     );

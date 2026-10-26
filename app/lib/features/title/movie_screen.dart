@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/library/work_snapshot.dart';
 import '../../data/ratings_service.dart';
+import '../../data/work_key.dart';
 import '../../shared/format.dart';
 import 'cast_section.dart';
 import 'my_rating.dart';
@@ -20,6 +21,7 @@ class MovieScreen extends ConsumerWidget {
     return TitlePage(
       value: ref.watch(movieProvider(id)),
       onRetry: () => ref.invalidate(movieProvider(id)),
+      savedKey: WorkKey.movie(id),
       builder: (context, movie) => [
         TitleHeader(
           posterPath: movie.posterPath,

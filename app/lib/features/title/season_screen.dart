@@ -35,6 +35,7 @@ class SeasonScreen extends ConsumerWidget {
     final tv = ref.watch(tvProvider(seasonKey.tmdbId));
     return TitlePage<(SeasonDetails, TvDetails)>(
       value: combineAsync(season, tv),
+      savedKey: seasonKey,
       onRetry: () {
         ref.invalidate(seasonProvider(seasonKey));
         ref.invalidate(tvProvider(seasonKey.tmdbId));

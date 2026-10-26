@@ -22,9 +22,17 @@ import 'score_reel.dart';
 /// [lineage] is the title's snapshot with all its ancestors, series first —
 /// a rating is saved together with them (docs/data-model.md).
 class MyRatingSection extends ConsumerStatefulWidget {
-  const MyRatingSection({super.key, required this.lineage});
+  const MyRatingSection({
+    super.key,
+    required this.lineage,
+    this.refreshSnapshots = true,
+  });
 
   final List<WorkSnapshot> lineage;
+
+  /// Whether opening refreshes the saved snapshots from [lineage]; not when
+  /// the lineage came from those very snapshots (a card shown offline).
+  final bool refreshSnapshots;
 
   @override
   ConsumerState<MyRatingSection> createState() => _MyRatingSectionState();
@@ -38,7 +46,9 @@ class _MyRatingSectionState extends ConsumerState<MyRatingSection> {
     super.initState();
     // The card was just opened: refresh the snapshots that already exist
     // (title in the current language, poster), never creating new ones.
-    unawaited(ref.read(libraryProvider).refreshSnapshots(widget.lineage));
+    if (widget.refreshSnapshots) {
+      unawaited(ref.read(libraryProvider).refreshSnapshots(widget.lineage));
+    }
   }
 
   @override
