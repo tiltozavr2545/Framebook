@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Framebook — Privacy Policy</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 40px 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #fbf3ef;
+    color: #231a16;
+    line-height: 1.6;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { background: #1a1210; color: #f1dfd8; }
+    .card { background: #2a1f1b !important; }
+    a { color: #ffb59c !important; }
+  }
+  .card {
+    max-width: 680px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  }
+  h1 { font-size: 24px; margin-top: 0; }
+  h2 { font-size: 18px; margin-top: 32px; }
+  p, li { font-size: 15px; opacity: 0.9; }
+  a { color: #a33a12; }
+  ul { padding-left: 20px; }
+  code { font-size: 14px; }
+  .updated { font-size: 13px; opacity: 0.6; margin-top: 40px; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>Framebook — Privacy Policy</h1>
+    <p>Framebook is a personal diary of film and TV ratings for Android: you give your own score and see how it compares with Kinopoisk, IMDb and others. It has no server and no accounts of its own. This page explains what happens to your data.</p>
+
+    <h2>What stays on your phone</h2>
+    <ul>
+      <li><strong>Your ratings, notes and watchlist</strong> are stored in the app's local database on your phone.</li>
+      <li><strong>The API keys you enter</strong> (TMDB, PoiskKino, OMDb) are kept in the phone's secure storage and are sent only to the service each key belongs to.</li>
+      <li><strong>Settings</strong> (language, theme) stay on the phone.</li>
+    </ul>
+
+    <h2>Google Drive (optional)</h2>
+    <p>If you sign in with Google in Settings → Sync and backup, Framebook asks for a single permission, <code>drive.appdata</code>: access to a hidden folder in <em>your own</em> Google Drive that only this app can see. Framebook cannot see, read or change any other file in your Drive, and it does not read your contacts, mail or anything else in your Google account. Your email address is shown only on the sync screen, so you know which account is signed in.</p>
+    <p>In that folder the app keeps one file with your ratings, notes and watchlist, and up to seven daily copies of it — that is how your devices stay in sync and how a mistake can be undone. The data travels from your phone straight to your Google account. The developer never receives it and has no way to read it.</p>
+
+    <h2>Film data</h2>
+    <p>To show titles, posters and ratings, the app sends requests to <a href="https://www.themoviedb.org" target="_blank" rel="noopener">TMDB</a>, <a href="https://poiskkino.dev" target="_blank" rel="noopener">PoiskKino</a> and <a href="https://www.omdbapi.com" target="_blank" rel="noopener">OMDb</a> with the keys you entered: the text you search for, or the ids of the title you open. Those services' own privacy policies apply to those requests. Your ratings and notes are never sent to them.</p>
+
+    <h2>What we don't do</h2>
+    <p>No analytics, no tracking, no advertising, no crash reporting services. Nothing is sold or shared with anyone.</p>
+
+    <h2 id="deleting-your-data">Deleting your data</h2>
+    <p>Deleting a rating in the app removes it on all your synced devices. To remove everything from Google Drive, use Settings → Sync and backup → Delete data from Google Drive; you can also revoke the app's access at any time at <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener">myaccount.google.com/permissions</a>. Uninstalling the app deletes everything stored on the phone.</p>
+
+    <h2>Children</h2>
+    <p>Framebook is not directed at children under 13 and does not knowingly collect any data from them — it collects no personal data at all.</p>
+
+    <h2>Contact</h2>
+    <p>Questions about this policy: open an issue at <a href="https://github.com/tiltozavr2545/Framebook/issues" target="_blank" rel="noopener">github.com/tiltozavr2545/Framebook/issues</a>.</p>
+
+    <h2>Changes to this policy</h2>
+    <p>If how the app handles data changes, this page is updated and the date below changes with it.</p>
+
+    <p class="updated">Last updated: October 26, 2026</p>
+  </div>
+</body>
+</html>
