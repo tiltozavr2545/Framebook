@@ -64,9 +64,17 @@ One Google Cloud project per app, set up by the repository owner.
    SHA-1: `keytool -list -v -keystore <file> -alias <alias>`.
    A SHA-1 mismatch is the most common cause of `ApiException: 10` on
    sign-in.
-4. **Web client ID** — needed only if the chosen google_sign_in version
-   requires a `serverClientId` to get an access token on Android **(to be
-   checked in Stage 5)**.
+4. **Web client** (type "Web application", no origins or redirects) —
+   required: google_sign_in 7 signs in on Android through Credential
+   Manager, which wants a `serverClientId`. Its client id is in
+   `app/lib/data/sync/google_account.dart` (`googleServerClientId`); a client
+   id isn't a secret. The client secret isn't used and never goes into the
+   repository.
+
+Set up on 2026-10-26: project `framebook-512810`, the Drive API, Branding
+with the GitHub Pages home page and privacy policy, the `drive.appdata`
+scope, Android clients for the release key and the Intel Mac's debug key,
+and the Web client.
 
 ### Testing or Production
 

@@ -10,8 +10,9 @@ import 'sync_engine.dart';
 /// project. On Android, Credential Manager signs in with it (google_sign_in
 /// 7 calls it `serverClientId`); the Android clients for each signing key
 /// live in the same project (docs/operations.md, "Google Cloud"). A client
-/// id is not a secret. Empty: this build has no Google sign-in.
-const googleServerClientId = String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
+/// id is not a secret, so it lives here rather than in a build variable.
+const googleServerClientId =
+    '682712190545-e1qbllq2u8htfgugv8h0a20on0ab1ffo.apps.googleusercontent.com';
 
 /// The only scope: the app's own hidden folder, nothing else on Drive.
 const driveScopes = [drive.DriveApi.driveAppdataScope];
