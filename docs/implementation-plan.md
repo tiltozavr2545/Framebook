@@ -248,7 +248,10 @@ Along the way:
    the user first.
 7. A new score picker: a horizontal carousel of scores to swipe through
    instead of the row of chips — the closest example is Kinopoisk's picker,
-   but horizontal.
+   but horizontal. The calibration is built into it: while the carousel
+   moves, it shows what else of this kind you rated at the score under the
+   cursor and the nearest scores around it, so the comparison helps choose
+   rather than coming as a separate sheet after the choice is made.
 8. Cast and crew on the title card: actors and directors (and creators for
    a series), if TMDB gives them — `credits` for a film, `aggregate_credits`
    for a series, an episode's own credits and guest stars.
