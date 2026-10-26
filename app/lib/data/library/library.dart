@@ -86,8 +86,9 @@ final class Calibration {
     required this.below,
   });
 
-  static const sameLimit = 6;
-  static const neighbourLimit = 3;
+  /// What fits under the score reel: four of the same, two each side.
+  static const sameLimit = 4;
+  static const neighbourLimit = 2;
 
   final List<RatedTitle> same;
   final List<RatedTitle> above;

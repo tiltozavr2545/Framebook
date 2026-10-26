@@ -319,7 +319,7 @@ void main() {
       expect((await library.calibration(matrix.key, 16)).isEmpty, isTrue);
     });
 
-    test('limits: six of the same, three per neighbour', () async {
+    test('limits: four of the same, two per neighbour', () async {
       for (var id = 1; id <= 8; id++) {
         await rate(film(id), 16);
       }
@@ -328,8 +328,9 @@ void main() {
       }
       await rate([matrix], 16);
       final c = await library.calibration(matrix.key, 16);
-      expect(c.same, hasLength(Calibration.sameLimit));
-      expect(c.above, hasLength(Calibration.neighbourLimit));
+      // What fits under the score reel.
+      expect(c.same, hasLength(4));
+      expect(c.above, hasLength(2));
     });
   });
 

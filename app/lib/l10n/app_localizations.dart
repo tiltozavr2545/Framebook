@@ -710,24 +710,6 @@ abstract class AppLocalizations {
   /// **'{count, plural, one{Your score for {count} episode: {average}} other{Your average over {count} episodes: {average}}}'**
   String partsAverageEpisodes(int count, String average);
 
-  /// No description provided for @calibrationTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'How it compares'**
-  String get calibrationTitle;
-
-  /// No description provided for @calibrationHigher.
-  ///
-  /// In en, this message translates to:
-  /// **'Half a point higher'**
-  String get calibrationHigher;
-
-  /// No description provided for @calibrationLower.
-  ///
-  /// In en, this message translates to:
-  /// **'Half a point lower'**
-  String get calibrationLower;
-
   /// No description provided for @calibrationSame.
   ///
   /// In en, this message translates to:
@@ -1261,6 +1243,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Imported'**
   String get importDone;
+
+  /// No description provided for @reelHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Pull the film to choose a score. Your other ratings of this kind show up here as it moves.'**
+  String get reelHint;
+
+  /// No description provided for @reelFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Your first rating of this kind — nothing to compare with yet.'**
+  String get reelFirst;
 }
 
 class _AppLocalizationsDelegate

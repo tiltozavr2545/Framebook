@@ -9,7 +9,10 @@ import '../../data/library/work_snapshot.dart';
 import '../../data/work_key.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/format.dart';
-import 'calibration_sheet.dart';
+import '../../data/sources/tmdb/tmdb_models.dart';
+import '../../shared/poster.dart';
+import '../../shared/title_text.dart';
+import 'score_reel.dart';
 
 /// "My rating" on a card of any kind: the score and note, or a button to
 /// rate; the watchlist toggle for films and series; for a series or a
@@ -94,30 +97,26 @@ class _MyRatingSectionState extends ConsumerState<MyRatingSection> {
     );
   }
 
-  /// Opens the editor, saves, and — if the score itself changed — shows the
-  /// calibration sheet. Everything from ref is taken before the awaits: the
-  /// card may be closed by then (AGENTS.md, pitfalls).
+  /// Opens the editor and saves. Everything from ref is taken before the
+  /// awaits: the card may be closed by then (AGENTS.md, pitfalls).
   Future<void> _edit(Rating? current) async {
     final library = ref.read(libraryProvider);
     final lineage = widget.lineage;
     final draft = await showModalBottomSheet<RatingDraft>(
       context: context,
+      // Over the navigation bar: the reel needs the whole width and the
+      // attention.
+      useRootNavigator: true,
       isScrollControlled: true,
       showDragHandle: true,
       builder: (_) => RatingEditor(
         initialScoreHalf: current?.scoreHalf,
         initialNote: current?.note,
+        compare: (half) => library.calibration(lineage.last.key, half),
       ),
     );
     if (draft == null) return;
     await library.rate(lineage, scoreHalf: draft.scoreHalf, note: draft.note);
-    if (current?.scoreHalf == draft.scoreHalf || !mounted) return;
-    await showCalibrationSheet(
-      context,
-      library: library,
-      key: lineage.last.key,
-      scoreHalf: draft.scoreHalf,
-    );
   }
 
   Future<void> _delete() async {
@@ -285,14 +284,22 @@ class MyScoreBadge extends ConsumerWidget {
 /// What the editor returns.
 typedef RatingDraft = ({int scoreHalf, String? note});
 
-/// Choosing a score (1–10 in steps of 0.5) and writing a note. No default
-/// score: a pre-selected 7 would nudge the choice. Tapping the selected
-/// score keeps it — deleting is a separate action.
+/// Choosing a score on the [ScoreReel] and writing a note. The comparison
+/// with your other ratings of this kind runs under the reel while it moves,
+/// so it helps to choose rather than coming after the choice (Stage 6).
 class RatingEditor extends StatefulWidget {
-  const RatingEditor({super.key, this.initialScoreHalf, this.initialNote});
+  const RatingEditor({
+    super.key,
+    this.initialScoreHalf,
+    this.initialNote,
+    required this.compare,
+  });
 
   final int? initialScoreHalf;
   final String? initialNote;
+
+  /// What else of this kind is rated at a score, and around it.
+  final Future<Calibration> Function(int scoreHalf) compare;
 
   @override
   State<RatingEditor> createState() => _RatingEditorState();
@@ -302,12 +309,34 @@ class _RatingEditorState extends State<RatingEditor> {
   late int? _scoreHalf = widget.initialScoreHalf;
   late final _note = TextEditingController(text: widget.initialNote);
 
+  /// The last comparison that arrived and the score it is for: kept on
+  /// screen while the next one loads, so the panel doesn't blink.
+  ({int scoreHalf, Calibration calibration})? _shown;
+
   static const _maxNote = 10000;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_scoreHalf case final half?) _compare(half);
+  }
 
   @override
   void dispose() {
     _note.dispose();
     super.dispose();
+  }
+
+  Future<void> _compare(int half) async {
+    final calibration = await widget.compare(half);
+    // Only the answer for the score still in the gate counts.
+    if (!mounted || _scoreHalf != half) return;
+    setState(() => _shown = (scoreHalf: half, calibration: calibration));
+  }
+
+  void _changed(int? half) {
+    setState(() => _scoreHalf = half);
+    if (half != null) _compare(half);
   }
 
   @override
@@ -316,67 +345,214 @@ class _RatingEditorState extends State<RatingEditor> {
     final theme = Theme.of(context);
     final score = _scoreHalf;
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        16,
-        0,
-        16,
-        16 + MediaQuery.viewInsetsOf(context).bottom,
+      padding: EdgeInsets.only(
+        bottom: 16 + MediaQuery.viewInsetsOf(context).bottom,
       ),
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(l10n.ratingEditorTitle, style: theme.textTheme.titleLarge),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                for (var half = 2; half <= 20; half++)
-                  ChoiceChip(
-                    label: Text(formatMyScore(half)),
-                    selected: half == score,
-                    showCheckmark: false,
-                    onSelected: (_) => setState(() => _scoreHalf = half),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _note,
-              minLines: 2,
-              maxLines: 6,
-              maxLength: _maxNote,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: InputDecoration(
-                labelText: l10n.ratingNote,
-                border: const OutlineInputBorder(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Text(
+                l10n.ratingEditorTitle,
+                style: theme.textTheme.headlineMedium,
               ),
-              // The counter only matters near the limit.
-              buildCounter:
-                  (
-                    _, {
-                    required currentLength,
-                    required isFocused,
-                    maxLength,
-                  }) => currentLength > _maxNote - 500
-                  ? Text('$currentLength / $maxLength')
-                  : null,
             ),
-            const SizedBox(height: 8),
-            FilledButton(
-              onPressed: score == null
-                  ? null
-                  : () => Navigator.pop<RatingDraft>(context, (
-                      scoreHalf: score,
-                      note: _note.text,
-                    )),
-              child: Text(l10n.ratingSave),
+            const SizedBox(height: 12),
+            ScoreReel(
+              initialScoreHalf: widget.initialScoreHalf,
+              onChanged: _changed,
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: score == null
+                  ? Text(
+                      l10n.reelHint,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    )
+                  : _Comparison(shown: _shown),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+              child: TextField(
+                controller: _note,
+                minLines: 2,
+                maxLines: 6,
+                maxLength: _maxNote,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: InputDecoration(labelText: l10n.ratingNote),
+                // The counter only matters near the limit.
+                buildCounter:
+                    (
+                      _, {
+                      required currentLength,
+                      required isFocused,
+                      maxLength,
+                    }) => currentLength > _maxNote - 500
+                    ? Text('$currentLength / $maxLength')
+                    : null,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+              child: FilledButton(
+                onPressed: score == null
+                    ? null
+                    : () => Navigator.pop<RatingDraft>(context, (
+                        scoreHalf: score,
+                        note: _note.text,
+                      )),
+                child: Text(l10n.ratingSave),
+              ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Under the reel: what you rated the same, and the nearest scores below and
+/// above, laid out the way the strip runs — lower on the left.
+class _Comparison extends StatelessWidget {
+  const _Comparison({required this.shown});
+
+  final ({int scoreHalf, Calibration calibration})? shown;
+
+  /// Tall enough for a label, a poster and a line of title, so the panel
+  /// keeps its height while the reel moves.
+  static const _rowHeight = 156.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final shown = this.shown;
+    if (shown == null) return const SizedBox(height: _rowHeight * 2);
+    final c = shown.calibration;
+    if (c.isEmpty) {
+      return Text(
+        l10n.reelFirst,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      );
+    }
+    String scoreOf(List<RatedTitle> group) =>
+        formatMyScore(group.first.rating.scoreHalf);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          height: _rowHeight,
+          child: _Group(
+            label: l10n.calibrationSame(formatMyScore(shown.scoreHalf)),
+            titles: c.same,
+            slots: Calibration.sameLimit,
+          ),
+        ),
+        SizedBox(
+          height: _rowHeight,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _Group(
+                  label: c.below.isEmpty
+                      ? null
+                      : l10n.calibrationBelow(scoreOf(c.below)),
+                  titles: c.below,
+                  slots: Calibration.neighbourLimit,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _Group(
+                  label: c.above.isEmpty
+                      ? null
+                      : l10n.calibrationAbove(scoreOf(c.above)),
+                  titles: c.above,
+                  slots: Calibration.neighbourLimit,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _Group extends StatelessWidget {
+  const _Group({
+    required this.label,
+    required this.titles,
+    required this.slots,
+  });
+
+  final String? label;
+  final List<RatedTitle> titles;
+
+  /// How many posters the row has room for; they keep their size whether
+  /// there is one title or four.
+  final int slots;
+
+  static const _poster = 64.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final muted = theme.textTheme.bodySmall?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label ?? '',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.titleSmall,
+        ),
+        const SizedBox(height: 6),
+        if (titles.isEmpty)
+          Text(l10n.calibrationNothing, style: muted)
+        else
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final title in titles.take(slots))
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: SizedBox(
+                    width: _poster,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Poster(
+                          title.posterPath,
+                          size: ImageSize.w185,
+                          width: _poster,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          describeRated(l10n, title).title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: muted,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+      ],
     );
   }
 }

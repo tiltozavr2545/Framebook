@@ -117,9 +117,6 @@
   "partsAverageSeasons": "{count, plural, one{Средняя по {count} сезону: {average}} other{Средняя по {count} сезонам: {average}}}",
   "partsAverageEpisodes": "{count, plural, one{Средняя по {count} серии: {average}} other{Средняя по {count} сериям: {average}}}",
 
-  "calibrationTitle": "С чем это в одном ряду",
-  "calibrationHigher": "На полбалла выше",
-  "calibrationLower": "На полбалла ниже",
   "calibrationSame": "Тоже {score}",
   "calibrationAbove": "Ступенькой выше · {score}",
   "calibrationBelow": "Ступенькой ниже · {score}",
@@ -214,5 +211,8 @@
   "importReplaceBody": "Оценки, которых нет в файле, будут удалены на всех твоих устройствах.",
   "importBroken": "Этот файл не читается.",
   "importTooNew": "Файл записан более новой версией Framebook. Обнови приложение, чтобы его импортировать.",
-  "importDone": "Импортировано"
+  "importDone": "Импортировано",
+
+  "reelHint": "Потяни плёнку, чтобы выбрать оценку. Пока она движется, здесь видно твои другие оценки того же типа.",
+  "reelFirst": "Это твоя первая оценка такого типа — сравнивать пока не с чем."
 }

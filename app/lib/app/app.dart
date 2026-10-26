@@ -4,18 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../l10n/app_localizations.dart';
 import 'preferences.dart';
 import 'router.dart';
-
-// Built once: ColorScheme.fromSeed computes a tonal palette, and the app
-// rebuilds on every theme and route change.
-final _lightTheme = ThemeData(
-  colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
-);
-final _darkTheme = ThemeData(
-  colorScheme: ColorScheme.fromSeed(
-    seedColor: Colors.deepOrange,
-    brightness: Brightness.dark,
-  ),
-);
+import 'theme.dart';
 
 class FramebookApp extends ConsumerWidget {
   const FramebookApp({super.key});
@@ -23,9 +12,10 @@ class FramebookApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp.router(
+      debugShowCheckedModeBanner: false,
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
-      theme: _lightTheme,
-      darkTheme: _darkTheme,
+      theme: FramebookTheme.light,
+      darkTheme: FramebookTheme.dark,
       themeMode: ref.watch(themeModeProvider),
       locale: ref.watch(localeProvider),
       localizationsDelegates: AppLocalizations.localizationsDelegates,

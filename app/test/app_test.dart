@@ -18,6 +18,7 @@ import 'package:framebook/data/sync/google_account.dart';
 import 'package:framebook/data/sync/sync_file.dart';
 import 'package:framebook/data/sync/sync_store.dart';
 import 'package:framebook/data/work_key.dart';
+import 'package:framebook/features/title/score_reel.dart';
 import 'package:framebook/shared/poster.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -322,6 +323,31 @@ void main() {
     note: null,
   );
 
+  /// Pulls the score reel until [score] stands in the gate: a slow drag
+  /// with a pause before letting go, so there is no fling to overshoot.
+  Future<void> pickScore(WidgetTester tester, double score) async {
+    final reel = find.byType(ScoreReel);
+    final position = tester
+        .state<ScrollableState>(
+          find.descendant(of: reel, matching: find.byType(Scrollable)),
+        )
+        .position;
+    // Frame 0 is the blank leader; score s is frame 2s − 1.
+    final target = (score * 2 - 1) * ScoreReel.extent;
+    final gesture = await tester.startGesture(tester.getCenter(reel));
+    final distance = position.pixels - target;
+    final steps = (distance.abs() / 20).ceil() + 1;
+    // The first move only takes up the touch slop.
+    await gesture.moveBy(Offset(distance.sign * 20, 0));
+    for (var i = 0; i < steps; i++) {
+      await gesture.moveBy(Offset(distance / steps, 0));
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await tester.pump(const Duration(milliseconds: 500));
+    await gesture.up();
+    await settle(tester);
+  }
+
   cardTest('rating a film with a note; it appears in My ratings', (
     tester,
   ) async {
@@ -331,13 +357,25 @@ void main() {
 
     await tester.tap(find.text('Rate'));
     await settle(tester);
-    await tester.tap(find.widgetWithText(ChoiceChip, '8.5'));
+    // No score until the reel moves: Save waits.
+    expect(
+      tester
+          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Save'))
+          .onPressed,
+      isNull,
+    );
+    await pickScore(tester, 8.5);
+    // The first film rated: nothing to compare with.
+    expect(
+      find.text(
+        'Your first rating of this kind — nothing to compare with yet.',
+      ),
+      findsOneWidget,
+    );
     await tester.enterText(find.widgetWithText(TextField, 'Note'), 'Классика');
     await tester.tap(find.text('Save'));
     await settle(tester);
 
-    // The first film rated: nothing to compare with, so no sheet.
-    expect(find.text('How it compares'), findsNothing);
     expect(find.text('My rating'), findsOneWidget);
     expect(find.text('8.5'), findsOneWidget);
     expect(find.text('Классика'), findsOneWidget);
@@ -354,9 +392,7 @@ void main() {
     expect(find.text('Классика'), findsOneWidget);
   });
 
-  cardTest('the calibration sheet shows what is rated the same, and nudges', (
-    tester,
-  ) async {
+  cardTest('the reel compares while it moves, before saving', (tester) async {
     await pumpApp(
       tester,
       keys: tmdbOnly,
@@ -367,26 +403,18 @@ void main() {
 
     await tester.tap(find.text('Rate'));
     await settle(tester);
-    await tester.tap(find.widgetWithText(ChoiceChip, '8.5'));
-    // Save is enabled only after the chip's rebuild.
-    await tester.pump();
-    await tester.tap(find.text('Save'));
-    await settle(tester);
-
-    expect(find.text('How it compares'), findsOneWidget);
+    await pickScore(tester, 8.5);
     expect(find.text('Also 8.5'), findsOneWidget);
     expect(find.text('Начало'), findsOneWidget);
 
     // Half a point higher: Inception becomes the neighbour below.
-    await tester.tap(find.byTooltip('Half a point higher'));
-    await settle(tester);
-    expect(find.text('Also 9'), findsNothing);
+    await pickScore(tester, 9);
+    expect(find.text('Also 9'), findsOneWidget);
     expect(find.text('A step below · 8.5'), findsOneWidget);
     expect(find.text('Начало'), findsOneWidget);
 
-    await tester.tap(find.text('Done'));
+    await tester.tap(find.text('Save'));
     await settle(tester);
-    // The card shows the nudged score.
     expect(find.text('9'), findsOneWidget);
   });
 

@@ -378,15 +378,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get calibrationTitle => 'How it compares';
-
-  @override
-  String get calibrationHigher => 'Half a point higher';
-
-  @override
-  String get calibrationLower => 'Half a point lower';
-
-  @override
   String calibrationSame(String score) {
     return 'Also $score';
   }
@@ -719,4 +710,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get importDone => 'Imported';
+
+  @override
+  String get reelHint =>
+      'Pull the film to choose a score. Your other ratings of this kind show up here as it moves.';
+
+  @override
+  String get reelFirst =>
+      'Your first rating of this kind — nothing to compare with yet.';
 }

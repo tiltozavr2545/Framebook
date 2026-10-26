@@ -130,9 +130,6 @@
   "partsAverageEpisodes": "{count, plural, one{Your score for {count} episode: {average}} other{Your average over {count} episodes: {average}}}",
   "@partsAverageEpisodes": {"placeholders": {"count": {"type": "int"}, "average": {"type": "String"}}},
 
-  "calibrationTitle": "How it compares",
-  "calibrationHigher": "Half a point higher",
-  "calibrationLower": "Half a point lower",
   "calibrationSame": "Also {score}",
   "@calibrationSame": {"placeholders": {"score": {"type": "String"}}},
   "calibrationAbove": "A step above · {score}",
@@ -245,5 +242,8 @@
   "importReplaceBody": "Ratings that aren't in the file will be deleted on all your devices.",
   "importBroken": "This file can't be read.",
   "importTooNew": "This file was written by a newer Framebook. Update the app to import it.",
-  "importDone": "Imported"
+  "importDone": "Imported",
+
+  "reelHint": "Pull the film to choose a score. Your other ratings of this kind show up here as it moves.",
+  "reelFirst": "Your first rating of this kind — nothing to compare with yet."
 }

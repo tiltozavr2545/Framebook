@@ -381,15 +381,6 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get calibrationTitle => 'С чем это в одном ряду';
-
-  @override
-  String get calibrationHigher => 'На полбалла выше';
-
-  @override
-  String get calibrationLower => 'На полбалла ниже';
-
-  @override
   String calibrationSame(String score) {
     return 'Тоже $score';
   }
@@ -725,4 +716,12 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get importDone => 'Импортировано';
+
+  @override
+  String get reelHint =>
+      'Потяни плёнку, чтобы выбрать оценку. Пока она движется, здесь видно твои другие оценки того же типа.';
+
+  @override
+  String get reelFirst =>
+      'Это твоя первая оценка такого типа — сравнивать пока не с чем.';
 }
