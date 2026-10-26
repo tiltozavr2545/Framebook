@@ -99,7 +99,5 @@ format change.
 
 ## Open questions
 
-- The calibration sheet: does it need a "don't show" switch in settings? Not
-  for now — decide after a couple of weeks of use.
 - A watchlist for seasons ("finish season 3") — needed, or is the whole
   series enough?

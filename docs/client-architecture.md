@@ -6,13 +6,11 @@ schema" as in Amicus. The data schema is in [data-model.md](data-model.md),
 the external APIs in [external-sources.md](external-sources.md), sync in
 [sync.md](sync.md).
 
-**Status: Stage 5.** Sync and backup through Google Drive sit on top of
-comparison and statistics (Stage 4), your own ratings and lists (Stage 3),
-search, title cards and external ratings (Stage 2) and the Stage 1 skeleton
-(database, keys, settings, navigation). The list below
-is the default decisions; if something is replaced along the way (drift by
-something else, say), it is recorded right here, so that the document doesn't
-silently drift away from the code.
+**Status: Stage 6.** A design of its own and the polish (the editing-table
+theme, the score reel, Discover, cast and people, saved cards offline) sit
+on top of sync (Stage 5), comparison and statistics (Stage 4), your own
+ratings and lists (Stage 3), search, cards and external ratings (Stage 2)
+and the Stage 1 skeleton.
 
 ---
 
@@ -180,11 +178,14 @@ pointless. The error screen has a retry button.
 
 The loading order, so that the screen is useful right away:
 
-1. The mini snapshot from `works`, if there is one: title, year, poster, your
-   own score — instantly and without a network. *(Not yet: today a card
-   that isn't in the HTTP cache shows the error screen offline; planned for
-   Stage 6.)*
-2. The TMDB card (through the HTTP cache): overview, seasons, TMDB rating.
+1. The TMDB card through the HTTP cache. If it can't load (offline,
+   nothing cached) and the title has a snapshot in `works` (rated or on the
+   watchlist), the **saved card** stands in: poster, title, year, your score
+   and note, the last known ratings, and a line saying so with a retry
+   (`features/title/saved_card.dart`, Stage 6). Without a snapshot, the
+   error screen.
+2. With the card: overview, cast and crew (`credits`), seasons, the TMDB
+   rating.
 3. External ratings from `external_ratings`: shown at once, even stale ones.
    In parallel, if they are older than 7 days and the budget allows, they are
    requested again.
@@ -219,20 +220,20 @@ All writes of the user's own data go through `Library`
   ratings. It is built from the card's **lineage** — `WorkSnapshot`s of the
   title and all its ancestors, series first — because a rating is saved with
   all of them.
-- Input is a bottom sheet with 19 chips, 1…10 in steps of 0.5, and a note.
-  There is no pre-selected score: a default 7 would nudge the choice.
-  Tapping the selected chip keeps it; deletion is a separate action with a
-  confirmation. Your own score is shown as "8" or "8.5", without a trailing
-  ".0".
+- Input is a bottom sheet with the **score reel** (Stage 6) and a note: a
+  strip of film pulled through a gate, frames 1…10 in steps of 0.5, a
+  haptic click per frame (`features/title/score_reel.dart`). It starts on a
+  blank leader frame, not on a score: a default 7 would nudge the choice.
+  Deletion is a separate action with a confirmation. Your own score is shown
+  as "8" or "8.5", without a trailing ".0".
 - Saving is one transaction: `works` (the snapshot with all its ancestors) +
   `ratings` + a tombstone in `watchlist`. Saving the same score and note
   again writes no new version — it would needlessly win a merge.
-- After a **new or changed score** — the **calibration sheet**: "A step
-  above", "Also N", "A step below"; the queries are in
-  [data-model.md](data-model.md). The −/+ buttons in its header move the
-  score just given by half a point, and the sheet rebuilds. The sheet doesn't
-  open if there are no other ratings of this kind; editing only the note
-  doesn't open it.
+- The **calibration** runs under the reel while it moves (Stage 6; in
+  Stage 3 it was a sheet after saving): up to four titles of the same kind
+  at the score in the gate, and two each at the nearest scores below and
+  above, laid out the way the strip runs — lower on the left. The queries
+  are in [data-model.md](data-model.md).
 - A series and a season show the average of their rated parts under the
   score ("Your average over 4 episodes: 7.8"); seasons and episodes show
   your score next to them in the lists.
@@ -316,6 +317,50 @@ The design is [sync.md](sync.md); here is what lives where in
   token is dropped and the call retried once.
 - Settings → Sync and backup is `features/settings/sync_screen.dart`; export
   and import go through the system "Save to…" / file picker (file_picker).
+
+## Design (Stage 6)
+
+The look is an editing table (`lib/app/theme.dart`): a cool lightbox,
+ink, film stock, and the editor's grease pencil.
+
+- **Red is only yours.** The grease-pencil red (`primary`) marks your own
+  score — on a card, in lists, on posters, the average in Stats — and your
+  actions (Rate, Save). Section labels, warnings and statuses are never red.
+  Edge-print amber (`tertiary`, `Reel.edge`) is for secondary figures:
+  years, dates, vote counts.
+- **Type:** Sofia Sans, bundled (OFL, `assets/fonts/`): Extra Condensed for
+  figures and titles — tall narrow numerals like edge print on film — and
+  the normal width for reading. Static weights cut from the variable fonts,
+  so `FontWeight` picks the right file.
+- **No plates.** Ratings on a card, the comparison blocks in Stats are
+  columns ruled on top, not grey rounded cards; a note sits in the margin
+  with a red rule.
+- **One bold element:** the score reel. Everything around it stays quiet.
+- Light and dark follow the system; both are designed, not inverted.
+- `test/screenshots/` renders the main screens to PNG with the real fonts
+  (`SCREENSHOTS=<dir> flutter test test/screenshots`) — the way to look at
+  the design without a device; skipped in normal runs.
+
+## Discover, cast and people (Stage 6)
+
+- **Discover** (the first tab): a search field on top; while it is empty,
+  shelves — like your favourites (TMDB recommendations for your latest
+  films and series rated 8+, without what you rated), trending this week,
+  in cinemas now, best of all time (discover by rating with a votes
+  threshold; `/top_rated` is crowded with new titles that have a handful of
+  votes). A shelf that fails or is empty is left out; all failing offline is
+  one message with a retry. Shelves come through the HTTP cache: a day for
+  what changes daily, a week for the rest.
+- **Cast and crew** on every card (`credits`; not `aggregate_credits`,
+  which is 350 KB for Game of Thrones): a strip of actors with their roles,
+  and lines for creators, directors, writers, music and cinematography.
+- **A person** (`features/person/`): dates, a folded biography, the
+  filmography split into acting and behind the camera, without talk shows
+  and news where they appear as themselves; your score next to what you
+  rated. The person route sits at the tab's level and is pushed, since
+  people and titles link to each other without end; back walks the pushes.
+  The filmography is one list item per title, so the list builds only what
+  is on screen.
 
 ---
 

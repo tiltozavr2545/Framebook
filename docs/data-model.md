@@ -124,12 +124,12 @@ Invariants:
 | `score_half` | int | 2…20, CHECK; score × 2 (7.5 → 15) |
 | `note` | text null | note/review, up to 10,000 characters |
 | `created_at` | int | UTC ms, the first rating |
-| `scored_at` | int | UTC ms, the last change of the **score** (not the note) — for "by date" sorting and "recent" in the calibration sheet |
+| `scored_at` | int | UTC ms, the last change of the **score** (not the note) — for "by date" sorting and "recent" in the calibration |
 | `updated_at` | int | UTC ms, the last user change of any kind — merging goes by it |
 | `updated_by` | text | `device_id` of the last writer — breaks ties on equal `updated_at` |
 | `deleted_at` | int null | tombstone; a row with it is never shown |
 
-Why integer half points: the calibration sheet looks for "exactly the same"
+Why integer half points: the calibration looks for "exactly the same"
 score, and `7.5` as a `double` after a couple of round trips through JSON is
 not guaranteed to be `7.5`. An integer compares without surprises. It becomes
 1–10 only for display.
@@ -226,17 +226,17 @@ files. Details are in [sync.md](sync.md).
 
 ## Key queries
 
-**The calibration sheet** — after saving score `S` for a title of kind `K`
-(all queries over live rows, `deleted_at is null`, the same `kind`, without
-the current title):
+**The calibration** — for score `S` in the reel's gate on a title of kind
+`K` (all queries over live rows, `deleted_at is null`, the same `kind`,
+without the current title); it runs again as the reel moves:
 
-1. "The same" — `score_half = S`, by `scored_at desc`, up to 6 rows.
+1. "The same" — `score_half = S`, by `scored_at desc`, up to 4 rows.
 2. "Neighbour above" — `score_half = (select min(score_half) … where score_half > S)`,
-   up to 3 rows.
+   up to 2 rows.
 3. "Neighbour below" — symmetric, with `max(…) < S`.
 
-An empty group simply isn't shown; if everything is empty (the first rating
-of this kind), the sheet doesn't open.
+An empty group says there is nothing near; if everything is empty (the
+first rating of this kind), the panel says so.
 
 **The hint for a series and a season** — the average of `score_half / 2.0`
 over the live ratings of its children (`parent_key = X`). For a series, over
