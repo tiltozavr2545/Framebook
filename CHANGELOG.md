@@ -115,3 +115,24 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
   (https://tiltozavr2545.github.io/Framebook/).
 - Fix: a cached external rating that changed to "not found" could keep its
   old value in the database.
+
+## 0.6.0 — Stage 6 (build 8)
+
+- A new look: an editing table — a cool lightbox, ink and film, with the
+  grease-pencil red kept for your own scores and actions. Sofia Sans, light
+  and dark themes by the system.
+- The score reel: pull a strip of film through the gate to choose a score,
+  1–10 by 0.5, with a click per frame. Your other ratings of the same kind
+  at that score, and the nearest ones below and above, show above it and
+  change as it moves; the separate comparison sheet is gone.
+- Discover replaces Search: the search field over shelves — like your
+  favourites, trending this week, in cinemas now, best of all time.
+- Cast and crew on every card, guest stars on episodes; a person page with
+  their filmography, your score next to what you rated.
+- A card that can't load offline opens from what was saved with your
+  rating or watchlist entry.
+- Cards: the title large, your score as a big red figure, the note in the
+  margin, the other ratings as ruled columns. Stats: your average as the big
+  figure.
+- The app's icon and splash screen; the version on the About screen;
+  shorter tab names.

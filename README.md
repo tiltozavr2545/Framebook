@@ -8,13 +8,24 @@ A project for myself and a couple of friends. The original idea and the decision
 
 ## Status
 
-In development, version 0.5.0. Working: search, film and series cards down
-to single episodes with ratings from Kinopoisk, IMDb, Rotten Tomatoes,
-Metacritic and TMDB; your own ratings with notes and the calibration sheet,
-My ratings (including the sort by divergence from Kinopoisk or IMDb) and
-the watchlist; background refresh of ratings and statistics; sync and daily
-copies through your own Google Drive, export and import to a file. Polish
-and distribution come next (Stage 6).
+In development, version 0.6.0 — the MVP is complete. Working: Discover
+with search and shelves, film and series cards down to single episodes with
+cast and crew and ratings from Kinopoisk, IMDb, Rotten Tomatoes, Metacritic
+and TMDB, people with their filmographies; your own ratings with notes on a
+score reel that compares as it moves, My ratings (including the sort by
+divergence from Kinopoisk or IMDb) and the watchlist; background refresh of
+ratings and statistics; sync and daily copies through your own Google
+Drive, export and import to a file; cards that open offline from what is
+saved. A full code review and optimization come next (Stage 7).
+
+<p>
+  <img src="docs/screenshots/search-light.png" width="200" alt="Discover: the search field over shelves">
+  <img src="docs/screenshots/card-light.png" width="200" alt="A film card: your score in red, ratings from the other sources">
+  <img src="docs/screenshots/editor-light.png" width="200" alt="The score reel, with your other ratings of the kind above it">
+  <img src="docs/screenshots/stats-dark.png" width="200" alt="Statistics in the dark theme">
+</p>
+
+(Rendered by `app/test/screenshots/` with stand-in posters.)
 Progress is tracked in
 [docs/implementation-plan.md](docs/implementation-plan.md). The first target
 platform is Android (an APK for myself and friends); iOS is postponed

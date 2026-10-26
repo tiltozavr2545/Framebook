@@ -17,7 +17,7 @@ are settled before anything is built on top of them.
 - [x] Stage 3 — Ratings, notes, watchlist, calibration
 - [x] Stage 4 — Comparison and statistics
 - [x] Stage 5 — Google Drive: sync and backup
-- [ ] Stage 6 — Polish and distribution
+- [x] Stage 6 — Polish and distribution
 - [ ] Stage 7 — Code review, optimization, a second review
 
 ---
@@ -230,31 +230,44 @@ Along the way:
 
 ## Stage 6 — Polish and distribution
 
-**Status:** not started
+**Status:** done (0.6.0); installing at friends' is theirs to do with the
+release.
 
-1. Empty states, errors without raw exception text, offline messages; a
-   card opened offline shows its snapshot from `works` instead of an error.
-2. Icon, name, splash screen.
-3. ✅ Moving the OAuth app to Production — done in Stage 5: the consent
-   screen is published, with Branding on GitHub Pages (see
-   [operations.md](operations.md)).
-4. A README with screenshots, installing at friends'. (The first GitHub
-   release already happened at 0.1.0.)
-5. The app's version on the About screen.
-6. A new Search tab: a search field on top and, under it, a selection of
-   films and series to browse instead of an empty screen. Which selection
-   (TMDB has trending, popular, top rated, now playing / upcoming, on the
-   air, by genre…) is to be decided when the stage starts: the options go to
-   the user first.
-7. A new score picker: a horizontal carousel of scores to swipe through
-   instead of the row of chips — the closest example is Kinopoisk's picker,
-   but horizontal. The calibration is built into it: while the carousel
-   moves, it shows what else of this kind you rated at the score under the
-   cursor and the nearest scores around it, so the comparison helps choose
-   rather than coming as a separate sheet after the choice is made.
-8. Cast and crew on the title card: actors and directors (and creators for
-   a series), if TMDB gives them — `credits` for a film, `aggregate_credits`
-   for a series, an episode's own credits and guest stars.
+1. ✅ Empty states, errors without raw exception text, offline messages; a
+   card opened offline shows its saved snapshot instead of an error.
+2. ✅ Icon, name, splash screen: the icon is film with its perforation, a
+   condensed F and the grease-pencil stroke (an adaptive vector icon with a
+   themed-icon layer); the splash is the film colour with it.
+3. ✅ Moving the OAuth app to Production — done in Stage 5.
+4. ✅ A README with screenshots. ⏳ Installing at friends' — with this
+   release.
+5. ✅ The app's version on the About screen.
+6. ✅ Discover: a search field over shelves — like your favourites, trending
+   this week, in cinemas now, best of all time (chosen by the user from the
+   options TMDB has).
+7. ✅ The score reel: a strip of film pulled through a gate, 1–10 by 0.5, a
+   haptic click per frame, a blank leader instead of a default score. The
+   calibration sits above it and changes as it moves (4 of the same, 2 each
+   side), in a box of fixed height so the reel never jumps.
+8. ✅ Cast and crew on every card, and a person page with the filmography.
+
+Along the way:
+- The whole interface was redesigned (the user allowed it): the
+  editing-table theme — a cool lightbox, ink, film, and red kept for your
+  own marks only — with Sofia Sans bundled; details in
+  [client-architecture.md](client-architecture.md), "Design".
+- No emulators on the development Mac, so the design was reviewed on PNGs
+  rendered by `test/screenshots/` with the real fonts, and on the user's
+  phone with release-signed preview builds.
+- `credits` rather than `aggregate_credits` for a series and a season: the
+  aggregate for Game of Thrones is 350 KB. "Best of all time" is discover by
+  rating with a votes threshold: `/top_rated` is crowded with new titles
+  that have a handful of votes.
+- A person and a title link to each other without end, so a person is not
+  nested under a card: the route sits at the tab's level and is pushed.
+- The first version of the reel printed whole scores larger than halves and
+  put the comparison under it, where its changing height made the reel
+  jump; both changed after trying it on the phone.
 
 ## Stage 7 — Code review, optimization, a second review
 
