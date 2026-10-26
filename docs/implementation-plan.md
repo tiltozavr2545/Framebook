@@ -18,6 +18,7 @@ are settled before anything is built on top of them.
 - [x] Stage 4 — Comparison and statistics
 - [x] Stage 5 — Google Drive: sync and backup
 - [ ] Stage 6 — Polish and distribution
+- [ ] Stage 7 — Code review, optimization, a second review
 
 ---
 
@@ -234,7 +235,34 @@ Along the way:
 1. Empty states, errors without raw exception text, offline messages; a
    card opened offline shows its snapshot from `works` instead of an error.
 2. Icon, name, splash screen.
-3. Moving the OAuth app to Production (or deciding to stay in Testing — see
+3. ✅ Moving the OAuth app to Production — done in Stage 5: the consent
+   screen is published, with Branding on GitHub Pages (see
    [operations.md](operations.md)).
 4. A README with screenshots, installing at friends'. (The first GitHub
    release already happened at 0.1.0.)
+5. The app's version on the About screen.
+6. A new Search tab: a search field on top and, under it, a selection of
+   films and series to browse instead of an empty screen. Which selection
+   (TMDB has trending, popular, top rated, now playing / upcoming, on the
+   air, by genre…) is to be decided when the stage starts: the options go to
+   the user first.
+7. A new score picker: a horizontal carousel of scores to swipe through
+   instead of the row of chips — the closest example is Kinopoisk's picker,
+   but horizontal.
+8. Cast and crew on the title card: actors and directors (and creators for
+   a series), if TMDB gives them — `credits` for a film, `aggregate_credits`
+   for a series, an episode's own credits and guest stars.
+
+## Stage 7 — Code review, optimization, a second review
+
+**Status:** not started
+
+1. A full code review of the app: correctness first, then everything else
+   it finds. Every bug found is fixed, with a test where it can have one.
+2. Optimization once the bugs are fixed: less memory, CPU and battery, less
+   network and disk, faster start and smoother scrolling — measured before
+   and after rather than guessed.
+3. After the optimization, a second full review that doesn't lean on the
+   first one's results: a fresh look at the code as it is then, so that the
+   first review's blind spots and anything the optimization broke get
+   caught.
