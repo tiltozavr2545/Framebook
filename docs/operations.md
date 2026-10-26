@@ -4,8 +4,8 @@ What to set up and what to press so the app builds, syncs and reaches
 friends. There is no server, so operations come down to three things: the
 external API keys, the Google OAuth client, and distributing the APK.
 
-**Status: keys, signing and releases are in use (Stages 0–2); the Google
-Cloud part is a plan until Stage 5.**
+**Status: keys, signing and releases are in use since Stages 0–2; the
+Google Cloud project for Drive sync since Stage 5 (0.5.0).**
 
 ---
 

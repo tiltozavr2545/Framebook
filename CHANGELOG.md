@@ -97,3 +97,21 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
   Works offline, except genre names the first time.
 - Releases: the workflow verifies the APK's signature and certificate before
   publishing.
+
+## 0.5.0 — Stage 5 (build 7)
+
+- Sync through your own Google Drive: sign in with Google in Settings →
+  Sync and backup, and ratings, notes and the watchlist are merged between
+  your devices — on launch, on returning to the app, half a minute after a
+  change, and with the button. The app gets access only to its own hidden
+  folder in your Drive (`drive.appdata`).
+- Merging is last write wins per title; a first sign-in on a device with
+  ratings asks before merging and shows how many there will be.
+- Daily copies in Drive for the last 7 days, restorable from the same
+  screen; deleting the data from Drive; signing out keeps everything.
+- Export to a file and import from one (merge, or replace everything) —
+  works without Google.
+- A home page and a privacy policy on GitHub Pages
+  (https://tiltozavr2545.github.io/Framebook/).
+- Fix: a cached external rating that changed to "not found" could keep its
+  old value in the database.

@@ -208,8 +208,9 @@ older than a week are deleted (on app start).
 ### `sync_state` — key-value
 
 `device_id` (a UUID created on first launch and never changed),
-`drive_file_id`, `last_sync_at`, `last_remote_modified_time`,
-`last_sync_error`. Details are in [sync.md](sync.md).
+`last_sync_at`, `last_remote_modified_time`, `last_sync_error`. The Drive
+file's id isn't kept: every pass lists the folder anyway, to find duplicate
+files. Details are in [sync.md](sync.md).
 
 ---
 

@@ -4,9 +4,9 @@ How user data moves between devices and how not to lose it. There is no
 server — the user's own Google Drive plays the shared storage. What exactly
 is synced is in [data-model.md](data-model.md).
 
-**Status: implemented in Stage 5** (`app/lib/data/sync/`); waiting for the
-Google Cloud project to be used on phones. When this file and the code
-disagree, the code is right.
+**Status: implemented in Stage 5 (0.5.0)**, `app/lib/data/sync/`; where
+things live is in [client-architecture.md](client-architecture.md), "Sync
+and backup". When this file and the code disagree, the code is right.
 
 ---
 

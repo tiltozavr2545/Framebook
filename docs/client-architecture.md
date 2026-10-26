@@ -6,10 +6,10 @@ schema" as in Amicus. The data schema is in [data-model.md](data-model.md),
 the external APIs in [external-sources.md](external-sources.md), sync in
 [sync.md](sync.md).
 
-**Status: Stage 4.** Comparison with others (the difference on the card,
-the divergence sort, background refresh) and statistics sit on top of your
-own ratings and lists (Stage 3), search, title cards and external ratings
-(Stage 2) and the Stage 1 skeleton (database, keys, settings, navigation). The list below
+**Status: Stage 5.** Sync and backup through Google Drive sit on top of
+comparison and statistics (Stage 4), your own ratings and lists (Stage 3),
+search, title cards and external ratings (Stage 2) and the Stage 1 skeleton
+(database, keys, settings, navigation). The list below
 is the default decisions; if something is replaced along the way (drift by
 something else, say), it is recorded right here, so that the document doesn't
 silently drift away from the code.
@@ -55,7 +55,9 @@ silently drift away from the code.
   dates can be an empty string, and a zero rating means "no votes". Clients
   take the body as a string and parse it themselves: in dio an unparsable
   body is `DioExceptionType.unknown`, which reads as "no network".
-  json_serializable is still the default for the sync file format (Stage 5)
+  The sync file (Stage 5) is read the same way, by hand, but strictly: a
+  missing or mistyped field makes the whole file broken rather than a
+  default (`lib/data/sync/sync_file.dart`).
 - **Statistics charts:** fl_chart
 - **Linting/formatting:** flutter_lints + `dart format`, in CI from the first
   commit
@@ -284,6 +286,36 @@ All writes of the user's own data go through `Library`
   decade. A kind filter on top, as in My ratings. Genre names come from
   TMDB's genre lists through the HTTP cache; without them (offline, nothing
   cached) the genre section says so and the rest still works.
+
+## Sync and backup (Stage 5)
+
+The design is [sync.md](sync.md); here is what lives where in
+`lib/data/sync/`.
+
+- `sync_file.dart` — the file format: gzipped JSON with `format_version`,
+  strict reading; a broken file and one from a newer app are different
+  errors, and neither is ever overwritten.
+- `merge.dart` — last write wins row by row, as pure functions; ties on the
+  version fall to the larger canonical JSON so the merge stays commutative,
+  associative and idempotent. Property tests check exactly that, and that
+  three devices converge whatever the order of edits and syncs.
+- `sync_store.dart` — the database side: reading the shared state, applying
+  someone else's in one transaction (a row is written only where it wins over
+  what is stored at that moment), and "replace everything". Rows are written
+  as full companions: drift leaves null columns out of an upsert of a data
+  class, which would keep a stale note or tombstone.
+- `sync_engine.dart` — one pass over a `SyncRemote`, with the daily copies;
+  `drive_remote.dart` is that remote on Drive's `appDataFolder`.
+- `google_account.dart` — google_sign_in 7: Credential Manager sign-in with
+  the Web client id, then Drive authorization for `drive.appdata` only. An
+  interface, so widget tests run on a fake account and an in-memory Drive.
+- `sync_controller.dart` — when to sync (launch and resume after 5 min, 30 s
+  after a change to ratings or the watchlist, the button), the last sync and
+  the last error for the screen, sign-out, deleting from Drive, the daily
+  copies, export and import. Offline isn't shown as an error; an expired
+  token is dropped and the call retried once.
+- Settings → Sync and backup is `features/settings/sync_screen.dart`; export
+  and import go through the system "Save to…" / file picker (file_picker).
 
 ---
 

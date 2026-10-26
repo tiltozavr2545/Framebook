@@ -16,7 +16,7 @@ are settled before anything is built on top of them.
 - [x] Stage 2 — Search and title card
 - [x] Stage 3 — Ratings, notes, watchlist, calibration
 - [x] Stage 4 — Comparison and statistics
-- [ ] Stage 5 — Google Drive: sync and backup
+- [x] Stage 5 — Google Drive: sync and backup
 - [ ] Stage 6 — Polish and distribution
 
 ---
@@ -189,12 +189,12 @@ Along the way:
 
 ## Stage 5 — Google Drive: sync and backup
 
-**Status:** in progress — the code is done and tested; the Google Cloud
-project and the check on two phones are left.
+**Status:** done (0.5.0); the check on two real phones is still owed.
 
-1. Google Cloud: a project, the Drive API, the consent screen, Android OAuth
-   clients for every signing key, and a Web client whose id the app signs
-   in with (see [operations.md](operations.md)).
+1. ✅ Google Cloud: a project, the Drive API, the consent screen (published,
+   with the home page and privacy policy on GitHub Pages), Android OAuth
+   clients for the release and the Intel Mac's debug key, and a Web client
+   whose id the app signs in with (see [operations.md](operations.md)).
 2. ✅ The file format and merging — pure functions
    (`lib/data/sync/sync_file.dart`, `merge.dart`); property-based tests for
    the merge's algebra and for convergence of three devices under random
@@ -209,10 +209,19 @@ project and the check on two phones are left.
    from Drive (Settings → Sync and backup).
 6. ✅ Daily copies (the last 7) and restoring from them.
 7. ✅ Export and import to a file (merge / replace).
-8. A check on two phones: offline edits of the same film on both → syncs in
-   different orders → the same result.
+8. ⏳ A check on two phones: offline edits of the same film on both → syncs
+   in different orders → the same result. Postponed until a second phone is
+   at hand (no emulators on the development Mac); until then the convergence
+   property tests stand in for it. Sign-in and the first upload to Drive
+   were checked on a real phone with a release-signed build.
 
 Along the way:
+- google_sign_in 7 needs a Web client id on Android (Credential Manager
+  signs in with it), so the "to be checked" in operations.md resolved to
+  "required". The id is a constant in `google_account.dart`.
+- Publishing the consent screen needs Branding: the home page and the
+  privacy policy went to GitHub Pages (`docs/gh-pages/`, synced to the
+  `gh-pages` branch by CI, as in Amicus).
 - The convergence test caught drift writing a data class with
   `nullToAbsent`: an upsert left null columns out, so a winning version
   with no note, or a revived tombstone, kept the stale local value. Rows are
