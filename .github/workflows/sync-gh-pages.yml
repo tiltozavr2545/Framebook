@@ -1,0 +1,59 @@
+name: Sync GitHub Pages
+
+# `docs/gh-pages/**` holds the source for the gh-pages branch: the home page
+# and the privacy policy the Google OAuth consent screen links to
+# (https://tiltozavr2545.github.io/Framebook/). gh-pages itself is an orphan
+# branch with no shared history with main, so this job copies the current
+# files over and commits only when something actually changed — the same
+# scheme as in Amicus.
+on:
+  push:
+    branches: [main]
+    paths: ["docs/gh-pages/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gh-pages-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      # Pinned by SHA like every other workflow here; this job can write to
+      # the repository, so a moved tag would get that access too.
+      - name: Checkout source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: source
+          sparse-checkout: docs/gh-pages
+          sparse-checkout-cone-mode: false
+
+      - name: Checkout gh-pages
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Copy pages
+        run: |
+          set -eu
+          cp source/docs/gh-pages/index.html gh-pages/index.html
+          cp source/docs/gh-pages/privacy.html gh-pages/privacy.html
+
+      - name: Commit and push if changed
+        working-directory: gh-pages
+        run: |
+          set -eu
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html privacy.html
+          if git diff --cached --quiet; then
+            echo "No changes to deploy."
+            exit 0
+          fi
+          git commit -m "Sync from docs/gh-pages/ (${{ github.sha }})"
+          git push origin gh-pages

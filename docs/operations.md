@@ -46,7 +46,13 @@ One Google Cloud project per app, set up by the repository owner.
 
 1. Create a project and enable the **Google Drive API**.
 2. **OAuth consent screen**: type External, name Framebook, a support email.
-   The only scope is `.../auth/drive.appdata` (non-sensitive).
+   The only scope is `.../auth/drive.appdata` (non-sensitive). Publishing
+   needs Branding filled in: the home page
+   `https://tiltozavr2545.github.io/Framebook/` and the privacy policy
+   `https://tiltozavr2545.github.io/Framebook/privacy.html`, authorized
+   domain `tiltozavr2545.github.io`. Both pages are GitHub Pages from the
+   `gh-pages` branch; their source is `docs/gh-pages/`, copied over by
+   `sync-gh-pages.yml` on every push to `main` (the same scheme as Amicus).
 3. **Credentials → OAuth client ID → Android**: package name
    `com.github.tiltozavr2545.framebook` and the signing key's SHA-1. Several
    clients are needed — one for every key that signs builds:

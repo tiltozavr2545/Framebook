@@ -17,6 +17,7 @@ read:
 | how the client is built, default decisions | [docs/client-architecture.md](docs/client-architecture.md) |
 | getting the API keys (step by step, for users) | [docs/api-keys.md](docs/api-keys.md), Russian translation [docs/api-keys.ru.md](docs/api-keys.ru.md) |
 | the Google OAuth client, where the signing key is, how to release | [docs/operations.md](docs/operations.md) |
+| the published home page and privacy policy (GitHub Pages) | [docs/gh-pages/](docs/gh-pages/) — edited here, not on the `gh-pages` branch: CI overwrites it on every push to `main` |
 | MVP stages and progress | [docs/implementation-plan.md](docs/implementation-plan.md) |
 | postponed work, open questions | [docs/future-development.md](docs/future-development.md) |
 | historical: the idea and decisions before the start | [docs/project-brief.md](docs/project-brief.md) |
