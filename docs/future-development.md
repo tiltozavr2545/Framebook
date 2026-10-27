@@ -1,6 +1,8 @@
 # Postponed features
 
-Everything deliberately left out of the MVP. Finished work doesn't go here:
+Everything deliberately left out of the MVP. Work that is scheduled moves to
+[implementation-plan.md](implementation-plan.md) (the items required before
+the code review are in Stage 6.5). Finished work doesn't go here:
 the feature history is in [../CHANGELOG.md](../CHANGELOG.md), the MVP scope in
 [project-brief.md](project-brief.md).
 
@@ -42,37 +44,11 @@ imported one or the local one?
 hand when automatic matching was wrong or found nothing. A manual link must
 be synced (`works` is derived data now), so it is a format change.
 
-## Episode renumbering on TMDB
-
-An episode's `work_key` is built from the season and episode numbers. If TMDB
-renumbers (moves specials, merges double episodes), the rating stays on the
-old number. An option: store the episode's TMDB id and offer to move the
-rating when the number differs.
-
 ## Background sync and rating refresh
 
 For now both happen only while the app is open. WorkManager on Android would
 allow syncing after changes and pulling ratings once a day within the
 budget.
-
-## Cleaning up tombstones
-
-For now they are kept forever (see [sync.md](sync.md)). They can only be
-cleaned up together with a rule "a device that hasn't synced for more than N
-days replaces its local state with the file rather than merging", otherwise
-it would resurrect what was deleted.
-
-## Syncing API keys and settings
-
-So that three keys don't have to be entered again on a new device. Keys in
-the user's own Drive are in their own storage, but they are still secrets off
-the device; an option is encrypting them with a key derived from a password
-only the user knows.
-
-## Checking for updates in the app
-
-A request to the GitHub Releases API on launch: if there is a newer version,
-an unobtrusive banner with a link to the APK.
 
 ## Rewatches
 
@@ -87,17 +63,8 @@ format change.
 
 ## Ideas for later
 
-- **Comparing with friends** — exchanging exports and "where my friend and I
-  disagree most". Without a server, only through a file.
 - **A separate "own" ratings source** — Letterboxd, for example, if an
   accessible API appears.
 - **A home screen widget** — the watchlist or a random film from it.
 - **A web/desktop version** — Flutter Web would hit CORS on some of the APIs;
   unlikely without a proxy server.
-
----
-
-## Open questions
-
-- A watchlist for seasons ("finish season 3") — needed, or is the whole
-  series enough?

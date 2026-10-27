@@ -57,7 +57,9 @@ can be added to a score.
   there are no 8.5s, the neighbour above is a 9).
 
 The kind is always the same: a film is compared with films, an episode with
-episodes. The score can be changed right from the sheet.
+episodes. The sheet appears only when there are enough ratings of that kind
+to compare with: more than 20 for films, more than 10 for series, seasons
+and episodes each. The score can be changed right from the sheet.
 
 **External ratings.** On the card next to your score: Kinopoisk, IMDb, TMDB,
 Rotten Tomatoes, Metacritic — whichever of them the particular work has, and

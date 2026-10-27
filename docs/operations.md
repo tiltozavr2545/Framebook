@@ -161,9 +161,9 @@ Building:
 - Installing at a friend's: download the APK from the release page, allow
   installs from that source, install. An update is a new APK over the old
   one, and the data stays (the same signing key, a higher `versionCode`).
-- Checking for updates inside the app is in
-  [future-development.md](future-development.md); in the MVP it is a message
-  in a chat.
+- Checking for updates inside the app is planned in Stage 6.5 of
+  [implementation-plan.md](implementation-plan.md); until then it is a
+  message in a chat.
 
 ---
 

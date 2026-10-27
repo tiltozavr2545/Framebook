@@ -129,11 +129,12 @@ a lagging clock at least doesn't lose to its own previous version.
 
 ### Tombstones
 
-In the MVP they are kept forever. A rating is about 300 bytes of JSON, so
+For now they are kept forever; cleaning them up is planned in Stage 6.5 of
+[implementation-plan.md](implementation-plan.md). A rating is about 300 bytes of JSON, so
 even 5,000 rows with notes take hundreds of kilobytes after gzip. Cleaning up
 old tombstones is only possible with a rule like "a device that hasn't
 synced for more than N days replaces rather than merges on its next
-sign-in" — that is in [future-development.md](future-development.md).
+sign-in" — that rule comes with the cleanup.
 
 ---
 

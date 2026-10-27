@@ -67,7 +67,7 @@ the string by hand anywhere.
 
 A known limitation: TMDB occasionally renumbers episodes (moves specials,
 merges double episodes). The rating then stays on the old number. Not handled
-in the MVP — see [future-development.md](future-development.md).
+yet — planned in Stage 6.5 of [implementation-plan.md](implementation-plan.md).
 
 ---
 
@@ -235,8 +235,12 @@ without the current title); it runs again as the reel moves:
    up to 2 rows.
 3. "Neighbour below" — symmetric, with `max(…) < S`.
 
-An empty group says there is nothing near; if everything is empty (the
-first rating of this kind), the panel says so.
+The calibration appears only when there are enough ratings of this kind to
+compare with: more than 20 live ratings for films, more than 10 for series,
+seasons and episodes each (counted without the current title). Below that
+the panel isn't shown at all — a handful of ratings makes "the same" and
+the neighbours noise. When it is shown, an empty group says there is
+nothing near.
 
 **The hint for a series and a season** — the average of `score_half / 2.0`
 over the live ratings of its children (`parent_key = X`). For a series, over

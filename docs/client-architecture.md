@@ -222,8 +222,10 @@ All writes of the user's own data go through `Library`
   all of them.
 - Input is a bottom sheet with the **score reel** (Stage 6) and a note: a
   strip of film pulled through a gate, frames 1…10 in steps of 0.5, a
-  haptic click per frame (`features/title/score_reel.dart`). It starts on a
-  blank leader frame, not on a score: a default 7 would nudge the choice.
+  haptic click per frame (`features/title/score_reel.dart`). In Stage 6
+  it started on a blank leader frame so as not to nudge the choice; from
+  Stage 6.5 it starts on 5, the middle of the scale, rather than on the
+  minimum.
   Deletion is a separate action with a confirmation. Your own score is shown
   as "8" or "8.5", without a trailing ".0".
 - Saving is one transaction: `works` (the snapshot with all its ancestors) +
@@ -233,7 +235,9 @@ All writes of the user's own data go through `Library`
   Stage 3 it was a sheet after saving): up to four titles of the same kind
   at the score in the gate, and two each at the nearest scores below and
   above, laid out the way the strip runs — lower on the left. The queries
-  are in [data-model.md](data-model.md).
+  are in [data-model.md](data-model.md). It is shown only once there are
+  enough ratings of the kind: more than 20 for films, more than 10 for
+  series, seasons and episodes each.
 - A series and a season show the average of their rated parts under the
   score ("Your average over 4 episodes: 7.8"); seasons and episodes show
   your score next to them in the lists.

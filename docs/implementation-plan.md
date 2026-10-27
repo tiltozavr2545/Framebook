@@ -18,6 +18,7 @@ are settled before anything is built on top of them.
 - [x] Stage 4 — Comparison and statistics
 - [x] Stage 5 — Google Drive: sync and backup
 - [x] Stage 6 — Polish and distribution
+- [ ] Stage 6.5 — Required items from the postponed list
 - [ ] Stage 7 — Code review, optimization, a second review
 
 ---
@@ -268,6 +269,60 @@ Along the way:
 - The first version of the reel printed whole scores larger than halves and
   put the comparison under it, where its changing height made the reel
   jump; both changed after trying it on the phone.
+
+## Stage 6.5 — Required items from the postponed list
+
+**Status:** not started
+
+Moved here from [future-development.md](future-development.md) by the
+user's decision: they are done before the code review, so that the review
+and the optimization see the final code.
+
+1. Episode renumbering on TMDB. An episode's `work_key` is built from the
+   season and episode numbers, so if TMDB renumbers (moves specials, merges
+   double episodes) the rating stays on the old number. Store the episode's
+   TMDB id and offer to move the rating when the number differs.
+2. Cleaning up tombstones, together with the rule "a device that hasn't
+   synced for more than N days replaces its local state with the file
+   rather than merging", otherwise old tombstones' removal would resurrect
+   what was deleted ([sync.md](sync.md)).
+3. Syncing API keys and settings, so that three keys needn't be entered
+   again on a new device. Keys are secrets off the device, so they are
+   encrypted with a key derived from a password only the user knows.
+4. Checking for updates in the app: a request to the GitHub Releases API on
+   launch; if there is a newer version, an unobtrusive banner with a link to
+   the APK.
+5. Comparing with friends: exchanging exports and "where my friend and I
+   disagree most". Without a server, only through a file.
+6. The calibration only when there is something to compare with: more than
+   20 ratings of the kind for films, more than 10 for series, seasons and
+   episodes each; below that the panel under the reel is hidden. (Stated in
+   [data-model.md](data-model.md), "Key queries".)
+7. The reel starts on 5 by default, not on the minimum (replacing the blank
+   leader frame from Stage 6). Opening an already rated title still starts
+   on its own score.
+8. Viewing a cover (or all of a title's covers) full screen: a tap on the
+   poster on a card opens a full-screen viewer with pinch-to-zoom, and with
+   several posters from TMDB (`/images`) a swipe between them. The larger
+   size comes from the image configuration ([external-sources.md](external-sources.md)),
+   the viewer opens from a cached smaller one while it loads.
+9. Rewriting the API keys guide ([api-keys.md](api-keys.md) and its Russian
+   copy `api-keys.ru.md`): the PoiskKino section ("2 minutes in Telegram",
+   the bot steps) doesn't match how a key is really obtained there, so it is
+   redone from the current registration flow and checked step by step.
+   The TMDB section must also say far more prominently that the account and
+   the key have to be registered from a computer, not from a phone.
+10. Cast text that doesn't fit: on phones with different display scales the
+    text with an actor's role is sometimes cut off. It must fit at any
+    scale (wrap or ellipsize deliberately, tested at large font and display
+    sizes).
+11. A watchlist for seasons ("finish season 3"): a season can be put on the
+   watchlist on its own, not only the whole series. Decided as required by
+   the user; the details (how it shows in the list and how it syncs) are
+   settled when the item starts.
+
+Each item that changes the sync format says so in [sync.md](sync.md) and
+[data-model.md](data-model.md) when it lands.
 
 ## Stage 7 — Code review, optimization, a second review
 
