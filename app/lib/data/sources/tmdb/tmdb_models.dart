@@ -259,6 +259,7 @@ final class SeasonSummary {
     required this.episodeCount,
     required this.posterPath,
     required this.vote,
+    this.tmdbId,
   });
 
   static SeasonSummary? fromJson(int tvId, Json json) {
@@ -266,6 +267,7 @@ final class SeasonSummary {
     if (number == null || number < 0) return null;
     return SeasonSummary(
       key: WorkKey.season(tvId, number),
+      tmdbId: _positive(json.integer('id')),
       name: json.string('name'),
       airDate: json.string('air_date'),
       episodeCount: json.integer('episode_count') ?? 0,
@@ -275,6 +277,10 @@ final class SeasonSummary {
   }
 
   final WorkKey key;
+
+  /// The season's own TMDB id (not the series'): how a rated season is found
+  /// again after TMDB renumbers the seasons.
+  final int? tmdbId;
 
   /// TMDB names it "Season 1" itself, but it can be empty.
   final String? name;
@@ -324,7 +330,8 @@ final class SeasonDetails {
 
   final WorkKey key;
 
-  /// The season's own TMDB id (not the series'), kept for reference.
+  /// The season's own TMDB id (not the series'): follows the season when
+  /// TMDB renumbers (lib/data/library/renumbering.dart).
   final int? tmdbId;
   final String? name;
   final String? overview;
@@ -371,7 +378,8 @@ final class EpisodeSummary {
 
   final WorkKey key;
 
-  /// The episode's own TMDB id (not the series'), kept for reference.
+  /// The episode's own TMDB id (not the series'): follows the episode when
+  /// TMDB renumbers (lib/data/library/renumbering.dart).
   final int? tmdbId;
   final String? name;
   final String? overview;

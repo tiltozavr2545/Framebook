@@ -18,7 +18,7 @@ are settled before anything is built on top of them.
 - [x] Stage 4 — Comparison and statistics
 - [x] Stage 5 — Google Drive: sync and backup
 - [x] Stage 6 — Polish and distribution
-- [ ] Stage 6.5 — Required items from the postponed list
+- [ ] Stage 6.5 — Required items from the postponed list (in progress, 0.7.0)
 - [ ] Stage 7 — Code review, optimization, a second review
 
 ---
@@ -272,16 +272,25 @@ Along the way:
 
 ## Stage 6.5 — Required items from the postponed list
 
-**Status:** not started
+**Status:** in progress (0.7.0 — the whole stage ships as one version)
 
 Moved here from [future-development.md](future-development.md) by the
 user's decision: they are done before the code review, so that the review
 and the optimization see the final code.
 
-1. Episode renumbering on TMDB. An episode's `work_key` is built from the
+1. ✅ Episode renumbering on TMDB. An episode's `work_key` is built from the
    season and episode numbers, so if TMDB renumbers (moves specials, merges
    double episodes) the rating stays on the old number. Store the episode's
    TMDB id and offer to move the rating when the number differs.
+   - Done for episodes and seasons alike, without a migration or a sync
+     format change: `works.tmdb_id` already held their own ids. Detection
+     uses only what the series, season or episode card loaded; the card
+     asks Move / Keep, or which score stays when the target is rated too.
+     The rules are in [data-model.md](data-model.md), "When TMDB
+     renumbers".
+   - The pitfall: opening a card refreshed the snapshot by key and would
+     have quietly adopted the new title's id, losing the link. A rated
+     title's own id now survives snapshot writes until the user answers.
 2. Cleaning up tombstones, together with the rule "a device that hasn't
    synced for more than N days replaces its local state with the file
    rather than merging", otherwise old tombstones' removal would resurrect
@@ -319,7 +328,8 @@ and the optimization see the final code.
 11. A watchlist for seasons ("finish season 3"): a season can be put on the
    watchlist on its own, not only the whole series. Decided as required by
    the user; the details (how it shows in the list and how it syncs) are
-   settled when the item starts.
+   settled when the item starts. A season's watchlist row has to follow
+   TMDB renumbering the way a rating does (item 1).
 
 Each item that changes the sync format says so in [sync.md](sync.md) and
 [data-model.md](data-model.md) when it lands.

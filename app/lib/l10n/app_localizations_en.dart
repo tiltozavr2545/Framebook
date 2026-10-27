@@ -378,6 +378,57 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String renumberEpisode(String from, String to) {
+    return 'Your rating of $from was for an episode that is now $to. Move it?';
+  }
+
+  @override
+  String renumberSeason(String from, String to) {
+    return 'Your rating of $from was for a season that is now $to. Move it?';
+  }
+
+  @override
+  String renumberManyEpisodes(String moves) {
+    return 'Your ratings were for episodes that are now numbered differently: $moves. Move them?';
+  }
+
+  @override
+  String renumberManySeasons(String moves) {
+    return 'Your ratings were for seasons that are now numbered differently: $moves. Move them?';
+  }
+
+  @override
+  String renumberConflictEpisode(
+    String fromScore,
+    String from,
+    String to,
+    String toScore,
+  ) {
+    return 'Your $fromScore for $from was for the episode that is now $to, which you rated $toScore. Which score to keep?';
+  }
+
+  @override
+  String renumberConflictSeason(
+    String fromScore,
+    String from,
+    String to,
+    String toScore,
+  ) {
+    return 'Your $fromScore for $from was for the season that is now $to, which you rated $toScore. Which score to keep?';
+  }
+
+  @override
+  String get renumberMove => 'Move';
+
+  @override
+  String get renumberKeep => 'Keep';
+
+  @override
+  String renumberKeepScore(String score) {
+    return 'Keep $score';
+  }
+
+  @override
   String calibrationSame(String score) {
     return 'Also $score';
   }

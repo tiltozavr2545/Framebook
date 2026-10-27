@@ -209,6 +209,24 @@ Which cells each kind gets: a film — Kinopoisk, IMDb, TMDB, RT, Metacritic;
 a series — Kinopoisk, IMDb, TMDB; a season and an episode — IMDb and TMDB
 (a season's IMDb is the episode average, labelled as such).
 
+When TMDB has renumbered a rated season or episode (Stage 6.5, the rules
+are in [data-model.md](data-model.md), "When TMDB renumbers"), the card
+asks inline rather than in a dialog: "Your rating of S1 · E5 was for an
+episode that is now S1 · E3. Move it?" with Move and Keep, or, when a
+rating already sits on the target, "Which score to keep?" with both scores
+(`features/title/renumber_notice.dart`). It is built from the response the
+screen already has and the stored ratings, so it costs no request:
+
+- a series card asks about its seasons, above the season list;
+- a season card asks about episodes now in this season (from any season of
+  the series), above the episode list;
+- an episode card asks only about its own number — under the header, or
+  above "TMDB has no such title" when the number is gone.
+
+One question at a time; an answered one disappears by itself (the notice
+watches the ratings), and the next, if any, takes its place. An unanswered
+one stays until answered — there is no "later".
+
 ---
 
 ## Rating (Stage 3)
@@ -243,7 +261,9 @@ All writes of the user's own data go through `Library`
   your score next to them in the lists.
 - Opening a card refreshes the snapshots that already exist (title in the
   current language, poster) — never creating new ones and never touching a
-  rating's `updated_at`.
+  rating's `updated_at`. A rated season's or episode's own TMDB id is the
+  exception: it is kept while TMDB has another title under its number, so
+  that the renumbering question isn't answered behind the user's back.
 
 ## Lists (Stage 3)
 

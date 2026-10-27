@@ -1,9 +1,12 @@
 import 'dart:convert';
 
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:framebook/data/db/database.dart';
+import 'package:framebook/data/api_source.dart';
 import 'package:framebook/data/library/library.dart';
+import 'package:framebook/data/library/renumbering.dart';
 import 'package:framebook/data/library/work_snapshot.dart';
 import 'package:framebook/data/source_failure.dart';
 import 'package:framebook/data/sources/tmdb/tmdb_models.dart';
@@ -379,6 +382,261 @@ void main() {
         await library.watchPartsAverage(const WorkKey.tv(1399)).first,
         isNull,
       );
+    });
+  });
+
+  group('renumbering', () {
+    // Season 1 of Game of Thrones as TMDB answers now: E1…E10 with ids
+    // 63056…63065. A rating "from before" is a row whose snapshot holds
+    // another episode's id under its number.
+    WorkSnapshot ep(int n, {int? id}) {
+      final real = WorkSnapshot.episode(season1.episodes[n - 1]);
+      return WorkSnapshot(
+        key: real.key,
+        tmdbId: id ?? real.tmdbId,
+        title: id == null ? real.title : 'Old $n',
+        imdbId: id == null ? null : 'tt000000$n',
+      );
+    }
+
+    List<WorkSnapshot> old(int n, {required int id}) => [
+      WorkSnapshot.tv(thrones),
+      WorkSnapshot.season(season1),
+      ep(n, id: id),
+    ];
+
+    Future<void> cache(WorkKey key) => db
+        .into(db.externalRatings)
+        .insert(
+          ExternalRatingsCompanion.insert(
+            workKey: key.toString(),
+            source: RatingSource.imdb,
+            status: RatingStatus.ok,
+            value: const Value(8.1),
+            scale: 10,
+            via: ApiSource.omdb,
+            fetchedAt: 1,
+          ),
+        );
+
+    final e3 = const WorkKey.episode(1399, 1, 3);
+    final e5 = const WorkKey.episode(1399, 1, 5);
+
+    test('rated parts carry the stored ids, live ratings only', () async {
+      await library.rate(old(5, id: 63058), scoreHalf: 16, note: null);
+      await library.rate(episode(2), scoreHalf: 14, note: null);
+      await library.rate(season(), scoreHalf: 18, note: null);
+      await library.deleteRating(const WorkKey.episode(1399, 1, 2));
+      final parts = await library
+          .watchRatedParts(thrones.key, WorkKind.episode)
+          .first;
+      expect(
+        [for (final p in parts) (p.key, p.tmdbId, p.scoreHalf)],
+        [(e5, 63058, 16)],
+      );
+      final seasons = await library
+          .watchRatedParts(thrones.key, WorkKind.season)
+          .first;
+      expect(seasons.single.key, season1.key);
+      expect(seasons.single.tmdbId, 3624);
+    });
+
+    test('opening the card keeps a rated episode\'s own id', () async {
+      await library.rate(old(5, id: 63058), scoreHalf: 16, note: null);
+      now = now.add(const Duration(hours: 1));
+      await library.refreshSnapshots(episode(5));
+      final work = (await workRow(e5.toString()))!;
+      // Everything else is refreshed; the id waits for the user's answer.
+      expect(work.tmdbId, 63058);
+      expect(work.title, season1.episodes[4].name);
+      expect(work.snapshotUpdatedAt, ms(now));
+    });
+
+    test('an unrated snapshot takes the new id; none is lost to the '
+        'stand-in', () async {
+      // The season is only an ancestor here.
+      await library.rate(
+        [
+          WorkSnapshot.tv(thrones),
+          const WorkSnapshot(
+            key: WorkKey.season(1399, 1),
+            tmdbId: 1,
+            title: '',
+          ),
+          WorkSnapshot.episode(season1.episodes[0]),
+        ],
+        scoreHalf: 16,
+        note: null,
+      );
+      await library.refreshSnapshots(season());
+      expect((await workRow('tmdb:tv:1399:s1'))!.tmdbId, 3624);
+      // TMDB sent no id this time: the known one stays.
+      await library.refreshSnapshots([
+        WorkSnapshot.tv(thrones),
+        const WorkSnapshot(
+          key: WorkKey.season(1399, 1),
+          tmdbId: 1399,
+          title: '',
+        ),
+      ]);
+      expect((await workRow('tmdb:tv:1399:s1'))!.tmdbId, 3624);
+    });
+
+    test('rating an episode keeps its rated season\'s own id', () async {
+      await library.rate(
+        [
+          WorkSnapshot.tv(thrones),
+          const WorkSnapshot(
+            key: WorkKey.season(1399, 1),
+            tmdbId: 9999,
+            title: 'Old',
+          ),
+        ],
+        scoreHalf: 16,
+        note: null,
+      );
+      await library.rate(episode(1), scoreHalf: 14, note: null);
+      expect((await workRow('tmdb:tv:1399:s1'))!.tmdbId, 9999);
+    });
+
+    test(
+      'move: a tombstone behind, the same rating at the new number',
+      () async {
+        final created = now;
+        await library.rate(old(5, id: 63058), scoreHalf: 16, note: 'Wolves');
+        await cache(e5);
+        await cache(e3);
+        final before = (await ratingRow(e5))!;
+        now = now.add(const Duration(days: 3));
+
+        await library.moveRatings([(from: e5, to: episode(3))]);
+
+        final gone = (await ratingRow(e5))!;
+        expect(gone.deletedAt, ms(now));
+        expect(gone.updatedAt, ms(now));
+        expect(gone.updatedBy, 'device-a');
+        // The tombstone still refers to its snapshot, which keeps the old id.
+        expect((await workRow(e5.toString()))!.tmdbId, 63058);
+
+        final moved = (await ratingRow(e3))!;
+        expect(moved.scoreHalf, 16);
+        expect(moved.note, 'Wolves');
+        expect(moved.createdAt, ms(created));
+        expect(moved.scoredAt, before.scoredAt);
+        expect(moved.updatedAt, ms(now));
+        expect(moved.deletedAt, isNull);
+        expect((await workRow(e3.toString()))!.tmdbId, 63058);
+
+        final cached = await db.select(db.externalRatings).get();
+        expect([for (final c in cached) c.workKey], [e3.toString()]);
+      },
+    );
+
+    test('move revives a tombstone at the target, later than it', () async {
+      await library.rate(episode(3), scoreHalf: 10, note: null);
+      now = now.add(const Duration(hours: 1));
+      await library.deleteRating(e3);
+      final tomb = (await ratingRow(e3))!;
+      await library.rate(old(5, id: 63058), scoreHalf: 16, note: null);
+      // A clock behind the tombstone: the move still wins over it.
+      now = now.subtract(const Duration(days: 1));
+
+      await library.moveRatings([(from: e5, to: episode(3))]);
+
+      final moved = (await ratingRow(e3))!;
+      expect(moved.deletedAt, isNull);
+      expect(moved.scoreHalf, 16);
+      expect(moved.updatedAt, tomb.updatedAt + 1);
+    });
+
+    test('a shift moves every rating at once', () async {
+      // E3 and E4 were rated as the episodes now numbered E4 and E5.
+      await library.rate(old(3, id: 63059), scoreHalf: 12, note: 'three');
+      await library.rate(old(4, id: 63060), scoreHalf: 18, note: 'four');
+      final groups = proposeRenumbering(
+        rated: await library
+            .watchRatedParts(thrones.key, WorkKind.episode)
+            .first,
+        current: {for (final e in season1.episodes) e.key: e.tmdbId},
+      );
+      expect(groups.single.conflicts, isEmpty);
+      now = now.add(const Duration(hours: 1));
+
+      await library.moveRatings([
+        for (final move in groups.single.moves)
+          (from: move.from, to: episode(move.to.episode!)),
+      ]);
+
+      expect((await ratingRow(e3))!.deletedAt, isNotNull);
+      final e4 = (await ratingRow(const WorkKey.episode(1399, 1, 4)))!;
+      expect((e4.scoreHalf, e4.note, e4.deletedAt), (12, 'three', null));
+      final five = (await ratingRow(e5))!;
+      expect((five.scoreHalf, five.note), (18, 'four'));
+      final after = proposeRenumbering(
+        rated: await library
+            .watchRatedParts(thrones.key, WorkKind.episode)
+            .first,
+        current: {for (final e in season1.episodes) e.key: e.tmdbId},
+      );
+      expect(after, isEmpty);
+    });
+
+    test('a conflict: the moved score replaces the one there', () async {
+      await library.rate(old(5, id: 63058), scoreHalf: 16, note: 'moved');
+      await library.rate(episode(3), scoreHalf: 10, note: 'there');
+      final there = (await ratingRow(e3))!;
+
+      await library.moveRatings([(from: e5, to: episode(3))]);
+
+      final kept = (await ratingRow(e3))!;
+      expect((kept.scoreHalf, kept.note), (16, 'moved'));
+      expect(kept.updatedAt, there.updatedAt + 1);
+      expect((await ratingRow(e5))!.deletedAt, isNotNull);
+    });
+
+    test('a conflict: the score there stays, the moved one goes', () async {
+      await library.rate(old(5, id: 63058), scoreHalf: 16, note: 'moved');
+      await library.rate(
+        [
+          WorkSnapshot.tv(thrones),
+          WorkSnapshot.season(season1),
+          ep(3, id: 11111), // merged: E3's own old id is gone from TMDB
+        ],
+        scoreHalf: 10,
+        note: 'there',
+      );
+      final there = (await ratingRow(e3))!;
+
+      await library.moveRatings(
+        [(from: e5, to: episode(3))],
+        keepExisting: {e3},
+      );
+
+      expect(await ratingRow(e3), there);
+      expect((await ratingRow(e5))!.deletedAt, isNotNull);
+      // The target now holds TMDB's id, so the question doesn't come back.
+      expect((await workRow(e3.toString()))!.tmdbId, 63058);
+    });
+
+    test('keep: the snapshot takes the id under its number, the rating '
+        'is untouched', () async {
+      await library.rate(old(5, id: 63058), scoreHalf: 16, note: null);
+      await library.rate(old(7, id: 70000), scoreHalf: 12, note: null);
+      final before = (await ratingRow(e5))!;
+      now = now.add(const Duration(hours: 1));
+
+      await library.keepRatings({
+        e5: 63060,
+        const WorkKey.episode(1399, 1, 7): null,
+      });
+
+      expect(await ratingRow(e5), before);
+      expect((await workRow(e5.toString()))!.tmdbId, 63060);
+      expect((await workRow(e5.toString()))!.snapshotUpdatedAt, ms(now));
+      // Not known here: the stand-in, which the next refresh replaces.
+      expect((await workRow('tmdb:tv:1399:s1:e7'))!.tmdbId, 1399);
+      await library.refreshSnapshots(episode(7));
+      expect((await workRow('tmdb:tv:1399:s1:e7'))!.tmdbId, 63062);
     });
   });
 

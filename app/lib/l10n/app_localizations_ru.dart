@@ -381,6 +381,57 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String renumberEpisode(String from, String to) {
+    return 'Ваша оценка «$from» была за серию, которая теперь «$to». Перенести её?';
+  }
+
+  @override
+  String renumberSeason(String from, String to) {
+    return 'Ваша оценка «$from» была за сезон, который теперь «$to». Перенести её?';
+  }
+
+  @override
+  String renumberManyEpisodes(String moves) {
+    return 'Ваши оценки были за серии, у которых теперь другие номера: $moves. Перенести их?';
+  }
+
+  @override
+  String renumberManySeasons(String moves) {
+    return 'Ваши оценки были за сезоны, у которых теперь другие номера: $moves. Перенести их?';
+  }
+
+  @override
+  String renumberConflictEpisode(
+    String fromScore,
+    String from,
+    String to,
+    String toScore,
+  ) {
+    return 'Оценка $fromScore у «$from» была за серию, которая теперь «$to», а там уже стоит ваша $toScore. Какую оставить?';
+  }
+
+  @override
+  String renumberConflictSeason(
+    String fromScore,
+    String from,
+    String to,
+    String toScore,
+  ) {
+    return 'Оценка $fromScore у «$from» была за сезон, который теперь «$to», а там уже стоит ваша $toScore. Какую оставить?';
+  }
+
+  @override
+  String get renumberMove => 'Перенести';
+
+  @override
+  String get renumberKeep => 'Оставить';
+
+  @override
+  String renumberKeepScore(String score) {
+    return 'Оставить $score';
+  }
+
+  @override
   String calibrationSame(String score) {
     return 'Тоже $score';
   }

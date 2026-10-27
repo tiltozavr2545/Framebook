@@ -117,6 +117,16 @@
   "partsAverageSeasons": "{count, plural, one{Средняя по {count} сезону: {average}} other{Средняя по {count} сезонам: {average}}}",
   "partsAverageEpisodes": "{count, plural, one{Средняя по {count} серии: {average}} other{Средняя по {count} сериям: {average}}}",
 
+  "renumberEpisode": "Ваша оценка «{from}» была за серию, которая теперь «{to}». Перенести её?",
+  "renumberSeason": "Ваша оценка «{from}» была за сезон, который теперь «{to}». Перенести её?",
+  "renumberManyEpisodes": "Ваши оценки были за серии, у которых теперь другие номера: {moves}. Перенести их?",
+  "renumberManySeasons": "Ваши оценки были за сезоны, у которых теперь другие номера: {moves}. Перенести их?",
+  "renumberConflictEpisode": "Оценка {fromScore} у «{from}» была за серию, которая теперь «{to}», а там уже стоит ваша {toScore}. Какую оставить?",
+  "renumberConflictSeason": "Оценка {fromScore} у «{from}» была за сезон, который теперь «{to}», а там уже стоит ваша {toScore}. Какую оставить?",
+  "renumberMove": "Перенести",
+  "renumberKeep": "Оставить",
+  "renumberKeepScore": "Оставить {score}",
+
   "calibrationSame": "Тоже {score}",
   "calibrationAbove": "Ступенькой выше · {score}",
   "calibrationBelow": "Ступенькой ниже · {score}",

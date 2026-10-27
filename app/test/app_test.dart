@@ -507,6 +507,108 @@ void main() {
   });
 
   /// The Matrix, rated before the test starts.
+  // Stage 6.5: TMDB renumbering. The fixtures are as TMDB answers now; a
+  // rating "from before" is seeded with another title's id under its number.
+
+  cardTest('a rating TMDB renumbered is moved to its episode on asking', (
+    tester,
+  ) async {
+    await pumpApp(
+      tester,
+      keys: tmdbOnly,
+      // S1 · E5 was rated when it was the episode TMDB now numbers E3.
+      seed: (library) => library.rate(
+        [
+          const WorkSnapshot(key: WorkKey.tv(1399), tmdbId: 1399, title: 'GoT'),
+          const WorkSnapshot(
+            key: WorkKey.season(1399, 1),
+            tmdbId: 3624,
+            title: 'Сезон 1',
+          ),
+          const WorkSnapshot(
+            key: WorkKey.episode(1399, 1, 5),
+            tmdbId: 63058,
+            title: 'Лорд Сноу',
+          ),
+        ],
+        scoreHalf: 3,
+        note: null,
+      ),
+    );
+    go(tester, '/search/tv/1399/s/1');
+    await settle(tester);
+
+    const question =
+        'Your rating of S1 · E5 was for an episode that is now S1 · E3. '
+        'Move it?';
+    await tester.scrollUntilVisible(
+      find.text(question),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.ensureVisible(find.widgetWithText(TextButton, 'Move'));
+    await settle(tester);
+    await tester.tap(find.widgetWithText(TextButton, 'Move'));
+    await settle(tester);
+
+    expect(find.text(question), findsNothing);
+    final row = find.ancestor(
+      of: find.text('Лорд Сноу'),
+      matching: find.byType(ListTile),
+    );
+    expect(
+      find.descendant(of: row, matching: find.text('1.5')),
+      findsOneWidget,
+    );
+  });
+
+  cardTest('keeping a renumbered season\'s rating asks no more', (
+    tester,
+  ) async {
+    await pumpApp(
+      tester,
+      keys: tmdbOnly,
+      // Rated as season 2 when it was the season TMDB now numbers 1.
+      seed: (library) => library.rate(
+        [
+          const WorkSnapshot(key: WorkKey.tv(1399), tmdbId: 1399, title: 'GoT'),
+          const WorkSnapshot(
+            key: WorkKey.season(1399, 2),
+            tmdbId: 3624,
+            title: 'Сезон 2',
+          ),
+        ],
+        scoreHalf: 3,
+        note: null,
+      ),
+    );
+    go(tester, '/search/tv/1399');
+    await settle(tester);
+
+    const question =
+        'Your rating of Season 2 was for a season that is now Season 1. '
+        'Move it?';
+    await tester.scrollUntilVisible(
+      find.text(question),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.ensureVisible(find.widgetWithText(TextButton, 'Keep'));
+    await settle(tester);
+    await tester.tap(find.widgetWithText(TextButton, 'Keep'));
+    await settle(tester);
+
+    expect(find.text(question), findsNothing);
+    final row = find.ancestor(
+      of: find.text('Сезон 2'),
+      matching: find.byType(ListTile),
+    );
+    expect(
+      find.descendant(of: row, matching: find.text('1.5')),
+      findsOneWidget,
+    );
+  });
+
   Future<void> matrixRated(Library library, int scoreHalf) => library.rate(
     [
       const WorkSnapshot(

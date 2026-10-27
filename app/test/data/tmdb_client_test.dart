@@ -125,6 +125,8 @@ void main() {
       expect(first.key, const WorkKey.season(1399, 1));
       expect(first.episodeCount, 10);
       expect(first.vote.average, 8.4);
+      // The season's own id, which a rating follows when TMDB renumbers.
+      expect(first.tmdbId, 3624);
     });
 
     test('season: every episode with its key', () async {

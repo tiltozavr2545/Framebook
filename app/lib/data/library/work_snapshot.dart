@@ -60,6 +60,16 @@ final class WorkSnapshot {
     posterPath: season.posterPath,
   );
 
+  /// A season from the series' season list — what a rating moved there by
+  /// renumbering is saved with when the season's own card isn't open.
+  factory WorkSnapshot.seasonSummary(SeasonSummary season) => WorkSnapshot(
+    key: season.key,
+    tmdbId: season.tmdbId ?? season.key.tmdbId,
+    title: season.name ?? '',
+    releaseDate: season.airDate,
+    posterPath: season.posterPath,
+  );
+
   /// An episode has no poster of its own (a still is 16:9); lists show the
   /// season's or the series' poster.
   factory WorkSnapshot.episode(EpisodeSummary episode, {String? imdbId}) =>

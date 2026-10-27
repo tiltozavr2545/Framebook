@@ -710,6 +710,70 @@ abstract class AppLocalizations {
   /// **'{count, plural, one{Your score for {count} episode: {average}} other{Your average over {count} episodes: {average}}}'**
   String partsAverageEpisodes(int count, String average);
 
+  /// No description provided for @renumberEpisode.
+  ///
+  /// In en, this message translates to:
+  /// **'Your rating of {from} was for an episode that is now {to}. Move it?'**
+  String renumberEpisode(String from, String to);
+
+  /// No description provided for @renumberSeason.
+  ///
+  /// In en, this message translates to:
+  /// **'Your rating of {from} was for a season that is now {to}. Move it?'**
+  String renumberSeason(String from, String to);
+
+  /// No description provided for @renumberManyEpisodes.
+  ///
+  /// In en, this message translates to:
+  /// **'Your ratings were for episodes that are now numbered differently: {moves}. Move them?'**
+  String renumberManyEpisodes(String moves);
+
+  /// No description provided for @renumberManySeasons.
+  ///
+  /// In en, this message translates to:
+  /// **'Your ratings were for seasons that are now numbered differently: {moves}. Move them?'**
+  String renumberManySeasons(String moves);
+
+  /// No description provided for @renumberConflictEpisode.
+  ///
+  /// In en, this message translates to:
+  /// **'Your {fromScore} for {from} was for the episode that is now {to}, which you rated {toScore}. Which score to keep?'**
+  String renumberConflictEpisode(
+    String fromScore,
+    String from,
+    String to,
+    String toScore,
+  );
+
+  /// No description provided for @renumberConflictSeason.
+  ///
+  /// In en, this message translates to:
+  /// **'Your {fromScore} for {from} was for the season that is now {to}, which you rated {toScore}. Which score to keep?'**
+  String renumberConflictSeason(
+    String fromScore,
+    String from,
+    String to,
+    String toScore,
+  );
+
+  /// No description provided for @renumberMove.
+  ///
+  /// In en, this message translates to:
+  /// **'Move'**
+  String get renumberMove;
+
+  /// No description provided for @renumberKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep'**
+  String get renumberKeep;
+
+  /// No description provided for @renumberKeepScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep {score}'**
+  String renumberKeepScore(String score);
+
   /// No description provided for @calibrationSame.
   ///
   /// In en, this message translates to:

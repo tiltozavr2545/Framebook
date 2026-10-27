@@ -65,9 +65,55 @@ from another source (the TMDB availability risk, see
 pure function in one place (`lib/data/work_key.dart`), with tests; never glue
 the string by hand anywhere.
 
-A known limitation: TMDB occasionally renumbers episodes (moves specials,
-merges double episodes). The rating then stays on the old number. Not handled
-yet — planned in Stage 6.5 of [implementation-plan.md](implementation-plan.md).
+### When TMDB renumbers (0.7.0)
+
+TMDB occasionally renumbers seasons and episodes (moves specials, merges a
+double episode, inserts a missing pilot), and a key built from numbers then
+means another title. The rated title's own TMDB id, stored in
+`works.tmdb_id`, tells where it went; the key itself never changes on its
+own, and nothing moves without the user's answer.
+
+- **Detection** compares what a screen has already loaded with the stored
+  ratings, without a request of its own: a season card and an episode card
+  compare the season's episode ids with every rated episode of the series,
+  a series card compares its season list with the rated seasons. A rating
+  whose stored id is now under another number of the same series and kind
+  is a proposed move. A move to another season is found when the season it
+  went to is opened. A stand-in id (the series' id, see below) is never
+  matched; an id that isn't under any loaded number — it vanished, or it is
+  in a season not opened yet — leaves the rating alone. The logic is a pure
+  function, `proposeRenumbering` (`lib/data/library/renumbering.dart`).
+- Moves that share a key are **one question**: a shift (E1 → E2 while
+  E2 → E3) or a swap only works applied at once. A target that already has
+  a live rating which isn't moving away is a **conflict**: the user picks
+  which of the two scores stays (a merged double episode lands here).
+- **Move** (`Library.moveRatings`, one transaction): the target's lineage
+  snapshots are written first (the foreign key), the target's with the id
+  TMDB has now; the old rating becomes a tombstone (`deleted_at`,
+  `updated_at` through the usual never-backwards rule, `updated_by`); the
+  target row is inserted or revived with the moved score, note,
+  `created_at` and `scored_at`, replacing a live one there unless the user
+  kept that one. The old `works` row stays — the tombstone refers to it.
+  The old key's `external_ratings` are dropped: they were fetched by its
+  numbers, for another title.
+- **Keep** (`Library.keepRatings`): the rating stays on its number and now
+  belongs to the title TMDB has there, so the snapshot takes that title's
+  id (or the stand-in when the screen doesn't know it — the next refresh of
+  that card takes the real one) and the question doesn't come back. There
+  is no separate "dismissed" state.
+- Until answered, the stored id survives every snapshot write — the
+  refresh on opening a card, the ancestors saved with another rating, an
+  edit of the rating itself: a live-rated season's or episode's own id is
+  kept when TMDB now has another one under its number. Only Move, Keep, or
+  rating the title anew after deleting it change it. A known id is never
+  replaced by the stand-in either.
+- A rating's `updated_at` changes only through Move or a conflict answer —
+  user actions — never through detection or Keep.
+- The sync file is unchanged: `works.tmdb_id` already travelled in it, and
+  a move is an ordinary tombstone plus an ordinary rating.
+- The watchlist holds only films and series, whose keys don't renumber.
+  When seasons join it (Stage 6.5, item 11), a season's watchlist row has
+  to follow renumbering the same way.
 
 ---
 
@@ -80,7 +126,7 @@ yet — planned in Stage 6.5 of [implementation-plan.md](implementation-plan.md)
 | `work_key` | text PK | see above |
 | `kind` | text | `movie` / `tv` / `season` / `episode`, CHECK |
 | `parent_key` | text null | season → series, episode → season; NULL for a film and a series |
-| `tmdb_id` | int | the object's TMDB id (for a season/episode, their own, for reference) |
+| `tmdb_id` | int | the object's TMDB id (for a season/episode, their own: how a rating finds its title after renumbering) |
 | `season_number` | int null | for a season and an episode |
 | `episode_number` | int null | for an episode |
 | `imdb_id` | text null | `tt…`; an episode has its own if TMDB knows it |
@@ -111,7 +157,10 @@ Invariants:
   foreign key and the sync file need it), and tombstones are kept forever
   ([sync.md](sync.md)). Cleanup comes with tombstone cleanup.
 - A season's and an episode's `tmdb_id` is their own TMDB id; when TMDB
-  didn't send it, the series' id stands in (the column must be positive).
+  didn't send it, the series' id stands in (the column must be positive),
+  and such a stand-in is never matched when TMDB renumbers (see "When TMDB
+  renumbers"). A rated one keeps its stored id through snapshot refreshes
+  while TMDB has another title under its number.
   `title` is TMDB's own name for the season ("Сезон 1"), possibly empty —
   lists show the series' title with it. An episode has no `poster_path`;
   lists use the season's or the series' poster.

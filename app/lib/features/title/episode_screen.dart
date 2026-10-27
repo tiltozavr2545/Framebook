@@ -13,6 +13,7 @@ import '../../shared/poster.dart';
 import 'cast_section.dart';
 import 'my_rating.dart';
 import 'ratings_panel.dart';
+import 'renumber_notice.dart';
 import 'title_layout.dart';
 import 'title_providers.dart';
 
@@ -42,10 +43,17 @@ class EpisodeScreen extends ConsumerWidget {
         final episode = season.episodes
             .where((e) => e.key == episodeKey)
             .firstOrNull;
+        final renumbered = RenumberNotice.episodes(
+          tv,
+          season,
+          about: episodeKey,
+        );
         if (episode == null) {
           // A number from the address that the season doesn't have (TMDB
-          // renumbered it).
+          // renumbered it): if it was rated and its episode is now under
+          // another number, the notice offers to move the rating there.
           return [
+            renumbered,
             const SizedBox(height: 48),
             const FailureView(error: SourceException(SourceFailure.notFound)),
           ];
@@ -75,6 +83,7 @@ class EpisodeScreen extends ConsumerWidget {
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
+          renumbered,
           const SizedBox(height: 16),
           MyRatingSection(
             lineage: [

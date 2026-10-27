@@ -12,6 +12,7 @@ import '../../shared/title_text.dart';
 import 'cast_section.dart';
 import 'my_rating.dart';
 import 'ratings_panel.dart';
+import 'renumber_notice.dart';
 import 'title_layout.dart';
 import 'title_providers.dart';
 import 'title_routes.dart';
@@ -69,7 +70,10 @@ class SeasonScreen extends ConsumerWidget {
           ),
           ...overviewSection(context, season.overview),
           ...castSection(context, season.credits),
-          if (season.episodes.isNotEmpty) SectionTitle(l10n.titleEpisodes),
+          if (season.episodes.isNotEmpty) ...[
+            SectionTitle(l10n.titleEpisodes),
+            RenumberNotice.episodes(tv, season),
+          ],
           for (final episode in season.episodes)
             ListTile(
               contentPadding: EdgeInsets.zero,

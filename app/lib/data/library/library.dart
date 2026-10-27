@@ -6,6 +6,7 @@ import '../db/database.dart';
 import '../db/database_provider.dart';
 import '../work_key.dart';
 import 'divergence.dart';
+import 'renumbering.dart';
 import 'work_snapshot.dart';
 
 /// A live rating with its title's snapshot and, for a season or an episode,
@@ -265,13 +266,153 @@ final class Library {
 
   /// Refreshes the snapshots that already exist (the card was opened) without
   /// creating new ones and without touching any user row's `updated_at`.
+  ///
+  /// A rated season's or episode's own TMDB id is kept when TMDB now has
+  /// another title under that number: it is how the rating finds its title
+  /// again ([moveRatings]), and only the user's answer replaces it.
   Future<void> refreshSnapshots(List<WorkSnapshot> lineage) =>
+      _db.transaction(() => _putSnapshots(lineage, _now(), insert: false));
+
+  /// The live ratings of [series]' seasons, or of its episodes in every
+  /// season ([kind]), with the TMDB ids stored with them — what renumbering
+  /// is detected from (lib/data/library/renumbering.dart).
+  Stream<List<RatedPart>> watchRatedParts(WorkKey series, WorkKind kind) {
+    if (series.kind != WorkKind.tv ||
+        (kind != WorkKind.season && kind != WorkKind.episode)) {
+      throw ArgumentError('seasons or episodes of a series');
+    }
+    final k = series.toString();
+    final query = _db.select(_db.ratings).join(
+      [innerJoin(_db.works, _db.works.workKey.equalsExp(_db.ratings.workKey))],
+    )..where(_db.ratings.deletedAt.isNull() & _db.works.kind.equalsValue(kind));
+    query.where(
+      kind == WorkKind.season
+          ? _db.works.parentKey.equals(k)
+          : _db.works.parentKey.like('$k:s%'),
+    );
+    return query.watch().map(
+      (rows) => [
+        for (final row in rows)
+          RatedPart(
+            key: WorkKey.parse(row.readTable(_db.works).workKey),
+            tmdbId: row.readTable(_db.works).tmdbId,
+            scoreHalf: row.readTable(_db.ratings).scoreHalf,
+          ),
+      ],
+    );
+  }
+
+  /// Moves ratings after TMDB renumbered (the user said "Move"): each move
+  /// takes its rating from `from` to the last title of `to` (a lineage,
+  /// ancestors first). All moves are applied at once, so a shift or a swap
+  /// works: every source is read before anything is written.
+  ///
+  /// The source becomes a tombstone (its snapshot stays: the tombstone
+  /// refers to it) and loses its cached external ratings, which were fetched
+  /// by its numbers for another title. The target gets the moved score,
+  /// note, `created_at` and `scored_at`, replacing a live rating there —
+  /// unless the target is in [keepExisting], when only the source is
+  /// tombstoned. The target's snapshot is written with the id TMDB has now.
+  Future<void> moveRatings(
+    List<({WorkKey from, List<WorkSnapshot> to})> moves, {
+    Set<WorkKey> keepExisting = const {},
+  }) => _db.transaction(() async {
+    final now = _now();
+    final sources = {for (final move in moves) move.from.toString()};
+    final targets = {
+      for (final move in moves) move.to.last.key.toString(): move,
+    };
+    final rows = {
+      for (final rating in await (_db.select(
+        _db.ratings,
+      )..where((r) => r.workKey.isIn({...sources, ...targets.keys}))).get())
+        rating.workKey: rating,
+    };
+
+    for (final move in moves) {
+      await _putSnapshots(move.to, now, adopt: move.to.last.key);
+    }
+    bool live(Rating? rating) => rating != null && rating.deletedAt == null;
+    for (final source in sources) {
+      final old = rows[source];
+      if (old == null || old.deletedAt != null) continue;
+      // A shift or a swap: another rating moves in, overwritten below.
+      if (targets[source] case final incoming?
+          when live(rows[incoming.from.toString()])) {
+        continue;
+      }
+      await (_db.update(
+        _db.ratings,
+      )..where((r) => r.workKey.equals(source))).write(
+        RatingsCompanion(
+          deletedAt: Value(now),
+          updatedAt: Value(_next(now, old.updatedAt)),
+          updatedBy: Value(deviceId),
+        ),
+      );
+    }
+    for (final MapEntry(key: target, value: move) in targets.entries) {
+      final moved = rows[move.from.toString()];
+      if (moved == null || moved.deletedAt != null) continue;
+      final existing = rows[target];
+      if (live(existing) &&
+          !sources.contains(target) &&
+          keepExisting.contains(move.to.last.key)) {
+        continue;
+      }
+      if (existing == null) {
+        await _db
+            .into(_db.ratings)
+            .insert(
+              RatingsCompanion.insert(
+                workKey: target,
+                scoreHalf: moved.scoreHalf,
+                note: Value(moved.note),
+                createdAt: moved.createdAt,
+                scoredAt: moved.scoredAt,
+                updatedAt: now,
+                updatedBy: deviceId,
+              ),
+            );
+      } else {
+        await (_db.update(
+          _db.ratings,
+        )..where((r) => r.workKey.equals(target))).write(
+          RatingsCompanion(
+            scoreHalf: Value(moved.scoreHalf),
+            note: Value(moved.note),
+            createdAt: Value(moved.createdAt),
+            scoredAt: Value(moved.scoredAt),
+            updatedAt: Value(_next(now, existing.updatedAt)),
+            updatedBy: Value(deviceId),
+            deletedAt: const Value(null),
+          ),
+        );
+      }
+    }
+    await (_db.delete(
+      _db.externalRatings,
+    )..where((e) => e.workKey.isIn(sources))).go();
+  });
+
+  /// "Keep" after TMDB renumbered: each rating stays on its number and now
+  /// belongs to the title TMDB has there, so its snapshot takes that title's
+  /// id and the question doesn't come back. `null` — the title under the
+  /// number isn't known on this screen (another season, or the number is
+  /// gone): the series' id stands in, and the next refresh of that card
+  /// takes the real one. Ratings themselves are not touched.
+  Future<void> keepRatings(Map<WorkKey, int?> currentIds) =>
       _db.transaction(() async {
         final now = _now();
-        for (final snapshot in lineage) {
-          await (_db.update(_db.works)
-                ..where((w) => w.workKey.equals(snapshot.key.toString())))
-              .write(snapshot.toCompanion(now));
+        for (final MapEntry(:key, value: id) in currentIds.entries) {
+          await (_db.update(
+            _db.works,
+          )..where((w) => w.workKey.equals(key.toString()))).write(
+            WorksCompanion(
+              tmdbId: Value(id ?? key.tmdbId),
+              snapshotUpdatedAt: Value(now),
+            ),
+          );
         }
       });
 
@@ -471,13 +612,47 @@ final class Library {
     _db.watchlist,
   )..where((w) => w.workKey.equals(key))).getSingleOrNull();
 
-  /// Upserts the snapshots, ancestors first (the foreign keys want them).
-  Future<void> _putSnapshots(List<WorkSnapshot> lineage, int now) async {
+  /// Upserts the snapshots, ancestors first (the foreign keys want them);
+  /// with [insert] off, only refreshes the ones that exist.
+  ///
+  /// A stored own TMDB id of a season or an episode survives the write when
+  /// the new one is the stand-in (TMDB sent none), and when the title has a
+  /// live rating and TMDB now has another title under its number — that is
+  /// a renumbering waiting for the user's answer (docs/data-model.md). Only
+  /// [adopt], the target of a move, takes the new id regardless.
+  Future<void> _putSnapshots(
+    List<WorkSnapshot> lineage,
+    int now, {
+    bool insert = true,
+    WorkKey? adopt,
+  }) async {
     for (final snapshot in lineage) {
-      await _db
-          .into(_db.works)
-          .insertOnConflictUpdate(snapshot.toCompanion(now));
+      final k = snapshot.key.toString();
+      final stored = await (_db.select(
+        _db.works,
+      )..where((w) => w.workKey.equals(k))).getSingleOrNull();
+      var row = snapshot.toCompanion(now);
+      if (stored == null) {
+        if (insert) await _db.into(_db.works).insert(row);
+        continue;
+      }
+      if (snapshot.key != adopt && await _keepsOwnId(stored, snapshot)) {
+        row = row.copyWith(tmdbId: const Value.absent());
+      }
+      await (_db.update(
+        _db.works,
+      )..where((w) => w.workKey.equals(k))).write(row);
     }
+  }
+
+  Future<bool> _keepsOwnId(Work stored, WorkSnapshot incoming) async {
+    final standIn = incoming.key.tmdbId;
+    if (stored.tmdbId == incoming.tmdbId || stored.tmdbId == standIn) {
+      return false;
+    }
+    if (incoming.tmdbId == standIn) return true;
+    final rating = await _ratingRow(stored.workKey);
+    return rating != null && rating.deletedAt == null;
   }
 
   /// Takes a title off the watchlist with a tombstone, if it is on it.
@@ -647,6 +822,13 @@ final myRatingProvider = StreamProvider.autoDispose.family<Rating?, WorkKey>(
 final inWatchlistProvider = StreamProvider.autoDispose.family<bool, WorkKey>(
   (ref, key) => ref.watch(libraryProvider).watchInWatchlist(key),
 );
+
+/// The live ratings of a series' seasons or episodes with their stored TMDB
+/// ids, for the renumbering notice.
+final ratedPartsProvider = StreamProvider.autoDispose
+    .family<List<RatedPart>, (WorkKey, WorkKind)>(
+      (ref, arg) => ref.watch(libraryProvider).watchRatedParts(arg.$1, arg.$2),
+    );
 
 final partsAverageProvider = StreamProvider.autoDispose
     .family<PartsAverage?, WorkKey>(

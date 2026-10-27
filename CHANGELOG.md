@@ -136,3 +136,12 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
   figure.
 - The app's icon and splash screen; the version on the About screen;
   shorter tab names.
+
+## 0.7.0 — Stage 6.5 (build 9)
+
+- When TMDB renumbers a season or an episode you rated (moves specials,
+  merges a double episode), the series, season or episode card notices it
+  from what it already loaded and asks inline: move the rating to the
+  title's new number, or keep it where it is. If the new number already has
+  your rating, you choose which score stays. The sync file format is
+  unchanged.
