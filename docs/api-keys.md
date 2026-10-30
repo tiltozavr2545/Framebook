@@ -13,7 +13,7 @@ Russian. Keep the two in step.
 | Service | Required | What it gives in the app | Time to get it |
 |---|---|---|---|
 | TMDB | **yes** | search, title cards, seasons and episodes, posters, TMDB rating | 10–15 minutes, key right away |
-| PoiskKino | no | Kinopoisk rating, sorting by divergence from Kinopoisk | 2 minutes in Telegram |
+| PoiskKino | no | Kinopoisk rating, sorting by divergence from Kinopoisk | Telegram registration |
 | OMDb | no | IMDb, Rotten Tomatoes, Metacritic | 5 minutes + an activation email |
 
 Without a PoiskKino key there is no Kinopoisk rating. Without an OMDb key
@@ -21,15 +21,18 @@ there is no RT or Metacritic, and IMDb for films and series comes from
 PoiskKino, if its key is set. Details are in
 [external-sources.md](external-sources.md).
 
-The sites' forms are described as of October 2026. If a field is named a
+The PoiskKino bot registration steps reflect the user's experience; its
+[site](https://poiskkino.dev/) confirms the bot and free-plan limit. The
+sites' forms are described as of October 2026. If a field is named a
 little differently, go by its meaning.
 
 ---
 
 ## 1. TMDB (The Movie Database)
 
-Do this **on a computer**: TMDB says outright that key registration isn't
-adapted for phones.
+**Use a computer to register the account and request the API key.**
+[TMDB says](https://developer.themoviedb.org/docs/getting-started) its key
+registration is not adapted for phones.
 
 ### 1.1. Account
 
@@ -127,9 +130,16 @@ from a Telegram bot; there is no website account.
 
 1. Open the bot **[@poiskkinodev_bot](https://t.me/poiskkinodev_bot)** and
    press **Start**.
-2. Follow the bot's prompts and pick the free plan — it is called **"Демо"**
-   (200 requests a day). The paid plans aren't needed.
-3. The bot sends the key, a string like `ABCD123-EFGH456-…`. Copy all of it.
+2. The bot asks you to join **both** its discussion group and its Telegram
+   channel. Open the links it provides, join both, then return to the bot
+   and complete its membership check.
+3. Follow the bot's prompts and select the free **"Демо"** plan (200
+   requests a day). Paid plans are not needed for Framebook.
+4. Copy the entire key the bot provides and paste it into Framebook.
+
+**Stay subscribed to both the group and the channel:** the bot disables the
+key if you leave either one. If a key stops working, check both memberships
+and follow the bot's instructions.
 
 The bot's buttons may be named differently from this; the point is to get a
 key on the free plan. The bot is also where you check the remaining limit
@@ -193,8 +203,10 @@ non-commercial use only.
 
 **In the app:** on first launch there is a key entry screen, later Settings
 → Sources. The app checks each key with a trial request and stores it in the
-phone's secure storage. Keys are not sent to Google Drive with sync — on a
-new phone they have to be entered again.
+phone's secure storage. Optionally enable encrypted key sync in Settings →
+Sync and backup to keep a password-encrypted copy in your own Google Drive.
+A new phone can restore it from the first-launch screen. Rating exports and
+daily rating backups do not contain the keys.
 
 **For the developer, to capture fixtures** — in a file outside the
 repository:

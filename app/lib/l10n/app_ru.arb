@@ -41,6 +41,7 @@
   "sourceOptional": "необязательно",
   "sourceTmdbName": "TMDB",
   "sourceTmdbDescription": "Поиск, карточки, сезоны и серии, постеры, рейтинг TMDB.",
+  "sourceTmdbComputer": "Регистрируй аккаунт и получай ключ TMDB с компьютера, а не с телефона.",
   "sourceTmdbHint": "API Read Access Token (начинается с eyJ…) или API key",
   "sourcePoiskkinoName": "ПоискКино",
   "sourcePoiskkinoDescription": "Рейтинг Кинопоиска. Бесплатно — 200 запросов в сутки.",

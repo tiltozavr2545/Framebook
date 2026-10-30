@@ -165,3 +165,6 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
   existing score.
 - Tap a cover to see it full screen, zoom in, and swipe through available
   posters or episode stills. Saved offline cards open their cached cover.
+- Clearer key setup: the app and guide highlight that TMDB registration
+  needs a computer, and the PoiskKino guide explains its Telegram membership
+  requirements.

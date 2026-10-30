@@ -112,6 +112,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Search, title details, seasons and episodes, posters, TMDB rating.';
 
   @override
+  String get sourceTmdbComputer =>
+      'Register your TMDB account and API key on a computer, not a phone.';
+
+  @override
   String get sourceTmdbHint =>
       'API Read Access Token (starts with eyJ…) or API key';
 

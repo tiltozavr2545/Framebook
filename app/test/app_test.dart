@@ -109,6 +109,12 @@ void main() {
     await pumpApp(tester);
 
     expect(find.text('Welcome to Framebook'), findsOneWidget);
+    expect(
+      find.text(
+        'Register your TMDB account and API key on a computer, not a phone.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Add a working TMDB key to continue.'), findsOneWidget);
     expect(continueButton(tester).onPressed, isNull);
     expect(find.byType(NavigationBar), findsNothing);

@@ -165,6 +165,15 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
             ),
             const SizedBox(height: 4),
             Text(description, style: theme.textTheme.bodyMedium),
+            if (_source == ApiSource.tmdb) ...[
+              const SizedBox(height: 8),
+              Text(
+                l10n.sourceTmdbComputer,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             TextField(
               controller: _controller,

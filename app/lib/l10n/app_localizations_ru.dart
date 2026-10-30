@@ -113,6 +113,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Поиск, карточки, сезоны и серии, постеры, рейтинг TMDB.';
 
   @override
+  String get sourceTmdbComputer =>
+      'Регистрируй аккаунт и получай ключ TMDB с компьютера, а не с телефона.';
+
+  @override
   String get sourceTmdbHint =>
       'API Read Access Token (начинается с eyJ…) или API key';
 

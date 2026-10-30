@@ -319,7 +319,7 @@ and the optimization see the final code.
    several posters from TMDB (`/images`) a swipe between them. The larger
    size comes from the image configuration ([external-sources.md](external-sources.md)),
    the viewer opens from a cached smaller one while it loads.
-9. Rewriting the API keys guide ([api-keys.md](api-keys.md) and its Russian
+9. ✅ Rewriting the API keys guide ([api-keys.md](api-keys.md) and its Russian
    copy `api-keys.ru.md`): the PoiskKino section ("2 minutes in Telegram",
    the bot steps) doesn't match how a key is really obtained there, so it is
    redone from the current registration flow and checked step by step.

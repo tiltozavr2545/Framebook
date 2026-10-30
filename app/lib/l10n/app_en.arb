@@ -42,6 +42,7 @@
   "sourceOptional": "optional",
   "sourceTmdbName": "TMDB",
   "sourceTmdbDescription": "Search, title details, seasons and episodes, posters, TMDB rating.",
+  "sourceTmdbComputer": "Register your TMDB account and API key on a computer, not a phone.",
   "sourceTmdbHint": "API Read Access Token (starts with eyJ…) or API key",
   "sourcePoiskkinoName": "PoiskKino",
   "sourcePoiskkinoDescription": "Kinopoisk rating. Free plan: 200 requests a day.",

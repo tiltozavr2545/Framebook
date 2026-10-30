@@ -296,6 +296,12 @@ abstract class AppLocalizations {
   /// **'Search, title details, seasons and episodes, posters, TMDB rating.'**
   String get sourceTmdbDescription;
 
+  /// No description provided for @sourceTmdbComputer.
+  ///
+  /// In en, this message translates to:
+  /// **'Register your TMDB account and API key on a computer, not a phone.'**
+  String get sourceTmdbComputer;
+
   /// No description provided for @sourceTmdbHint.
   ///
   /// In en, this message translates to:
