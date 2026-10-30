@@ -60,9 +60,10 @@ style, it is breakage.
   full season lists never reach the database; the on-disk cache of HTTP
   responses is evictable and isn't carried by sync. The boundary is in
   [docs/data-model.md](docs/data-model.md).
-- **API keys never reach the repository, the build or Google Drive.** Users
-  enter them and they live in `flutter_secure_storage`. In logs and error
-  reports a key is masked.
+- **API keys never reach the repository, the build or plaintext Drive files.**
+  Users enter them and they live in `flutter_secure_storage`. Only explicitly
+  enabled password-encrypted key sync may put them in a separate Drive file;
+  exports and rating backups never contain them. Keys are masked in logs.
 - **A score is stored as an integer number of half points** (`score_half`
   2…20 = 1.0…10.0). No `double` in the database or the sync file — the "same
   score" comparison in the calibration sheet must be exact.

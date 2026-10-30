@@ -296,9 +296,12 @@ and the optimization see the final code.
    deletions ([sync.md](sync.md)). The original global-watermark absence
    rule was found non-associative during implementation; the user chose
    compact deletion records in preference to unsafe cleanup.
-3. Syncing API keys and settings, so that three keys needn't be entered
-   again on a new device. Keys are secrets off the device, so they are
-   encrypted with a key derived from a password only the user knows.
+3. ✅ Optional encrypted API-key sync, including only the comparison source
+   among settings. A separate Drive file uses Argon2id and AES-256-GCM;
+   each device caches the derived key in OS secure storage. Onboarding can
+   restore from Drive before entering a TMDB key. Offline edits persist for
+   retry; disabling or deleting data cancels pending operations. Rating
+   exports and daily copies exclude keys. Details are in [sync.md](sync.md).
 4. Checking for updates in the app: a request to the GitHub Releases API on
    launch; if there is a newer version, an unobtrusive banner with a link to
    the release page.

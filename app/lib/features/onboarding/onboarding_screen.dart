@@ -30,6 +30,12 @@ class OnboardingScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             Text(l10n.onboardingIntro, style: theme.textTheme.bodyLarge),
             const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () => context.push(Routes.restoreDrive),
+              icon: const Icon(Icons.cloud_download_outlined),
+              label: Text(l10n.secretsRestoreFromDrive),
+            ),
+            const SizedBox(height: 16),
             const ApiKeysForm(),
           ],
         ),

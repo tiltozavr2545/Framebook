@@ -151,3 +151,8 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
   asks before removing unsynced local edits and lets you keep them instead.
   The sync file is now version 2; old exports still import, while older app
   versions must update before syncing.
+- Optionally sync your API keys and preferred comparison source through a
+  separate password-encrypted file in your Google Drive. Restore them on
+  first launch without entering the TMDB key again; each device remembers
+  its encryption key in secure storage. Theme and language stay local,
+  and rating exports and daily copies never include your API keys.

@@ -18,6 +18,7 @@ import '../features/watchlist/watchlist_screen.dart';
 
 abstract final class Routes {
   static const onboarding = '/onboarding';
+  static const restoreDrive = '/restore-drive';
   static const search = '/search';
   static const ratings = '/ratings';
   static const watchlist = '/watchlist';
@@ -46,13 +47,21 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: hasTmdb,
     redirect: (context, state) {
       final onOnboarding = state.matchedLocation == Routes.onboarding;
-      if (!hasTmdb.value && !onOnboarding) return Routes.onboarding;
+      if (!hasTmdb.value &&
+          !onOnboarding &&
+          state.matchedLocation != Routes.restoreDrive) {
+        return Routes.onboarding;
+      }
       return null;
     },
     routes: [
       GoRoute(
         path: Routes.onboarding,
         builder: (context, state) => const OnboardingScreen(),
+      ),
+      GoRoute(
+        path: Routes.restoreDrive,
+        builder: (context, state) => const SyncScreen(restoreOnly: true),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => ShellScreen(shell: shell),

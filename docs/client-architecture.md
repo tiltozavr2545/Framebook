@@ -72,7 +72,8 @@ and the Stage 1 skeleton.
 | drift / drift_flutter / drift_dev | 2.29.0 / 0.2.7 / 2.29.0 | **ceiling**: drift 2.31 pulls sqlite3 and test, which need Dart 3.10+, while `test` is pinned through `flutter_test` from the SDK |
 | build_runner / json_serializable | 2.7.1 / 6.11.2 | analyzer 7.7.1 |
 | dio | 5.11.1 | `dio_cache_interceptor` dropped in Stage 2 — see "HTTP" above |
-| crypto | 3.0.7 | HTTP cache file names are the sha1 of the key |
+| crypto | 3.0.7 | HTTP cache file names and sync deletion digests |
+| cryptography | 2.9.0 | Argon2id and AES-256-GCM for optional encrypted key sync; requires Dart 3.3+ |
 | cached_network_image / flutter_cache_manager | 3.4.1 / 3.4.5 | own `CacheManager` for posters |
 | flutter_secure_storage | 10.3.4 | |
 | shared_preferences | 2.5.3 | |
@@ -138,7 +139,8 @@ the theme, the language and whether there is a TMDB key, otherwise the app
 flashes the wrong theme or the main screen before onboarding.
 
 The router keeps the user on onboarding while there is no TMDB key, and sends
-them back there if the key is removed. The user leaves onboarding themselves,
+them back there if the key is removed. The Drive restore route is also
+available without a key. The user leaves onboarding themselves,
 with a button: after TMDB they may want to add the optional keys too.
 
 A key check is one request (`KeyValidator`, `lib/data/key_validator.dart`)
@@ -346,6 +348,13 @@ The design is [sync.md](sync.md); here is what lives where in
   live edits. Keep restores those entries with a newer version; Discard
   applies the deletions. Cancel leaves sync paused. Imports expose the same
   choice when necessary. Cleanup rules are in [sync.md](sync.md).
+- `secrets_vault.dart` — optional encrypted key sync in a separate file,
+  Argon2id in an isolate, AES-256-GCM and authenticated format parameters.
+  Pending snapshots and cached derived keys use OS secure storage. No secret
+  enters the rating file, exports or daily copies.
+- `secrets_controller.dart` — account-scoped opt-in state, unlocking, applying
+  restored keys and `divergence_source`, and uploading subsequent edits.
+  The onboarding restore route is available before the required TMDB key.
 
 ## Design (Stage 6)
 

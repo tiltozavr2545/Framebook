@@ -910,4 +910,52 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get savedCardFailed => 'TMDB didn\'t answer: this is the saved card.';
+
+  @override
+  String get secretsRestoreFromDrive => 'Restore from Google Drive';
+
+  @override
+  String get secretsTitle => 'Sync API keys and comparison source';
+
+  @override
+  String get secretsHint =>
+      'Encrypted with a separate password. Changes are uploaded automatically.';
+
+  @override
+  String get secretsError =>
+      'Could not unlock or sync the encrypted backup. Check the password and connection.';
+
+  @override
+  String get secretsUnlock => 'Unlock encrypted backup';
+
+  @override
+  String get secretsForgot => 'Forgot password?';
+
+  @override
+  String get secretsForgotHint =>
+      'Enter your keys manually before replacing the encrypted backup.';
+
+  @override
+  String get secretsOverwriteConfirm =>
+      'Replace the encrypted backup with the keys and comparison source on this device? The previous encrypted backup will be lost.';
+
+  @override
+  String get secretsOverwrite => 'Replace backup';
+
+  @override
+  String get secretsPassword => 'Backup password';
+
+  @override
+  String get secretsPasswordHint => 'At least 8 characters';
+
+  @override
+  String get secretsContinue => 'Continue';
+
+  @override
+  String get secretsMissing =>
+      'No encrypted key backup found. Enable it on your other device first.';
+
+  @override
+  String get secretsWrongPassword =>
+      'The password is incorrect or the encrypted file is damaged.';
 }

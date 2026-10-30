@@ -2,8 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:framebook/data/sync/sync_controller.dart';
+import 'package:framebook/data/sync/secrets_controller.dart';
 import 'package:framebook/features/settings/sync_screen.dart';
 import 'package:framebook/l10n/app_localizations.dart';
+
+class _SecretsOff extends SecretsController {
+  @override
+  SecretsStatus build() => const SecretsStatus();
+}
 
 class _PausedSync extends SyncController {
   bool? answer;
@@ -43,7 +49,10 @@ void main() {
       final controller = _PausedSync();
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [syncControllerProvider.overrideWith(() => controller)],
+          overrides: [
+            syncControllerProvider.overrideWith(() => controller),
+            secretsControllerProvider.overrideWith(_SecretsOff.new),
+          ],
           child: const MaterialApp(
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
@@ -84,7 +93,10 @@ void main() {
     final controller = _PausedSync();
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [syncControllerProvider.overrideWith(() => controller)],
+        overrides: [
+          syncControllerProvider.overrideWith(() => controller),
+          secretsControllerProvider.overrideWith(_SecretsOff.new),
+        ],
         child: const MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,

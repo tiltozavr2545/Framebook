@@ -311,5 +311,20 @@
   "@aboutVersionName": {"placeholders": {"name": {"type": "String"}}},
 
   "savedCardOffline": "No connection: this is the saved card. The overview and the cast come back online.",
-  "savedCardFailed": "TMDB didn't answer: this is the saved card."
+  "savedCardFailed": "TMDB didn't answer: this is the saved card.",
+
+  "secretsRestoreFromDrive": "Restore from Google Drive",
+  "secretsTitle": "Sync API keys and comparison source",
+  "secretsHint": "Encrypted with a separate password. Changes are uploaded automatically.",
+  "secretsError": "Could not unlock or sync the encrypted backup. Check the password and connection.",
+  "secretsUnlock": "Unlock encrypted backup",
+  "secretsForgot": "Forgot password?",
+  "secretsForgotHint": "Enter your keys manually before replacing the encrypted backup.",
+  "secretsOverwriteConfirm": "Replace the encrypted backup with the keys and comparison source on this device? The previous encrypted backup will be lost.",
+  "secretsOverwrite": "Replace backup",
+  "secretsPassword": "Backup password",
+  "secretsPasswordHint": "At least 8 characters",
+  "secretsContinue": "Continue",
+  "secretsMissing": "No encrypted key backup found. Enable it on your other device first.",
+  "secretsWrongPassword": "The password is incorrect or the encrypted file is damaged."
 }

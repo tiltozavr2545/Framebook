@@ -75,7 +75,8 @@ Format rules:
 - Version 2 adds `purged_before` and compact deletion records. Version 1 is
   read with a zero watermark and no compact records. Version 1 clients must
   update before they can read a version 2 file.
-- API keys, settings and the rating cache never go into the file.
+- API keys, settings and the rating cache never go into the rating sync
+  file. Optional encrypted key sync uses a separate file (see below).
 
 ---
 
@@ -226,3 +227,45 @@ faithfully as a correct change. So, separately:
 
 The last error is kept in `sync_state.last_sync_error` and is visible in
 settings along with the time of the last successful sync.
+
+
+## Optional encrypted key sync
+
+This is separate from the rating sync file and disabled by default. Enable
+it on the Sync screen to share API keys and `divergence_source` between
+signed-in devices. Theme and language stay local. The encrypted file is not
+included in rating exports or daily rating backups. Deleting app data from
+Drive deletes it too.
+
+The user chooses a password of at least eight characters. A password-derived
+key encrypts the entire payload with AES-256-GCM; every write has a fresh
+nonce and authentication tag. Argon2id uses 19 MiB, two iterations, parallelism one and a 32-byte output;
+it runs in an isolate so derivation does not block rendering. Its random 16-byte salt and fixed algorithm parameters accompany
+the ciphertext and are authenticated. The derived key is cached only in OS
+secure storage for the account and encryption identity; the password is
+never stored. Keys are never put in SQLite, logs or ordinary preferences.
+The format and parameter checks reject unsupported or malformed files
+before overwriting anything.
+
+A new device can restore from Google Drive during onboarding before it has
+a TMDB key. It signs in and asks for the password, then restores keys and
+the comparison source. The derived key is remembered on that device. A file
+with a changed password or salt requires unlocking again; it is not silently
+overwritten with this device's old key.
+
+Edits and key removals automatically update the encrypted whole-file LWW
+snapshot. Its version is a monotonic UTC timestamp plus device id; there is
+no per-key merge. A failed upload keeps pending changes for retry. Applying
+a remote snapshot must not turn it into a new local edit or create an upload
+loop. The same Drive metadata-check/write race described above also applies
+here: a device retains its newer snapshot in secure storage and repairs a
+concurrent older upload on a subsequent sync. The main rating sync continues
+to use its independent merge rules.
+
+If the password is forgotten, the existing encrypted content cannot be
+recovered. After entering the API keys again, the user can explicitly
+confirm replacing the encrypted file with a new password. This is separate
+from a normal unlock attempt: a wrong password never overwrites Drive data.
+
+Algorithm API references: [Argon2id](https://pub.dev/documentation/cryptography/latest/cryptography/Argon2id-class.html)
+and [cryptography](https://pub.dev/documentation/cryptography/latest/).

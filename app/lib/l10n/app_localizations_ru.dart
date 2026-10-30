@@ -916,4 +916,52 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get savedCardFailed => 'TMDB не ответил: это сохранённая карточка.';
+
+  @override
+  String get secretsRestoreFromDrive => 'Восстановить с Google Диска';
+
+  @override
+  String get secretsTitle => 'Синхронизация ключей API и источника сравнения';
+
+  @override
+  String get secretsHint =>
+      'Данные защищены отдельным паролем. Изменения загружаются автоматически.';
+
+  @override
+  String get secretsError =>
+      'Не удалось открыть или синхронизировать зашифрованную копию. Проверьте пароль и подключение.';
+
+  @override
+  String get secretsUnlock => 'Открыть зашифрованную копию';
+
+  @override
+  String get secretsForgot => 'Забыли пароль?';
+
+  @override
+  String get secretsForgotHint =>
+      'Перед заменой копии введите ключи на этом устройстве вручную.';
+
+  @override
+  String get secretsOverwriteConfirm =>
+      'Заменить зашифрованную копию ключами и источником сравнения с этого устройства? Предыдущая копия будет потеряна.';
+
+  @override
+  String get secretsOverwrite => 'Заменить копию';
+
+  @override
+  String get secretsPassword => 'Пароль копии';
+
+  @override
+  String get secretsPasswordHint => 'Не менее 8 символов';
+
+  @override
+  String get secretsContinue => 'Продолжить';
+
+  @override
+  String get secretsMissing =>
+      'Зашифрованная копия ключей не найдена. Сначала включите её на другом устройстве.';
+
+  @override
+  String get secretsWrongPassword =>
+      'Неверный пароль или зашифрованный файл повреждён.';
 }

@@ -1517,6 +1517,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'TMDB didn\'t answer: this is the saved card.'**
   String get savedCardFailed;
+
+  /// No description provided for @secretsRestoreFromDrive.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore from Google Drive'**
+  String get secretsRestoreFromDrive;
+
+  /// No description provided for @secretsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync API keys and comparison source'**
+  String get secretsTitle;
+
+  /// No description provided for @secretsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Encrypted with a separate password. Changes are uploaded automatically.'**
+  String get secretsHint;
+
+  /// No description provided for @secretsError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not unlock or sync the encrypted backup. Check the password and connection.'**
+  String get secretsError;
+
+  /// No description provided for @secretsUnlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock encrypted backup'**
+  String get secretsUnlock;
+
+  /// No description provided for @secretsForgot.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot password?'**
+  String get secretsForgot;
+
+  /// No description provided for @secretsForgotHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your keys manually before replacing the encrypted backup.'**
+  String get secretsForgotHint;
+
+  /// No description provided for @secretsOverwriteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace the encrypted backup with the keys and comparison source on this device? The previous encrypted backup will be lost.'**
+  String get secretsOverwriteConfirm;
+
+  /// No description provided for @secretsOverwrite.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace backup'**
+  String get secretsOverwrite;
+
+  /// No description provided for @secretsPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup password'**
+  String get secretsPassword;
+
+  /// No description provided for @secretsPasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'At least 8 characters'**
+  String get secretsPasswordHint;
+
+  /// No description provided for @secretsContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get secretsContinue;
+
+  /// No description provided for @secretsMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'No encrypted key backup found. Enable it on your other device first.'**
+  String get secretsMissing;
+
+  /// No description provided for @secretsWrongPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'The password is incorrect or the encrypted file is damaged.'**
+  String get secretsWrongPassword;
 }
 
 class _AppLocalizationsDelegate

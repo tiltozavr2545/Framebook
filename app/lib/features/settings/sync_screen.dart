@@ -10,19 +10,24 @@ import '../../data/sync/google_account.dart';
 import '../../data/sync/sync_controller.dart';
 import '../../data/sync/sync_engine.dart';
 import '../../data/sync/sync_file.dart';
+import '../../data/sync/secrets_controller.dart';
+import '../../data/sync/secrets_vault.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/format.dart';
 
 /// Settings → Sync and backup: Google Drive, its daily copies, and export /
 /// import to a file (docs/sync.md).
 class SyncScreen extends ConsumerWidget {
-  const SyncScreen({super.key});
+  const SyncScreen({super.key, this.restoreOnly = false});
+
+  final bool restoreOnly;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final status = ref.watch(syncControllerProvider);
+    final secrets = ref.watch(secretsControllerProvider);
     final muted = theme.textTheme.bodyMedium?.copyWith(
       color: theme.colorScheme.onSurfaceVariant,
     );
@@ -120,6 +125,38 @@ class SyncScreen extends ConsumerWidget {
                 ],
               ),
             ),
+            SwitchListTile(
+              title: Text(l10n.secretsTitle),
+              subtitle: Text(
+                secrets.error == null ? l10n.secretsHint : l10n.secretsError,
+              ),
+              value: secrets.enabled,
+              onChanged: secrets.busy
+                  ? null
+                  : (enabled) async {
+                      if (!enabled) {
+                        await ref
+                            .read(secretsControllerProvider.notifier)
+                            .disable();
+                      } else {
+                        await _secretsPassword(context, ref);
+                      }
+                    },
+            ),
+            if (secrets.enabled && secrets.locked)
+              ListTile(
+                title: Text(l10n.secretsUnlock),
+                onTap: secrets.busy
+                    ? null
+                    : () => _secretsPassword(context, ref),
+              ),
+            ListTile(
+              title: Text(l10n.secretsForgot),
+              subtitle: Text(l10n.secretsForgotHint),
+              onTap: secrets.busy
+                  ? null
+                  : () => _secretsPassword(context, ref, overwrite: true),
+            ),
             ListTile(
               leading: const Icon(Icons.history),
               title: Text(l10n.syncBackups),
@@ -154,6 +191,82 @@ class SyncScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _secretsPassword(
+    BuildContext context,
+    WidgetRef ref, {
+    bool overwrite = false,
+  }) async {
+    final l10n = AppLocalizations.of(context);
+    final controller = ref.read(secretsControllerProvider.notifier);
+    if (overwrite) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(l10n.secretsForgot),
+          content: Text(l10n.secretsOverwriteConfirm),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(l10n.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(l10n.secretsOverwrite),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !context.mounted) return;
+    }
+    final input = TextEditingController();
+    final password = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.secretsPassword),
+        content: TextField(
+          controller: input,
+          obscureText: true,
+          autofocus: true,
+          decoration: InputDecoration(hintText: l10n.secretsPasswordHint),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, input.text),
+            child: Text(l10n.secretsContinue),
+          ),
+        ],
+      ),
+    );
+    input.dispose();
+    if (password == null || !context.mounted) return;
+    if (password.length < 8) {
+      _snack(context, l10n.secretsPasswordHint);
+      return;
+    }
+    try {
+      if (overwrite) {
+        await controller.overwrite(password);
+      } else {
+        await controller.enable(password, createIfMissing: !restoreOnly);
+      }
+    } catch (error) {
+      if (context.mounted) {
+        _snack(
+          context,
+          error is SecretsMissing
+              ? l10n.secretsMissing
+              : error is SecretsWrongPassword
+              ? l10n.secretsWrongPassword
+              : l10n.secretsError,
+        );
+      }
+    }
   }
 
   static void _snack(BuildContext context, String text) =>
@@ -304,6 +417,7 @@ class SyncScreen extends ConsumerWidget {
 
   Future<void> _deleteDriveData(BuildContext context, WidgetRef ref) async {
     final controller = ref.read(syncControllerProvider.notifier);
+    final secrets = ref.read(secretsControllerProvider.notifier);
     final l10n = AppLocalizations.of(context);
     final confirmed = await _confirm(
       context,
@@ -313,6 +427,8 @@ class SyncScreen extends ConsumerWidget {
     );
     if (!confirmed) return;
     try {
+      await secrets.prepareForDeletion();
+      await secrets.resetForDeletedDrive();
       await controller.deleteDriveData();
       if (context.mounted) _snack(context, l10n.syncDeleted);
     } on SyncException catch (e) {

@@ -103,15 +103,54 @@ class ApiKeysNotifier extends Notifier<ApiKeys> {
   @override
   ApiKeys build() => ref.watch(initialApiKeysProvider);
 
-  Future<void> save(ApiSource source, StoredKey key) async {
-    await ref.read(apiKeyStoreProvider).save(source, key);
-    state = state.withKey(source, key);
+  Future<void> _queue = Future.value();
+  Future<void> _serialize(Future<void> Function() action) {
+    final result = _queue.then((_) => action());
+    _queue = result.then<void>((_) {}, onError: (Object _, StackTrace __) {});
+    return result;
   }
 
-  Future<void> remove(ApiSource source) async {
+  Future<void> save(ApiSource source, StoredKey key) => _serialize(() async {
+    await ref.read(apiKeyStoreProvider).save(source, key);
+    state = state.withKey(source, key);
+  });
+
+  Future<void> remove(ApiSource source) => _serialize(() async {
     await ref.read(apiKeyStoreProvider).remove(source);
     state = state.without(source);
-  }
+  });
+
+  Future<void> replaceRemote(
+    Map<ApiSource, StoredKey> keys, {
+    bool Function()? stillValid,
+  }) => _serialize(() async {
+    if (stillValid != null && !stillValid()) return;
+    final store = ref.read(apiKeyStoreProvider);
+    final previous = state;
+    Future<void> apply(ApiKeys values) async {
+      for (final source in ApiSource.values) {
+        final key = values[source];
+        if (key == null) {
+          await store.remove(source);
+        } else {
+          await store.save(source, key);
+        }
+      }
+    }
+
+    try {
+      final next = ApiKeys(Map.unmodifiable(keys));
+      await apply(next);
+      if (stillValid != null && !stillValid()) {
+        await apply(previous);
+        return;
+      }
+      state = next;
+    } catch (_) {
+      await apply(previous);
+      rethrow;
+    }
+  });
 }
 
 final apiKeysProvider = NotifierProvider<ApiKeysNotifier, ApiKeys>(

@@ -43,6 +43,7 @@ platform is Android (an APK for myself and friends); iOS is postponed
 - Statistics: the distribution of your scores, the average deviation from Kinopoisk/IMDb, a breakdown by genre and decade
 - Offline use for what is already rated: the list, sorting, statistics
 - Sync and backup through Google Drive (the app's hidden folder), plus export/import to a file
+- Optional password-encrypted API key and comparison-source sync, including restore on first launch
 - Two locales (en/ru), a dark theme
 
 ## Stack

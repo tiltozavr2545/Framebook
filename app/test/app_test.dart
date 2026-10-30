@@ -110,11 +110,22 @@ void main() {
     expect(find.byType(NavigationBar), findsNothing);
   });
 
+  cardTest('Drive restore is accessible without a TMDB key', (tester) async {
+    await pumpApp(tester);
+    await tester.tap(find.text('Restore from Google Drive'));
+    await tester.pumpAndSettle();
+    expect(find.text('Sync and backup'), findsOneWidget);
+    expect(find.text('Welcome to Framebook'), findsNothing);
+  });
+
   cardTest('a checked TMDB key unlocks the app', (tester) async {
     await pumpApp(tester);
 
     await tester.enterText(find.byType(TextField).first, 'eyJtoken');
-    await tester.tap(find.widgetWithText(FilledButton, 'Check and save').first);
+    final check = find.widgetWithText(FilledButton, 'Check and save').first;
+    await tester.ensureVisible(check);
+    await tester.pumpAndSettle();
+    await tester.tap(check);
     await tester.pumpAndSettle();
 
     expect(find.text('Key works'), findsOneWidget);

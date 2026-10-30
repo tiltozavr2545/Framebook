@@ -270,9 +270,12 @@ files. Details are in [sync.md](sync.md).
 
 ## Outside the database
 
-- **API keys** — `flutter_secure_storage`, never in SQLite or the sync file.
+- **API keys** — `flutter_secure_storage`, never in SQLite or the rating
+  sync file. Optional password-encrypted key sync uses a separate Drive file
+  and keeps the derived key in secure storage ([sync.md](sync.md)).
 - **Settings** (theme, language, the default source for the divergence sort,
-  `divergence_source`) — `shared_preferences`. Not synced in the MVP.
+  `divergence_source`) — `shared_preferences`. Optional encrypted key sync
+  includes only `divergence_source`; theme and language remain per-device.
 - **The HTTP cache of API responses, and images** — on disk, evictable; see
   [client-architecture.md](client-architecture.md).
 
