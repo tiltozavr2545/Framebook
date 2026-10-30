@@ -231,6 +231,10 @@ one stays until answered — there is no "later".
 
 ---
 
+Cast cards reserve space using the current text scale for two lines each of
+name and role. Both wrap and ellipsize deliberately, so larger display text
+does not clip the role or overflow the horizontal strip.
+
 A cover on a movie, series, season or episode card opens a full-screen
 viewer: the current image appears first, followed by UI-language,
 original-language and textless variants. The viewer supports swipe and

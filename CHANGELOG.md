@@ -168,3 +168,4 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
 - Clearer key setup: the app and guide highlight that TMDB registration
   needs a computer, and the PoiskKino guide explains its Telegram membership
   requirements.
+- Actor names and roles fit more reliably at larger text and display sizes.

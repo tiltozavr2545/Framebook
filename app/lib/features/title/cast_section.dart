@@ -43,8 +43,28 @@ class _CastStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final shown = cast.take(_shown).toList();
+    final nameStyle = theme.textTheme.titleSmall?.copyWith(height: 1.2);
+    final roleStyle = theme.textTheme.bodySmall?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
+    double twoLineHeight(TextStyle? style) {
+      final painter = TextPainter(
+        text: TextSpan(text: 'M\nM', style: style),
+        maxLines: 2,
+        textDirection: Directionality.of(context),
+        textScaler: MediaQuery.textScalerOf(context),
+      )..layout(maxWidth: _width);
+      final height = painter.height;
+      painter.dispose();
+      return height;
+    }
+
     return SizedBox(
-      height: _width * 3 / 2 + 58,
+      height:
+          _width * 3 / 2 +
+          6 +
+          twoLineHeight(nameStyle) +
+          twoLineHeight(roleStyle),
       // The strip runs to the screen edges, past the card's padding.
       child: OverflowBox(
         maxWidth: MediaQuery.sizeOf(context).width,
@@ -74,16 +94,14 @@ class _CastStrip extends StatelessWidget {
                       person.name,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleSmall?.copyWith(height: 1.2),
+                      style: nameStyle,
                     ),
                     if (person.character case final role? when role.isNotEmpty)
                       Text(
                         role,
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
+                        style: roleStyle,
                       ),
                   ],
                 ),

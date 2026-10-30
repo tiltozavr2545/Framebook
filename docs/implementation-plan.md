@@ -325,7 +325,7 @@ and the optimization see the final code.
    redone from the current registration flow and checked step by step.
    The TMDB section must also say far more prominently that the account and
    the key have to be registered from a computer, not from a phone.
-10. Cast text that doesn't fit: on phones with different display scales the
+10. ✅ Cast text that doesn't fit: on phones with different display scales the
     text with an actor's role is sometimes cut off. It must fit at any
     scale (wrap or ellipsize deliberately, tested at large font and display
     sizes).
