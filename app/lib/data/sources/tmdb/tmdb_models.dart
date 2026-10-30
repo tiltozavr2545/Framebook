@@ -111,6 +111,7 @@ final class MovieDetails {
     required this.runtime,
     required this.imdbId,
     required this.vote,
+    this.originalLanguage,
     this.credits = const Credits(),
   });
 
@@ -123,6 +124,7 @@ final class MovieDetails {
       key: WorkKey.movie(id),
       title: json.string('title') ?? json.string('original_title') ?? '',
       originalTitle: json.string('original_title'),
+      originalLanguage: json.string('original_language'),
       releaseDate: json.string('release_date'),
       posterPath: json.string('poster_path'),
       genres: _genres(json),
@@ -142,6 +144,7 @@ final class MovieDetails {
   final WorkKey key;
   final String title;
   final String? originalTitle;
+  final String? originalLanguage;
   final String? releaseDate;
   final String? posterPath;
   final List<Genre> genres;
@@ -175,6 +178,7 @@ final class TvDetails {
     required this.seasons,
     required this.imdbId,
     required this.vote,
+    this.originalLanguage,
     this.credits = const Credits(),
   });
 
@@ -187,6 +191,7 @@ final class TvDetails {
       key: WorkKey.tv(id),
       title: json.string('name') ?? json.string('original_name') ?? '',
       originalTitle: json.string('original_name'),
+      originalLanguage: json.string('original_language'),
       firstAirDate: json.string('first_air_date'),
       lastAirDate: json.string('last_air_date'),
       posterPath: json.string('poster_path'),
@@ -211,6 +216,7 @@ final class TvDetails {
   final WorkKey key;
   final String title;
   final String? originalTitle;
+  final String? originalLanguage;
   final String? firstAirDate;
   final String? lastAirDate;
   final String? posterPath;
@@ -393,14 +399,46 @@ final class EpisodeSummary {
 }
 
 /// Where TMDB images live (`GET /configuration`).
+/// An image path and its language, or null for an image without text.
+final class TmdbImage {
+  const TmdbImage(this.path, this.language);
+  final String path;
+  final String? language;
+}
+
 final class ImageConfig {
-  const ImageConfig(this.baseUrl);
+  const ImageConfig(
+    this.baseUrl, {
+    this.posterLarge = ImageSize.w780,
+    this.stillLarge = ImageSize.original,
+  });
 
   factory ImageConfig.fromJson(Json json) {
-    final base = json.object('images')?.string('secure_base_url');
-    return base == null || !base.startsWith('https://')
-        ? fallback
-        : ImageConfig(base);
+    final images = json.object('images');
+    final base = images?.string('secure_base_url');
+    if (base == null || !base.startsWith('https://')) return fallback;
+    ImageSize choose(String field, ImageSize defaultSize) {
+      final sizes = images?.raw[field];
+      if (sizes is! List) return defaultSize;
+      for (final size in [
+        ImageSize.w780,
+        ImageSize.original,
+        ImageSize.w500,
+        ImageSize.w342,
+        ImageSize.w300,
+        ImageSize.w185,
+        ImageSize.w92,
+      ]) {
+        if (sizes.contains(size.name)) return size;
+      }
+      return defaultSize;
+    }
+
+    return ImageConfig(
+      base,
+      posterLarge: choose('poster_sizes', ImageSize.w780),
+      stillLarge: choose('still_sizes', ImageSize.original),
+    );
   }
 
   /// Used until the configuration loads, and if it never does. The address
@@ -408,13 +446,15 @@ final class ImageConfig {
   static const fallback = ImageConfig('https://image.tmdb.org/t/p/');
 
   final String baseUrl;
+  final ImageSize posterLarge;
+  final ImageSize stillLarge;
 
   Uri url(String path, ImageSize size) =>
       Uri.parse('$baseUrl${size.name}$path');
 }
 
 /// Sizes present in the configuration's `poster_sizes` / `still_sizes`.
-enum ImageSize { w92, w185, w300, w342, w500 }
+enum ImageSize { w92, w185, w300, w342, w500, w780, original }
 
 /// A `{"genres": [{"id", "name"}]}` list: a card's genres, or the whole
 /// list from `genre/movie/list`.

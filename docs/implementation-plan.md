@@ -314,7 +314,7 @@ and the optimization see the final code.
 7. ✅ The reel starts on 5 by default, not on the minimum (replacing the blank
    leader frame from Stage 6). Opening an already rated title still starts
    on its own score.
-8. Viewing a cover (or all of a title's covers) full screen: a tap on the
+8. ✅ Viewing a cover (or all of a title's covers) full screen: a tap on the
    poster on a card opens a full-screen viewer with pinch-to-zoom, and with
    several posters from TMDB (`/images`) a swipe between them. The larger
    size comes from the image configuration ([external-sources.md](external-sources.md)),

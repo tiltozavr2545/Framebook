@@ -96,6 +96,8 @@ class _Saved extends StatelessWidget {
           posterPath:
               work.posterPath ?? season?.posterPath ?? series?.posterPath,
           title: lines.title,
+          coverKey: key,
+          cachedCoverOnly: true,
           originalTitle: work.originalTitle,
           facts: [lines.subtitle],
         ),

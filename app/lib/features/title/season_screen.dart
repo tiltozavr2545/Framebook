@@ -46,6 +46,8 @@ class SeasonScreen extends ConsumerWidget {
         return [
           TitleHeader(
             posterPath: season.posterPath ?? tv.posterPath,
+            coverKey: season.key,
+            originalLanguage: tv.originalLanguage,
             title: seasonName(l10n, season.number, season.name),
             facts: [
               tv.title,

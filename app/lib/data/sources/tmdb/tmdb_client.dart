@@ -17,6 +17,9 @@ abstract interface class TmdbApi {
   Future<String?> episodeImdbId(int tvId, int season, int episode);
   Future<ImageConfig> imageConfig();
 
+  /// Poster variants, or stills for an episode.
+  Future<List<TmdbImage>> images(WorkKey key);
+
   /// The names of the genres for films ([WorkKind.movie]) or series
   /// ([WorkKind.tv]); the two lists share most ids.
   Future<List<Genre>> genres(WorkKind kind);
@@ -152,6 +155,26 @@ final class TmdbClient implements TmdbApi {
     );
     final id = json.string('imdb_id');
     return id != null && id.startsWith('tt') ? id : null;
+  }
+
+  @override
+  Future<List<TmdbImage>> images(WorkKey key) async {
+    final path = switch (key.kind) {
+      WorkKind.movie => '/movie/${key.tmdbId}/images',
+      WorkKind.tv => '/tv/${key.tmdbId}/images',
+      WorkKind.season => '/tv/${key.tmdbId}/season/${key.season}/images',
+      WorkKind.episode =>
+        '/tv/${key.tmdbId}/season/${key.season}/episode/${key.episode}/images',
+    };
+    final json = await _get(path, const {}, TmdbTtl.details, localized: false);
+    return [
+      for (final image in json.objects(
+        key.kind == WorkKind.episode ? 'stills' : 'posters',
+      ))
+        if (image.string('file_path') case final path?
+            when path.startsWith('/'))
+          TmdbImage(path, image.string('iso_639_1')),
+    ];
   }
 
   @override

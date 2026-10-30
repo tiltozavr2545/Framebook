@@ -231,6 +231,13 @@ one stays until answered — there is no "later".
 
 ---
 
+A cover on a movie, series, season or episode card opens a full-screen
+viewer: the current image appears first, followed by UI-language,
+original-language and textless variants. The viewer supports swipe and
+pinch-to-zoom, using a cached small image while the larger size loads. A
+saved offline card opens only its cached cover, without a network request.
+TMDB's image configuration selects the large poster or still size.
+
 ## Rating (Stage 3)
 
 All writes of the user's own data go through `Library`

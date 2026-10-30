@@ -11,6 +11,8 @@
   "updateFailed": "Could not check for updates",
   "@updateAvailable": {"placeholders": {"version": {"type": "String"}}},
 
+  "coverOpen": "Open full-screen cover",
+
   "appTitle": "Framebook",
 
   "tabSearch": "Discover",

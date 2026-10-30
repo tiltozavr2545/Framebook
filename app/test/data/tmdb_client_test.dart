@@ -30,6 +30,31 @@ void main() {
     serve(apiFixtures);
   });
 
+  test(
+    'image endpoints use posters for seasons and stills for episodes',
+    () async {
+      serve((request) {
+        if (request.path.endsWith('/episode/1/images')) {
+          return (status: 200, body: fixture('tmdb/episode_images.json'));
+        }
+        return (status: 200, body: fixture('tmdb/season_images.json'));
+      });
+      await client().images(const WorkKey.movie(603));
+      expect(http.requests.last.uri.path, '/3/movie/603/images');
+      await client().images(const WorkKey.tv(1399));
+      expect(http.requests.last.uri.path, '/3/tv/1399/images');
+      final season = await client().images(const WorkKey.season(1399, 1));
+      expect(http.requests.last.uri.path, '/3/tv/1399/season/1/images');
+      expect(season.first.language, 'en');
+      final episode = await client().images(const WorkKey.episode(1399, 1, 1));
+      expect(
+        http.requests.last.uri.path,
+        '/3/tv/1399/season/1/episode/1/images',
+      );
+      expect(episode.single.language, isNull);
+    },
+  );
+
   group('search', () {
     test('keeps films and series, in TMDB order', () async {
       final page = await client().search('Матрица');
@@ -149,6 +174,8 @@ void main() {
 
     test('image base URL from the configuration', () async {
       final config = await client().imageConfig();
+      expect(config.posterLarge, ImageSize.w780);
+      expect(config.stillLarge, ImageSize.original);
       expect(
         config.url('/abc.jpg', ImageSize.w185).toString(),
         'https://image.tmdb.org/t/p/w185/abc.jpg',

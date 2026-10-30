@@ -32,6 +32,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updateFailed => 'Could not check for updates';
 
   @override
+  String get coverOpen => 'Open full-screen cover';
+
+  @override
   String get appTitle => 'Framebook';
 
   @override

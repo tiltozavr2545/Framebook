@@ -140,6 +140,12 @@ abstract class AppLocalizations {
   /// **'Could not check for updates'**
   String get updateFailed;
 
+  /// No description provided for @coverOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open full-screen cover'**
+  String get coverOpen;
+
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:

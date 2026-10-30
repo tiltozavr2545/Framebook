@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -21,6 +23,14 @@ final _posterCache = CacheManager(
     maxNrOfCacheObjects: 1500,
   ),
 );
+
+/// A cached image without a network request, used by saved offline cards.
+final cachedPosterProvider = FutureProvider.autoDispose
+    .family<File?, ({String path, ImageSize size})>(
+      (ref, key) async => (await _posterCache.getFileFromCache(
+        '${key.size.name}${key.path}',
+      ))?.file,
+    );
 
 /// Where an image comes from, by URL and cache key. Tests replace it with an
 /// in-memory image.

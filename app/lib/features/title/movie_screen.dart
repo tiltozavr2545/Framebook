@@ -25,6 +25,8 @@ class MovieScreen extends ConsumerWidget {
       builder: (context, movie) => [
         TitleHeader(
           posterPath: movie.posterPath,
+          coverKey: movie.key,
+          originalLanguage: movie.originalLanguage,
           title: movie.title,
           originalTitle: movie.originalTitle,
           facts: [

@@ -9,6 +9,7 @@ import '../../shared/failure_view.dart';
 import '../../shared/format.dart';
 import '../../shared/poster.dart';
 import 'saved_card.dart';
+import 'cover_viewer.dart';
 
 /// Card scaffold: title, loading, error with a retry.
 class TitlePage<T> extends ConsumerWidget {
@@ -59,6 +60,9 @@ class TitleHeader extends StatelessWidget {
     this.facts = const [],
     this.tagline,
     this.posterIcon = Icons.movie_outlined,
+    this.coverKey,
+    this.originalLanguage,
+    this.cachedCoverOnly = false,
   });
 
   final String? posterPath;
@@ -71,6 +75,9 @@ class TitleHeader extends StatelessWidget {
   final List<String?> facts;
   final String? tagline;
   final IconData posterIcon;
+  final WorkKey? coverKey;
+  final String? originalLanguage;
+  final bool cachedCoverOnly;
 
   @override
   Widget build(BuildContext context) {
@@ -89,11 +96,32 @@ class TitleHeader extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Poster(
-              posterPath,
-              size: ImageSize.w342,
-              width: 128,
-              icon: posterIcon,
+            Semantics(
+              button: posterPath != null && coverKey != null,
+              label: posterPath != null && coverKey != null
+                  ? AppLocalizations.of(context).coverOpen
+                  : null,
+              child: InkWell(
+                onTap: posterPath == null || coverKey == null
+                    ? null
+                    : () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => CoverViewer(
+                            currentPath: posterPath!,
+                            keyForImages: coverKey!,
+                            previewSize: ImageSize.w342,
+                            originalLanguage: originalLanguage,
+                            cachedOnly: cachedCoverOnly,
+                          ),
+                        ),
+                      ),
+                child: Poster(
+                  posterPath,
+                  size: ImageSize.w342,
+                  width: 128,
+                  icon: posterIcon,
+                ),
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(

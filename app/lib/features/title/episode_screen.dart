@@ -11,6 +11,7 @@ import '../../shared/failure_view.dart';
 import '../../shared/format.dart';
 import '../../shared/poster.dart';
 import 'cast_section.dart';
+import 'cover_viewer.dart';
 import 'my_rating.dart';
 import 'ratings_panel.dart';
 import 'renumber_notice.dart';
@@ -59,12 +60,30 @@ class EpisodeScreen extends ConsumerWidget {
           ];
         }
         return [
-          Poster(
-            episode.stillPath,
-            size: ImageSize.w500,
-            width: MediaQuery.sizeOf(context).width - 32,
-            aspectRatio: 16 / 9,
-            icon: Icons.live_tv_outlined,
+          Semantics(
+            button: episode.stillPath != null,
+            label: episode.stillPath != null ? l10n.coverOpen : null,
+            child: InkWell(
+              onTap: episode.stillPath == null
+                  ? null
+                  : () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => CoverViewer(
+                          currentPath: episode.stillPath!,
+                          keyForImages: episodeKey,
+                          previewSize: ImageSize.w300,
+                          originalLanguage: tv.originalLanguage,
+                        ),
+                      ),
+                    ),
+              child: Poster(
+                episode.stillPath,
+                size: ImageSize.w300,
+                width: MediaQuery.sizeOf(context).width - 32,
+                aspectRatio: 16 / 9,
+                icon: Icons.live_tv_outlined,
+              ),
+            ),
           ),
           const SizedBox(height: 16),
           Text(

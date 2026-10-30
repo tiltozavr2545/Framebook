@@ -35,6 +35,8 @@ class TvScreen extends ConsumerWidget {
       builder: (context, tv) => [
         TitleHeader(
           posterPath: tv.posterPath,
+          coverKey: tv.key,
+          originalLanguage: tv.originalLanguage,
           title: tv.title,
           originalTitle: tv.originalTitle,
           facts: [

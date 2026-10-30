@@ -46,11 +46,15 @@ Base: `https://api.themoviedb.org/3`. The response language is the
 | season | `GET /tv/{id}/season/{n}` — includes every episode with its `vote_average` |
 | an episode's ids in other databases | `GET /tv/{id}/season/{n}/episode/{m}/external_ids` |
 | genres | `GET /genre/movie/list`, `GET /genre/tv/list` — names for the statistics by genre; the lists share most ids |
+| cover variants | `GET /movie/{id}/images`, `/tv/{id}/images`, `/tv/{id}/season/{n}/images`, `/tv/{id}/season/{n}/episode/{m}/images` — posters, or episode stills |
 | image configuration | `GET /configuration` — base URL and poster sizes |
 
 Posters: `{secure_base_url}{size}{poster_path}`; `w185` in lists, `w342` in
-a card's header, `w500` for an episode still (all present in `poster_sizes` /
-`still_sizes`).
+a card's header, `w300` for an episode still. The full-screen viewer uses
+`w780` posters and original stills when available in the configuration.
+Variant requests omit the `language` filter, then retain only the current
+cover, the UI and original languages, and images without a language; no
+movie or series backdrops are used.
 
 What the fixtures confirmed:
 

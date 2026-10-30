@@ -163,3 +163,5 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
   same kind to make the comparison useful.
 - New ratings start at 5 on the score reel; editing a rating opens at its
   existing score.
+- Tap a cover to see it full screen, zoom in, and swipe through available
+  posters or episode stills. Saved offline cards open their cached cover.

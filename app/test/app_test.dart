@@ -1,3 +1,5 @@
+import 'package:framebook/features/title/cover_viewer.dart';
+import 'package:framebook/features/title/title_layout.dart';
 import 'package:framebook/data/update_checker.dart';
 import 'package:dio/dio.dart';
 import 'package:drift/native.dart';
@@ -410,6 +412,28 @@ void main() {
       tester.widget<ScoreReel>(find.byType(ScoreReel)).initialScoreHalf,
       17,
     );
+  });
+
+  cardTest('a movie cover opens full screen and the back button returns', (
+    tester,
+  ) async {
+    await pumpApp(tester, keys: tmdbOnly);
+    go(tester, '/search/movie/603');
+    await settle(tester);
+    await tester.tap(
+      find
+          .descendant(
+            of: find.byType(TitleHeader),
+            matching: find.byType(InkWell),
+          )
+          .first,
+    );
+    await settle(tester);
+    expect(find.byType(CoverViewer), findsOneWidget);
+    await tester.pageBack();
+    await settle(tester);
+    expect(find.byType(CoverViewer), findsNothing);
+    expect(find.byType(TitleHeader), findsOneWidget);
   });
 
   cardTest('rating a film with a note; it appears in My ratings', (

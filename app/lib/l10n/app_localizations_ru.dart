@@ -32,6 +32,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get updateFailed => 'Не удалось проверить обновления';
 
   @override
+  String get coverOpen => 'Открыть обложку на весь экран';
+
+  @override
   String get appTitle => 'Framebook';
 
   @override
