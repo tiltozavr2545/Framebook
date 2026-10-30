@@ -351,7 +351,7 @@ class RatingEditor extends StatefulWidget {
 }
 
 class _RatingEditorState extends State<RatingEditor> {
-  late int? _scoreHalf = widget.initialScoreHalf;
+  late int? _scoreHalf = widget.initialScoreHalf ?? 10;
   late final _note = TextEditingController(text: widget.initialNote);
 
   /// The last comparison that arrived and the score it is for: kept on

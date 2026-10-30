@@ -311,7 +311,7 @@ and the optimization see the final code.
    20 ratings of the kind for films, more than 10 for series, seasons and
    episodes each; below that the panel under the reel is hidden. (Stated in
    [data-model.md](data-model.md), "Key queries".)
-7. The reel starts on 5 by default, not on the minimum (replacing the blank
+7. ✅ The reel starts on 5 by default, not on the minimum (replacing the blank
    leader frame from Stage 6). Opening an already rated title still starts
    on its own score.
 8. Viewing a cover (or all of a title's covers) full screen: a tap on the

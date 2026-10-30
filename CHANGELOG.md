@@ -161,3 +161,5 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
   manually from About.
 - The score comparison panel appears once you have enough ratings of the
   same kind to make the comparison useful.
+- New ratings start at 5 on the score reel; editing a rating opens at its
+  existing score.

@@ -362,8 +362,8 @@ void main() {
           find.descendant(of: reel, matching: find.byType(Scrollable)),
         )
         .position;
-    // Frame 0 is the blank leader; score s is frame 2s − 1.
-    final target = (score * 2 - 1) * ScoreReel.extent;
+    // Frame 0 is score 1; score s is frame 2s − 2.
+    final target = (score * 2 - 2) * ScoreReel.extent;
     final gesture = await tester.startGesture(tester.getCenter(reel));
     final distance = position.pixels - target;
     final steps = (distance.abs() / 20).ceil() + 1;
@@ -378,6 +378,40 @@ void main() {
     await settle(tester);
   }
 
+  cardTest('new ratings save 5 and existing ratings reopen at their score', (
+    tester,
+  ) async {
+    await pumpApp(tester, keys: tmdbOnly);
+    go(tester, '/search/movie/603');
+    await settle(tester);
+    await tester.tap(find.text('Rate'));
+    await settle(tester);
+    expect(
+      tester
+          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Save'))
+          .onPressed,
+      isNotNull,
+    );
+    await tester.tap(find.text('Save'));
+    await settle(tester);
+    expect(find.text('5'), findsWidgets);
+    await tester.tap(find.byTooltip('Change'));
+    await settle(tester);
+    expect(
+      tester.widget<ScoreReel>(find.byType(ScoreReel)).initialScoreHalf,
+      10,
+    );
+    await pickScore(tester, 8.5);
+    await tester.tap(find.text('Save'));
+    await settle(tester);
+    await tester.tap(find.byTooltip('Change'));
+    await settle(tester);
+    expect(
+      tester.widget<ScoreReel>(find.byType(ScoreReel)).initialScoreHalf,
+      17,
+    );
+  });
+
   cardTest('rating a film with a note; it appears in My ratings', (
     tester,
   ) async {
@@ -387,12 +421,12 @@ void main() {
 
     await tester.tap(find.text('Rate'));
     await settle(tester);
-    // No score until the reel moves: Save waits.
+    // The default score is ready to save without moving the reel.
     expect(
       tester
           .widget<FilledButton>(find.widgetWithText(FilledButton, 'Save'))
           .onPressed,
-      isNull,
+      isNotNull,
     );
     await pickScore(tester, 8.5);
     // The comparison panel stays hidden until there are enough ratings.

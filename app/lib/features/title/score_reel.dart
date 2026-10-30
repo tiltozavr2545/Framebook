@@ -9,15 +9,14 @@ import '../../shared/format.dart';
 /// 1 to 10 in steps of 0.5; whatever stands in the gate — outlined in red,
 /// the editor's grease pencil — is the score. Each step clicks.
 ///
-/// The strip starts with a blank leader frame: an unrated title starts there
-/// rather than on a default score, which would nudge the choice.
+/// An unrated title starts at 5; a rated title starts at its saved score.
 class ScoreReel extends StatefulWidget {
   const ScoreReel({super.key, this.initialScoreHalf, required this.onChanged});
 
-  /// 2…20; `null` — start on the leader.
+  /// 2…20; `null` starts on 5.
   final int? initialScoreHalf;
 
-  /// The score now in the gate; `null` on the leader.
+  /// The score now in the gate.
   final ValueChanged<int?> onChanged;
 
   /// Frame width including its share of the strip.
@@ -29,16 +28,16 @@ class ScoreReel extends StatefulWidget {
 }
 
 class _ScoreReelState extends State<ScoreReel> {
-  /// 0 is the leader, 1…19 are the scores 1…10.
-  static const _count = 20;
+  /// 0…18 are the scores 1…10.
+  static const _count = 19;
 
   late int _index = _indexOf(widget.initialScoreHalf);
   late final _controller = ScrollController(
     initialScrollOffset: _index * ScoreReel.extent,
   )..addListener(_moved);
 
-  static int _indexOf(int? half) => half == null ? 0 : half - 1;
-  static int? _halfAt(int index) => index == 0 ? null : index + 1;
+  static int _indexOf(int? half) => (half ?? 10) - 2;
+  static int _halfAt(int index) => index + 2;
 
   @override
   void dispose() {
@@ -70,13 +69,11 @@ class _ScoreReelState extends State<ScoreReel> {
     return Semantics(
       slider: true,
       label: l10n.ratingEditorTitle,
-      value: half == null ? '—' : formatMyScore(half),
-      // From the leader, "increase" lands on 1; nothing goes below 1 or
-      // back onto the leader.
-      increasedValue: _index < _count - 1 ? formatMyScore(_index + 2) : null,
-      decreasedValue: _index > 1 ? formatMyScore(_index) : null,
+      value: formatMyScore(half),
+      increasedValue: _index < _count - 1 ? formatMyScore(half + 1) : null,
+      decreasedValue: _index > 0 ? formatMyScore(half - 1) : null,
       onIncrease: _index < _count - 1 ? () => _goTo(_index + 1) : null,
-      onDecrease: _index > 1 ? () => _goTo(_index - 1) : null,
+      onDecrease: _index > 0 ? () => _goTo(_index - 1) : null,
       child: SizedBox(
         height: ScoreReel.height,
         child: LayoutBuilder(
@@ -126,7 +123,7 @@ class _ScoreReelState extends State<ScoreReel> {
 class _Frame extends StatelessWidget {
   const _Frame({required this.half, required this.inGate});
 
-  final int? half;
+  final int half;
   final bool inGate;
 
   @override
@@ -155,10 +152,7 @@ class _Frame extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: FittedBox(
               fit: BoxFit.scaleDown,
-              child: Text(
-                half == null ? '—' : formatMyScore(half),
-                style: style,
-              ),
+              child: Text(formatMyScore(half), style: style),
             ),
           ),
         ),
