@@ -275,6 +275,74 @@ void main() {
       await library.rate(lineage, scoreHalf: half, note: null);
     }
 
+    test('comparison requires more than 20 other live films', () async {
+      for (var id = 1; id <= 20; id++) {
+        await rate(film(id), 16);
+      }
+      await rate([matrix], 16);
+      expect(await library.hasCalibration(matrix.key), isFalse);
+      await rate(film(21), 16);
+      expect(await library.hasCalibration(matrix.key), isTrue);
+      await library.deleteRating(const WorkKey.movie(21));
+      expect(await library.hasCalibration(matrix.key), isFalse);
+      expect(await library.hasCalibration(episode(1).last.key), isFalse);
+    });
+
+    test('series, seasons and episodes each require more than 10', () async {
+      for (var id = 1; id <= 11; id++) {
+        final tv = WorkSnapshot(
+          key: WorkKey.tv(id),
+          tmdbId: id,
+          title: 'Series $id',
+        );
+        final season = WorkSnapshot(
+          key: WorkKey.season(id, 1),
+          tmdbId: id,
+          title: 'Season',
+        );
+        final ep = WorkSnapshot(
+          key: WorkKey.episode(id, 1, 1),
+          tmdbId: id,
+          title: 'Episode',
+        );
+        await rate([tv], 16);
+        await rate([tv, season], 16);
+        await rate([tv, season, ep], 16);
+      }
+      for (final key in [
+        const WorkKey.tv(1),
+        const WorkKey.season(1, 1),
+        const WorkKey.episode(1, 1, 1),
+      ]) {
+        expect(await library.hasCalibration(key), isFalse);
+      }
+      final tv = WorkSnapshot(
+        key: const WorkKey.tv(12),
+        tmdbId: 12,
+        title: 'Series 12',
+      );
+      final season = WorkSnapshot(
+        key: const WorkKey.season(12, 1),
+        tmdbId: 12,
+        title: 'Season',
+      );
+      final ep = WorkSnapshot(
+        key: const WorkKey.episode(12, 1, 1),
+        tmdbId: 12,
+        title: 'Episode',
+      );
+      await rate([tv], 16);
+      await rate([tv, season], 16);
+      await rate([tv, season, ep], 16);
+      for (final key in [
+        const WorkKey.tv(1),
+        const WorkKey.season(1, 1),
+        const WorkKey.episode(1, 1, 1),
+      ]) {
+        expect(await library.hasCalibration(key), isTrue);
+      }
+    });
+
     test('the same score, recent first, without the title itself', () async {
       await rate(film(1), 16);
       await rate(film(2), 16);

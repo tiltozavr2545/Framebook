@@ -502,6 +502,27 @@ final class Library {
     });
   }
 
+  /// Whether there are enough other live ratings of this kind to compare.
+  Future<bool> hasCalibration(WorkKey key) async {
+    final count = _db.ratings.workKey.count();
+    final row =
+        await (_db.selectOnly(_db.ratings).join([
+                innerJoin(
+                  _db.works,
+                  _db.works.workKey.equalsExp(_db.ratings.workKey),
+                ),
+              ])
+              ..addColumns([count])
+              ..where(
+                _db.ratings.deletedAt.isNull() &
+                    _db.works.kind.equalsValue(key.kind) &
+                    _db.ratings.workKey.equals(key.toString()).not(),
+              ))
+            .getSingle();
+    final threshold = key.kind == WorkKind.movie ? 20 : 10;
+    return (row.read(count) ?? 0) > threshold;
+  }
+
   /// The calibration sheet for [key] just scored [scoreHalf]: live ratings
   /// of the same kind, without the title itself.
   Future<Calibration> calibration(WorkKey key, int scoreHalf) async {

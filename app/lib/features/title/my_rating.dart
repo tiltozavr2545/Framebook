@@ -109,6 +109,8 @@ class _MyRatingSectionState extends ConsumerState<MyRatingSection> {
   Future<void> _edit(Rating? current) async {
     final library = ref.read(libraryProvider);
     final lineage = widget.lineage;
+    final showComparison = await library.hasCalibration(lineage.last.key);
+    if (!mounted) return;
     final draft = await showModalBottomSheet<RatingDraft>(
       context: context,
       // Over the navigation bar: the reel needs the whole width and the
@@ -117,6 +119,7 @@ class _MyRatingSectionState extends ConsumerState<MyRatingSection> {
       isScrollControlled: true,
       showDragHandle: true,
       builder: (_) => RatingEditor(
+        showComparison: showComparison,
         initialScoreHalf: current?.scoreHalf,
         initialNote: current?.note,
         compare: (half) => library.calibration(lineage.last.key, half),
@@ -332,11 +335,13 @@ class RatingEditor extends StatefulWidget {
     super.key,
     this.initialScoreHalf,
     this.initialNote,
+    this.showComparison = true,
     required this.compare,
   });
 
   final int? initialScoreHalf;
   final String? initialNote;
+  final bool showComparison;
 
   /// What else of this kind is rated at a score, and around it.
   final Future<Calibration> Function(int scoreHalf) compare;
@@ -358,7 +363,7 @@ class _RatingEditorState extends State<RatingEditor> {
   @override
   void initState() {
     super.initState();
-    if (_scoreHalf case final half?) _compare(half);
+    if (widget.showComparison && _scoreHalf != null) _compare(_scoreHalf!);
   }
 
   @override
@@ -376,7 +381,7 @@ class _RatingEditorState extends State<RatingEditor> {
 
   void _changed(int? half) {
     setState(() => _scoreHalf = half);
-    if (half != null) _compare(half);
+    if (widget.showComparison && half != null) _compare(half);
   }
 
   @override
@@ -402,20 +407,21 @@ class _RatingEditorState extends State<RatingEditor> {
             ),
             // The comparison sits above the reel in a box of its own fixed
             // height: whatever it shows, the reel under the thumb stays put.
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-              child: SizedBox(
-                height: _Comparison.height,
-                child: score == null
-                    ? Text(
-                        l10n.reelHint,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      )
-                    : _Comparison(shown: _shown),
+            if (widget.showComparison)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                child: SizedBox(
+                  height: _Comparison.height,
+                  child: score == null
+                      ? Text(
+                          l10n.reelHint,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        )
+                      : _Comparison(shown: _shown),
+                ),
               ),
-            ),
             ScoreReel(
               initialScoreHalf: widget.initialScoreHalf,
               onChanged: _changed,

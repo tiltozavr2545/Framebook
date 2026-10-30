@@ -159,3 +159,5 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
 - Framebook checks for new releases once a day and offers a link to the
   release page. You can dismiss the banner until the next version, or check
   manually from About.
+- The score comparison panel appears once you have enough ratings of the
+  same kind to make the comparison useful.

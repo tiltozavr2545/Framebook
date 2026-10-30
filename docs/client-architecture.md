@@ -321,6 +321,11 @@ hours; a manual check is available on About. Dismissal persists per version,
 and the banner opens the release page. Offline and API errors are quiet during
 automatic checks. Tests use a fake source, not the network.
 
+The comparison panel in the rating editor appears only with more than 20
+other live film ratings or more than 10 other live ratings of the same TV,
+season or episode kind. The threshold is checked before opening the editor,
+so the reel stays in place while the score changes.
+
 ## Sync and backup (Stage 5)
 
 The design is [sync.md](sync.md); here is what lives where in

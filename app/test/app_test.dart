@@ -395,12 +395,12 @@ void main() {
       isNull,
     );
     await pickScore(tester, 8.5);
-    // The first film rated: nothing to compare with.
+    // The comparison panel stays hidden until there are enough ratings.
     expect(
       find.text(
         'Your first rating of this kind — nothing to compare with yet.',
       ),
-      findsOneWidget,
+      findsNothing,
     );
     await tester.enterText(find.widgetWithText(TextField, 'Note'), 'Классика');
     await tester.tap(find.text('Save'));
@@ -426,7 +426,22 @@ void main() {
     await pumpApp(
       tester,
       keys: tmdbOnly,
-      seed: (library) => inceptionRated(library, 17),
+      seed: (library) async {
+        await inceptionRated(library, 17);
+        for (var id = 1; id <= 20; id++) {
+          await library.rate(
+            [
+              WorkSnapshot(
+                key: WorkKey.movie(id),
+                tmdbId: id,
+                title: 'Film $id',
+              ),
+            ],
+            scoreHalf: 2,
+            note: null,
+          );
+        }
+      },
     );
     go(tester, '/search/movie/603');
     await settle(tester);

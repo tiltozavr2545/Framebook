@@ -307,7 +307,7 @@ and the optimization see the final code.
    the release page.
 5. **Postponed by the user.** Comparing with friends is outside this stage;
    see [future-development.md](future-development.md).
-6. The calibration only when there is something to compare with: more than
+6. ✅ The calibration only when there is something to compare with: more than
    20 ratings of the kind for films, more than 10 for series, seasons and
    episodes each; below that the panel under the reel is hidden. (Stated in
    [data-model.md](data-model.md), "Key queries".)
