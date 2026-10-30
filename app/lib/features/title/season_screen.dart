@@ -58,6 +58,7 @@ class SeasonScreen extends ConsumerWidget {
               ]),
             ],
           ),
+          WatchlistRenumberNotice(tv: tv, about: seasonKey),
           const SizedBox(height: 16),
           MyRatingSection(
             lineage: [WorkSnapshot.tv(tv), WorkSnapshot.season(season)],

@@ -16,7 +16,7 @@ import '../../shared/title_text.dart';
 import 'score_reel.dart';
 
 /// "My rating" on a card of any kind: the score and note, or a button to
-/// rate; the watchlist toggle for films and series; for a series or a
+/// rate; the watchlist toggle for films, series and seasons; for a series or a
 /// season, the average of its rated parts as a hint.
 ///
 /// [lineage] is the title's snapshot with all its ancestors, series first —
@@ -57,7 +57,7 @@ class _MyRatingSectionState extends ConsumerState<MyRatingSection> {
     final theme = Theme.of(context);
     final rating = ref.watch(myRatingProvider(_key)).value;
     final kind = _key.kind;
-    final watchlistable = kind == WorkKind.movie || kind == WorkKind.tv;
+    final watchlistable = kind != WorkKind.episode;
     final listed =
         watchlistable && (ref.watch(inWatchlistProvider(_key)).value ?? false);
     final parts = kind == WorkKind.tv || kind == WorkKind.season

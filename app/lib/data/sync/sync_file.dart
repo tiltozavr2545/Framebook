@@ -42,6 +42,47 @@ final class DeletionRecord {
   }
 }
 
+/// Latest explicit series or season selection for a series. A permanent
+/// register preserves the choice even if individual rows are later removed.
+final class WatchlistFence {
+  const WatchlistFence({
+    required this.seriesKey,
+    required this.season,
+    required this.updatedAt,
+    required this.updatedBy,
+  });
+  final String seriesKey;
+  final bool season;
+  final int updatedAt;
+  final String updatedBy;
+
+  Map<String, Object?> toJson() => {
+    'series_key': seriesKey,
+    'season': season,
+    'updated_at': updatedAt,
+    'updated_by': updatedBy,
+  };
+  static WatchlistFence fromJson(Object? raw) {
+    final row = _Row(raw, 'watchlist_fences');
+    final key = row.string('series_key');
+    final parsed = WorkKey.tryParse(key);
+    final at = row.integer('updated_at');
+    final by = row.string('updated_by');
+    if (parsed == null ||
+        parsed.kind != WorkKind.tv ||
+        at < 0 ||
+        row.raw['season'] is! bool) {
+      throw const _BadRow('invalid watchlist fence');
+    }
+    return WatchlistFence(
+      seriesKey: key,
+      season: row.raw['season'] as bool,
+      updatedAt: at,
+      updatedBy: by,
+    );
+  }
+}
+
 /// The shared ratings, watchlist, snapshots, compact deletions and cleanup cutoff.
 final class SyncState {
   const SyncState({
@@ -51,6 +92,7 @@ final class SyncState {
     this.purgedBefore = 0,
     this.ratingDeletions = const [],
     this.watchlistDeletions = const [],
+    this.watchlistFences = const [],
   });
 
   final List<Work> works;
@@ -58,6 +100,7 @@ final class SyncState {
   final List<WatchlistEntry> watchlist;
   final List<DeletionRecord> ratingDeletions;
   final List<DeletionRecord> watchlistDeletions;
+  final List<WatchlistFence> watchlistFences;
 
   /// Cleanup cutoff in UTC milliseconds. Absence does not imply deletion.
   final int purgedBefore;
@@ -69,6 +112,7 @@ final class SyncState {
     purgedBefore: value,
     ratingDeletions: ratingDeletions,
     watchlistDeletions: watchlistDeletions,
+    watchlistFences: watchlistFences,
   );
 
   bool get isEmpty =>
@@ -76,7 +120,8 @@ final class SyncState {
       ratings.isEmpty &&
       watchlist.isEmpty &&
       ratingDeletions.isEmpty &&
-      watchlistDeletions.isEmpty;
+      watchlistDeletions.isEmpty &&
+      watchlistFences.isEmpty;
 
   /// Live ratings: what the first sign-in dialog counts.
   int get liveRatings => ratings.where((r) => r.deletedAt == null).length;
@@ -116,7 +161,7 @@ final class SyncFileTooNew extends SyncFileException {
 /// earlier version working, for old exports: version 1 had no
 /// `purged_before` and reads as 0.
 abstract final class SyncFile {
-  static const formatVersion = 2;
+  static const formatVersion = 3;
 
   /// The state file in `appDataFolder`.
   static const name = 'framebook-sync.json.gz';
@@ -138,6 +183,7 @@ abstract final class SyncFile {
         'watchlist_deletions': [
           for (final d in state.watchlistDeletions) d.toJson(),
         ],
+        'watchlist_fences': [for (final f in state.watchlistFences) f.toJson()],
         'works': [for (final w in state.works) workToJson(w)],
         'ratings': [for (final r in state.ratings) ratingToJson(r)],
         'watchlist': [for (final w in state.watchlist) watchlistToJson(w)],
@@ -172,6 +218,9 @@ abstract final class SyncFile {
               json['watchlist_deletions'] is! List)) {
         throw const _BadRow('missing deletion registers');
       }
+      if (version >= 3 && json['watchlist_fences'] is! List) {
+        throw const _BadRow('missing watchlist fences');
+      }
       final works = [for (final w in _list(json, 'works')) workFromJson(w)];
       final ratings = [
         for (final r in _list(json, 'ratings')) ratingFromJson(r),
@@ -180,11 +229,45 @@ abstract final class SyncFile {
         for (final w in _list(json, 'watchlist')) watchlistFromJson(w),
       ];
       _checkReferences(works, ratings, watchlist);
+      final fences = version >= 3
+          ? [
+              for (final f in _list(json, 'watchlist_fences'))
+                WatchlistFence.fromJson(f),
+            ]
+          : [
+              for (final w in watchlist)
+                if (w.deletedAt == null &&
+                    WorkKey.tryParse(w.workKey)?.kind == WorkKind.tv)
+                  WatchlistFence(
+                    seriesKey: w.workKey,
+                    season: false,
+                    updatedAt: w.updatedAt,
+                    updatedBy: w.updatedBy,
+                  ),
+            ];
+      if (version >= 3) {
+        for (final w in watchlist) {
+          if (w.deletedAt != null) continue;
+          final key = WorkKey.parse(w.workKey);
+          if (key.kind != WorkKind.tv && key.kind != WorkKind.season) continue;
+          final series = key.kind == WorkKind.tv ? key : key.parent!;
+          final exists = fences.any(
+            (f) =>
+                f.seriesKey == series.toString() &&
+                f.season == (key.kind == WorkKind.season) &&
+                (f.updatedAt > w.updatedAt ||
+                    (f.updatedAt == w.updatedAt &&
+                        f.updatedBy.compareTo(w.updatedBy) >= 0)),
+          );
+          if (!exists) throw const _BadRow('watchlist selection without fence');
+        }
+      }
       return SyncState(
         works: works,
         ratings: ratings,
         watchlist: watchlist,
         purgedBefore: purgedBefore,
+        watchlistFences: fences,
         ratingDeletions: [
           for (final d in _list(json, 'rating_deletions'))
             DeletionRecord.fromJson(d),

@@ -1,4 +1,8 @@
 import '../sync/sync_store.dart';
+import '../sync/sync_file.dart';
+import '../sync/merge.dart';
+import 'dart:math';
+
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -53,10 +57,11 @@ final class RatedTitle {
 
 /// A live watchlist entry with its title's snapshot (films and series only).
 final class WatchlistTitle {
-  const WatchlistTitle({required this.entry, required this.work});
+  const WatchlistTitle({required this.entry, required this.work, this.series});
 
   final WatchlistEntry entry;
   final Work work;
+  final Work? series;
 
   WorkKey get key => WorkKey.parse(work.workKey);
 }
@@ -173,7 +178,10 @@ final class Library {
         final rescored = revived || old.scoreHalf != scoreHalf;
         // Nothing changed — no new version that would needlessly win a
         // merge against a real edit from another device.
-        if (!rescored && old.note == cleanNote) return;
+        if (!rescored && old.note == cleanNote) {
+          await _unlist(key, now);
+          return;
+        }
         await (_db.update(
           _db.ratings,
         )..where((r) => r.workKey.equals(key))).write(
@@ -187,7 +195,11 @@ final class Library {
           ),
         );
       }
-      await _unlist(key, now);
+      if (lineage.last.key.kind == WorkKind.season) {
+        await _unlistForSeasonRating(key, now);
+      } else {
+        await _unlist(key, now);
+      }
     });
   }
 
@@ -211,6 +223,7 @@ final class Library {
           updatedBy: Value(deviceId),
         ),
       );
+      if (key.kind == WorkKind.season) await _unlistForSeasonRating(k, now);
     });
   }
 
@@ -229,19 +242,81 @@ final class Library {
           updatedBy: Value(deviceId),
         ),
       );
+      if (key.kind == WorkKind.season) await _unlistForSeasonRating(k, now);
     });
   }
 
   Future<void> addToWatchlist(List<WorkSnapshot> lineage) {
     final key = lineage.last.key;
-    if (key.kind != WorkKind.movie && key.kind != WorkKind.tv) {
-      throw ArgumentError.value(key, 'lineage', 'films and series only');
+    if (key.kind == WorkKind.episode) {
+      throw ArgumentError.value(
+        key,
+        'lineage',
+        'films, series and seasons only',
+      );
     }
     final k = key.toString();
     return _db.transaction(() async {
       final now = _now();
-      await _putSnapshots(lineage, now);
+      if (key.kind == WorkKind.season) {
+        final rating = await _ratingRow(k);
+        if (rating != null && rating.deletedAt == null) return;
+      }
+      final store = SyncStore(_db);
+      final state = await store.read();
       final old = await _watchlistRow(k);
+      if (old != null && visibleWatchlistEntry(old, state.watchlistFences)) {
+        return;
+      }
+      await _putSnapshots(lineage, now, adopt: key);
+      final series = key.kind == WorkKind.tv
+          ? key
+          : key.kind == WorkKind.season
+          ? key.parent
+          : null;
+      var version = now;
+      if (old != null && version <= old.updatedAt) version = old.updatedAt + 1;
+      final deletion = await _deletionTime(SyncStore.watchlistDeletionsKey, k);
+      if (version <= deletion) version = deletion + 1;
+      if (series != null) {
+        for (final fence in state.watchlistFences) {
+          if (fence.seriesKey == series.toString() &&
+              version <= fence.updatedAt) {
+            version = fence.updatedAt + 1;
+          }
+        }
+        final fence = WatchlistFence(
+          seriesKey: series.toString(),
+          season: key.kind == WorkKind.season,
+          updatedAt: version,
+          updatedBy: deviceId,
+        );
+        await store.saveFences(
+          mergeStates(
+            state,
+            SyncState(watchlistFences: [fence]),
+          ).watchlistFences,
+        );
+        if (key.kind == WorkKind.season) {
+          await _unlist(series.toString(), version);
+        } else {
+          final seasons =
+              await (_db.select(_db.watchlist).join([
+                    innerJoin(
+                      _db.works,
+                      _db.works.workKey.equalsExp(_db.watchlist.workKey),
+                    ),
+                  ])..where(
+                    _db.works.parentKey.equals(k) &
+                        _db.works.kind.equalsValue(WorkKind.season) &
+                        _db.watchlist.deletedAt.isNull(),
+                  ))
+                  .get();
+          for (final row in seasons) {
+            await _unlist(row.readTable(_db.watchlist).workKey, version);
+          }
+        }
+      }
       if (old == null) {
         await _db
             .into(_db.watchlist)
@@ -249,20 +324,17 @@ final class Library {
               WatchlistCompanion.insert(
                 workKey: k,
                 addedAt: now,
-                updatedAt: _next(
-                  now,
-                  await _deletionTime(SyncStore.watchlistDeletionsKey, k),
-                ),
+                updatedAt: version,
                 updatedBy: deviceId,
               ),
             );
-      } else if (old.deletedAt != null) {
+      } else {
         await (_db.update(
           _db.watchlist,
         )..where((w) => w.workKey.equals(k))).write(
           WatchlistCompanion(
             addedAt: Value(now),
-            updatedAt: Value(_next(now, old.updatedAt)),
+            updatedAt: Value(version),
             updatedBy: Value(deviceId),
             deletedAt: const Value(null),
           ),
@@ -408,6 +480,116 @@ final class Library {
     )..where((e) => e.workKey.isIn(sources))).go();
   });
 
+  /// Moves visible watchlisted seasons together after a TMDB renumbering.
+  /// A target already rated is not added back to the watchlist.
+  Future<void> moveWatchlistedSeasons(
+    List<({WorkKey from, List<WorkSnapshot> to})> moves,
+  ) => _db.transaction(() async {
+    if (moves.isEmpty) return;
+    final series = moves.first.from.parent;
+    if (series == null ||
+        moves.any(
+          (m) =>
+              m.from.kind != WorkKind.season ||
+              m.from.parent != series ||
+              m.to.last.key.kind != WorkKind.season ||
+              m.to.last.key.parent != series,
+        )) {
+      throw ArgumentError('moves must contain seasons of the same series');
+    }
+    final store = SyncStore(_db);
+    final state = await store.read();
+    final rows = {for (final row in state.watchlist) row.workKey: row};
+    final sources = {
+      for (final move in moves)
+        if (rows[move.from.toString()] case final row?
+            when visibleWatchlistEntry(row, state.watchlistFences))
+          move.from.toString(): row,
+    };
+    if (sources.isEmpty) return;
+    var previous = 0;
+    for (final fence in state.watchlistFences) {
+      if (fence.seriesKey == series.toString()) {
+        previous = max(previous, fence.updatedAt);
+      }
+    }
+    for (final row in state.watchlist) {
+      final key = WorkKey.parse(row.workKey);
+      if (key == series || key.parent == series) {
+        previous = max(previous, row.updatedAt);
+      }
+    }
+    for (final deletion in state.watchlistDeletions) {
+      if (moves.any(
+        (move) => move.to.last.key.toString() == deletion.workKey,
+      )) {
+        previous = max(previous, deletion.updatedAt);
+      }
+    }
+    final now = _now();
+    final version = _next(now, previous);
+    final fence = WatchlistFence(
+      seriesKey: series.toString(),
+      season: true,
+      updatedAt: version,
+      updatedBy: deviceId,
+    );
+    await store.saveFences(
+      mergeStates(state, SyncState(watchlistFences: [fence])).watchlistFences,
+    );
+    await _unlist(series.toString(), version);
+    final targets = {
+      for (final move in moves)
+        if (sources.containsKey(move.from.toString()))
+          move.to.last.key.toString(): move,
+    };
+    final ratedTargets = <String>{};
+    for (final entry in targets.entries) {
+      final rating = await _ratingRow(entry.key);
+      if (rating != null && rating.deletedAt == null) {
+        ratedTargets.add(entry.key);
+      }
+      await _putSnapshots(
+        entry.value.to,
+        now,
+        adopt: ratedTargets.contains(entry.key)
+            ? null
+            : entry.value.to.last.key,
+      );
+    }
+    for (final source in sources.keys) {
+      if (targets.containsKey(source) && !ratedTargets.contains(source)) {
+        continue;
+      }
+      await _unlist(source, version);
+    }
+    for (final entry in targets.entries) {
+      final target = entry.key;
+      if (ratedTargets.contains(target)) {
+        await _unlist(target, version);
+        continue;
+      }
+      final existing = rows[target];
+      if (existing != null &&
+          visibleWatchlistEntry(existing, state.watchlistFences) &&
+          !sources.containsKey(target)) {
+        continue;
+      }
+      final moved = sources[entry.value.from.toString()]!;
+      await _db
+          .into(_db.watchlist)
+          .insertOnConflictUpdate(
+            WatchlistEntry(
+              workKey: target,
+              addedAt: moved.addedAt,
+              updatedAt: version,
+              updatedBy: deviceId,
+              deletedAt: null,
+            ).toCompanion(false),
+          );
+    }
+  });
+
   /// "Keep" after TMDB renumbered: each rating stays on its number and now
   /// belongs to the title TMDB has there, so its snapshot takes that title's
   /// id and the question doesn't come back. `null` — the title under the
@@ -418,12 +600,17 @@ final class Library {
       _db.transaction(() async {
         final now = _now();
         for (final MapEntry(:key, value: id) in currentIds.entries) {
+          final old = await (_db.select(
+            _db.works,
+          )..where((w) => w.workKey.equals(key.toString()))).getSingleOrNull();
           await (_db.update(
             _db.works,
           )..where((w) => w.workKey.equals(key.toString()))).write(
             WorksCompanion(
               tmdbId: Value(id ?? key.tmdbId),
-              snapshotUpdatedAt: Value(now),
+              snapshotUpdatedAt: Value(
+                old == null ? now : _next(now, old.snapshotUpdatedAt),
+              ),
             ),
           );
         }
@@ -453,12 +640,21 @@ final class Library {
           ))
           .watchSingleOrNull();
 
-  Stream<bool> watchInWatchlist(WorkKey key) =>
-      (_db.select(_db.watchlist)..where(
-            (w) => w.workKey.equals(key.toString()) & w.deletedAt.isNull(),
-          ))
-          .watchSingleOrNull()
-          .map((row) => row != null);
+  Stream<bool> watchInWatchlist(WorkKey key) => _db
+      .customSelect(
+        'SELECT 1',
+        readsFrom: {_db.watchlist, _db.ratings, _db.syncState},
+      )
+      .watch()
+      .asyncMap((_) async {
+        final row = await _watchlistRow(key.toString());
+        if (key.kind == WorkKind.season) {
+          final rating = await _ratingRow(key.toString());
+          if (rating != null && rating.deletedAt == null) return false;
+        }
+        return row != null &&
+            visibleWatchlistEntry(row, await SyncStore(_db).fences());
+      });
 
   /// The average over a season's rated episodes; for a series, over its
   /// rated seasons, or — if none is rated — over the rated episodes of all
@@ -617,26 +813,39 @@ final class Library {
     );
   }
 
-  /// The live watchlist, most recently added first.
-  Stream<List<WatchlistTitle>> watchWatchlist() =>
-      (_db.select(_db.watchlist).join([
-              innerJoin(
-                _db.works,
-                _db.works.workKey.equalsExp(_db.watchlist.workKey),
-              ),
-            ])
-            ..where(_db.watchlist.deletedAt.isNull())
-            ..orderBy([OrderingTerm.desc(_db.watchlist.addedAt)]))
-          .watch()
-          .map(
-            (rows) => [
-              for (final row in rows)
-                WatchlistTitle(
-                  entry: row.readTable(_db.watchlist),
-                  work: row.readTable(_db.works),
-                ),
-            ],
-          );
+  /// Visible entries and their series snapshots, most recently added first.
+  Stream<List<WatchlistTitle>> watchWatchlist() => _db
+      .customSelect(
+        'SELECT 1',
+        readsFrom: {_db.watchlist, _db.ratings, _db.works, _db.syncState},
+      )
+      .watch()
+      .asyncMap(
+        (_) => _db.transaction(() async {
+          final state = await SyncStore(_db).read();
+          final works = {for (final w in state.works) w.workKey: w};
+          final rated = {
+            for (final r in state.ratings)
+              if (r.deletedAt == null) r.workKey,
+          };
+          final rows = [...state.watchlist]
+            ..sort((a, b) => b.addedAt.compareTo(a.addedAt));
+          return [
+            for (final row in rows)
+              if ((WorkKey.parse(row.workKey).kind != WorkKind.season ||
+                      !rated.contains(row.workKey)) &&
+                  visibleWatchlistEntry(row, state.watchlistFences))
+                if (works[row.workKey] case final work?)
+                  WatchlistTitle(
+                    entry: row,
+                    work: work,
+                    series: WorkKey.parse(row.workKey).kind == WorkKind.season
+                        ? works[WorkKey.parse(row.workKey).parent.toString()]
+                        : null,
+                  ),
+          ];
+        }),
+      );
 
   Future<Rating?> _ratingRow(String key) => (_db.select(
     _db.ratings,
@@ -670,6 +879,11 @@ final class Library {
         if (insert) await _db.into(_db.works).insert(row);
         continue;
       }
+      if (snapshot.key == adopt) {
+        row = row.copyWith(
+          snapshotUpdatedAt: Value(_next(now, stored.snapshotUpdatedAt)),
+        );
+      }
       if (snapshot.key != adopt && await _keepsOwnId(stored, snapshot)) {
         row = row.copyWith(tmdbId: const Value.absent());
       }
@@ -686,13 +900,56 @@ final class Library {
     }
     if (incoming.tmdbId == standIn) return true;
     final rating = await _ratingRow(stored.workKey);
-    return rating != null && rating.deletedAt == null;
+    if (rating != null && rating.deletedAt == null) return true;
+    if (incoming.key.kind == WorkKind.season) {
+      final listed = await _watchlistRow(stored.workKey);
+      return listed != null && listed.deletedAt == null;
+    }
+    return false;
+  }
+
+  /// Rating or removing a season rating suppresses an older, unseen offline
+  /// watchlist selection too. This tombstone is a consequence of the edit.
+  Future<void> _unlistForSeasonRating(String key, int now) async {
+    final old = await _watchlistRow(key);
+    final compact = await _deletionTime(SyncStore.watchlistDeletionsKey, key);
+    final previous = max(old?.updatedAt ?? 0, compact);
+    if (old != null) {
+      final store = SyncStore(_db);
+      await store.saveFences((await store.read()).watchlistFences);
+      await (_db.update(
+        _db.watchlist,
+      )..where((w) => w.workKey.equals(key))).write(
+        WatchlistCompanion(
+          deletedAt: Value(now),
+          updatedAt: Value(_next(now, previous)),
+          updatedBy: Value(deviceId),
+        ),
+      );
+    } else {
+      await _db
+          .into(_db.watchlist)
+          .insert(
+            WatchlistCompanion.insert(
+              workKey: key,
+              addedAt: now,
+              updatedAt: _next(now, previous),
+              updatedBy: deviceId,
+              deletedAt: Value(now),
+            ),
+          );
+    }
   }
 
   /// Takes a title off the watchlist with a tombstone, if it is on it.
   Future<void> _unlist(String key, int now) async {
     final listed = await _watchlistRow(key);
     if (listed == null || listed.deletedAt != null) return;
+    final workKey = WorkKey.parse(key);
+    if (workKey.kind == WorkKind.tv || workKey.kind == WorkKind.season) {
+      final store = SyncStore(_db);
+      await store.saveFences((await store.read()).watchlistFences);
+    }
     await (_db.update(
       _db.watchlist,
     )..where((w) => w.workKey.equals(key))).write(

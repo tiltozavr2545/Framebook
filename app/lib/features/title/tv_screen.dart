@@ -66,6 +66,7 @@ class TvScreen extends ConsumerWidget {
         if (tv.seasons.isNotEmpty) ...[
           SectionTitle(l10n.titleSeasons),
           RenumberNotice.seasons(tv),
+          WatchlistRenumberNotice(tv: tv),
         ],
         for (final season in tv.seasons)
           ListTile(

@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:crypto/crypto.dart';
 
 import '../db/database.dart';
+import '../work_key.dart';
 import 'sync_file.dart';
 
 const purgeAge = Duration(days: 180);
@@ -128,6 +129,35 @@ List<T> _merge<T>(
   return [for (final k in keys) rows[k] as T];
 }
 
+int compareFences(WatchlistFence a, WatchlistFence b) {
+  final time = a.updatedAt.compareTo(b.updatedAt);
+  return time != 0 ? time : a.updatedBy.compareTo(b.updatedBy);
+}
+
+/// A selection of one category suppresses older selections of the other.
+/// The original rows are retained so the underlying LWW merge stays associative.
+bool visibleWatchlistEntry(
+  WatchlistEntry row,
+  Iterable<WatchlistFence> fences,
+) {
+  if (row.deletedAt != null) return false;
+  final key = WorkKey.parse(row.workKey);
+  if (key.kind != WorkKind.tv && key.kind != WorkKind.season) return true;
+  final series = key.kind == WorkKind.tv ? key : key.parent!;
+  for (final fence in fences) {
+    if (fence.seriesKey != series.toString() ||
+        fence.season == (key.kind == WorkKind.season)) {
+      continue;
+    }
+    final time = row.updatedAt.compareTo(fence.updatedAt);
+    if (time < 0 ||
+        (time == 0 && row.updatedBy.compareTo(fence.updatedBy) <= 0)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 SyncState mergeStates(SyncState a, SyncState b) {
   final rd = _merge(
     a.ratingDeletions,
@@ -169,6 +199,12 @@ SyncState mergeStates(SyncState a, SyncState b) {
     ],
     ratingDeletions: rd,
     watchlistDeletions: wd,
+    watchlistFences: _merge(
+      a.watchlistFences,
+      b.watchlistFences,
+      (f) => '${f.seriesKey}:${f.season}',
+      compareFences,
+    ),
     purgedBefore: max(a.purgedBefore, b.purgedBefore),
   );
 }
@@ -196,6 +232,12 @@ bool remoteBehind(SyncState local, SyncState remote) {
         remote.watchlist,
         (w) => w.workKey,
         compareWatchlist,
+      ) ||
+      !same(
+        merged.watchlistFences,
+        remote.watchlistFences,
+        (f) => '${f.seriesKey}:${f.season}',
+        compareFences,
       ) ||
       !same(
         merged.ratingDeletions,

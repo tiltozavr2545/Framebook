@@ -48,6 +48,7 @@ String _canonical(SyncState state) => jsonEncode({
   'purged_before': state.purgedBefore,
   'rating_deletions': [for (final d in state.ratingDeletions) d.toJson()],
   'watchlist_deletions': [for (final d in state.watchlistDeletions) d.toJson()],
+  'watchlist_fences': [for (final f in state.watchlistFences) f.toJson()],
   'works': [for (final w in state.works) SyncFile.workToJson(w)],
   'ratings': [for (final r in state.ratings) SyncFile.ratingToJson(r)],
   'watchlist': [for (final w in state.watchlist) SyncFile.watchlistToJson(w)],
@@ -126,7 +127,7 @@ void main() {
 
       final json =
           jsonDecode(utf8.decode(gzip.decode(bytes))) as Map<String, Object?>;
-      expect(json['format_version'], 2);
+      expect(json['format_version'], 3);
       expect(json['purged_before'], state.purgedBefore);
       expect(json['written_by'], 'dev-a');
       expect(json['app_version'], '0.5.0+7');
@@ -188,7 +189,7 @@ void main() {
 
     test('a file written by a newer app is refused, not misread', () {
       expect(
-        () => SyncFile.decode(_gzipJson({'format_version': 3})),
+        () => SyncFile.decode(_gzipJson({'format_version': 4})),
         throwsA(isA<SyncFileTooNew>()),
       );
     });
@@ -1190,6 +1191,261 @@ void main() {
         }
       });
     }
+  });
+
+  group('series and season selection', () {
+    WatchlistEntry entry(String key, int time, String by) => WatchlistEntry(
+      workKey: key,
+      addedAt: time,
+      updatedAt: time,
+      updatedBy: by,
+      deletedAt: null,
+    );
+    WatchlistFence fence(bool season, int time, String by) => WatchlistFence(
+      seriesKey: 'tmdb:tv:1399',
+      season: season,
+      updatedAt: time,
+      updatedBy: by,
+    );
+
+    test(
+      'group selections merge associatively and suppress older opposite rows',
+      () {
+        final series = SyncState(
+          watchlist: [entry('tmdb:tv:1399', 10, 'a')],
+          watchlistFences: [fence(false, 10, 'a')],
+        );
+        final oldSeason = SyncState(
+          watchlist: [entry('tmdb:tv:1399:s1', 5, 'b')],
+          watchlistFences: [fence(true, 5, 'b')],
+        );
+        final newSeason = SyncState(
+          watchlist: [entry('tmdb:tv:1399:s2', 15, 'c')],
+          watchlistFences: [fence(true, 15, 'c')],
+        );
+        for (final a in [series, oldSeason, newSeason]) {
+          expect(_canonical(mergeStates(a, a)), _canonical(a));
+          for (final b in [series, oldSeason, newSeason]) {
+            expect(
+              _canonical(mergeStates(a, b)),
+              _canonical(mergeStates(b, a)),
+            );
+            for (final c in [series, oldSeason, newSeason]) {
+              expect(
+                _canonical(mergeStates(mergeStates(a, b), c)),
+                _canonical(mergeStates(a, mergeStates(b, c))),
+              );
+            }
+          }
+        }
+        final merged = mergeStates(mergeStates(series, oldSeason), newSeason);
+        expect(
+          merged.watchlist
+              .where((w) => visibleWatchlistEntry(w, merged.watchlistFences))
+              .map((w) => w.workKey),
+          ['tmdb:tv:1399:s2'],
+        );
+        expect(
+          remoteBehind(
+            SyncState(watchlistFences: [fence(false, 10, 'a')]),
+            const SyncState(),
+          ),
+          isTrue,
+        );
+      },
+    );
+
+    test(
+      'randomized group merges are associative and never show both categories',
+      () {
+        final random = Random(34);
+        SyncState state() {
+          final rows = <WatchlistEntry>[];
+          final fences = <WatchlistFence>[];
+          for (var i = 0; i < 4; i++) {
+            final isSeason = random.nextBool();
+            final timestamp = random.nextInt(5) + 1;
+            final by = ['a', 'b', 'c'][random.nextInt(3)];
+            final key = isSeason
+                ? 'tmdb:tv:1399:s${random.nextInt(3) + 1}'
+                : 'tmdb:tv:1399';
+            rows.add(entry(key, timestamp, by));
+            fences.add(fence(isSeason, timestamp, by));
+          }
+          return mergeStates(
+            const SyncState(),
+            SyncState(watchlist: rows, watchlistFences: fences),
+          );
+        }
+
+        for (var i = 0; i < 500; i++) {
+          final a = state(), b = state(), c = state();
+          final left = mergeStates(mergeStates(a, b), c);
+          final right = mergeStates(a, mergeStates(b, c));
+          expect(_canonical(left), _canonical(right), reason: 'case $i');
+          final visible = left.watchlist
+              .where((w) => visibleWatchlistEntry(w, left.watchlistFences))
+              .toList();
+          expect(
+            visible.any((w) => w.workKey == 'tmdb:tv:1399') &&
+                visible.any((w) => w.workKey.startsWith('tmdb:tv:1399:s')),
+            isFalse,
+            reason: 'case $i',
+          );
+        }
+      },
+    );
+
+    test(
+      'version 2 series becomes a selection fence; version 3 requires fences',
+      () async {
+        final device = _Device('a', MemoryRemote());
+        addTearDown(device.db.close);
+        await device.library.addToWatchlist([_episode.first]);
+        final oldState = await device.store.read();
+        final json =
+            jsonDecode(
+                  utf8.decode(
+                    gzip.decode(
+                      SyncFile.encode(
+                        oldState,
+                        writtenAt: 1,
+                        writtenBy: 'a',
+                        appVersion: 'test',
+                      ),
+                    ),
+                  ),
+                )
+                as Map<String, dynamic>;
+        json['format_version'] = 2;
+        json.remove('watchlist_fences');
+        final upgraded = SyncFile.decode(_gzipJson(json));
+        expect(upgraded.watchlistFences.single.seriesKey, 'tmdb:tv:1399');
+        expect(upgraded.watchlistFences.single.season, isFalse);
+        json['format_version'] = 3;
+        expect(
+          () => SyncFile.decode(_gzipJson(json)),
+          throwsA(isA<SyncFileBroken>()),
+        );
+        json['watchlist_fences'] = [];
+        expect(
+          () => SyncFile.decode(_gzipJson(json)),
+          throwsA(isA<SyncFileBroken>()),
+        );
+      },
+    );
+
+    test(
+      'explicit replacement restores the older whole-series selection',
+      () async {
+        final device = _Device('a', MemoryRemote());
+        addTearDown(device.db.close);
+        await device.library.addToWatchlist([_episode.first]);
+        final backup = await device.store.read();
+        device.now += 10;
+        await device.library.addToWatchlist(_episode.take(2).toList());
+        expect(
+          await device.library.watchInWatchlist(_episode[1].key).first,
+          isTrue,
+        );
+        await device.store.replaceWith(
+          backup,
+          deviceId: device.id,
+          now: device.now,
+        );
+        expect(
+          await device.library.watchInWatchlist(_episode.first.key).first,
+          isTrue,
+        );
+        expect(
+          await device.library.watchInWatchlist(_episode[1].key).first,
+          isFalse,
+        );
+      },
+    );
+
+    test(
+      'an offline season selection stays hidden while rated and does not return when the rating is deleted',
+      () async {
+        final remote = MemoryRemote();
+        final rated = _Device('rated', remote, start: 100);
+        final listed = _Device('listed', remote, start: 200);
+        addTearDown(() async {
+          await rated.db.close();
+          await listed.db.close();
+        });
+        final season = _episode.take(2).toList();
+        await rated.library.rate(season, scoreHalf: 12, note: null);
+        await listed.library.addToWatchlist(season);
+        await rated.engine.sync();
+        await listed.engine.sync();
+        await rated.engine.sync();
+        expect(
+          await rated.library.watchInWatchlist(season.last.key).first,
+          isFalse,
+        );
+        expect(
+          await listed.library.watchInWatchlist(season.last.key).first,
+          isFalse,
+        );
+        rated.now = 300;
+        await rated.library.deleteRating(season.last.key);
+        await rated.engine.sync();
+        await listed.engine.sync();
+        expect(
+          await rated.library.watchInWatchlist(season.last.key).first,
+          isFalse,
+        );
+        expect(
+          await listed.library.watchInWatchlist(season.last.key).first,
+          isFalse,
+        );
+      },
+    );
+
+    test(
+      'offline devices converge and do not revive seasons superseded by a series',
+      () async {
+        final remote = MemoryRemote();
+        final a = _Device('a', remote, start: 100);
+        final b = _Device('b', remote, start: 50);
+        final c = _Device('c', remote, start: 150);
+        addTearDown(() async {
+          await a.db.close();
+          await b.db.close();
+          await c.db.close();
+        });
+        final second = [
+          _episode.first,
+          const WorkSnapshot(
+            key: WorkKey.season(1399, 2),
+            tmdbId: 3625,
+            title: 'Season 2',
+          ),
+        ];
+        await a.library.addToWatchlist([_episode.first]);
+        await b.library.addToWatchlist(_episode.take(2).toList());
+        await c.library.addToWatchlist(second);
+        for (var round = 0; round < 3; round++) {
+          for (final device in [a, b, c]) {
+            await device.engine.sync();
+          }
+        }
+        final states = [
+          for (final device in [a, b, c]) await device.store.read(),
+        ];
+        expect(_canonical(states[1]), _canonical(states[0]));
+        expect(_canonical(states[2]), _canonical(states[0]));
+        for (final state in states) {
+          expect(
+            state.watchlist
+                .where((w) => visibleWatchlistEntry(w, state.watchlistFences))
+                .map((w) => w.workKey),
+            ['tmdb:tv:1399:s2'],
+          );
+        }
+      },
+    );
   });
 
   group('convergence', () {

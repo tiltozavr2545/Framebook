@@ -111,9 +111,10 @@ own, and nothing moves without the user's answer.
   user actions — never through detection or Keep.
 - The sync file is unchanged: `works.tmdb_id` already travelled in it, and
   a move is an ordinary tombstone plus an ordinary rating.
-- The watchlist holds only films and series, whose keys don't renumber.
-  When seasons join it (Stage 6.5, item 11), a season's watchlist row has
-  to follow renumbering the same way.
+- Watchlisted seasons use the same detection and Move / Keep prompt. Moves
+  preserve their added date and update snapshots; a destination already
+  rated is not re-added to the watchlist. Until answered, a watchlisted
+  season's own TMDB id is protected from snapshot refreshes.
 
 ---
 
@@ -196,15 +197,22 @@ Rating a title again after deletion (tombstone) is an UPDATE of the same row:
 
 | Column | Type | Comment |
 |---|---|---|
-| `work_key` | text PK, FK → `works` | in the MVP, only `movie` and `tv` |
+| `work_key` | text PK, FK → `works` | `movie`, `tv`, or `season` |
 | `added_at` | int | UTC ms |
 | `updated_at` | int | UTC ms |
 | `updated_by` | text | `device_id` |
 | `deleted_at` | int null | tombstone |
 
-Rating a title sets `deleted_at` on its `watchlist` row in the same
-transaction. Not the other way round: deleting a rating doesn't put the film
-back on the list.
+Rating a title removes it from the watchlist in the same transaction.
+A season rating also records a tombstone when the list entry is absent, so
+an older offline addition cannot return after the rating is deleted.
+Deleting a rating does not put the title back on the list.
+
+Several seasons can be listed under one series. Selecting the whole series
+unlists its seasons; selecting a season unlists the whole series. Group
+selection registers make this rule deterministic across offline devices
+([sync.md](sync.md)). Rows suppressed by a later opposite selection stay in
+the synced data but are hidden, so merging remains associative.
 
 ---
 
@@ -258,7 +266,8 @@ older than a week are deleted (on app start).
 
 `device_id` (a UUID created on first launch and never changed),
 `last_sync_at`, `last_remote_modified_time`, `last_sync_error`,
-`purged_before`, and JSON-encoded `rating_deletions` / `watchlist_deletions`.
+`purged_before`, JSON-encoded `rating_deletions` / `watchlist_deletions`,
+and `watchlist_fences` for the latest series and season selections.
 The compact deletion registers retain only the natural key and deletion
 version, not a score, note or snapshot. They have no foreign key to `works`
 and are included in the sync file even though stored in this key-value table.

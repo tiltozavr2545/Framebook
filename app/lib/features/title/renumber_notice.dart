@@ -150,6 +150,71 @@ class RenumberNotice extends ConsumerWidget {
   }
 }
 
+/// The same TMDB move question for seasons on the watchlist.
+class WatchlistRenumberNotice extends ConsumerWidget {
+  const WatchlistRenumberNotice({super.key, required this.tv, this.about});
+  final TvDetails tv;
+  final WorkKey? about;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final listed = ref.watch(watchlistTitlesProvider).value;
+    if (listed == null) return const SizedBox.shrink();
+    final parts = [
+      for (final title in listed)
+        if (title.key.kind == WorkKind.season && title.key.parent == tv.key)
+          RatedPart(key: title.key, tmdbId: title.work.tmdbId, scoreHalf: 0),
+    ];
+    final current = {
+      for (final season in tv.seasons) season.key: season.tmdbId,
+    };
+    final question = proposeRenumbering(
+      rated: parts,
+      current: current,
+    ).where((r) => about == null || r.touches(about!)).firstOrNull;
+    if (question == null) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
+    final library = ref.read(libraryProvider);
+    String name(WorkKey key) => seasonName(l10n, key.season!, null);
+    final text = question.moves.length == 1
+        ? l10n.watchlistRenumber(
+            name(question.moves.single.from),
+            name(question.moves.single.to),
+          )
+        : l10n.watchlistRenumberMany(
+            question.moves
+                .map((m) => '${name(m.from)} → ${name(m.to)}')
+                .join(', '),
+          );
+    return _Notice(
+      text: text,
+      actions: [
+        (
+          l10n.renumberKeep,
+          () => library.keepRatings({
+            for (final move in question.moves) move.from: current[move.from],
+          }),
+        ),
+        (
+          l10n.renumberMove,
+          () => library.moveWatchlistedSeasons([
+            for (final move in question.moves)
+              (
+                from: move.from,
+                to: [
+                  WorkSnapshot.tv(tv),
+                  WorkSnapshot.seasonSummary(
+                    tv.seasons.firstWhere((s) => s.key == move.to),
+                  ),
+                ],
+              ),
+          ]),
+        ),
+      ],
+    );
+  }
+}
+
 class _Notice extends StatelessWidget {
   const _Notice({required this.text, required this.actions});
 

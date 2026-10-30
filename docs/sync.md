@@ -32,10 +32,11 @@ JSON, gzipped. Rows are the same columns as in the database, in
 
 ```json
 {
-  "format_version": 2,
+  "format_version": 3,
   "purged_before": 0,
   "rating_deletions": [],
   "watchlist_deletions": [],
+  "watchlist_fences": [],
   "written_at": 1760870400000,
   "written_by": "6f1c…-device-uuid",
   "app_version": "0.7.0+9",
@@ -72,9 +73,11 @@ Format rules:
   is also needed for importing old exports.
 - The file gets retained `ratings` and `watchlist` rows, their compact deletion
   records, and the `works` rows the retained rows refer to, with their ancestors.
-- Version 2 adds `purged_before` and compact deletion records. Version 1 is
-  read with a zero watermark and no compact records. Version 1 clients must
-  update before they can read a version 2 file.
+- Version 2 adds `purged_before` and compact deletion records; version 1
+  reads with a zero watermark and no compact records. Version 3 adds
+  `watchlist_fences`; versions 1 and 2 are read with a series-selection
+  register derived from each live whole-series entry. Older clients must
+  update before syncing a newer file.
 - API keys, settings and the rating cache never go into the rating sync
   file. Optional encrypted key sync uses a separate file (see below).
 
@@ -96,6 +99,26 @@ This merge is **commutative, associative and idempotent**: whatever order and
 however many times the devices synced, the states converge. This property is
 the main thing the rest of the algorithm rests on, and it is covered by tests
 on random sequences of edits (property-based).
+
+### Series and season watchlist choices
+
+Each series has two permanent LWW selection registers: the latest explicit
+whole-series selection and latest season selection. A visible series or
+season entry must be newer than the opposite register. Selecting a whole
+series hides older season entries; selecting a season hides an older series
+entry. Multiple seasons newer than the last series selection remain visible.
+Versions use `(updated_at, updated_by)`, with a local edit always newer than
+both known group registers, even if the clock lags.
+
+The ordinary watchlist rows remain independent LWW registers: a row hidden by
+an opposite selection is retained rather than fabricated into a new version.
+This preserves associative merging and prevents stale devices from bringing
+back an older choice after the winning entry is later removed. An explicit
+replacement import restores the file's visible selections as new edits.
+An active season rating also hides its list entry, and editing or deleting a
+season rating records a per-key watchlist tombstone so older offline list
+entries do not return when the rating is removed. The group registers live
+in the existing `sync_state` key-value table and travel in format 3 exports.
 
 ### One pass of the algorithm
 

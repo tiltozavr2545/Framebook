@@ -451,6 +451,16 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String watchlistRenumber(String from, String to) {
+    return 'Сезон в списке «Буду смотреть» переместился с $from на $to. Перенести?';
+  }
+
+  @override
+  String watchlistRenumberMany(String moves) {
+    return 'Сезоны в списке «Буду смотреть» перенумерованы: $moves. Перенести?';
+  }
+
+  @override
   String get renumberMove => 'Перенести';
 
   @override

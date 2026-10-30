@@ -149,8 +149,8 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
   their notes and unneeded title snapshots. Small deletion records remain so
   old devices and exported backups cannot silently bring them back. Sync
   asks before removing unsynced local edits and lets you keep them instead.
-  The sync file is now version 2; old exports still import, while older app
-  versions must update before syncing.
+  Old exports still import, while older app versions must update before
+  syncing the new file format.
 - Optionally sync your API keys and preferred comparison source through a
   separate password-encrypted file in your Google Drive. Restore them on
   first launch without entering the TMDB key again; each device remembers
@@ -169,3 +169,8 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
   needs a computer, and the PoiskKino guide explains its Telegram membership
   requirements.
 - Actor names and roles fit more reliably at larger text and display sizes.
+- Add individual seasons to the watchlist, grouped under their series.
+  Rating a season removes it; choosing a whole series replaces its seasons,
+  and choosing a season replaces the whole-series selection. If TMDB changes
+  season numbers, the app asks whether to move the saved entry. The sync
+  format is now version 3; older exports remain readable.

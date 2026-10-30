@@ -329,7 +329,7 @@ and the optimization see the final code.
     text with an actor's role is sometimes cut off. It must fit at any
     scale (wrap or ellipsize deliberately, tested at large font and display
     sizes).
-11. A watchlist for seasons ("finish season 3"): a season can be put on the
+11. ✅ A watchlist for seasons ("finish season 3"): a season can be put on the
    watchlist on its own, grouped under the series. Selecting a season removes
    the whole-series entry; selecting the series removes its season entries.
    Rating a season removes it from the watchlist. A season's row follows

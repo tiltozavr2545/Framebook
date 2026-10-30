@@ -135,6 +135,8 @@
   "renumberManySeasons": "Ваши оценки были за сезоны, у которых теперь другие номера: {moves}. Перенести их?",
   "renumberConflictEpisode": "Оценка {fromScore} у «{from}» была за серию, которая теперь «{to}», а там уже стоит ваша {toScore}. Какую оставить?",
   "renumberConflictSeason": "Оценка {fromScore} у «{from}» была за сезон, который теперь «{to}», а там уже стоит ваша {toScore}. Какую оставить?",
+  "watchlistRenumber": "Сезон в списке «Буду смотреть» переместился с {from} на {to}. Перенести?",
+  "watchlistRenumberMany": "Сезоны в списке «Буду смотреть» перенумерованы: {moves}. Перенести?",
   "renumberMove": "Перенести",
   "renumberKeep": "Оставить",
   "renumberKeepScore": "Оставить {score}",

@@ -527,6 +527,29 @@ void main() {
     expect(find.text('9'), findsOneWidget);
   });
 
+  cardTest('watchlisted seasons appear under their series and can be undone', (
+    tester,
+  ) async {
+    await pumpApp(tester, keys: tmdbOnly);
+    go(tester, '/search/tv/1399/s/1');
+    await settle(tester);
+    await tester.tap(find.text('Want to watch'));
+    await settle(tester);
+    await tester.tap(tab('Watchlist'));
+    await settle(tester);
+    expect(inList('Игра Престолов'), findsOneWidget);
+    expect(inList('Сезон 1'), findsOneWidget);
+    await tester.tap(find.byTooltip('Remove from the watchlist'));
+    await settle(tester);
+    expect(inList('Сезон 1'), findsNothing);
+    await tester.tap(find.text('Undo'));
+    await settle(tester);
+    expect(inList('Сезон 1'), findsOneWidget);
+    await tester.tap(inList('Сезон 1'));
+    await settle(tester);
+    expect(find.text('On the watchlist'), findsOneWidget);
+  });
+
   cardTest('the watchlist: add from the card, remove and undo in the tab', (
     tester,
   ) async {
@@ -653,6 +676,42 @@ void main() {
       findsOneWidget,
     );
   });
+
+  cardTest(
+    'a watchlisted season follows a TMDB renumbering after confirmation',
+    (tester) async {
+      await pumpApp(
+        tester,
+        keys: tmdbOnly,
+        seed: (library) => library.addToWatchlist([
+          const WorkSnapshot(key: WorkKey.tv(1399), tmdbId: 1399, title: 'GoT'),
+          const WorkSnapshot(
+            key: WorkKey.season(1399, 2),
+            tmdbId: 3624,
+            title: 'Сезон 2',
+          ),
+        ]),
+      );
+      go(tester, '/search/tv/1399');
+      await settle(tester);
+      const question =
+          'A season on your watchlist moved from Season 2 to Season 1. Move it?';
+      await tester.scrollUntilVisible(
+        find.text(question),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.ensureVisible(find.widgetWithText(TextButton, 'Move'));
+      await settle(tester);
+      await tester.tap(find.widgetWithText(TextButton, 'Move'));
+      await settle(tester);
+      expect(find.text(question), findsNothing);
+      await tester.tap(tab('Watchlist'));
+      await settle(tester);
+      expect(inList('Сезон 1'), findsOneWidget);
+      expect(inList('Сезон 2'), findsNothing);
+    },
+  );
 
   cardTest('keeping a renumbered season\'s rating asks no more', (
     tester,

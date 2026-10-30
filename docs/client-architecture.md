@@ -332,6 +332,13 @@ hours; a manual check is available on About. Dismissal persists per version,
 and the banner opens the release page. Offline and API errors are quiet during
 automatic checks. Tests use a fake source, not the network.
 
+The watchlist groups season entries under a tappable series header; the
+header need not be a watchlist selection itself. Adding the whole series
+and adding a season displace the opposite selection. The local and sync
+rules, including concurrent offline selections, are in [sync.md](sync.md).
+The series and season cards ask Move / Keep when TMDB renumbers a listed
+season, using the ids already loaded on the card.
+
 The comparison panel in the rating editor appears only with more than 20
 other live film ratings or more than 10 other live ratings of the same TV,
 season or episode kind. The threshold is checked before opening the editor,

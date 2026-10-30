@@ -264,8 +264,159 @@ void main() {
       expect(await library.watchInWatchlist(matrix.key).first, isFalse);
     });
 
-    test('only films and series go on the watchlist', () {
-      expect(() => library.addToWatchlist(season()), throwsArgumentError);
+    test(
+      'seasons displace series, series displaces all seasons, rating removes a season',
+      () async {
+        final series = [WorkSnapshot.tv(thrones)];
+        final first = season();
+        final second = [
+          series.first,
+          const WorkSnapshot(
+            key: WorkKey.season(1399, 2),
+            tmdbId: 7002,
+            title: 'Season 2',
+          ),
+        ];
+        await library.addToWatchlist(series);
+        await library.addToWatchlist(first);
+        expect(await library.watchInWatchlist(series.last.key).first, isFalse);
+        expect(await library.watchInWatchlist(first.last.key).first, isTrue);
+        await library.addToWatchlist(second);
+        final listed = await library.watchWatchlist().first;
+        expect(listed.map((t) => t.key).toSet(), {
+          first.last.key,
+          second.last.key,
+        });
+        expect(
+          listed.every((t) => t.series?.workKey == series.first.key.toString()),
+          isTrue,
+        );
+        await library.addToWatchlist(series);
+        expect(await library.watchInWatchlist(first.last.key).first, isFalse);
+        expect(await library.watchInWatchlist(second.last.key).first, isFalse);
+        expect(await library.watchInWatchlist(series.last.key).first, isTrue);
+        await library.addToWatchlist(first);
+        await library.rate(first, scoreHalf: 12, note: null);
+        expect(await library.watchInWatchlist(first.last.key).first, isFalse);
+        await library.addToWatchlist(first);
+        expect(await library.watchInWatchlist(first.last.key).first, isFalse);
+      },
+    );
+
+    test(
+      'watchlisted season keeps its TMDB id until renumbering is answered',
+      () async {
+        final first = season();
+        await library.addToWatchlist(first);
+        final changed = [
+          first.first,
+          const WorkSnapshot(
+            key: WorkKey.season(1399, 1),
+            tmdbId: 9000,
+            title: 'New season',
+          ),
+        ];
+        await library.refreshSnapshots(changed);
+        expect((await workRow(first.last.key.toString()))!.tmdbId, 3624);
+        final destination = [
+          first.first,
+          const WorkSnapshot(
+            key: WorkKey.season(1399, 2),
+            tmdbId: 3624,
+            title: 'Moved season',
+          ),
+        ];
+        final before = (await watchRow(first.last.key))!.addedAt;
+        await library.moveWatchlistedSeasons([
+          (from: first.last.key, to: destination),
+        ]);
+        expect(await library.watchInWatchlist(first.last.key).first, isFalse);
+        expect(
+          await library.watchInWatchlist(destination.last.key).first,
+          isTrue,
+        );
+        expect((await watchRow(destination.last.key))!.addedAt, before);
+        expect((await workRow(destination.last.key.toString()))!.tmdbId, 3624);
+      },
+    );
+
+    test(
+      'moving a watchlisted season to an already rated season removes it',
+      () async {
+        final first = season();
+        final destination = [
+          first.first,
+          const WorkSnapshot(
+            key: WorkKey.season(1399, 2),
+            tmdbId: 3624,
+            title: 'Season 2',
+          ),
+        ];
+        await library.addToWatchlist(first);
+        await library.rate(destination, scoreHalf: 12, note: null);
+        await library.moveWatchlistedSeasons([
+          (from: first.last.key, to: destination),
+        ]);
+        expect(await library.watchInWatchlist(first.last.key).first, isFalse);
+        expect(
+          await library.watchInWatchlist(destination.last.key).first,
+          isFalse,
+        );
+        expect((await ratingRow(destination.last.key))!.scoreHalf, 12);
+      },
+    );
+
+    test(
+      'watchlisted seasons can swap numbers without losing either selection',
+      () async {
+        final series = WorkSnapshot.tv(thrones);
+        final first = [
+          series,
+          const WorkSnapshot(
+            key: WorkKey.season(1399, 1),
+            tmdbId: 3624,
+            title: 'One',
+          ),
+        ];
+        final second = [
+          series,
+          const WorkSnapshot(
+            key: WorkKey.season(1399, 2),
+            tmdbId: 3625,
+            title: 'Two',
+          ),
+        ];
+        await library.addToWatchlist(first);
+        await library.addToWatchlist(second);
+        final movedFirst = [
+          series,
+          const WorkSnapshot(
+            key: WorkKey.season(1399, 2),
+            tmdbId: 3624,
+            title: 'One',
+          ),
+        ];
+        final movedSecond = [
+          series,
+          const WorkSnapshot(
+            key: WorkKey.season(1399, 1),
+            tmdbId: 3625,
+            title: 'Two',
+          ),
+        ];
+        await library.moveWatchlistedSeasons([
+          (from: first.last.key, to: movedFirst),
+          (from: second.last.key, to: movedSecond),
+        ]);
+        expect(await library.watchInWatchlist(first.last.key).first, isTrue);
+        expect(await library.watchInWatchlist(second.last.key).first, isTrue);
+        expect((await workRow(first.last.key.toString()))!.tmdbId, 3625);
+        expect((await workRow(second.last.key.toString()))!.tmdbId, 3624);
+      },
+    );
+
+    test('episodes cannot be added to the watchlist', () {
+      expect(() => library.addToWatchlist(episode(1)), throwsArgumentError);
     });
   });
 

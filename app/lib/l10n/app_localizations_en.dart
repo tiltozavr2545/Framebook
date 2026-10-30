@@ -448,6 +448,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String watchlistRenumber(String from, String to) {
+    return 'A season on your watchlist moved from $from to $to. Move it?';
+  }
+
+  @override
+  String watchlistRenumberMany(String moves) {
+    return 'Seasons on your watchlist were renumbered: $moves. Move them?';
+  }
+
+  @override
   String get renumberMove => 'Move';
 
   @override

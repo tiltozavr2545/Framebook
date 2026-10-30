@@ -810,6 +810,18 @@ abstract class AppLocalizations {
     String toScore,
   );
 
+  /// No description provided for @watchlistRenumber.
+  ///
+  /// In en, this message translates to:
+  /// **'A season on your watchlist moved from {from} to {to}. Move it?'**
+  String watchlistRenumber(String from, String to);
+
+  /// No description provided for @watchlistRenumberMany.
+  ///
+  /// In en, this message translates to:
+  /// **'Seasons on your watchlist were renumbered: {moves}. Move them?'**
+  String watchlistRenumberMany(String moves);
+
   /// No description provided for @renumberMove.
   ///
   /// In en, this message translates to:

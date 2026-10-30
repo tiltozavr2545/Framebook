@@ -27,6 +27,7 @@ final class SyncStore {
   static const purgedBeforeKey = 'purged_before';
   static const ratingDeletionsKey = 'rating_deletions';
   static const watchlistDeletionsKey = 'watchlist_deletions';
+  static const watchlistFencesKey = 'watchlist_fences';
 
   /// Everything that goes into the file: every rating and watchlist row,
   /// tombstones included, the snapshots they refer to with their ancestors,
@@ -52,6 +53,24 @@ final class SyncStore {
       purgedBefore: await _purgedBefore(),
       ratingDeletions: await _deletions(ratingDeletionsKey),
       watchlistDeletions: await _deletions(watchlistDeletionsKey),
+      watchlistFences: mergeStates(
+        SyncState(watchlistFences: await fences()),
+        SyncState(
+          watchlistFences: [
+            for (final row in watchlist)
+              if (row.deletedAt == null)
+                if (WorkKey.tryParse(row.workKey) case final key?
+                    when key.kind == WorkKind.tv || key.kind == WorkKind.season)
+                  WatchlistFence(
+                    seriesKey: (key.kind == WorkKind.tv ? key : key.parent!)
+                        .toString(),
+                    season: key.kind == WorkKind.season,
+                    updatedAt: row.updatedAt,
+                    updatedBy: row.updatedBy,
+                  ),
+          ],
+        ),
+      ).watchlistFences,
     );
   });
 
@@ -131,6 +150,7 @@ final class SyncStore {
       }
     }
     await _saveDeletions(merged);
+    await saveFences(merged.watchlistFences);
     await _setPurgedBefore(merged.purgedBefore);
     await _pruneWorks();
     return changed;
@@ -261,6 +281,7 @@ final class SyncStore {
       SyncState(
         ratingDeletions: registers.ratingDeletions,
         watchlistDeletions: registers.watchlistDeletions,
+        watchlistFences: registers.watchlistFences,
       ),
     );
     file = SyncState(
@@ -271,11 +292,15 @@ final class SyncStore {
       ],
       watchlist: [
         for (final row in file.watchlist)
-          if (!absent.watchlist.contains(row.workKey)) row,
+          if (!absent.watchlist.contains(row.workKey) &&
+              (row.deletedAt != null ||
+                  visibleWatchlistEntry(row, file.watchlistFences)))
+            row,
       ],
       purgedBefore: file.purgedBefore,
       ratingDeletions: file.ratingDeletions,
       watchlistDeletions: file.watchlistDeletions,
+      watchlistFences: file.watchlistFences,
     );
     await _saveDeletions(mergeStates(localState, file));
     var changed = 0;
@@ -348,9 +373,29 @@ final class SyncStore {
     }
     for (final wanted in file.watchlist) {
       final local = await _listed(wanted.workKey);
+      final key = WorkKey.parse(wanted.workKey);
+      final series = key.kind == WorkKind.tv
+          ? key
+          : key.kind == WorkKind.season
+          ? key.parent
+          : null;
+      var previous = max(wanted.updatedAt, local?.updatedAt ?? 0);
+      if (series != null) {
+        for (final fence in registers.watchlistFences) {
+          if (fence.seriesKey == series.toString()) {
+            previous = max(previous, fence.updatedAt);
+          }
+        }
+      }
+      final compact = registers.watchlistDeletions
+          .where((d) => d.workKey == wanted.workKey)
+          .firstOrNull;
+      previous = max(previous, compact?.updatedAt ?? 0);
       if (local != null &&
           local.addedAt == wanted.addedAt &&
-          (local.deletedAt == null) == (wanted.deletedAt == null)) {
+          (local.deletedAt == null) == (wanted.deletedAt == null) &&
+          (local.deletedAt != null ||
+              visibleWatchlistEntry(local, registers.watchlistFences))) {
         continue;
       }
       await _db
@@ -358,18 +403,14 @@ final class SyncStore {
           .insertOnConflictUpdate(
             _full(
               wanted.copyWith(
-                updatedAt: _next(
-                  now,
-                  local == null || local.updatedAt < wanted.updatedAt
-                      ? wanted.updatedAt
-                      : local.updatedAt,
-                ),
+                updatedAt: _next(now, previous),
                 updatedBy: deviceId,
               ),
             ),
           );
       changed++;
     }
+    await saveFences((await read()).watchlistFences);
     await _pruneWorks();
     return changed;
   });
@@ -401,6 +442,20 @@ final class SyncStore {
     }
     return -1;
   }
+
+  Future<List<WatchlistFence>> fences() async {
+    final value = await stateValue(watchlistFencesKey);
+    if (value == null) return [];
+    return [
+      for (final row in jsonDecode(value) as List<dynamic>)
+        WatchlistFence.fromJson(row),
+    ];
+  }
+
+  Future<void> saveFences(List<WatchlistFence> fences) => setStateValue(
+    watchlistFencesKey,
+    jsonEncode([for (final f in fences) f.toJson()]),
+  );
 
   Future<List<DeletionRecord>> _deletions(String key) async {
     final value = await stateValue(key);
