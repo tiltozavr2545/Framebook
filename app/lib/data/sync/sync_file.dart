@@ -4,22 +4,79 @@ import 'dart:io' show gzip;
 import '../db/database.dart';
 import '../work_key.dart';
 
-/// The state a device shares through Google Drive or an export file
-/// (docs/sync.md, "File format"): every `ratings` and `watchlist` row,
-/// tombstones included, and the `works` rows they refer to with their
-/// ancestors.
+/// A permanent, compact version of a deleted row.
+final class DeletionRecord {
+  const DeletionRecord({
+    required this.workKey,
+    required this.updatedAt,
+    required this.updatedBy,
+    required this.tieBreak,
+  });
+  final String workKey;
+  final int updatedAt;
+  final String updatedBy;
+  final String tieBreak;
+
+  Map<String, Object?> toJson() => {
+    'work_key': workKey,
+    'updated_at': updatedAt,
+    'updated_by': updatedBy,
+    'tie_break': tieBreak,
+  };
+  static DeletionRecord fromJson(Object? raw) {
+    final row = _Row(raw, 'deletions');
+    final key = row.string('work_key');
+    final hash = row.string('tie_break');
+    final time = row.integer('updated_at');
+    if (WorkKey.tryParse(key) == null ||
+        time < 0 ||
+        !RegExp(r'^[0-9a-f]{64}$').hasMatch(hash)) {
+      throw const _BadRow('invalid deletion record');
+    }
+    return DeletionRecord(
+      workKey: key,
+      updatedAt: time,
+      updatedBy: row.string('updated_by'),
+      tieBreak: hash,
+    );
+  }
+}
+
+/// The shared ratings, watchlist, snapshots, compact deletions and cleanup cutoff.
 final class SyncState {
   const SyncState({
     this.works = const [],
     this.ratings = const [],
     this.watchlist = const [],
+    this.purgedBefore = 0,
+    this.ratingDeletions = const [],
+    this.watchlistDeletions = const [],
   });
 
   final List<Work> works;
   final List<Rating> ratings;
   final List<WatchlistEntry> watchlist;
+  final List<DeletionRecord> ratingDeletions;
+  final List<DeletionRecord> watchlistDeletions;
 
-  bool get isEmpty => works.isEmpty && ratings.isEmpty && watchlist.isEmpty;
+  /// Cleanup cutoff in UTC milliseconds. Absence does not imply deletion.
+  final int purgedBefore;
+
+  SyncState withPurgedBefore(int value) => SyncState(
+    works: works,
+    ratings: ratings,
+    watchlist: watchlist,
+    purgedBefore: value,
+    ratingDeletions: ratingDeletions,
+    watchlistDeletions: watchlistDeletions,
+  );
+
+  bool get isEmpty =>
+      works.isEmpty &&
+      ratings.isEmpty &&
+      watchlist.isEmpty &&
+      ratingDeletions.isEmpty &&
+      watchlistDeletions.isEmpty;
 
   /// Live ratings: what the first sign-in dialog counts.
   int get liveRatings => ratings.where((r) => r.deletedAt == null).length;
@@ -56,9 +113,10 @@ final class SyncFileTooNew extends SyncFileException {
 /// [formatVersion] goes up on **any** change of the set of fields, even an
 /// optional one: an old client would drop the field it doesn't know when it
 /// rewrote the file (docs/sync.md, "Format rules"). Reading keeps every
-/// earlier version working, for old exports.
+/// earlier version working, for old exports: version 1 had no
+/// `purged_before` and reads as 0.
 abstract final class SyncFile {
-  static const formatVersion = 1;
+  static const formatVersion = 2;
 
   /// The state file in `appDataFolder`.
   static const name = 'framebook-sync.json.gz';
@@ -75,6 +133,11 @@ abstract final class SyncFile {
         'written_at': writtenAt,
         'written_by': writtenBy,
         'app_version': appVersion,
+        'purged_before': state.purgedBefore,
+        'rating_deletions': [for (final d in state.ratingDeletions) d.toJson()],
+        'watchlist_deletions': [
+          for (final d in state.watchlistDeletions) d.toJson(),
+        ],
         'works': [for (final w in state.works) workToJson(w)],
         'ratings': [for (final r in state.ratings) ratingToJson(r)],
         'watchlist': [for (final w in state.watchlist) watchlistToJson(w)],
@@ -98,7 +161,17 @@ abstract final class SyncFile {
       throw const SyncFileBroken('no format_version');
     }
     if (version > formatVersion) throw SyncFileTooNew(version);
+    final purgedBefore = switch (json['purged_before']) {
+      _ when version < 2 => 0,
+      final int p when p >= 0 => p,
+      _ => throw const SyncFileBroken('no purged_before'),
+    };
     try {
+      if (version >= 2 &&
+          (json['rating_deletions'] is! List ||
+              json['watchlist_deletions'] is! List)) {
+        throw const _BadRow('missing deletion registers');
+      }
       final works = [for (final w in _list(json, 'works')) workFromJson(w)];
       final ratings = [
         for (final r in _list(json, 'ratings')) ratingFromJson(r),
@@ -107,7 +180,20 @@ abstract final class SyncFile {
         for (final w in _list(json, 'watchlist')) watchlistFromJson(w),
       ];
       _checkReferences(works, ratings, watchlist);
-      return SyncState(works: works, ratings: ratings, watchlist: watchlist);
+      return SyncState(
+        works: works,
+        ratings: ratings,
+        watchlist: watchlist,
+        purgedBefore: purgedBefore,
+        ratingDeletions: [
+          for (final d in _list(json, 'rating_deletions'))
+            DeletionRecord.fromJson(d),
+        ],
+        watchlistDeletions: [
+          for (final d in _list(json, 'watchlist_deletions'))
+            DeletionRecord.fromJson(d),
+        ],
+      );
     } on _BadRow catch (e) {
       throw SyncFileBroken(e.reason);
     }

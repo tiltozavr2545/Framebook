@@ -320,10 +320,11 @@ The design is [sync.md](sync.md); here is what lives where in
 - `sync_file.dart` — the file format: gzipped JSON with `format_version`,
   strict reading; a broken file and one from a newer app are different
   errors, and neither is ever overwritten.
-- `merge.dart` — last write wins row by row, as pure functions; ties on the
-  version fall to the larger canonical JSON so the merge stays commutative,
-  associative and idempotent. Property tests check exactly that, and that
-  three devices converge whatever the order of edits and syncs.
+- `merge.dart` — last write wins row by row, including permanent compact
+  deletion registers. Deterministic tie breaking and equivalent full/compact
+  deletions keep the merge commutative, associative and idempotent. Property
+  tests check exactly that, and that three devices converge whatever the
+  order of edits and syncs.
 - `sync_store.dart` — the database side: reading the shared state, applying
   someone else's in one transaction (a row is written only where it wins over
   what is stored at that moment), and "replace everything". Rows are written
@@ -341,6 +342,10 @@ The design is [sync.md](sync.md); here is what lives where in
   token is dropped and the call retried once.
 - Settings → Sync and backup is `features/settings/sync_screen.dart`; export
   and import go through the system "Save to…" / file picker (file_picker).
+  A paused-sync warning asks before applying compact deletions over unsynced
+  live edits. Keep restores those entries with a newer version; Discard
+  applies the deletions. Cancel leaves sync paused. Imports expose the same
+  choice when necessary. Cleanup rules are in [sync.md](sync.md).
 
 ## Design (Stage 6)
 

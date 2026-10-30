@@ -145,3 +145,9 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
   title's new number, or keep it where it is. If the new number already has
   your rating, you choose which score stays. The sync file format is
   unchanged.
+- Deleted ratings and watchlist entries are compacted after 180 days, freeing
+  their notes and unneeded title snapshots. Small deletion records remain so
+  old devices and exported backups cannot silently bring them back. Sync
+  asks before removing unsynced local edits and lets you keep them instead.
+  The sync file is now version 2; old exports still import, while older app
+  versions must update before syncing.

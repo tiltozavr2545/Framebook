@@ -242,6 +242,13 @@
   "syncDeleteTitle": "Delete the data from Google Drive?",
   "syncDeleteBody": "The file and the daily copies will be deleted, and this device will sign out. Your ratings stay on your devices. Another device that is still signed in will put its data back on its next sync.",
   "syncDeleted": "Deleted from Google Drive",
+  "syncStaleTitle": "Unsynced changes to deleted entries",
+  "syncStaleBody": "Unsynced ratings and watchlist entries on this device that conflict with a newer deletion in Google Drive: {count}. Keep restores these entries on your devices. Discard applies the deletion. Sync is paused until you choose.",
+  "@syncStaleBody": {"placeholders": {"count": {"type": "int"}}},
+  "syncStaleKeep": "Keep",
+  "syncStaleDiscard": "Discard",
+  "syncStalePaused": "Sync is paused until you answer a question",
+  "syncStaleReview": "Review",
 
   "backupFile": "Export and import",
   "exportFile": "Export to a file",
@@ -258,6 +265,8 @@
   "importBroken": "This file can't be read.",
   "importTooNew": "This file was written by a newer Framebook. Update the app to import it.",
   "importDone": "Imported",
+  "importStaleBody": "Unsynced ratings and watchlist entries on this device that conflict with a newer deletion in the file: {count}. Keep restores these entries. Discard applies the deletion.",
+  "@importStaleBody": {"placeholders": {"count": {"type": "int"}}},
 
   "reelHint": "Pull the film to choose a score. Your other ratings of this kind show up here as it moves.",
   "reelFirst": "Your first rating of this kind — nothing to compare with yet.",

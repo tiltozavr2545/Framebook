@@ -45,6 +45,9 @@ final class _Device {
 }
 
 String _canonical(SyncState state) => jsonEncode({
+  'purged_before': state.purgedBefore,
+  'rating_deletions': [for (final d in state.ratingDeletions) d.toJson()],
+  'watchlist_deletions': [for (final d in state.watchlistDeletions) d.toJson()],
   'works': [for (final w in state.works) SyncFile.workToJson(w)],
   'ratings': [for (final r in state.ratings) SyncFile.ratingToJson(r)],
   'watchlist': [for (final w in state.watchlist) SyncFile.watchlistToJson(w)],
@@ -123,7 +126,8 @@ void main() {
 
       final json =
           jsonDecode(utf8.decode(gzip.decode(bytes))) as Map<String, Object?>;
-      expect(json['format_version'], 1);
+      expect(json['format_version'], 2);
+      expect(json['purged_before'], state.purgedBefore);
       expect(json['written_by'], 'dev-a');
       expect(json['app_version'], '0.5.0+7');
       final film = (json['works']! as List).cast<Map<String, Object?>>().first;
@@ -184,7 +188,7 @@ void main() {
 
     test('a file written by a newer app is refused, not misread', () {
       expect(
-        () => SyncFile.decode(_gzipJson({'format_version': 2})),
+        () => SyncFile.decode(_gzipJson({'format_version': 3})),
         throwsA(isA<SyncFileTooNew>()),
       );
     });
@@ -648,6 +652,544 @@ void main() {
       expect((await b.store.read()).liveRatings, 1);
       expect(await a.state(), await b.state());
     });
+  });
+
+  group('purge watermark', () {
+    test('v1 reads P=0 and v2 round trips the watermark', () {
+      expect(SyncFile.decode(_gzipJson({'format_version': 1})).purgedBefore, 0);
+      final bytes = SyncFile.encode(
+        const SyncState(purgedBefore: 123),
+        writtenAt: 124,
+        writtenBy: 'a',
+        appVersion: 'test',
+      );
+      expect(SyncFile.decode(bytes).purgedBefore, 123);
+      for (final p in [null, -1, '10']) {
+        expect(
+          () => SyncFile.decode(
+            _gzipJson({'format_version': 2, 'purged_before': p}),
+          ),
+          throwsA(isA<SyncFileBroken>()),
+        );
+      }
+    });
+
+    test('compact and full deletion merge is associative and idempotent', () {
+      final old = _rating('k', at: 1);
+      final deleted = _rating('k', at: 2, deletedAt: 2);
+      final compact = ratingDeletion(deleted);
+      final states = [
+        SyncState(ratings: [old]),
+        SyncState(ratings: [deleted]),
+        SyncState(ratingDeletions: [compact]),
+        SyncState(ratings: [_rating('k', at: 3)]),
+        const SyncState(purgedBefore: 100),
+      ];
+      for (final a in states) {
+        expect(_canonical(mergeStates(a, a)), _canonical(a));
+        for (final b in states) {
+          expect(_canonical(mergeStates(a, b)), _canonical(mergeStates(b, a)));
+          for (final c in states) {
+            expect(
+              _canonical(mergeStates(mergeStates(a, b), c)),
+              _canonical(mergeStates(a, mergeStates(b, c))),
+            );
+          }
+        }
+      }
+      expect(
+        mergeStates(
+          const SyncState(purgedBefore: 100),
+          SyncState(ratings: [old]),
+        ).ratings,
+        hasLength(1),
+      );
+      expect(
+        mergeStates(
+          SyncState(ratingDeletions: [compact]),
+          SyncState(ratings: [deleted]),
+        ).ratings,
+        isEmpty,
+      );
+    });
+
+    test('mixed rating and watchlist registers obey merge laws', () {
+      final rng = Random(24680);
+      SyncState randomState() {
+        final ratings = <Rating>[];
+        final watchlist = <WatchlistEntry>[];
+        final rd = <DeletionRecord>[];
+        final wd = <DeletionRecord>[];
+        for (var i = 0; i < 3; i++) {
+          final key = 'tmdb:movie:$i';
+          final at = rng.nextInt(4) + 1;
+          final by = ['a', 'b'][rng.nextInt(2)];
+          final kind = rng.nextInt(4);
+          final rating = _rating(
+            key,
+            at: at,
+            by: by,
+            score: 10 + rng.nextInt(3),
+            deletedAt: kind >= 2 ? at : null,
+          );
+          final watch = WatchlistEntry(
+            workKey: key,
+            addedAt: 1,
+            updatedAt: at,
+            updatedBy: by,
+            deletedAt: kind >= 2 ? at : null,
+          );
+          if (kind == 1 || kind == 2) {
+            ratings.add(rating);
+            watchlist.add(watch);
+          }
+          if (kind == 3) {
+            rd.add(ratingDeletion(rating));
+            wd.add(watchlistDeletion(watch));
+          }
+        }
+        return SyncState(
+          ratings: ratings,
+          watchlist: watchlist,
+          ratingDeletions: rd,
+          watchlistDeletions: wd,
+          purgedBefore: rng.nextInt(4),
+        );
+      }
+
+      for (var i = 0; i < 1000; i++) {
+        final a = randomState(), b = randomState(), c = randomState();
+        expect(
+          _canonical(mergeStates(a, a)),
+          _canonical(a),
+          reason: 'idempotence $i',
+        );
+        expect(
+          _canonical(mergeStates(a, b)),
+          _canonical(mergeStates(b, a)),
+          reason: 'commutativity $i',
+        );
+        expect(
+          _canonical(mergeStates(mergeStates(a, b), c)),
+          _canonical(mergeStates(a, mergeStates(b, c))),
+          reason: 'associativity $i',
+        );
+      }
+    });
+
+    test(
+      'devices converge after a real 180-day purge and stale backup merge',
+      () async {
+        final remote = MemoryRemote();
+        final a = _Device('a', remote), b = _Device('b', remote);
+        addTearDown(() async {
+          await a.db.close();
+          await b.db.close();
+        });
+        await a.library.rate(_film(1), scoreHalf: 12, note: null);
+        await a.engine.sync();
+        await b.engine.sync();
+        final oldBackup = await b.store.read();
+        await a.library.deleteRating(const WorkKey.movie(1));
+        a.now += 181 * Duration.millisecondsPerDay;
+        b.now = a.now;
+        await a.engine.sync();
+        final review = await b.engine.sync();
+        if (review.paused) {
+          await b.engine.sync(
+            stale: StaleChoice.discard,
+            reviewedFingerprint: review.staleFingerprint,
+          );
+        }
+        await b.store.apply(oldBackup);
+        await b.engine.sync();
+        await a.engine.sync();
+        expect((await a.store.read()).ratingDeletions, hasLength(1));
+        expect((await b.store.read()).ratings, isEmpty);
+        expect(await a.state(), await b.state());
+      },
+    );
+
+    test('v2 rejects absent and invalid deletion metadata', () {
+      for (final entry in [
+        null,
+        {
+          'work_key': 'bad',
+          'updated_at': 1,
+          'updated_by': 'a',
+          'tie_break': 'a' * 64,
+        },
+        {
+          'work_key': 'tmdb:movie:1',
+          'updated_at': -1,
+          'updated_by': 'a',
+          'tie_break': 'a' * 64,
+        },
+        {
+          'work_key': 'tmdb:movie:1',
+          'updated_at': 1,
+          'updated_by': 'a',
+          'tie_break': 'bad',
+        },
+      ]) {
+        final file = {
+          'format_version': 2,
+          'purged_before': 0,
+          'watchlist_deletions': <Object>[],
+        };
+        if (entry != null) file['rating_deletions'] = [entry];
+        expect(
+          () => SyncFile.decode(_gzipJson(file)),
+          throwsA(isA<SyncFileBroken>()),
+        );
+      }
+    });
+
+    test('reviewed version cannot authorize a subsequent edit', () async {
+      final remote = MemoryRemote();
+      final d = _Device('a', remote);
+      addTearDown(d.db.close);
+      await d.library.rate(_film(1), scoreHalf: 12, note: null);
+      final deletion = ratingDeletion(
+        _rating('tmdb:movie:1', at: d.now + 20, by: 'b', deletedAt: d.now + 20),
+      );
+      remote.put(
+        SyncFile.name,
+        SyncFile.encode(
+          SyncState(ratingDeletions: [deletion]),
+          writtenAt: d.now,
+          writtenBy: 'b',
+          appVersion: 'test',
+        ),
+      );
+      final first = await d.engine.sync();
+      await d.library.rate(_film(1), scoreHalf: 16, note: null);
+      final second = await d.engine.sync(
+        stale: StaleChoice.discard,
+        reviewedFingerprint: first.staleFingerprint,
+      );
+      expect(second.paused, isTrue);
+      expect(second.staleFingerprint, isNot(first.staleFingerprint));
+      expect((await d.store.read()).ratings.single.scoreHalf, 16);
+    });
+
+    test('incoming watermark is bounded by half the retention age', () {
+      expect(
+        clampWatermark(999999999999, 200 * Duration.millisecondsPerDay),
+        110 * Duration.millisecondsPerDay,
+      );
+      expect(clampWatermark(7, 200 * Duration.millisecondsPerDay), 7);
+      expect(
+        purgeWatermark(200 * Duration.millisecondsPerDay),
+        20 * Duration.millisecondsPerDay,
+      );
+    });
+
+    test('purging prunes orphans but retains referenced ancestors', () async {
+      final d = _Device('a', MemoryRemote());
+      addTearDown(d.db.close);
+      await d.library.rate(_film(1), scoreHalf: 12, note: null);
+      await d.library.deleteRating(const WorkKey.movie(1));
+      await d.library.rate(_episode, scoreHalf: 16, note: null);
+      final tombstone = (await d.store.read()).ratings.firstWhere(
+        (r) => r.workKey == 'tmdb:movie:1',
+      );
+      expect(await d.store.purge(tombstone.updatedAt), 0);
+      expect(await d.store.purge(tombstone.updatedAt + 1), 1);
+      final state = await d.store.read();
+      expect(state.works, hasLength(3));
+      expect(state.ratings.single.workKey, 'tmdb:tv:1399:s1:e3');
+      expect(await d.db.select(d.db.works).get(), hasLength(3));
+    });
+
+    test(
+      'old exports cannot resurrect forgotten rows even with replace',
+      () async {
+        final d = _Device('a', MemoryRemote());
+        addTearDown(d.db.close);
+        await d.library.rate(_film(1), scoreHalf: 12, note: null);
+        final backup = await d.store.read();
+        await d.library.deleteRating(const WorkKey.movie(1));
+        await d.store.purge(d.now + 10);
+        await d.store.apply(backup);
+        expect((await d.store.read()).ratings, isEmpty);
+        await d.store.replaceWith(backup, deviceId: 'a', now: d.now + 100);
+        expect((await d.store.read()).ratings, isEmpty);
+      },
+    );
+
+    test(
+      'replacement restores an older score after re-rating a compacted deletion',
+      () async {
+        final d = _Device('a', MemoryRemote());
+        addTearDown(d.db.close);
+        await d.library.rate(_film(1), scoreHalf: 12, note: null);
+        final backup = await d.store.read();
+        await d.library.deleteRating(const WorkKey.movie(1));
+        await d.store.purge(d.now + 10);
+        await d.library.rate(_film(1), scoreHalf: 18, note: null);
+        await d.store.replaceWith(backup, deviceId: 'a', now: d.now + 100);
+        final state = await d.store.read();
+        expect(state.liveRatings, 1);
+        expect(state.ratings.single.scoreHalf, 12);
+      },
+    );
+
+    test('replacement can undo a recent full tombstone', () async {
+      final d = _Device('a', MemoryRemote());
+      addTearDown(d.db.close);
+      await d.library.rate(_film(1), scoreHalf: 12, note: null);
+      final backup = await d.store.read();
+      await d.library.deleteRating(const WorkKey.movie(1));
+      await d.store.replaceWith(backup, deviceId: 'a', now: d.now + 10);
+      expect((await d.store.read()).liveRatings, 1);
+    });
+
+    test('edit at the same millisecond as last sync requires review', () {
+      final live = _rating('k', at: 3);
+      final deletion = ratingDeletion(_rating('k', at: 4, deletedAt: 4));
+      expect(
+        unsyncedDrops(
+          SyncState(ratings: [live]),
+          SyncState(ratingDeletions: [deletion]),
+          lastSyncAt: 3,
+        ).ratings,
+        contains('k'),
+      );
+    });
+
+    test(
+      'compact deletions survive export and protect a new local edit against clock skew',
+      () async {
+        final d = _Device('a', MemoryRemote());
+        addTearDown(d.db.close);
+        await d.library.rate(_film(1), scoreHalf: 12, note: null);
+        await d.library.addToWatchlist(_film(2));
+        await d.library.deleteRating(const WorkKey.movie(1));
+        await d.library.removeFromWatchlist(const WorkKey.movie(2));
+        await d.store.purge(d.now + 10);
+        final compact = await d.store.read();
+        final copy = SyncFile.decode(
+          SyncFile.encode(
+            compact,
+            writtenAt: d.now,
+            writtenBy: 'a',
+            appVersion: 'test',
+          ),
+        );
+        expect(copy.ratingDeletions, hasLength(1));
+        expect(copy.watchlistDeletions, hasLength(1));
+        d.now -= 1000;
+        await d.library.rate(_film(1), scoreHalf: 14, note: null);
+        await d.library.addToWatchlist(_film(2));
+        final state = await d.store.read();
+        expect(
+          state.ratings.single.updatedAt,
+          greaterThan(copy.ratingDeletions.single.updatedAt),
+        );
+        expect(
+          state.watchlist.single.updatedAt,
+          greaterThan(copy.watchlistDeletions.single.updatedAt),
+        );
+        expect(mergeStates(state, copy).liveRatings, 1);
+      },
+    );
+
+    test(
+      'failed upload retains compact deletion and retry publishes it',
+      () async {
+        final remote = MemoryRemote();
+        final d = _Device('a', remote);
+        addTearDown(d.db.close);
+        await d.library.rate(_film(1), scoreHalf: 12, note: null);
+        await d.engine.sync();
+        await d.library.deleteRating(const WorkKey.movie(1));
+        d.now += 400 * Duration.millisecondsPerDay;
+        remote.afterDownload = (_) {
+          remote.failing = SyncFailure.offline;
+        };
+        await expectLater(d.engine.sync(), throwsA(isA<SyncException>()));
+        expect((await d.store.read()).ratingDeletions, hasLength(1));
+        remote.afterDownload = null;
+        remote.failing = null;
+        await d.engine.sync();
+        final main = remote.files.values.firstWhere(
+          (f) => f.name == SyncFile.name,
+        );
+        expect(SyncFile.decode(main.bytes).ratingDeletions, hasLength(1));
+      },
+    );
+
+    test(
+      'keep beats a newer full tombstone after an older compact deletion',
+      () async {
+        final remote = MemoryRemote();
+        final d = _Device('a', remote);
+        addTearDown(d.db.close);
+        await d.library.rate(_film(1), scoreHalf: 12, note: null);
+        final local = await d.store.read();
+        final old = d.now + 100, latest = d.now + 200;
+        final compact = ratingDeletion(
+          _rating('tmdb:movie:1', at: old, by: 'b', deletedAt: old),
+        );
+        final full = _rating(
+          'tmdb:movie:1',
+          at: latest,
+          by: 'b',
+          deletedAt: latest,
+        );
+        remote.put(
+          SyncFile.name,
+          SyncFile.encode(
+            SyncState(
+              works: local.works,
+              ratings: [full],
+              ratingDeletions: [compact],
+            ),
+            writtenAt: d.now,
+            writtenBy: 'b',
+            appVersion: 'test',
+          ),
+        );
+        final review = await d.engine.sync();
+        expect(review.stale, 1);
+        final result = await d.engine.sync(
+          stale: StaleChoice.keep,
+          reviewedFingerprint: review.staleFingerprint,
+        );
+        expect(result.paused, isFalse);
+        final state = await d.store.read();
+        expect(state.liveRatings, 1);
+        expect(state.ratings.single.updatedAt, greaterThan(latest));
+      },
+    );
+
+    test(
+      'newer remote live version avoids a stale compact deletion warning',
+      () async {
+        final remote = MemoryRemote();
+        final d = _Device('a', remote);
+        addTearDown(d.db.close);
+        await d.library.rate(_film(1), scoreHalf: 12, note: null);
+        final local = await d.store.read();
+        final old = d.now + 100, latest = d.now + 200;
+        final compact = ratingDeletion(
+          _rating('tmdb:movie:1', at: old, by: 'b', deletedAt: old),
+        );
+        final live = _rating('tmdb:movie:1', at: latest, by: 'b', score: 18);
+        remote.put(
+          SyncFile.name,
+          SyncFile.encode(
+            SyncState(
+              works: local.works,
+              ratings: [live],
+              ratingDeletions: [compact],
+            ),
+            writtenAt: d.now,
+            writtenBy: 'b',
+            appVersion: 'test',
+          ),
+        );
+        expect((await d.engine.sync()).paused, isFalse);
+        expect((await d.store.read()).ratings.single.scoreHalf, 18);
+      },
+    );
+
+    test(
+      'keep beats the newest duplicate compact deletion for both row types',
+      () async {
+        final remote = MemoryRemote();
+        final d = _Device('a', remote);
+        addTearDown(d.db.close);
+        await d.library.rate(_film(1), scoreHalf: 12, note: null);
+        await d.library.addToWatchlist(_film(2));
+        DeletionRecord rating(int time) => ratingDeletion(
+          _rating('tmdb:movie:1', at: time, by: 'b', deletedAt: time),
+        );
+        DeletionRecord watch(int time) => watchlistDeletion(
+          WatchlistEntry(
+            workKey: 'tmdb:movie:2',
+            addedAt: 1,
+            updatedAt: time,
+            updatedBy: 'b',
+            deletedAt: time,
+          ),
+        );
+        final latest = d.now + 200;
+        remote.put(
+          SyncFile.name,
+          SyncFile.encode(
+            SyncState(
+              ratingDeletions: [rating(latest), rating(d.now + 100)],
+              watchlistDeletions: [watch(latest), watch(d.now + 100)],
+            ),
+            writtenAt: d.now,
+            writtenBy: 'b',
+            appVersion: 'test',
+          ),
+        );
+        final review = await d.engine.sync();
+        expect(review.stale, 2);
+        final result = await d.engine.sync(
+          stale: StaleChoice.keep,
+          reviewedFingerprint: review.staleFingerprint,
+        );
+        expect(result.paused, isFalse);
+        final state = await d.store.read();
+        expect(state.liveRatings, 1);
+        expect(state.ratings.single.updatedAt, greaterThan(latest));
+        expect(state.watchlist.single.deletedAt, isNull);
+        expect(state.watchlist.single.updatedAt, greaterThan(latest));
+      },
+    );
+
+    for (final choice in [StaleChoice.keep, StaleChoice.discard]) {
+      test('unsynced stale rows pause before ${choice.name}', () async {
+        final remote = MemoryRemote();
+        final d = _Device('a', remote);
+        addTearDown(d.db.close);
+        await d.library.rate(_film(1), scoreHalf: 12, note: null);
+        d.now += 400 * Duration.millisecondsPerDay;
+        final p = purgeWatermark(d.now);
+        remote.put(
+          SyncFile.name,
+          SyncFile.encode(
+            SyncState(
+              purgedBefore: p,
+              ratingDeletions: [
+                ratingDeletion(
+                  _rating(
+                    'tmdb:movie:1',
+                    at: 1000001,
+                    by: 'b',
+                    deletedAt: 1000001,
+                  ),
+                ),
+              ],
+            ),
+            writtenAt: d.now,
+            writtenBy: 'b',
+            appVersion: 'test',
+          ),
+        );
+        final paused = await d.engine.sync();
+        expect(paused.stale, 1);
+        expect((await d.store.read()).liveRatings, 1);
+        expect(await d.store.stateValue(SyncStore.lastSyncKey), isNull);
+        expect(
+          (await d.engine.sync(
+            stale: choice,
+            reviewedFingerprint: paused.staleFingerprint,
+          )).paused,
+          isFalse,
+        );
+        final state = await d.store.read();
+        expect(state.liveRatings, choice == StaleChoice.keep ? 1 : 0);
+        if (choice == StaleChoice.keep) {
+          expect(state.ratings.single.updatedAt, greaterThan(1000001));
+        }
+      });
+    }
   });
 
   group('convergence', () {

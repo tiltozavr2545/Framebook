@@ -291,18 +291,19 @@ and the optimization see the final code.
    - The pitfall: opening a card refreshed the snapshot by key and would
      have quietly adopted the new title's id, losing the link. A rated
      title's own id now survives snapshot writes until the user answers.
-2. Cleaning up tombstones, together with the rule "a device that hasn't
-   synced for more than N days replaces its local state with the file
-   rather than merging", otherwise old tombstones' removal would resurrect
-   what was deleted ([sync.md](sync.md)).
+2. ✅ Cleaning up full tombstones after 180 days, preserving permanent compact
+   per-key deletion records so old devices and backups cannot resurrect
+   deletions ([sync.md](sync.md)). The original global-watermark absence
+   rule was found non-associative during implementation; the user chose
+   compact deletion records in preference to unsafe cleanup.
 3. Syncing API keys and settings, so that three keys needn't be entered
    again on a new device. Keys are secrets off the device, so they are
    encrypted with a key derived from a password only the user knows.
 4. Checking for updates in the app: a request to the GitHub Releases API on
    launch; if there is a newer version, an unobtrusive banner with a link to
-   the APK.
-5. Comparing with friends: exchanging exports and "where my friend and I
-   disagree most". Without a server, only through a file.
+   the release page.
+5. **Postponed by the user.** Comparing with friends is outside this stage;
+   see [future-development.md](future-development.md).
 6. The calibration only when there is something to compare with: more than
    20 ratings of the kind for films, more than 10 for series, seasons and
    episodes each; below that the panel under the reel is hidden. (Stated in
@@ -326,9 +327,9 @@ and the optimization see the final code.
     scale (wrap or ellipsize deliberately, tested at large font and display
     sizes).
 11. A watchlist for seasons ("finish season 3"): a season can be put on the
-   watchlist on its own, not only the whole series. Decided as required by
-   the user; the details (how it shows in the list and how it syncs) are
-   settled when the item starts. A season's watchlist row has to follow
+   watchlist on its own, grouped under the series. Selecting a season removes
+   the whole-series entry; selecting the series removes its season entries.
+   Rating a season removes it from the watchlist. A season's row follows
    TMDB renumbering the way a rating does (item 1).
 
 Each item that changes the sync format says so in [sync.md](sync.md) and

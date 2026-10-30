@@ -711,6 +711,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncDeleted => 'Deleted from Google Drive';
 
   @override
+  String get syncStaleTitle => 'Unsynced changes to deleted entries';
+
+  @override
+  String syncStaleBody(int count) {
+    return 'Unsynced ratings and watchlist entries on this device that conflict with a newer deletion in Google Drive: $count. Keep restores these entries on your devices. Discard applies the deletion. Sync is paused until you choose.';
+  }
+
+  @override
+  String get syncStaleKeep => 'Keep';
+
+  @override
+  String get syncStaleDiscard => 'Discard';
+
+  @override
+  String get syncStalePaused => 'Sync is paused until you answer a question';
+
+  @override
+  String get syncStaleReview => 'Review';
+
+  @override
   String get backupFile => 'Export and import';
 
   @override
@@ -756,6 +776,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get importDone => 'Imported';
+
+  @override
+  String importStaleBody(int count) {
+    return 'Unsynced ratings and watchlist entries on this device that conflict with a newer deletion in the file: $count. Keep restores these entries. Discard applies the deletion.';
+  }
 
   @override
   String get reelHint =>

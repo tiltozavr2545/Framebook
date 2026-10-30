@@ -22,6 +22,8 @@ final class SyncStatus {
     this.busy = false,
     this.lastSyncAt,
     this.error,
+    this.stale,
+    this.staleFingerprint,
   });
 
   /// Whether this build can sign in to Google at all.
@@ -38,17 +40,30 @@ final class SyncStatus {
   /// kept: it is quietly put off (docs/sync.md, "Errors").
   final SyncFailure? error;
 
+  /// Sync is paused on a question: this many of this device's ratings and
+  /// watchlist entries, changed and never synced, are older than Drive's
+  /// watermark, and the user keeps or discards them
+  /// ([SyncController.resolveStale]). `null` — nothing to ask.
+  final int? stale;
+  final String? staleFingerprint;
+
   SyncStatus copyWith({
     String? Function()? account,
     bool? busy,
     int? Function()? lastSyncAt,
     SyncFailure? Function()? error,
+    int? Function()? stale,
+    String? Function()? staleFingerprint,
   }) => SyncStatus(
     configured: configured,
     account: account == null ? this.account : account(),
     busy: busy ?? this.busy,
     lastSyncAt: lastSyncAt == null ? this.lastSyncAt : lastSyncAt(),
     error: error == null ? this.error : error(),
+    stale: stale == null ? this.stale : stale(),
+    staleFingerprint: staleFingerprint == null
+        ? this.staleFingerprint
+        : staleFingerprint(),
   );
 }
 
@@ -58,8 +73,17 @@ typedef FirstSync = ({int device, int drive, int merged});
 /// The app version written into the file; read from the platform in `main()`.
 final appVersionProvider = Provider<String>((ref) => 'unknown');
 
-/// The result of reading an import file, for its dialog.
-typedef ImportPreview = ({SyncState file, int device, int inFile, int merged});
+/// The result of reading an import file, for its dialog. [stale] — live
+/// rows of this device's, never synced, that merging would drop: the dialog
+/// asks whether to keep them.
+typedef ImportPreview = ({
+  SyncState file,
+  int device,
+  int inFile,
+  int merged,
+  int stale,
+  String fingerprint,
+});
 
 /// Sync with Google Drive, the daily copies, export and import
 /// (docs/sync.md). Syncs on launch and on returning to the app when the last
@@ -70,9 +94,7 @@ class SyncController extends Notifier<SyncStatus> {
   static const debounce = Duration(seconds: 30);
 
   static const _accountKey = 'sync_account';
-  static const _lastSyncKey = 'last_sync_at';
   static const _errorKey = 'last_sync_error';
-  static const _modifiedKey = 'last_remote_modified_time';
 
   late GoogleAccount _google;
   late SyncStore _store;
@@ -107,7 +129,9 @@ class SyncController extends Notifier<SyncStatus> {
   /// Reads the last sync from `sync_state`, then — if signed in — restores
   /// the session silently and syncs if it is due.
   Future<void> _load(String? account) async {
-    final last = int.tryParse(await _store.stateValue(_lastSyncKey) ?? '');
+    final last = int.tryParse(
+      await _store.stateValue(SyncStore.lastSyncKey) ?? '',
+    );
     final error = await _store.stateValue(_errorKey);
     if (!ref.mounted) return;
     state = state.copyWith(
@@ -158,23 +182,46 @@ class SyncController extends Notifier<SyncStatus> {
   Future<void> confirmFirstSync() => sync();
 
   /// One sync pass; a pass already under way is waited for instead. Errors
-  /// end up in [SyncStatus.error], never thrown.
-  Future<void> sync() => _running ??= _sync().whenComplete(() {
-    _running = null;
-  });
+  /// end up in [SyncStatus.error], never thrown; a question about stale
+  /// changes, in [SyncStatus.stale].
+  Future<void> sync() => _pass(null, null);
 
-  Future<void> _sync() async {
+  /// The answer to [SyncStatus.stale]: runs the pass again with it.
+  Future<void> resolveStale({
+    required bool keep,
+    required String fingerprint,
+  }) => _pass(keep ? StaleChoice.keep : StaleChoice.discard, fingerprint);
+
+  Future<void> _pass(StaleChoice? stale, String? fingerprint) =>
+      _running ??= _sync(stale, fingerprint).whenComplete(() {
+        _running = null;
+      });
+
+  Future<void> _sync(StaleChoice? stale, String? fingerprint) async {
     if (state.account == null) return;
     _debounce?.cancel();
     state = state.copyWith(busy: true);
     try {
-      final report = await _withDrive((engine) => engine.sync());
-      final now = DateTime.now().toUtc().millisecondsSinceEpoch;
-      await _store.setStateValue(_lastSyncKey, '$now');
-      await _store.setStateValue(_modifiedKey, report.modifiedTime);
+      final report = await _withDrive(
+        (engine) => engine.sync(stale: stale, reviewedFingerprint: fingerprint),
+      );
+      if (report.paused) {
+        if (ref.mounted) {
+          state = state.copyWith(
+            stale: () => report.stale,
+            staleFingerprint: () => report.staleFingerprint,
+          );
+        }
+        return;
+      }
       await _store.setStateValue(_errorKey, null);
       if (ref.mounted) {
-        state = state.copyWith(lastSyncAt: () => now, error: () => null);
+        state = state.copyWith(
+          lastSyncAt: () => report.syncedAt,
+          error: () => null,
+          stale: () => null,
+          staleFingerprint: () => null,
+        );
       }
     } on SyncException catch (e) {
       await _fail(e.failure);
@@ -217,15 +264,20 @@ class SyncController extends Notifier<SyncStatus> {
     await _google.signOut();
     await ref.read(sharedPreferencesProvider).remove(_accountKey);
     await _store.setStateValue(_errorKey, null);
-    state = state.copyWith(account: () => null, error: () => null);
+    state = state.copyWith(
+      account: () => null,
+      error: () => null,
+      stale: () => null,
+      staleFingerprint: () => null,
+    );
   }
 
   /// Deletes the file and the daily copies from Drive and signs out here.
   /// Throws [SyncException].
   Future<void> deleteDriveData() async {
     await _withDrive((engine) => engine.deleteAll());
-    await _store.setStateValue(_lastSyncKey, null);
-    await _store.setStateValue(_modifiedKey, null);
+    await _store.setStateValue(SyncStore.lastSyncKey, null);
+    await _store.setStateValue(SyncStore.modifiedKey, null);
     state = state.copyWith(lastSyncAt: () => null);
     await signOut();
   }
@@ -234,8 +286,8 @@ class SyncController extends Notifier<SyncStatus> {
   Future<List<RemoteFile>> backups() =>
       _withDrive((engine) => engine.backups());
 
-  /// Restoring a daily copy is an import that replaces everything. Throws
-  /// [SyncException].
+  /// Restoring a daily copy is an import that replaces everything (its
+  /// watermark clamped as the file's is). Throws [SyncException].
   Future<void> restore(RemoteFile backup) async {
     final copy = await _withDrive((engine) => engine.readBackup(backup));
     await _replace(copy);
@@ -244,38 +296,82 @@ class SyncController extends Notifier<SyncStatus> {
   /// The export file: the same format as the file in Drive.
   Future<List<int>> export() async => SyncFile.encode(
     await _store.read(),
-    writtenAt: DateTime.now().toUtc().millisecondsSinceEpoch,
+    writtenAt: _now,
     writtenBy: ref.read(deviceIdProvider),
     appVersion: ref.read(appVersionProvider),
   );
 
-  /// Reads an import file. Throws [SyncFileException].
+  /// Reads an import file; its watermark is clamped to this device's clock,
+  /// as Drive's is. Throws [SyncFileException].
   Future<ImportPreview> previewImport(List<int> bytes) async {
-    final file = SyncFile.decode(bytes);
+    final read = SyncFile.decode(bytes);
+    final file = read.withPurgedBefore(clampWatermark(read.purgedBefore, _now));
+    return _preview(file);
+  }
+
+  Future<ImportPreview> _preview(SyncState file) async {
     final device = await _store.read();
+    final lastSyncAt = int.tryParse(
+      await _store.stateValue(SyncStore.lastSyncKey) ?? '',
+    );
+    final stale = unsyncedDrops(device, file, lastSyncAt: lastSyncAt);
     return (
       file: file,
       device: device.liveRatings,
       inFile: file.liveRatings,
       merged: mergeStates(device, file).liveRatings,
+      stale: stale.ratings.length + stale.watchlist.length,
+      fingerprint: staleFingerprint(device, file, lastSyncAt: lastSyncAt),
     );
   }
 
-  /// Merges the file in by the usual rules, or replaces everything with it.
-  Future<void> import(SyncState file, {required bool replace}) async {
+  /// Returns an updated preview when newly discovered conflicts need consent.
+  Future<ImportPreview?> import(
+    SyncState file, {
+    required bool replace,
+    bool keepStale = true,
+    String? reviewedFingerprint,
+  }) async {
     if (replace) {
       await _replace(file);
     } else {
-      await _store.apply(file);
+      final updated = await _db.transaction(() async {
+        final device = await _store.read();
+        final lastSyncAt = int.tryParse(
+          await _store.stateValue(SyncStore.lastSyncKey) ?? '',
+        );
+        final stale = unsyncedDrops(device, file, lastSyncAt: lastSyncAt);
+        final count = stale.ratings.length + stale.watchlist.length;
+        if (count > 0 &&
+            staleFingerprint(device, file, lastSyncAt: lastSyncAt) !=
+                reviewedFingerprint) {
+          return _preview(file);
+        }
+        if (keepStale && count > 0) {
+          await _store.restamp(
+            ratings: stale.ratings,
+            watchlist: stale.watchlist,
+            deviceId: ref.read(deviceIdProvider),
+            now: _now,
+            remote: file,
+          );
+        }
+        await _store.apply(file);
+        return null;
+      });
+      if (updated != null) return updated;
       if (state.account != null) unawaited(sync());
     }
+    return null;
   }
+
+  static int get _now => DateTime.now().toUtc().millisecondsSinceEpoch;
 
   Future<void> _replace(SyncState file) async {
     await _store.replaceWith(
       file,
       deviceId: ref.read(deviceIdProvider),
-      now: DateTime.now().toUtc().millisecondsSinceEpoch,
+      now: _now,
     );
     if (state.account != null) unawaited(sync());
   }

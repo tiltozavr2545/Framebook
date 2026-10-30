@@ -152,10 +152,10 @@ Invariants:
 - `works` rows that no `ratings` / `watchlist` row refers to (including
   through descendants) can be deleted locally on cleanup. A snapshot has no
   tombstone: it is derived data, there is nothing to "delete on other
-  devices" — it simply stops being written to the sync file. In practice
-  nothing is deleted yet: a tombstoned row still refers to its snapshot (the
-  foreign key and the sync file need it), and tombstones are kept forever
-  ([sync.md](sync.md)). Cleanup comes with tombstone cleanup.
+  devices" — it simply stops being written to the sync file. Full tombstones
+  retain snapshots until they are compacted after 180 days. Compact deletion
+  registers retain no snapshot or foreign key; cleanup prunes unreferenced
+  snapshots while retaining every referenced ancestor ([sync.md](sync.md)).
 - A season's and an episode's `tmdb_id` is their own TMDB id; when TMDB
   didn't send it, the series' id stands in (the column must be positive),
   and such a stand-in is never matched when TMDB renumbers (see "When TMDB
@@ -257,7 +257,12 @@ older than a week are deleted (on app start).
 ### `sync_state` — key-value
 
 `device_id` (a UUID created on first launch and never changed),
-`last_sync_at`, `last_remote_modified_time`, `last_sync_error`. The Drive
+`last_sync_at`, `last_remote_modified_time`, `last_sync_error`,
+`purged_before`, and JSON-encoded `rating_deletions` / `watchlist_deletions`.
+The compact deletion registers retain only the natural key and deletion
+version, not a score, note or snapshot. They have no foreign key to `works`
+and are included in the sync file even though stored in this key-value table.
+No schema migration is needed for these new keys. The Drive
 file's id isn't kept: every pass lists the folder anyway, to find duplicate
 files. Details are in [sync.md](sync.md).
 

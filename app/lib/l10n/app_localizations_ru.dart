@@ -717,6 +717,26 @@ class AppLocalizationsRu extends AppLocalizations {
   String get syncDeleted => 'Удалено с Google Диска';
 
   @override
+  String get syncStaleTitle => 'Изменения удалённых записей';
+
+  @override
+  String syncStaleBody(int count) {
+    return 'Несинхронизированных оценок и записей «Хочу посмотреть» на этом устройстве, которые конфликтуют с более поздним удалением на Google Диске: $count. «Оставить» восстановит эти записи на твоих устройствах. «Отбросить» применит удаление. Пока ты не выберешь, синхронизация на паузе.';
+  }
+
+  @override
+  String get syncStaleKeep => 'Оставить';
+
+  @override
+  String get syncStaleDiscard => 'Отбросить';
+
+  @override
+  String get syncStalePaused => 'Синхронизация на паузе: нужен твой ответ';
+
+  @override
+  String get syncStaleReview => 'Открыть';
+
+  @override
   String get backupFile => 'Экспорт и импорт';
 
   @override
@@ -762,6 +782,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get importDone => 'Импортировано';
+
+  @override
+  String importStaleBody(int count) {
+    return 'Несинхронизированных оценок и записей «Хочу посмотреть» на этом устройстве, которые конфликтуют с более поздним удалением в файле: $count. «Оставить» восстановит эти записи. «Отбросить» применит удаление.';
+  }
 
   @override
   String get reelHint =>

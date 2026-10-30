@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:intl/intl.dart';
 
 import 'merge.dart';
@@ -64,18 +66,47 @@ final class SyncException implements Exception {
       'SyncException(${failure.name}${detail == null ? '' : ': $detail'})';
 }
 
-/// What a successful pass did.
+/// The user's answer about this device's unsynced changes that Drive's
+/// compact deletion would beat (docs/sync.md, "Tombstones").
+enum StaleChoice {
+  /// They become new versions and go to Drive.
+  keep,
+
+  /// They are dropped, as Drive's state says.
+  discard,
+}
+
+/// What a pass did.
 final class SyncReport {
   const SyncReport({
     required this.applied,
     required this.uploaded,
     required this.modifiedTime,
+    this.syncedAt,
+    this.stale = 0,
+    this.staleFingerprint,
   });
 
-  /// Rows that came from Drive and won.
+  /// The pass stopped before changing anything: [stale] live rows of this
+  /// device's, changed since its last sync, would be dropped, and the user
+  /// decides first. Sync again with a [StaleChoice].
+  const SyncReport.paused(this.stale, this.staleFingerprint)
+    : applied = 0,
+      uploaded = false,
+      modifiedTime = null,
+      syncedAt = null;
+
+  /// Rows that came from Drive and won, or were beaten by a deletion.
   final int applied;
   final bool uploaded;
   final String? modifiedTime;
+
+  /// UTC ms the pass started, written to `last_sync_at`; `null` — paused.
+  final int? syncedAt;
+  final int stale;
+  final String? staleFingerprint;
+
+  bool get paused => stale > 0;
 }
 
 /// One pass of the algorithm in docs/sync.md ("One pass of the algorithm"),
@@ -106,6 +137,8 @@ final class SyncEngine {
   static bool isBackup(RemoteFile file) =>
       file.name.startsWith(backupPrefix) && file.name.endsWith('.json.gz');
 
+  int get _now => _clock().toUtc().millisecondsSinceEpoch;
+
   /// The state in Drive, or `null` when there is no file yet — for the first
   /// sign-in dialog. Duplicates are merged here too, without writing.
   Future<SyncState?> peek() async {
@@ -118,25 +151,36 @@ final class SyncEngine {
     return state;
   }
 
-  /// Merges Drive and the device both ways. Throws [SyncException].
-  Future<SyncReport> sync() async {
+  /// Merges Drive and the device both ways. When the merge would drop live
+  /// rows this device changed since its last sync, nothing is changed and
+  /// the report is [SyncReport.paused] until the pass is run again with
+  /// [stale] (docs/sync.md, "Tombstones"). Throws [SyncException].
+  Future<SyncReport> sync({
+    StaleChoice? stale,
+    String? reviewedFingerprint,
+  }) async {
+    final started = _now;
+    final lastSync = int.tryParse(
+      await _store.stateValue(SyncStore.lastSyncKey) ?? '',
+    );
+    var applied = 0;
     for (var attempt = 1; attempt <= attempts; attempt++) {
       final files = await _remote.list();
       final mains = _mains(files);
       if (mains.isEmpty) {
-        final local = await _store.read();
-        if (local.isEmpty) {
-          return const SyncReport(
-            applied: 0,
-            uploaded: false,
-            modifiedTime: null,
-          );
+        if ((await _store.read()).isEmpty) {
+          return _done(started, applied: 0, uploaded: false, modified: null);
         }
-        final created = await _remote.create(SyncFile.name, _encode(local));
-        return SyncReport(
+        await _store.purge(_watermark(await _store.read()));
+        final created = await _remote.create(
+          SyncFile.name,
+          _encode(await _store.read()),
+        );
+        return _done(
+          started,
           applied: 0,
           uploaded: true,
-          modifiedTime: created.modifiedTime,
+          modified: created.modifiedTime,
         );
       }
 
@@ -145,21 +189,46 @@ final class SyncEngine {
       final main = mains.first;
       final extras = mains.skip(1).toList();
       final bytes = await _download(main.id);
-      var applied = await _store.apply(_decode(bytes));
+      var remote = _decode(bytes);
       for (final extra in extras) {
-        applied += await _store.apply(_decode(await _download(extra.id)));
+        remote = mergeStates(remote, _decode(await _download(extra.id)));
       }
 
-      final remote = _decode(bytes);
-      final local = await _store.read();
-      if (!remoteBehind(local, remote) && extras.isEmpty) {
-        return SyncReport(
+      try {
+        applied += await _store.apply(
+          remote,
+          guard: true,
+          lastSyncAt: lastSync,
+          reviewedFingerprint: reviewedFingerprint,
+          keep: stale == null ? null : stale == StaleChoice.keep,
+          deviceId: deviceId,
+          now: _now,
+        );
+      } on StaleReviewRequired catch (review) {
+        return SyncReport.paused(review.count, review.fingerprint);
+      }
+
+      var local = await _store.read();
+      final watermark = _watermark(local);
+      final purgeable =
+          local.ratings.any(
+            (r) => r.deletedAt != null && r.updatedAt < watermark,
+          ) ||
+          local.watchlist.any(
+            (w) => w.deletedAt != null && w.updatedAt < watermark,
+          );
+      if (!remoteBehind(local, remote) && extras.isEmpty && !purgeable) {
+        return _done(
+          started,
           applied: applied,
           uploaded: false,
-          modifiedTime: main.modifiedTime,
+          modified: main.modifiedTime,
         );
       }
 
+      // Every write to Drive moves the watermark up and purges below it.
+      await _store.purge(watermark);
+      local = await _store.read();
       await _dailyCopy(files, bytes);
       // No conditional write in Drive v3: re-read the metadata, and start
       // over if someone wrote the file since we downloaded it.
@@ -169,10 +238,11 @@ final class SyncEngine {
       for (final extra in extras) {
         await _remote.delete(extra.id);
       }
-      return SyncReport(
+      return _done(
+        started,
         applied: applied,
         uploaded: true,
-        modifiedTime: written.modifiedTime,
+        modified: written.modifiedTime,
       );
     }
     throw const SyncException(
@@ -188,6 +258,29 @@ final class SyncEngine {
 
   Future<SyncState> readBackup(RemoteFile backup) async =>
       _decode(await _download(backup.id));
+
+  /// Step 6 of the pass: what `last_sync_at` says from now on is that every
+  /// row changed before [started] is in Drive.
+  Future<SyncReport> _done(
+    int started, {
+    required int applied,
+    required bool uploaded,
+    required String? modified,
+  }) async {
+    await _store.setStateValue(SyncStore.lastSyncKey, '$started');
+    await _store.setStateValue(SyncStore.modifiedKey, modified);
+    return SyncReport(
+      applied: applied,
+      uploaded: uploaded,
+      modifiedTime: modified,
+      syncedAt: started,
+    );
+  }
+
+  /// P = max(the file's, this device's, now − N) — the file's is already in
+  /// [local] once it is applied.
+  int _watermark(SyncState local) =>
+      max(local.purgedBefore, purgeWatermark(_now));
 
   /// "Delete data from Google Drive": the file and every copy.
   Future<void> deleteAll() async {
@@ -217,9 +310,11 @@ final class SyncEngine {
   );
 
   /// A file that can't be read is an error, never something to overwrite.
-  static SyncState _decode(List<int> bytes) {
+  /// Its watermark is clamped to this device's clock.
+  SyncState _decode(List<int> bytes) {
     try {
-      return SyncFile.decode(bytes);
+      final state = SyncFile.decode(bytes);
+      return state.withPurgedBefore(clampWatermark(state.purgedBefore, _now));
     } on SyncFileTooNew catch (e) {
       throw SyncException(SyncFailure.tooNew, 'format ${e.version}');
     } on SyncFileBroken catch (e) {

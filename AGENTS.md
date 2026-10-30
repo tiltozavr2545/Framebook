@@ -70,9 +70,10 @@ style, it is breakage.
   or `tmdb:tv:1399:s1:e3` is derived from the source's ids. Two offline
   ratings of the same film on two devices are one row with a conflict, not
   two duplicate rows.
-- **Synced rows are never physically deleted.** Deletion is `deleted_at` (a
-  tombstone). Without it, merging resurrects what was deleted on another
-  device.
+- **Deletion knowledge is never discarded.** Deletion starts as `deleted_at`
+  (a tombstone). After 180 days a full row may be replaced by a permanent
+  compact deletion register; see [docs/sync.md](docs/sync.md). Without it,
+  merging resurrects what was deleted on another device.
 - **`updated_at` changes on any user change of the row, and only on that.**
   A background refresh of the snapshot or the rating cache doesn't touch a
   rating's `updated_at` — otherwise it would win the merge over a real edit

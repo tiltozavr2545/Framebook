@@ -131,6 +131,57 @@ void main() {
     );
   });
 
+  test('import asks again when a new conflicting row appears', () async {
+    final (container, library) = await device(
+      'b',
+      FakeGoogleAccount(MemoryRemote()),
+    );
+    final controller = container.read(syncControllerProvider.notifier);
+    await library.rate(film, scoreHalf: 17, note: null);
+    final future = DateTime.now().millisecondsSinceEpoch + 60000;
+    final file = SyncState(
+      ratingDeletions: [
+        DeletionRecord(
+          workKey: 'tmdb:movie:603',
+          updatedAt: future,
+          updatedBy: 'a',
+          tieBreak: '0' * 64,
+        ),
+        DeletionRecord(
+          workKey: 'tmdb:movie:27205',
+          updatedAt: future,
+          updatedBy: 'a',
+          tieBreak: '0' * 64,
+        ),
+      ],
+    );
+    final bytes = SyncFile.encode(
+      file,
+      writtenAt: future,
+      writtenBy: 'a',
+      appVersion: 'test',
+    );
+    final first = await controller.previewImport(bytes);
+    expect(first.stale, 1);
+    await library.rate(other, scoreHalf: 12, note: null);
+    final next = await controller.import(
+      first.file,
+      replace: false,
+      keepStale: false,
+      reviewedFingerprint: first.fingerprint,
+    );
+    expect(next?.stale, 2);
+    expect((await SyncStore(databases.single).read()).liveRatings, 2);
+    final result = await controller.import(
+      next!.file,
+      replace: false,
+      keepStale: false,
+      reviewedFingerprint: next.fingerprint,
+    );
+    expect(result, isNull);
+    expect((await SyncStore(databases.single).read()).liveRatings, 0);
+  });
+
   test('a broken or newer import file is refused', () async {
     final (a, _) = await device('a', FakeGoogleAccount(MemoryRemote()));
     final controller = a.read(syncControllerProvider.notifier);

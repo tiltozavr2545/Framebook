@@ -1218,6 +1218,42 @@ abstract class AppLocalizations {
   /// **'Deleted from Google Drive'**
   String get syncDeleted;
 
+  /// No description provided for @syncStaleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsynced changes to deleted entries'**
+  String get syncStaleTitle;
+
+  /// No description provided for @syncStaleBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsynced ratings and watchlist entries on this device that conflict with a newer deletion in Google Drive: {count}. Keep restores these entries on your devices. Discard applies the deletion. Sync is paused until you choose.'**
+  String syncStaleBody(int count);
+
+  /// No description provided for @syncStaleKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep'**
+  String get syncStaleKeep;
+
+  /// No description provided for @syncStaleDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get syncStaleDiscard;
+
+  /// No description provided for @syncStalePaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync is paused until you answer a question'**
+  String get syncStalePaused;
+
+  /// No description provided for @syncStaleReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get syncStaleReview;
+
   /// No description provided for @backupFile.
   ///
   /// In en, this message translates to:
@@ -1301,6 +1337,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Imported'**
   String get importDone;
+
+  /// No description provided for @importStaleBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsynced ratings and watchlist entries on this device that conflict with a newer deletion in the file: {count}. Keep restores these entries. Discard applies the deletion.'**
+  String importStaleBody(int count);
 
   /// No description provided for @reelHint.
   ///

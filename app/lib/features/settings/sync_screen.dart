@@ -55,6 +55,28 @@ class SyncScreen extends ConsumerWidget {
               ),
             )
           else ...[
+            if (status.stale case final count?
+                when status.staleFingerprint != null)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(l10n.syncStalePaused),
+                    TextButton(
+                      onPressed: status.busy
+                          ? null
+                          : () => _resolveStale(
+                              context,
+                              ref,
+                              count,
+                              status.staleFingerprint!,
+                            ),
+                      child: Text(l10n.syncStaleReview),
+                    ),
+                  ],
+                ),
+              ),
             ListTile(
               leading: const Icon(Icons.account_circle_outlined),
               title: Text(l10n.syncSignedInAs(status.account!)),
@@ -136,6 +158,45 @@ class SyncScreen extends ConsumerWidget {
 
   static void _snack(BuildContext context, String text) =>
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+
+  Future<void> _resolveStale(
+    BuildContext context,
+    WidgetRef ref,
+    int count,
+    String fingerprint,
+  ) async {
+    final controller = ref.read(syncControllerProvider.notifier);
+    final l10n = AppLocalizations.of(context);
+    final keep = await _staleChoice(context, l10n.syncStaleBody(count));
+    if (keep != null) {
+      await controller.resolveStale(keep: keep, fingerprint: fingerprint);
+    }
+  }
+
+  static Future<bool?> _staleChoice(BuildContext context, String body) {
+    final l10n = AppLocalizations.of(context);
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.syncStaleTitle),
+        content: SingleChildScrollView(child: Text(body)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.syncStaleDiscard),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.syncStaleKeep),
+          ),
+        ],
+      ),
+    );
+  }
 
   Future<void> _signIn(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
@@ -242,6 +303,7 @@ class SyncScreen extends ConsumerWidget {
   }
 
   Future<void> _deleteDriveData(BuildContext context, WidgetRef ref) async {
+    final controller = ref.read(syncControllerProvider.notifier);
     final l10n = AppLocalizations.of(context);
     final confirmed = await _confirm(
       context,
@@ -251,7 +313,7 @@ class SyncScreen extends ConsumerWidget {
     );
     if (!confirmed) return;
     try {
-      await ref.read(syncControllerProvider.notifier).deleteDriveData();
+      await controller.deleteDriveData();
       if (context.mounted) _snack(context, l10n.syncDeleted);
     } on SyncException catch (e) {
       if (context.mounted) _snack(context, _failureText(l10n, e.failure));
@@ -275,7 +337,7 @@ class SyncScreen extends ConsumerWidget {
     final picked = await FilePicker.pickFiles(withData: true);
     final bytes = picked?.files.singleOrNull?.bytes;
     if (bytes == null || !context.mounted) return;
-    final ImportPreview preview;
+    ImportPreview preview;
     try {
       preview = await controller.previewImport(bytes);
     } on SyncFileException catch (e) {
@@ -321,7 +383,26 @@ class SyncScreen extends ConsumerWidget {
         )) {
       return;
     }
-    await controller.import(preview.file, replace: replace);
+    while (true) {
+      if (!context.mounted) return;
+      var keepStale = true;
+      if (!replace && preview.stale > 0) {
+        final keep = await _staleChoice(
+          context,
+          l10n.importStaleBody(preview.stale),
+        );
+        if (keep == null) return;
+        keepStale = keep;
+      }
+      final next = await controller.import(
+        preview.file,
+        replace: replace,
+        keepStale: keepStale,
+        reviewedFingerprint: preview.fingerprint,
+      );
+      if (next == null) break;
+      preview = next;
+    }
     if (context.mounted) _snack(context, l10n.importDone);
   }
 

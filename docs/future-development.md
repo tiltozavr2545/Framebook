@@ -21,6 +21,12 @@ but isn't maintained. When there is time:
 - the Keychain entry of flutter_secure_storage survives uninstalling the
   app — decide whether that is good or bad for API keys.
 
+## Comparing with friends
+
+Explicitly postponed during Stage 6.5. A future file exchange should contain
+scores only and show a one-off comparison without storing friends' libraries.
+No server is planned. Presentation and matching details remain to be designed.
+
 ## Importing ratings from other services
 
 - **IMDb** — the "Your Ratings" CSV export (it has `Const` = `imdb_id` and a

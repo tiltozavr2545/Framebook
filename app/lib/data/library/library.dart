@@ -1,3 +1,4 @@
+import '../sync/sync_store.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -120,6 +121,9 @@ final class Library {
   static int _next(int now, int previous) =>
       now > previous ? now : previous + 1;
 
+  Future<int> _deletionTime(String storageKey, String key) =>
+      SyncStore(_db).deletionTime(storageKey, key);
+
   static void _checkScore(int scoreHalf) {
     if (scoreHalf < 2 || scoreHalf > 20) {
       throw RangeError.range(scoreHalf, 2, 20, 'scoreHalf');
@@ -157,7 +161,10 @@ final class Library {
                 note: Value(cleanNote),
                 createdAt: now,
                 scoredAt: now,
-                updatedAt: now,
+                updatedAt: _next(
+                  now,
+                  await _deletionTime(SyncStore.ratingDeletionsKey, key),
+                ),
                 updatedBy: deviceId,
               ),
             );
@@ -242,7 +249,10 @@ final class Library {
               WatchlistCompanion.insert(
                 workKey: k,
                 addedAt: now,
-                updatedAt: now,
+                updatedAt: _next(
+                  now,
+                  await _deletionTime(SyncStore.watchlistDeletionsKey, k),
+                ),
                 updatedBy: deviceId,
               ),
             );
@@ -370,7 +380,10 @@ final class Library {
                 note: Value(moved.note),
                 createdAt: moved.createdAt,
                 scoredAt: moved.scoredAt,
-                updatedAt: now,
+                updatedAt: _next(
+                  now,
+                  await _deletionTime(SyncStore.ratingDeletionsKey, target),
+                ),
                 updatedBy: deviceId,
               ),
             );
