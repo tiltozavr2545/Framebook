@@ -272,7 +272,7 @@ Along the way:
 
 ## Stage 6.5 — Required items from the postponed list
 
-**Status:** in progress (0.7.0 — the whole stage ships as one version)
+**Status:** complete (0.7.0; item 5 postponed by the user)
 
 Moved here from [future-development.md](future-development.md) by the
 user's decision: they are done before the code review, so that the review
