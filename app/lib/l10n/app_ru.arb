@@ -1,6 +1,15 @@
 {
   "@@locale": "ru",
 
+
+  "updateAvailable": "Доступно обновление {version}",
+  "updateOpen": "Открыть релиз",
+  "updateDismiss": "Скрыть",
+  "updateCheck": "Проверить обновления",
+  "updateFound": "Доступно обновление",
+  "updateCurrent": "Установлена последняя версия",
+  "updateFailed": "Не удалось проверить обновления",
+
   "appTitle": "Framebook",
 
   "tabSearch": "Обзор",

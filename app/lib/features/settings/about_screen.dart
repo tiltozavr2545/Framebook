@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/theme.dart';
 import '../../data/sync/sync_controller.dart';
+import '../../data/update_checker.dart';
 import '../../l10n/app_localizations.dart';
 
 /// About the app and where the data comes from. TMDB attribution — the logo
@@ -45,6 +46,32 @@ class AboutScreen extends ConsumerWidget {
                 color: Reel.of(context).edge,
               ),
             ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.system_update),
+            title: Text(l10n.updateCheck),
+            onTap: () async {
+              final controller = ref.read(updateControllerProvider.notifier);
+              final result = await controller.check(manual: true);
+              if (!context.mounted) return;
+              final text = switch (result) {
+                UpdateResult.available => l10n.updateFound,
+                UpdateResult.current => l10n.updateCurrent,
+                UpdateResult.failed => l10n.updateFailed,
+              };
+              final release = controller.lastRelease;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(text),
+                  action: result == UpdateResult.available && release != null
+                      ? SnackBarAction(
+                          label: l10n.updateOpen,
+                          onPressed: () => _open(release.url),
+                        )
+                      : null,
+                ),
+              );
+            },
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),

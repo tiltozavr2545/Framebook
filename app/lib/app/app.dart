@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/app_localizations.dart';
 import '../data/sync/secrets_controller.dart';
+import '../data/update_checker.dart';
 import 'preferences.dart';
 import 'router.dart';
 import 'theme.dart';
@@ -13,6 +14,7 @@ class FramebookApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(secretsControllerProvider);
+    ref.watch(updateControllerProvider);
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,

@@ -9,6 +9,29 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String updateAvailable(String version) {
+    return 'Update $version is available';
+  }
+
+  @override
+  String get updateOpen => 'Open release';
+
+  @override
+  String get updateDismiss => 'Dismiss';
+
+  @override
+  String get updateCheck => 'Check for updates';
+
+  @override
+  String get updateFound => 'An update is available';
+
+  @override
+  String get updateCurrent => 'You have the latest version';
+
+  @override
+  String get updateFailed => 'Could not check for updates';
+
+  @override
   String get appTitle => 'Framebook';
 
   @override

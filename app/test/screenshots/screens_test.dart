@@ -1,3 +1,4 @@
+import 'package:framebook/data/update_checker.dart';
 // Renders the main screens to PNG files with the real fonts, to look at the
 // design without a device: `SCREENSHOTS=/tmp/fb-shots flutter test
 // test/screenshots`. Skipped in normal runs — it checks nothing, and font
@@ -106,6 +107,7 @@ void main() {
         child: ProviderScope(
           retry: (_, _) => null,
           overrides: [
+            updateChecksEnabledProvider.overrideWithValue(false),
             databaseProvider.overrideWithValue(db),
             deviceIdProvider.overrideWithValue('shots'),
             backgroundRefreshEnabledProvider.overrideWithValue(false),

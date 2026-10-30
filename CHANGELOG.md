@@ -156,3 +156,6 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
   first launch without entering the TMDB key again; each device remembers
   its encryption key in secure storage. Theme and language stay local,
   and rating exports and daily copies never include your API keys.
+- Framebook checks for new releases once a day and offers a link to the
+  release page. You can dismiss the banner until the next version, or check
+  manually from About.

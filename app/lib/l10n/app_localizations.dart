@@ -98,6 +98,48 @@ abstract class AppLocalizations {
     Locale('ru'),
   ];
 
+  /// No description provided for @updateAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Update {version} is available'**
+  String updateAvailable(String version);
+
+  /// No description provided for @updateOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open release'**
+  String get updateOpen;
+
+  /// No description provided for @updateDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss'**
+  String get updateDismiss;
+
+  /// No description provided for @updateCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Check for updates'**
+  String get updateCheck;
+
+  /// No description provided for @updateFound.
+  ///
+  /// In en, this message translates to:
+  /// **'An update is available'**
+  String get updateFound;
+
+  /// No description provided for @updateCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'You have the latest version'**
+  String get updateCurrent;
+
+  /// No description provided for @updateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not check for updates'**
+  String get updateFailed;
+
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:

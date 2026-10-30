@@ -1,3 +1,4 @@
+import 'package:framebook/data/update_checker.dart';
 import 'package:dio/dio.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
@@ -65,6 +66,7 @@ void main() {
       ProviderScope(
         retry: (_, _) => null,
         overrides: [
+          updateChecksEnabledProvider.overrideWithValue(false),
           databaseProvider.overrideWithValue(db),
           deviceIdProvider.overrideWithValue('test'),
           // Its passes run on timers; it has tests of its own.

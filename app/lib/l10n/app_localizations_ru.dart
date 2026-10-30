@@ -9,6 +9,29 @@ class AppLocalizationsRu extends AppLocalizations {
   AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
   @override
+  String updateAvailable(String version) {
+    return 'Доступно обновление $version';
+  }
+
+  @override
+  String get updateOpen => 'Открыть релиз';
+
+  @override
+  String get updateDismiss => 'Скрыть';
+
+  @override
+  String get updateCheck => 'Проверить обновления';
+
+  @override
+  String get updateFound => 'Доступно обновление';
+
+  @override
+  String get updateCurrent => 'Установлена последняя версия';
+
+  @override
+  String get updateFailed => 'Не удалось проверить обновления';
+
+  @override
   String get appTitle => 'Framebook';
 
   @override

@@ -1,6 +1,16 @@
 {
   "@@locale": "en",
 
+
+  "updateAvailable": "Update {version} is available",
+  "updateOpen": "Open release",
+  "updateDismiss": "Dismiss",
+  "updateCheck": "Check for updates",
+  "updateFound": "An update is available",
+  "updateCurrent": "You have the latest version",
+  "updateFailed": "Could not check for updates",
+  "@updateAvailable": {"placeholders": {"version": {"type": "String"}}},
+
   "appTitle": "Framebook",
 
   "tabSearch": "Discover",

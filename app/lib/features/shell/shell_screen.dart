@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/router.dart';
 import '../../data/background_refresh.dart';
+import '../../data/update_checker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../data/sync/sync_controller.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -43,7 +45,12 @@ class ShellScreen extends ConsumerWidget {
     ref.listen(syncControllerProvider, (_, _) {});
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      body: shell,
+      body: Column(
+        children: [
+          const UpdateBanner(),
+          Expanded(child: shell),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: shell.currentIndex,
         // Tapping the active tab again takes it back to its start.
@@ -54,6 +61,33 @@ class ShellScreen extends ConsumerWidget {
             NavigationDestination(icon: Icon(tab.icon), label: tab.label(l10n)),
         ],
       ),
+    );
+  }
+}
+
+/// Shows the latest release until this version is dismissed.
+class UpdateBanner extends ConsumerWidget {
+  const UpdateBanner({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final release = ref.watch(updateControllerProvider);
+    if (release == null) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
+    return MaterialBanner(
+      content: Text(l10n.updateAvailable(release.version)),
+      actions: [
+        TextButton(
+          onPressed: () =>
+              launchUrl(release.url, mode: LaunchMode.externalApplication),
+          child: Text(l10n.updateOpen),
+        ),
+        TextButton(
+          onPressed: () =>
+              ref.read(updateControllerProvider.notifier).dismiss(),
+          child: Text(l10n.updateDismiss),
+        ),
+      ],
     );
   }
 }

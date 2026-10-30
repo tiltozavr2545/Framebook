@@ -302,7 +302,7 @@ and the optimization see the final code.
    restore from Drive before entering a TMDB key. Offline edits persist for
    retry; disabling or deleting data cancels pending operations. Rating
    exports and daily copies exclude keys. Details are in [sync.md](sync.md).
-4. Checking for updates in the app: a request to the GitHub Releases API on
+4. ✅ Checking for updates in the app: a request to the GitHub Releases API on
    launch; if there is a newer version, an unobtrusive banner with a link to
    the release page.
 5. **Postponed by the user.** Comparing with friends is outside this stage;

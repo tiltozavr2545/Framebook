@@ -314,6 +314,13 @@ All writes of the user's own data go through `Library`
   TMDB's genre lists through the HTTP cache; without them (offline, nothing
   cached) the genre section says so and the rest still works.
 
+## Update checks
+
+The latest stable GitHub release is checked at launch at most once per 24
+hours; a manual check is available on About. Dismissal persists per version,
+and the banner opens the release page. Offline and API errors are quiet during
+automatic checks. Tests use a fake source, not the network.
+
 ## Sync and backup (Stage 5)
 
 The design is [sync.md](sync.md); here is what lives where in
