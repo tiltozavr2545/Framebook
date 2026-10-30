@@ -45,13 +45,15 @@
     <h2>What stays on your phone</h2>
     <ul>
       <li><strong>Your ratings, notes and watchlist</strong> are stored in the app's local database on your phone.</li>
-      <li><strong>The API keys you enter</strong> (TMDB, PoiskKino, OMDb) are kept in the phone's secure storage and are sent only to the service each key belongs to.</li>
+      <li><strong>The API keys you enter</strong> (TMDB, PoiskKino, OMDb) are kept in the phone's secure storage and sent to the service each key belongs to. If you explicitly enable encrypted key sync, an encrypted copy is also stored in your own Google Drive, as described below.</li>
       <li><strong>Settings</strong> (language, theme) stay on the phone.</li>
     </ul>
 
     <h2>Google Drive (optional)</h2>
     <p>If you sign in with Google in Settings → Sync and backup, Framebook asks for a single permission, <code>drive.appdata</code>: access to a hidden folder in <em>your own</em> Google Drive that only this app can see. Framebook cannot see, read or change any other file in your Drive, and it does not read your contacts, mail or anything else in your Google account. Your email address is shown only on the sync screen, so you know which account is signed in.</p>
     <p>In that folder the app keeps one file with your ratings, notes and watchlist, and up to seven daily copies of it — that is how your devices stay in sync and how a mistake can be undone. The data travels from your phone straight to your Google account. The developer never receives it and has no way to read it.</p>
+
+    <p>Encrypted key sync is a separate, optional switch. It stores your API keys and preferred comparison source in a separate password-encrypted file. Language and theme stay on each device. The password is not stored; a derived encryption key is remembered in the phone's secure storage so you do not have to unlock it every time. The encrypted key file is excluded from rating exports and daily rating backups. If you forget the password and lose access on your devices, the developer cannot recover it.</p>
 
     <h2>Film data</h2>
     <p>To show titles, posters and ratings, the app sends requests to <a href="https://www.themoviedb.org" target="_blank" rel="noopener">TMDB</a>, <a href="https://poiskkino.dev" target="_blank" rel="noopener">PoiskKino</a> and <a href="https://www.omdbapi.com" target="_blank" rel="noopener">OMDb</a> with the keys you entered: the text you search for, or the ids of the title you open. Those services' own privacy policies apply to those requests. Your ratings and notes are never sent to them.</p>
