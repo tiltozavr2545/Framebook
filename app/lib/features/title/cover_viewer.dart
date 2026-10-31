@@ -36,18 +36,25 @@ final coverVariantsProvider = FutureProvider.autoDispose
       (ref, key) => ref.watch(tmdbProvider).images(key),
     );
 
+final personImagesProvider = FutureProvider.autoDispose
+    .family<List<TmdbImage>, int>(
+      (ref, id) => ref.watch(tmdbProvider).personImages(id),
+    );
+
 /// Opens immediately with the current cover, including while variants load.
 class CoverViewer extends ConsumerStatefulWidget {
   const CoverViewer({
     super.key,
     required this.currentPath,
-    required this.keyForImages,
+    this.keyForImages,
+    this.personId,
     required this.previewSize,
     this.originalLanguage,
     this.cachedOnly = false,
-  });
+  }) : assert((keyForImages == null) != (personId == null));
   final String currentPath;
-  final WorkKey keyForImages;
+  final WorkKey? keyForImages;
+  final int? personId;
   final ImageSize previewSize;
   final String? originalLanguage;
   final bool cachedOnly;
@@ -63,14 +70,20 @@ class _CoverViewerState extends ConsumerState<CoverViewer> {
   Widget build(BuildContext context) {
     final images = widget.cachedOnly
         ? const <TmdbImage>[]
-        : ref.watch(coverVariantsProvider(widget.keyForImages)).value ??
+        : (widget.personId != null
+                  ? ref.watch(personImagesProvider(widget.personId!)).value
+                  : ref
+                        .watch(coverVariantsProvider(widget.keyForImages!))
+                        .value) ??
               const <TmdbImage>[];
-    final paths = orderedCovers(
-      widget.currentPath,
-      images,
-      uiLanguage: ref.watch(contentLanguageProvider).split('-').first,
-      originalLanguage: widget.originalLanguage,
-    );
+    final paths = widget.personId != null
+        ? {widget.currentPath, for (final image in images) image.path}.toList()
+        : orderedCovers(
+            widget.currentPath,
+            images,
+            uiLanguage: ref.watch(contentLanguageProvider).split('-').first,
+            originalLanguage: widget.originalLanguage,
+          );
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -86,7 +99,9 @@ class _CoverViewerState extends ConsumerState<CoverViewer> {
           path: paths[index],
           previewSize: widget.previewSize,
           cachedOnly: widget.cachedOnly,
-          still: widget.keyForImages.kind == WorkKind.episode,
+          still:
+              widget.personId != null ||
+              widget.keyForImages?.kind == WorkKind.episode,
           onZoom: (zoomed) {
             if (_zoomed != zoomed) setState(() => _zoomed = zoomed);
           },

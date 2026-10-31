@@ -136,24 +136,28 @@ in the existing `sync_state` key-value table and travel in format 3 exports.
 5. If the merged state has rows where the local version won (that is, the
    remote differs from the merged), or old full tombstones need compaction,
    compact and upload the merged state. Before uploading, re-read the file's
-   metadata: if `modifiedTime` changed after step 2, go back to step 2 (at
-   most three attempts).
+   metadata for every state file: if `modifiedTime` changed after step 2, go
+   back to step 2 (at most three attempts). Check each duplicate again before
+   deleting it.
 6. Write the pass start time as `last_sync_at` and `modifiedTime` to
    `sync_state` after success. An edit during upload remains unsynced for the
    next pass; a paused or failed pass does not advance this acknowledgement.
 
 Drive API v3 has no conditional write (If-Match) for content upload, so a
-race window remains between steps 5 and 6: another device may overwrite the
-file without seeing our upload. That doesn't lose data: the losing device
-kept its rows locally, and on the next sync step 5 uploads them again. The
-race delays a change but doesn't lose it. That is exactly why every device
-keeps the full state.
+race window remains between metadata checks and writes or duplicate deletion.
+Another device's update can be overwritten or its duplicate removed after
+the last check. Its local copy can restore the change on a later sync, but
+the shared file may lack it until then. If that device loses its local data
+before another successful sync, the change may be lost. Every device keeps
+the full state to make recovery possible; the metadata check is not an atomic
+write or deletion.
 
 ### When to sync
 
 - on app launch and on returning to it, if more than 5 minutes have passed
   since the last sync;
 - 30 seconds after the last change (debounce);
+- changes during a pass schedule another pass after the debounce;
 - with the "Sync" button in settings.
 
 With no network it is quietly put off until the next occasion. In the MVP
@@ -203,7 +207,8 @@ locally so a retry cannot resurrect an older row.
 - **First sign-in on a device with local data, when Drive already has a
   file**, is an ordinary merge, not a replacement. Before it there is a
   dialog with counters: "120 ratings on the device, 340 in Drive, 395 after
-  merging".
+  merging". A local watchlist also triggers this confirmation. The account
+  is remembered for automatic sync only after the user confirms.
 - **Signing out of Google** — the local data stays, the file in Drive stays.
 - **"Delete data from Google Drive"** deletes the file and the copies. Other
   devices still signed in will create the file again from their state on
@@ -275,6 +280,10 @@ a TMDB key. It signs in and asks for the password, then restores keys and
 the comparison source. The derived key is remembered on that device. A file
 with a changed password or salt requires unlocking again; it is not silently
 overwritten with this device's old key.
+
+Disabling key sync waits for already started operations before clearing the
+local cached key and snapshot. The encrypted file already on Drive remains
+until the user deletes the app's Drive data.
 
 Edits and key removals automatically update the encrypted whole-file LWW
 snapshot. Its version is a monotonic UTC timestamp plus device id; there is

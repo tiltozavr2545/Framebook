@@ -58,14 +58,16 @@ class SearchNotifier extends Notifier<SearchState> {
   }
 
   void typed(String text) {
-    _debounce?.cancel();
     final query = text.trim();
+    if (query == state.query && state.failure == null) return;
+    _debounce?.cancel();
     if (query.isEmpty) {
       _generation++;
       state = const SearchState();
       return;
     }
-    if (query == state.query && state.failure == null) return;
+    _generation++;
+    state = SearchState(query: query, loading: true);
     _debounce = Timer(debounce, () => _load(query, 1));
   }
 

@@ -35,6 +35,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get coverOpen => 'Open full-screen cover';
 
   @override
+  String get photoOpen => 'Open full-screen photo';
+
+  @override
   String get appTitle => 'Framebook';
 
   @override
@@ -359,6 +362,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ratingRate => 'Rate';
+
+  @override
+  String get ratingNotReleased => 'Rating is available after release.';
 
   @override
   String get ratingMine => 'My rating';

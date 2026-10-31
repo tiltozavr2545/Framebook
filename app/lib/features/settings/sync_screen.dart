@@ -316,7 +316,11 @@ class SyncScreen extends ConsumerWidget {
     final controller = ref.read(syncControllerProvider.notifier);
     try {
       final first = await controller.signIn();
-      if (first == null || !context.mounted) return;
+      if (first == null) return;
+      if (!context.mounted) {
+        await controller.signOut();
+        return;
+      }
       final merge = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(

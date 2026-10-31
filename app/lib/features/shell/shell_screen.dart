@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/router.dart';
 import '../../data/background_refresh.dart';
+import '../../data/library/localized_titles.dart';
 import '../../data/update_checker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../data/sync/sync_controller.dart';
@@ -41,6 +42,7 @@ class ShellScreen extends ConsumerWidget {
     // where there are no keys to refresh with. Listened to, not watched, so
     // its passes don't rebuild the shell.
     ref.listen(backgroundRefreshProvider, (_, _) {});
+    ref.watch(localizedTitlesProvider);
     // Sync too: on launch, on returning to the app, after changes.
     ref.listen(syncControllerProvider, (_, _) {});
     final l10n = AppLocalizations.of(context);

@@ -18,7 +18,7 @@ are settled before anything is built on top of them.
 - [x] Stage 4 — Comparison and statistics
 - [x] Stage 5 — Google Drive: sync and backup
 - [x] Stage 6 — Polish and distribution
-- [ ] Stage 6.5 — Required items from the postponed list (in progress, 0.7.0)
+- [x] Stage 6.5 — Required items from the postponed list (0.7.0; item 5 postponed)
 - [ ] Stage 7 — Code review, optimization, a second review
 
 ---
@@ -300,7 +300,8 @@ and the optimization see the final code.
    among settings. A separate Drive file uses Argon2id and AES-256-GCM;
    each device caches the derived key in OS secure storage. Onboarding can
    restore from Drive before entering a TMDB key. Offline edits persist for
-   retry; disabling or deleting data cancels pending operations. Rating
+   retry; disabling or deleting data stops new work and waits for operations
+   already underway. Rating
    exports and daily copies exclude keys. Details are in [sync.md](sync.md).
 4. ✅ Checking for updates in the app: a request to the GitHub Releases API on
    launch; if there is a newer version, an unobtrusive banner with a link to
@@ -340,10 +341,19 @@ Each item that changes the sync format says so in [sync.md](sync.md) and
 
 ## Stage 7 — Code review, optimization, a second review
 
-**Status:** not started
+**Status:** initial review complete; optimization and the second review pending
 
-1. A full code review of the app: correctness first, then everything else
-   it finds. Every bug found is fixed, with a test where it can have one.
+The 0.7.1 follow-up refreshes saved titles after a language change, prevents
+rating films whose known release date is in the future, and opens person
+photographs full screen. Unknown release dates remain rateable.
+
+1. ✅ Initial review of correctness, security, tests and documentation. Fixed
+   synchronization races around edits, duplicate files, first sign-in and
+   deletion, and waited for key-sync operations before disabling them.
+   Invalid sync snapshots are rejected before database writes; stale search
+   responses cannot replace a newer query. Regression tests cover these cases.
+   The remaining Drive metadata-check race and its limits are documented in
+   [sync.md](sync.md); the two-physical-phone check is still pending.
 2. Optimization once the bugs are fixed: less memory, CPU and battery, less
    network and disk, faster start and smoother scrolling — measured before
    and after rather than guessed.

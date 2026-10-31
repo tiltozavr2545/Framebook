@@ -71,6 +71,11 @@ final localeProvider = NotifierProvider<LocaleNotifier, Locale?>(
 /// way Flutter itself picks it.
 final contentLanguageProvider = Provider<String>((ref) {
   final chosen = ref.watch(localeProvider);
+  if (chosen == null) {
+    final observer = _SystemLocaleObserver(ref.invalidateSelf);
+    WidgetsBinding.instance.addObserver(observer);
+    ref.onDispose(() => WidgetsBinding.instance.removeObserver(observer));
+  }
   final code =
       chosen?.languageCode ??
       PlatformDispatcher.instance.locales
@@ -83,3 +88,11 @@ final contentLanguageProvider = Provider<String>((ref) {
           );
   return code == 'ru' ? 'ru-RU' : 'en-US';
 });
+
+class _SystemLocaleObserver with WidgetsBindingObserver {
+  _SystemLocaleObserver(this.changed);
+  final VoidCallback changed;
+
+  @override
+  void didChangeLocales(List<Locale>? locales) => changed();
+}

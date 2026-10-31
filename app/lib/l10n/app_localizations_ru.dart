@@ -35,6 +35,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get coverOpen => 'Открыть обложку на весь экран';
 
   @override
+  String get photoOpen => 'Открыть фотографию на весь экран';
+
+  @override
   String get appTitle => 'Framebook';
 
   @override
@@ -362,6 +365,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get ratingRate => 'Оценить';
+
+  @override
+  String get ratingNotReleased => 'Оценка станет доступна после выхода фильма.';
 
   @override
   String get ratingMine => 'Моя оценка';

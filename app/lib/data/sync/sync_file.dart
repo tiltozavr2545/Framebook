@@ -213,6 +213,11 @@ abstract final class SyncFile {
       _ => throw const SyncFileBroken('no purged_before'),
     };
     try {
+      if (json['works'] is! List ||
+          json['ratings'] is! List ||
+          json['watchlist'] is! List) {
+        throw const _BadRow('missing state tables');
+      }
       if (version >= 2 &&
           (json['rating_deletions'] is! List ||
               json['watchlist_deletions'] is! List)) {
@@ -328,13 +333,25 @@ abstract final class SyncFile {
     if (kind != parsed.kind.name) {
       throw _BadRow('works: kind $kind for $key');
     }
+    final parent = row.stringOrNull('parent_key');
+    final tmdbId = row.integer('tmdb_id');
+    final season = row.integerOrNull('season_number');
+    final episode = row.integerOrNull('episode_number');
+    if (parent != parsed.parent?.toString() ||
+        tmdbId <= 0 ||
+        ((parsed.kind == WorkKind.movie || parsed.kind == WorkKind.tv) &&
+            tmdbId != parsed.tmdbId) ||
+        season != parsed.season ||
+        episode != parsed.episode) {
+      throw _BadRow('works: inconsistent snapshot for $key');
+    }
     return Work(
       workKey: key,
       kind: parsed.kind,
-      parentKey: row.stringOrNull('parent_key'),
-      tmdbId: row.integer('tmdb_id'),
-      seasonNumber: row.integerOrNull('season_number'),
-      episodeNumber: row.integerOrNull('episode_number'),
+      parentKey: parent,
+      tmdbId: tmdbId,
+      seasonNumber: season,
+      episodeNumber: episode,
       imdbId: row.stringOrNull('imdb_id'),
       kpId: row.integerOrNull('kp_id'),
       title: row.string('title'),
@@ -351,10 +368,14 @@ abstract final class SyncFile {
     final row = _Row(raw, 'ratings');
     final score = row.integer('score_half');
     if (score < 2 || score > 20) throw _BadRow('ratings: score_half $score');
+    final note = row.stringOrNull('note');
+    if (note != null && note.runes.length > 10000) {
+      throw const _BadRow('ratings: note too long');
+    }
     return Rating(
       workKey: row.string('work_key'),
       scoreHalf: score,
-      note: row.stringOrNull('note'),
+      note: note,
       createdAt: row.integer('created_at'),
       scoredAt: row.integer('scored_at'),
       updatedAt: row.integer('updated_at'),

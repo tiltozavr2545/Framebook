@@ -146,6 +146,12 @@ abstract class AppLocalizations {
   /// **'Open full-screen cover'**
   String get coverOpen;
 
+  /// No description provided for @photoOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open full-screen photo'**
+  String get photoOpen;
+
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
@@ -703,6 +709,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Rate'**
   String get ratingRate;
+
+  /// No description provided for @ratingNotReleased.
+  ///
+  /// In en, this message translates to:
+  /// **'Rating is available after release.'**
+  String get ratingNotReleased;
 
   /// No description provided for @ratingMine.
   ///

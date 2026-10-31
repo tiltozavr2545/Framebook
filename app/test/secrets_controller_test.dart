@@ -237,6 +237,38 @@ void main() {
     expect(remote.files, isEmpty);
     container.dispose();
   });
+
+  test(
+    'disabling waits for a blocked sync before clearing its cache',
+    () async {
+      await setup();
+      start();
+      await settle();
+      final controller = container.read(secretsControllerProvider.notifier);
+      await controller.enable('password123');
+      remote.entered = Completer<void>();
+      remote.release = Completer<void>();
+      await container
+          .read(apiKeysProvider.notifier)
+          .save(ApiSource.tmdb, const StoredKey('edit', verified: true));
+      await remote.entered!.future;
+      var disabled = false;
+      final operation = controller.disable().then((_) => disabled = true);
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      expect(disabled, isFalse);
+      remote.release!.complete();
+      await operation;
+      final vault = SecretsVault(
+        remote: remote,
+        storage: storage,
+        accountId: 'me@example.com',
+        deviceId: 'device',
+      );
+      expect(await vault.isUnlocked, isFalse);
+      expect(container.read(secretsControllerProvider).enabled, isFalse);
+      container.dispose();
+    },
+  );
   test('account switch while acquiring Drive prevents old upload', () async {
     await setup();
     start();

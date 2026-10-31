@@ -25,6 +25,11 @@ Reply? apiFixtures(RequestOptions request) {
           'tmdb/tv_1399_s1e3_credits_ru.json',
         ),
         '/3/person/6384' => ok('tmdb/person_6384_ru.json'),
+        '/3/person/6384/images' => (
+          status: 200,
+          body:
+              '{"profiles":[{"file_path":"/one.jpg"},{"file_path":"/two.jpg"}]}',
+        ),
         '/3/trending/all/week' => ok('tmdb/trending_all_week_ru.json'),
         '/3/movie/now_playing' => ok('tmdb/movie_now_playing_ru.json'),
         '/3/discover/movie' => ok('tmdb/discover_movie_best_ru.json'),

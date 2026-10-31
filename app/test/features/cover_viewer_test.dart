@@ -90,6 +90,35 @@ void main() {
     expect(find.byKey(const ValueKey('/other')), findsOneWidget);
   });
 
+  testWidgets('person photos open with all available profiles', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          contentLanguageProvider.overrideWithValue('en-US'),
+          imageConfigProvider.overrideWith((ref) async => ImageConfig.fallback),
+          posterImageProvider.overrideWithValue(
+            (_, __) => MemoryImage(transparentPng),
+          ),
+          personImagesProvider.overrideWith(
+            (ref, id) async => [const TmdbImage('/second', null)],
+          ),
+        ],
+        child: const MaterialApp(
+          home: CoverViewer(
+            currentPath: '/first',
+            personId: 1,
+            previewSize: ImageSize.w185,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(InteractiveViewer), findsOneWidget);
+    await tester.drag(find.byType(PageView), const Offset(-500, 0));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('/second')), findsOneWidget);
+  });
+
   testWidgets(
     'saved offline cover never fetches image variants or network images',
     (tester) async {

@@ -240,6 +240,8 @@ viewer: the current image appears first, followed by UI-language,
 original-language and textless variants. The viewer supports swipe and
 pinch-to-zoom, using a cached small image while the larger size loads. A
 saved offline card opens only its cached cover, without a network request.
+Person pages open their profile photo in the same viewer and load available
+profile photos from TMDB, with the current photo first.
 TMDB's image configuration selects the large poster or still size.
 
 ## Rating (Stage 3)

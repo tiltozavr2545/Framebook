@@ -247,6 +247,7 @@ class SecretsController extends Notifier<SecretsStatus> {
     if (account == null) return;
     state = const SecretsStatus();
     await _rememberEnabled(false, account);
+    await _waitOperations();
     await SecretsVault.resetLocal(
       storage: ref.read(secretsStorageProvider),
       accountId: account,
@@ -261,6 +262,10 @@ class SecretsController extends Notifier<SecretsStatus> {
     if (account == null) return;
     state = const SecretsStatus();
     await _rememberEnabled(false, account);
+    await _waitOperations();
+  }
+
+  Future<void> _waitOperations() async {
     while (_operations.isNotEmpty) {
       await Future.wait(
         _operations.toList().map(

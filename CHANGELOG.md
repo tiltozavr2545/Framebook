@@ -174,3 +174,14 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
   and choosing a season replaces the whole-series selection. If TMDB changes
   season numbers, the app asks whether to move the saved entry. The sync
   format is now version 3; older exports remain readable.
+
+## 0.7.1 — Review and fixes (build 10)
+
+- Saved titles refresh in the selected language without changing ratings.
+- Films with a future release date cannot be rated yet; they can still be
+  added to the watchlist. Unknown release dates do not block rating.
+- Open a person's photograph full screen and swipe through available photos.
+- More reliable sync when edits, sign-out or Drive deletion overlap an
+  upload; first sync waits for confirmation, including with a watchlist.
+  Invalid backups are rejected before import, and searches discard stale
+  responses as soon as a new query is entered.

@@ -85,6 +85,10 @@ typedef ImportPreview = ({
   String fingerprint,
 });
 
+final syncDebounceProvider = Provider<Duration>(
+  (ref) => SyncController.debounce,
+);
+
 /// Sync with Google Drive, the daily copies, export and import
 /// (docs/sync.md). Syncs on launch and on returning to the app when the last
 /// sync is more than [resumeAfter] old, [debounce] after a change, and on the
@@ -100,6 +104,9 @@ class SyncController extends Notifier<SyncStatus> {
   late SyncStore _store;
   Timer? _debounce;
   Future<void>? _running;
+  bool _changedDuringSync = false;
+  bool _suspended = false;
+  bool _firstSyncPending = false;
 
   AppDatabase get _db => ref.read(databaseProvider);
 
@@ -144,7 +151,7 @@ class SyncController extends Notifier<SyncStatus> {
   }
 
   Future<void> _maybeSync() async {
-    if (state.account == null) return;
+    if (state.account == null || _suspended || _firstSyncPending) return;
     final last = state.lastSyncAt;
     final now = DateTime.now().toUtc().millisecondsSinceEpoch;
     if (last != null && now - last < resumeAfter.inMilliseconds) return;
@@ -152,10 +159,13 @@ class SyncController extends Notifier<SyncStatus> {
   }
 
   void _changed() {
-    // Our own writes while applying Drive's rows aren't a reason to sync.
-    if (state.account == null || state.busy) return;
+    if (state.account == null || _firstSyncPending) return;
+    if (_suspended || state.busy) {
+      _changedDuringSync = true;
+      return;
+    }
     _debounce?.cancel();
-    _debounce = Timer(debounce, () => unawaited(sync()));
+    _debounce = Timer(ref.read(syncDebounceProvider), () => unawaited(sync()));
   }
 
   /// Signs in. When Drive already has data and so does the device, returns
@@ -166,20 +176,35 @@ class SyncController extends Notifier<SyncStatus> {
     final email = await _google.signIn();
     final drive = await _withDrive((engine) => engine.peek());
     final device = await _store.read();
-    await ref.read(sharedPreferencesProvider).setString(_accountKey, email);
+    final hasLocalData =
+        device.liveRatings != 0 ||
+        device.watchlist.any((entry) => entry.deletedAt == null);
+    _firstSyncPending = drive != null && hasLocalData;
+    if (!_firstSyncPending) {
+      await ref.read(sharedPreferencesProvider).setString(_accountKey, email);
+    } else {
+      await ref.read(sharedPreferencesProvider).remove(_accountKey);
+    }
     state = state.copyWith(account: () => email, error: () => null);
-    if (drive == null || device.liveRatings == 0) {
+    if (!_firstSyncPending) {
       await sync();
       return null;
     }
+    final remote = drive!;
     return (
       device: device.liveRatings,
-      drive: drive.liveRatings,
-      merged: mergeStates(device, drive).liveRatings,
+      drive: remote.liveRatings,
+      merged: mergeStates(device, remote).liveRatings,
     );
   }
 
-  Future<void> confirmFirstSync() => sync();
+  Future<void> confirmFirstSync() async {
+    final account = state.account;
+    if (!_firstSyncPending || account == null) return;
+    await ref.read(sharedPreferencesProvider).setString(_accountKey, account);
+    _firstSyncPending = false;
+    await sync();
+  }
 
   /// One sync pass; a pass already under way is waited for instead. Errors
   /// end up in [SyncStatus.error], never thrown; a question about stale
@@ -193,13 +218,16 @@ class SyncController extends Notifier<SyncStatus> {
   }) => _pass(keep ? StaleChoice.keep : StaleChoice.discard, fingerprint);
 
   Future<void> _pass(StaleChoice? stale, String? fingerprint) =>
-      _running ??= _sync(stale, fingerprint).whenComplete(() {
-        _running = null;
-      });
+      _suspended || _firstSyncPending
+      ? Future.value()
+      : _running ??= _sync(stale, fingerprint).whenComplete(() {
+          _running = null;
+        });
 
   Future<void> _sync(StaleChoice? stale, String? fingerprint) async {
     if (state.account == null) return;
     _debounce?.cancel();
+    _changedDuringSync = false;
     state = state.copyWith(busy: true);
     try {
       final report = await _withDrive(
@@ -226,7 +254,10 @@ class SyncController extends Notifier<SyncStatus> {
     } on SyncException catch (e) {
       await _fail(e.failure);
     } finally {
-      if (ref.mounted) state = state.copyWith(busy: false);
+      if (ref.mounted) {
+        state = state.copyWith(busy: false);
+        if (_changedDuringSync && state.stale == null) _changed();
+      }
     }
   }
 
@@ -260,10 +291,22 @@ class SyncController extends Notifier<SyncStatus> {
 
   /// Signing out keeps the data, both here and in Drive.
   Future<void> signOut() async {
+    _suspended = true;
     _debounce?.cancel();
+    try {
+      await _running;
+      await _signOut();
+    } finally {
+      _suspended = false;
+      if (ref.mounted && _changedDuringSync) _changed();
+    }
+  }
+
+  Future<void> _signOut() async {
     await _google.signOut();
     await ref.read(sharedPreferencesProvider).remove(_accountKey);
     await _store.setStateValue(_errorKey, null);
+    _firstSyncPending = false;
     state = state.copyWith(
       account: () => null,
       error: () => null,
@@ -275,11 +318,19 @@ class SyncController extends Notifier<SyncStatus> {
   /// Deletes the file and the daily copies from Drive and signs out here.
   /// Throws [SyncException].
   Future<void> deleteDriveData() async {
-    await _withDrive((engine) => engine.deleteAll());
-    await _store.setStateValue(SyncStore.lastSyncKey, null);
-    await _store.setStateValue(SyncStore.modifiedKey, null);
-    state = state.copyWith(lastSyncAt: () => null);
-    await signOut();
+    _suspended = true;
+    _debounce?.cancel();
+    try {
+      await _running;
+      await _withDrive((engine) => engine.deleteAll());
+      await _store.setStateValue(SyncStore.lastSyncKey, null);
+      await _store.setStateValue(SyncStore.modifiedKey, null);
+      state = state.copyWith(lastSyncAt: () => null);
+      await _signOut();
+    } finally {
+      _suspended = false;
+      if (ref.mounted && _changedDuringSync) _changed();
+    }
   }
 
   /// The daily copies, newest first. Throws [SyncException].

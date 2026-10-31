@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:framebook/features/title/cover_viewer.dart';
 import 'package:framebook/features/title/title_layout.dart';
 import 'package:framebook/data/update_checker.dart';
@@ -341,6 +343,98 @@ void main() {
   void go(WidgetTester tester, String location) => ProviderScope.containerOf(
     tester.element(find.byType(FramebookApp)),
   ).read(routerProvider).go(location);
+
+  cardTest('future films cannot be rated but can be watchlisted', (
+    tester,
+  ) async {
+    await pumpApp(
+      tester,
+      keys: tmdbOnly,
+      http: (request) {
+        if (request.uri.path == '/3/movie/603') {
+          final json =
+              jsonDecode(fixture('tmdb/movie_603_ru.json'))
+                  as Map<String, dynamic>;
+          json['release_date'] = '2999-01-01';
+          return (status: 200, body: jsonEncode(json));
+        }
+        return apiFixtures(request);
+      },
+    );
+    go(tester, '/search/movie/603');
+    await settle(tester);
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.ancestor(
+              of: find.text('Rate'),
+              matching: find.byWidgetPredicate(
+                (widget) => widget is FilledButton,
+              ),
+            ),
+          )
+          .onPressed,
+      isNull,
+    );
+    expect(find.text('Rating is available after release.'), findsOneWidget);
+    await tester.tap(find.text('Want to watch'));
+    await settle(tester);
+    expect(find.text('On the watchlist'), findsOneWidget);
+  });
+
+  cardTest(
+    'an existing rating on a future film can be deleted but not edited',
+    (tester) async {
+      await pumpApp(
+        tester,
+        keys: tmdbOnly,
+        seed: (library) => library.rate(
+          const [
+            WorkSnapshot(
+              key: WorkKey.movie(603),
+              tmdbId: 603,
+              title: 'Matrix',
+              releaseDate: '2999-01-01',
+            ),
+          ],
+          scoreHalf: 16,
+          note: null,
+        ),
+        http: (request) {
+          if (request.uri.path == '/3/movie/603') {
+            final json =
+                jsonDecode(fixture('tmdb/movie_603_ru.json'))
+                    as Map<String, dynamic>;
+            json['release_date'] = '2999-01-01';
+            return (status: 200, body: jsonEncode(json));
+          }
+          return apiFixtures(request);
+        },
+      );
+      go(tester, '/search/movie/603');
+      await settle(tester);
+      expect(
+        tester
+            .widget<IconButton>(
+              find.byWidgetPredicate(
+                (widget) => widget is IconButton && widget.tooltip == 'Change',
+              ),
+            )
+            .onPressed,
+        isNull,
+      );
+      expect(
+        tester
+            .widget<IconButton>(
+              find.byWidgetPredicate(
+                (widget) => widget is IconButton && widget.tooltip == 'Delete',
+              ),
+            )
+            .onPressed,
+        isNotNull,
+      );
+    },
+  );
 
   Finder tab(String label) => find.descendant(
     of: find.byType(NavigationBar),
@@ -1011,6 +1105,11 @@ void main() {
     await settle(tester);
     expect(find.text('Filmography'), findsOneWidget);
     expect(find.textContaining('Born'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('person-photo')));
+    await settle(tester);
+    expect(find.byType(CoverViewer), findsOneWidget);
+    await tester.tap(find.byTooltip('Back'));
+    await settle(tester);
 
     // Back in 1999, the film this started from.
     await tester.scrollUntilVisible(

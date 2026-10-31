@@ -8,7 +8,7 @@ A project for myself and a couple of friends. The original idea and the decision
 
 ## Status
 
-In development, version 0.6.0 — the MVP is complete. Working: Discover
+In development, version 0.7.1 — the MVP is complete. Working: Discover
 with search and shelves, film and series cards down to single episodes with
 cast and crew and ratings from Kinopoisk, IMDb, Rotten Tomatoes, Metacritic
 and TMDB, people with their filmographies; your own ratings with notes on a
@@ -16,7 +16,8 @@ score reel that compares as it moves, My ratings (including the sort by
 divergence from Kinopoisk or IMDb) and the watchlist; background refresh of
 ratings and statistics; sync and daily copies through your own Google
 Drive, export and import to a file; cards that open offline from what is
-saved. A full code review and optimization come next (Stage 7).
+saved. The initial code review is complete; measured optimization and a
+second review are next (Stage 7).
 
 <p>
   <img src="docs/screenshots/search-light.png" width="200" alt="Discover: the search field over shelves">

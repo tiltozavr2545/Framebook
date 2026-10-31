@@ -30,6 +30,12 @@ void main() {
     serve(apiFixtures);
   });
 
+  test('person photos come from the profile images endpoint', () async {
+    final images = await client().personImages(6384);
+    expect(http.requests.last.uri.path, '/3/person/6384/images');
+    expect(images.map((image) => image.path), ['/one.jpg', '/two.jpg']);
+  });
+
   test(
     'image endpoints use posters for seasons and stills for episodes',
     () async {

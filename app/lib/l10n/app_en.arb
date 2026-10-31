@@ -12,6 +12,7 @@
   "@updateAvailable": {"placeholders": {"version": {"type": "String"}}},
 
   "coverOpen": "Open full-screen cover",
+  "photoOpen": "Open full-screen photo",
 
   "appTitle": "Framebook",
 
@@ -130,6 +131,7 @@
   "undo": "Undo",
 
   "ratingRate": "Rate",
+  "ratingNotReleased": "Rating is available after release.",
   "ratingMine": "My rating",
   "ratingEdit": "Change",
   "ratingDelete": "Delete",

@@ -355,6 +355,34 @@ final class Library {
   Future<void> refreshSnapshots(List<WorkSnapshot> lineage) =>
       _db.transaction(() => _putSnapshots(lineage, _now(), insert: false));
 
+  /// Refresh a translated title without adopting a renumbered part or
+  /// changing the version of its rating or watchlist entry.
+  Future<void> refreshLocalizedTitle(
+    WorkKey key,
+    String title,
+    int expectedId,
+    bool Function() valid,
+  ) => _db.transaction(() async {
+    if (!valid() || title.isEmpty) return;
+    final row = await (_db.select(
+      _db.works,
+    )..where((w) => w.workKey.equals(key.toString()))).getSingleOrNull();
+    if (!valid() ||
+        row == null ||
+        row.tmdbId != expectedId ||
+        row.title == title) {
+      return;
+    }
+    await (_db.update(
+      _db.works,
+    )..where((w) => w.workKey.equals(row.workKey))).write(
+      WorksCompanion(
+        title: Value(title),
+        snapshotUpdatedAt: Value(_next(_now(), row.snapshotUpdatedAt)),
+      ),
+    );
+  });
+
   /// The live ratings of [series]' seasons, or of its episodes in every
   /// season ([kind]), with the TMDB ids stored with them — what renumbering
   /// is detected from (lib/data/library/renumbering.dart).

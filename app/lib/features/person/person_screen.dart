@@ -10,6 +10,7 @@ import '../../l10n/app_localizations.dart';
 import '../../shared/format.dart';
 import '../../shared/poster.dart';
 import '../title/my_rating.dart';
+import '../title/cover_viewer.dart';
 import '../title/title_layout.dart';
 import '../title/title_routes.dart';
 
@@ -92,11 +93,29 @@ class _Header extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Poster(
-          person.profilePath,
-          size: ImageSize.w342,
-          width: 120,
-          icon: Icons.person_outline,
+        Semantics(
+          button: person.profilePath != null,
+          label: person.profilePath != null ? l10n.photoOpen : null,
+          child: InkWell(
+            key: const ValueKey('person-photo'),
+            onTap: person.profilePath == null
+                ? null
+                : () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => CoverViewer(
+                        currentPath: person.profilePath!,
+                        personId: person.id,
+                        previewSize: ImageSize.w185,
+                      ),
+                    ),
+                  ),
+            child: Poster(
+              person.profilePath,
+              size: ImageSize.w185,
+              width: 120,
+              icon: Icons.person_outline,
+            ),
+          ),
         ),
         const SizedBox(width: 16),
         Expanded(

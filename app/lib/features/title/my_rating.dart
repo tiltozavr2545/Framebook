@@ -63,6 +63,18 @@ class _MyRatingSectionState extends ConsumerState<MyRatingSection> {
     final parts = kind == WorkKind.tv || kind == WorkKind.season
         ? ref.watch(partsAverageProvider(_key)).value
         : null;
+    final releaseDate = widget.lineage.last.releaseDate;
+    final date = releaseDate == null ? null : DateTime.tryParse(releaseDate);
+    final today = DateTime.now();
+    final unreleased =
+        kind == WorkKind.movie &&
+        date != null &&
+        RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(releaseDate!) &&
+        DateTime(
+          date.year,
+          date.month,
+          date.day,
+        ).isAfter(DateTime(today.year, today.month, today.day));
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -73,15 +85,16 @@ class _MyRatingSectionState extends ConsumerState<MyRatingSection> {
             _Unrated(
               listed: listed,
               watchlistable: watchlistable,
-              onRate: () => _edit(null),
+              onRate: unreleased ? null : () => _edit(null),
               onToggleWatchlist: _toggleWatchlist,
             )
           else
             _Rated(
               rating: rating,
-              onEdit: () => _edit(rating),
+              onEdit: unreleased ? null : () => _edit(rating),
               onDelete: () => _delete(),
             ),
+          if (unreleased) Text(l10n.ratingNotReleased),
           if (parts != null) ...[
             const SizedBox(height: 8),
             Text(
@@ -170,7 +183,7 @@ class _Unrated extends StatelessWidget {
 
   final bool listed;
   final bool watchlistable;
-  final VoidCallback onRate;
+  final VoidCallback? onRate;
   final Future<void> Function(bool listed) onToggleWatchlist;
 
   @override
@@ -213,7 +226,7 @@ class _Rated extends StatelessWidget {
   });
 
   final Rating rating;
-  final VoidCallback onEdit;
+  final VoidCallback? onEdit;
   final VoidCallback onDelete;
 
   @override

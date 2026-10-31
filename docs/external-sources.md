@@ -47,6 +47,7 @@ Base: `https://api.themoviedb.org/3`. The response language is the
 | an episode's ids in other databases | `GET /tv/{id}/season/{n}/episode/{m}/external_ids` |
 | genres | `GET /genre/movie/list`, `GET /genre/tv/list` — names for the statistics by genre; the lists share most ids |
 | cover variants | `GET /movie/{id}/images`, `/tv/{id}/images`, `/tv/{id}/season/{n}/images`, `/tv/{id}/season/{n}/episode/{m}/images` — posters, or episode stills |
+| person photos | `GET /person/{id}/images` — profile photos for the full-screen viewer |
 | image configuration | `GET /configuration` — base URL and poster sizes |
 
 Posters: `{secure_base_url}{size}{poster_path}`; `w185` in lists, `w342` in

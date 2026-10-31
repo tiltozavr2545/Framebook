@@ -206,6 +206,7 @@ void main() {
       ('not gzip', utf8.encode('{"format_version": 1}')),
       ('not JSON', gzip.encode(utf8.encode('{format_version'))),
       ('no version', _gzipJson({'works': <Object>[]})),
+      ('missing state tables', _gzipJson({'format_version': 1})),
       (
         'a required field missing',
         _gzipJson({
@@ -247,6 +248,25 @@ void main() {
           'format_version': 1,
           'works': [
             {...work, 'kind': 'tv'},
+          ],
+        }),
+      ),
+      (
+        'a snapshot that contradicts its key',
+        _gzipJson({
+          'format_version': 1,
+          'works': [
+            {...work, 'tmdb_id': 0},
+          ],
+        }),
+      ),
+      (
+        'a note longer than the database permits',
+        _gzipJson({
+          'format_version': 1,
+          'works': [work],
+          'ratings': [
+            {...rating, 'note': 'x' * 10001},
           ],
         }),
       ),
@@ -558,6 +578,42 @@ void main() {
       expect((await a.store.read()).ratings, hasLength(2));
     });
 
+    test(
+      'a duplicate changed after download is merged before removal',
+      () async {
+        await a.library.rate(_film(1), scoreHalf: 16, note: null);
+        await b.library.rate(_film(2), scoreHalf: 12, note: null);
+        final first = SyncFile.encode(
+          await a.store.read(),
+          writtenAt: 1,
+          writtenBy: 'a',
+          appVersion: 'test',
+        );
+        final second = SyncFile.encode(
+          await b.store.read(),
+          writtenAt: 1,
+          writtenBy: 'b',
+          appVersion: 'test',
+        );
+        remote.put(SyncFile.name, first);
+        final extra = remote.put(SyncFile.name, first);
+        var changed = false;
+        remote.afterDownload = (id) {
+          if (id == extra.id && !changed) {
+            changed = true;
+            remote.put(SyncFile.name, second, id: id);
+          }
+        };
+        await a.engine.sync();
+        expect(changed, isTrue);
+        expect(remote.names.where((n) => n == SyncFile.name), hasLength(1));
+        final uploaded = SyncFile.decode(
+          remote.files.values.firstWhere((f) => f.name == SyncFile.name).bytes,
+        );
+        expect(uploaded.liveRatings, 2);
+      },
+    );
+
     test('a broken file is left alone', () async {
       remote.put(SyncFile.name, utf8.encode('garbage'));
       await a.library.rate(_film(1), scoreHalf: 16, note: null);
@@ -657,7 +713,17 @@ void main() {
 
   group('purge watermark', () {
     test('v1 reads P=0 and v2 round trips the watermark', () {
-      expect(SyncFile.decode(_gzipJson({'format_version': 1})).purgedBefore, 0);
+      expect(
+        SyncFile.decode(
+          _gzipJson({
+            'format_version': 1,
+            'works': <Object>[],
+            'ratings': <Object>[],
+            'watchlist': <Object>[],
+          }),
+        ).purgedBefore,
+        0,
+      );
       final bytes = SyncFile.encode(
         const SyncState(purgedBefore: 123),
         writtenAt: 124,

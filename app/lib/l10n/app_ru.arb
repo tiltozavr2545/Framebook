@@ -11,6 +11,7 @@
   "updateFailed": "Не удалось проверить обновления",
 
   "coverOpen": "Открыть обложку на весь экран",
+  "photoOpen": "Открыть фотографию на весь экран",
 
   "appTitle": "Framebook",
 
@@ -118,6 +119,7 @@
   "undo": "Вернуть",
 
   "ratingRate": "Оценить",
+  "ratingNotReleased": "Оценка станет доступна после выхода фильма.",
   "ratingMine": "Моя оценка",
   "ratingEdit": "Изменить",
   "ratingDelete": "Удалить",

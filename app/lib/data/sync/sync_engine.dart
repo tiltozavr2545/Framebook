@@ -232,12 +232,25 @@ final class SyncEngine {
       await _dailyCopy(files, bytes);
       // No conditional write in Drive v3: re-read the metadata, and start
       // over if someone wrote the file since we downloaded it.
-      final fresh = await _remote.metadata(main.id);
-      if (fresh.modifiedTime != main.modifiedTime) continue;
+      var changed = false;
+      for (final file in mains) {
+        if ((await _remote.metadata(file.id)).modifiedTime !=
+            file.modifiedTime) {
+          changed = true;
+          break;
+        }
+      }
+      if (changed) continue;
       final written = await _remote.update(main.id, _encode(local));
       for (final extra in extras) {
+        if ((await _remote.metadata(extra.id)).modifiedTime !=
+            extra.modifiedTime) {
+          changed = true;
+          break;
+        }
         await _remote.delete(extra.id);
       }
+      if (changed) continue;
       return _done(
         started,
         applied: applied,

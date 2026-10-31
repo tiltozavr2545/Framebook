@@ -20,6 +20,9 @@ abstract interface class TmdbApi {
   /// Poster variants, or stills for an episode.
   Future<List<TmdbImage>> images(WorkKey key);
 
+  /// Profile photographs of a person.
+  Future<List<TmdbImage>> personImages(int id);
+
   /// The names of the genres for films ([WorkKind.movie]) or series
   /// ([WorkKind.tv]); the two lists share most ids.
   Future<List<Genre>> genres(WorkKind kind);
@@ -171,6 +174,22 @@ final class TmdbClient implements TmdbApi {
       for (final image in json.objects(
         key.kind == WorkKind.episode ? 'stills' : 'posters',
       ))
+        if (image.string('file_path') case final path?
+            when path.startsWith('/'))
+          TmdbImage(path, image.string('iso_639_1')),
+    ];
+  }
+
+  @override
+  Future<List<TmdbImage>> personImages(int id) async {
+    final json = await _get(
+      '/person/$id/images',
+      const {},
+      TmdbTtl.details,
+      localized: false,
+    );
+    return [
+      for (final image in json.objects('profiles'))
         if (image.string('file_path') case final path?
             when path.startsWith('/'))
           TmdbImage(path, image.string('iso_639_1')),

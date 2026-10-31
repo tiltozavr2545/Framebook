@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,6 +42,43 @@ final class _Unauthorized extends MemoryRemote {
   SyncFailure? get failing => SyncFailure.unauthorized;
 }
 
+final class _BlockingRemote extends MemoryRemote {
+  Completer<void>? entered;
+  Completer<void>? release;
+
+  @override
+  Future<RemoteFile> update(String id, List<int> bytes) async {
+    if (entered case final signal?) {
+      entered = null;
+      signal.complete();
+      await release!.future;
+    }
+    return super.update(id, bytes);
+  }
+}
+
+final class _FailingDeleteRemote extends MemoryRemote {
+  final entered = Completer<void>();
+  final release = Completer<void>();
+  final uploaded = Completer<void>();
+
+  @override
+  Future<RemoteFile> update(String id, List<int> bytes) async {
+    final result = await super.update(id, bytes);
+    if (SyncFile.decode(bytes).liveRatings == 2 && !uploaded.isCompleted) {
+      uploaded.complete();
+    }
+    return result;
+  }
+
+  @override
+  Future<void> delete(String id) async {
+    entered.complete();
+    await release.future;
+    throw const SyncException(SyncFailure.failed);
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -55,8 +94,9 @@ void main() {
 
   Future<(ProviderContainer, Library)> device(
     String id,
-    GoogleAccount google,
-  ) async {
+    GoogleAccount google, {
+    Duration debounce = SyncController.debounce,
+  }) async {
     SharedPreferences.setMockInitialValues({});
     final db = AppDatabase(NativeDatabase.memory());
     databases.add(db);
@@ -69,6 +109,7 @@ void main() {
         ),
         googleAccountProvider.overrideWithValue(google),
         appVersionProvider.overrideWithValue('test'),
+        syncDebounceProvider.overrideWithValue(debounce),
       ],
     );
     addTearDown(container.dispose);
@@ -245,6 +286,87 @@ void main() {
     expect((await SyncStore(databases.single).read()).liveRatings, 1);
   });
 
+  test('first sync waits for confirmation even after a local edit', () async {
+    final remote = MemoryRemote();
+    final (source, sourceLibrary) = await device(
+      'source',
+      FakeGoogleAccount(remote),
+    );
+    await sourceLibrary.rate(other, scoreHalf: 12, note: null);
+    await source.read(syncControllerProvider.notifier).signIn();
+    final (target, targetLibrary) = await device(
+      'target',
+      FakeGoogleAccount(remote),
+      debounce: Duration.zero,
+    );
+    await targetLibrary.rate(film, scoreHalf: 17, note: null);
+    final controller = target.read(syncControllerProvider.notifier);
+    expect(await controller.signIn(), isNotNull);
+    expect(
+      target.read(sharedPreferencesProvider).getString('sync_account'),
+      isNull,
+    );
+    await targetLibrary.rate(film, scoreHalf: 16, note: null);
+    await controller.sync();
+    await Future<void>.delayed(const Duration(milliseconds: 30));
+    expect((await SyncStore(databases.last).read()).liveRatings, 1);
+    await controller.confirmFirstSync();
+    expect(
+      target.read(sharedPreferencesProvider).getString('sync_account'),
+      'me@example.com',
+    );
+    expect((await SyncStore(databases.last).read()).liveRatings, 2);
+  });
+
+  test('a local watchlist also requires first sync confirmation', () async {
+    final remote = MemoryRemote();
+    final (source, sourceLibrary) = await device(
+      'source',
+      FakeGoogleAccount(remote),
+    );
+    await sourceLibrary.rate(other, scoreHalf: 12, note: null);
+    await source.read(syncControllerProvider.notifier).signIn();
+    final (target, targetLibrary) = await device(
+      'target',
+      FakeGoogleAccount(remote),
+    );
+    await targetLibrary.addToWatchlist(film);
+    final controller = target.read(syncControllerProvider.notifier);
+    expect(await controller.signIn(), isNotNull);
+    expect((await SyncStore(databases.last).read()).liveRatings, 0);
+    await controller.confirmFirstSync();
+    expect((await SyncStore(databases.last).read()).liveRatings, 1);
+  });
+
+  test('an edit during upload triggers another sync', () async {
+    final remote = _BlockingRemote();
+    final (container, library) = await device(
+      'a',
+      FakeGoogleAccount(remote),
+      debounce: Duration.zero,
+    );
+    await library.rate(film, scoreHalf: 17, note: null);
+    final controller = container.read(syncControllerProvider.notifier);
+    await controller.signIn();
+    remote.entered = Completer<void>();
+    remote.release = Completer<void>();
+    final entered = remote.entered!.future;
+    await library.rate(film, scoreHalf: 16, note: null);
+    final pass = controller.sync();
+    await entered;
+    await library.rate(other, scoreHalf: 12, note: null);
+    remote.release!.complete();
+    await pass;
+    for (var i = 0; i < 100; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+      final main = remote.files.values.firstWhere(
+        (f) => f.name == SyncFile.name,
+      );
+      if (SyncFile.decode(main.bytes).liveRatings == 2) return;
+    }
+    fail('The edit made during upload was not synced');
+  });
+
   test('deleting the data from Drive removes every file', () async {
     final remote = MemoryRemote();
     final (a, library) = await device('a', FakeGoogleAccount(remote));
@@ -255,5 +377,48 @@ void main() {
     await controller.deleteDriveData();
     expect(remote.files, isEmpty);
     expect(a.read(syncControllerProvider).account, isNull);
+  });
+
+  test(
+    'deletion waits for an in-flight upload before removing files',
+    () async {
+      final remote = _BlockingRemote();
+      final (container, library) = await device('a', FakeGoogleAccount(remote));
+      final controller = container.read(syncControllerProvider.notifier);
+      await library.rate(film, scoreHalf: 17, note: null);
+      await controller.signIn();
+      remote.entered = Completer<void>();
+      remote.release = Completer<void>();
+      final entered = remote.entered!.future;
+      await library.rate(film, scoreHalf: 16, note: null);
+      final pass = controller.sync();
+      await entered;
+      final deletion = controller.deleteDriveData();
+      remote.release!.complete();
+      await pass;
+      await deletion;
+      expect(remote.files, isEmpty);
+      expect(container.read(syncControllerProvider).account, isNull);
+    },
+  );
+
+  test('an edit during failed deletion is still scheduled for sync', () async {
+    final remote = _FailingDeleteRemote();
+    final (container, library) = await device(
+      'a',
+      FakeGoogleAccount(remote),
+      debounce: const Duration(milliseconds: 10),
+    );
+    final controller = container.read(syncControllerProvider.notifier);
+    await library.rate(film, scoreHalf: 17, note: null);
+    await controller.signIn();
+    final deletion = controller.deleteDriveData();
+    final failure = expectLater(deletion, throwsA(isA<SyncException>()));
+    await remote.entered.future;
+    await library.rate(other, scoreHalf: 12, note: null);
+    await pumpEventQueue();
+    remote.release.complete();
+    await failure;
+    await remote.uploaded.future.timeout(const Duration(seconds: 10));
   });
 }
