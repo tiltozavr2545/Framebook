@@ -105,8 +105,8 @@ class TitleHeader extends StatelessWidget {
                 onTap: posterPath == null || coverKey == null
                     ? null
                     : () => Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => CoverViewer(
+                        coverViewerRoute(
+                          (_) => CoverViewer(
                             currentPath: posterPath!,
                             keyForImages: coverKey!,
                             previewSize: ImageSize.w342,

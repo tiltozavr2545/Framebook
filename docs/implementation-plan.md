@@ -300,8 +300,10 @@ and the optimization see the final code.
    among settings. A separate Drive file uses Argon2id and AES-256-GCM;
    each device caches the derived key in OS secure storage. Onboarding can
    restore from Drive before entering a TMDB key. Offline edits persist for
-   retry; disabling or deleting data stops new work and waits for operations
-   already underway. Rating
+   retry; keys merge independently with versioned deletion records, so
+   enabling or unlocking does not replace keys that exist on only one phone.
+   Disabling or deleting data stops new work and waits for operations already
+   underway. Rating
    exports and daily copies exclude keys. Details are in [sync.md](sync.md).
 4. ✅ Checking for updates in the app: a request to the GitHub Releases API on
    launch; if there is a newer version, an unobtrusive banner with a link to
@@ -319,7 +321,9 @@ and the optimization see the final code.
    poster on a card opens a full-screen viewer with pinch-to-zoom, and with
    several posters from TMDB (`/images`) a swipe between them. The larger
    size comes from the image configuration ([external-sources.md](external-sources.md)),
-   the viewer opens from a cached smaller one while it loads.
+   the viewer opens from a cached smaller one while it loads. The route fades
+   in without the Android page-scale transition, so the image has its final
+   full-screen geometry from the first frame.
 9. ✅ Rewriting the API keys guide ([api-keys.md](api-keys.md) and its Russian
    copy `api-keys.ru.md`): the PoiskKino section ("2 minutes in Telegram",
    the bot steps) doesn't match how a key is really obtained there, so it is
@@ -341,11 +345,17 @@ Each item that changes the sync format says so in [sync.md](sync.md) and
 
 ## Stage 7 — Code review, optimization, a second review
 
-**Status:** initial review complete; optimization and the second review pending
+**Status:** initial review and 0.7.2 correctness follow-up complete;
+optimization and the second independent review pending
 
 The 0.7.1 follow-up refreshes saved titles after a language change, prevents
 rating films whose known release date is in the future, and opens person
 photographs full screen. Unknown release dates remain rateable.
+
+The 0.7.2 correctness pass fixes sticky external ids, per-key encrypted vault
+merging, different-language sync churn, Drive timeouts and offline session
+restore, key validation, update-check retries and sync-controller races. Its
+regression tests cover the vault, timeouts and the full-screen route.
 
 1. ✅ Initial review of correctness, security, tests and documentation. Fixed
    synchronization races around edits, duplicate files, first sign-in and

@@ -67,8 +67,8 @@ class EpisodeScreen extends ConsumerWidget {
               onTap: episode.stillPath == null
                   ? null
                   : () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => CoverViewer(
+                      coverViewerRoute(
+                        (_) => CoverViewer(
                           currentPath: episode.stillPath!,
                           keyForImages: episodeKey,
                           previewSize: ImageSize.w300,

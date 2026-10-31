@@ -61,6 +61,7 @@
   "keyStatusValid": "Key works",
   "keyStatusUnverified": "Saved, not checked: no connection",
   "keyStatusInvalid": "The service rejected this key",
+  "keyStatusFailed": "The service returned an invalid response; the key was not saved",
   "keyStatusLimit": "Key works, but today's request limit is used up",
   "keyStatusEmpty": "Paste a key first",
 

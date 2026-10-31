@@ -11,9 +11,14 @@ import 'sync_engine.dart';
 /// [SyncRemote] on Google Drive's `appDataFolder` (docs/sync.md): a hidden
 /// folder only this app sees, through the `drive.appdata` scope.
 final class DriveRemote implements SyncRemote {
-  DriveRemote(http.Client client) : _api = drive.DriveApi(client);
+  DriveRemote(
+    http.Client client, {
+    Duration timeout = const Duration(seconds: 30),
+  }) : _api = drive.DriveApi(client),
+       _timeout = timeout;
 
   final drive.DriveApi _api;
+  final Duration _timeout;
 
   static const _space = 'appDataFolder';
   static const _fields = 'id,name,modifiedTime,createdTime';
@@ -93,9 +98,9 @@ final class DriveRemote implements SyncRemote {
   );
 
   /// Drive's errors as [SyncException]s (docs/sync.md, "Errors").
-  static Future<T> _call<T>(Future<T> Function() request) async {
+  Future<T> _call<T>(Future<T> Function() request) async {
     try {
-      return await request();
+      return await request().timeout(_timeout);
     } on drive.DetailedApiRequestError catch (e) {
       final reasons = {for (final error in e.errors) error.reason};
       throw SyncException(switch (e.status) {

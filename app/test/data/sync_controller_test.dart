@@ -42,6 +42,21 @@ final class _Unauthorized extends MemoryRemote {
   SyncFailure? get failing => SyncFailure.unauthorized;
 }
 
+final class _UnavailableRestoreGoogle extends FakeGoogleAccount {
+  _UnavailableRestoreGoogle(super.remote);
+
+  var driveCalls = 0;
+
+  @override
+  Future<String?> restore() async => null;
+
+  @override
+  Future<DriveAccess> drive() async {
+    driveCalls++;
+    return super.drive();
+  }
+}
+
 final class _BlockingRemote extends MemoryRemote {
   Completer<void>? entered;
   Completer<void>? release;
@@ -96,8 +111,11 @@ void main() {
     String id,
     GoogleAccount google, {
     Duration debounce = SyncController.debounce,
+    String? storedAccount,
   }) async {
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({
+      if (storedAccount != null) 'sync_account': storedAccount,
+    });
     final db = AppDatabase(NativeDatabase.memory());
     databases.add(db);
     final container = ProviderContainer(
@@ -260,6 +278,20 @@ void main() {
     await controller.sync();
     expect(a.read(syncControllerProvider).error, isNull);
     expect(a.read(syncControllerProvider).busy, isFalse);
+  });
+
+  test('unavailable session restore stays quiet on cold start', () async {
+    final google = _UnavailableRestoreGoogle(MemoryRemote());
+    final (container, _) = await device(
+      'a',
+      google,
+      storedAccount: 'me@example.com',
+    );
+    await pumpEventQueue();
+
+    expect(container.read(syncControllerProvider).account, 'me@example.com');
+    expect(container.read(syncControllerProvider).error, isNull);
+    expect(google.driveCalls, 0);
   });
 
   test('an expired token is dropped and the sync retried', () async {

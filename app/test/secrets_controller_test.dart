@@ -269,6 +269,28 @@ void main() {
       container.dispose();
     },
   );
+  test('preparing a failed Drive deletion keeps key sync enabled', () async {
+    await setup();
+    start();
+    await settle();
+    final controller = container.read(secretsControllerProvider.notifier);
+    await controller.enable('password123');
+
+    final account = await controller.prepareForDeletion();
+
+    expect(account, 'me@example.com');
+    expect(container.read(secretsControllerProvider).enabled, isTrue);
+    expect(prefs.getBool('secrets_enabled.me@example.com'), isTrue);
+    final vault = SecretsVault(
+      remote: remote,
+      storage: storage,
+      accountId: 'me@example.com',
+      deviceId: 'device',
+    );
+    expect(await vault.isUnlocked, isTrue);
+    container.dispose();
+  });
+
   test('account switch while acquiring Drive prevents old upload', () async {
     await setup();
     start();

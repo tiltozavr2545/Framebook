@@ -51,7 +51,8 @@ and the Stage 1 skeleton.
   of the wrong type as missing. json_serializable would get in the way here:
   a film and a series name the same field differently (`title`/`name`),
   dates can be an empty string, and a zero rating means "no votes". Clients
-  take the body as a string and parse it themselves: in dio an unparsable
+  take the body as a string and parse it themselves, including key checks: in
+  dio an unparsable
   body is `DioExceptionType.unknown`, which reads as "no network".
   The sync file (Stage 5) is read the same way, by hand, but strictly: a
   missing or mistyped field makes the whole file broken rather than a
@@ -365,7 +366,8 @@ The design is [sync.md](sync.md); here is what lives where in
   as full companions: drift leaves null columns out of an upsert of a data
   class, which would keep a stale note or tombstone.
 - `sync_engine.dart` — one pass over a `SyncRemote`, with the daily copies;
-  `drive_remote.dart` is that remote on Drive's `appDataFolder`.
+  `drive_remote.dart` is that remote on Drive's `appDataFolder`, with a
+  30-second timeout around each complete operation.
 - `google_account.dart` — google_sign_in 7: Credential Manager sign-in with
   the Web client id, then Drive authorization for `drive.appdata` only. An
   interface, so widget tests run on a fake account and an in-memory Drive.
@@ -374,6 +376,9 @@ The design is [sync.md](sync.md); here is what lives where in
   the last error for the screen, sign-out, deleting from Drive, the daily
   copies, export and import. Offline isn't shown as an error; an expired
   token is dropped and the call retried once.
+  Automatic cold-start sync waits for silent Google-session restoration;
+  failure to restore while offline is retried later without an authorization
+  error.
 - Settings → Sync and backup is `features/settings/sync_screen.dart`; export
   and import go through the system "Save to…" / file picker (file_picker).
   A paused-sync warning asks before applying compact deletions over unsynced
@@ -382,8 +387,9 @@ The design is [sync.md](sync.md); here is what lives where in
   choice when necessary. Cleanup rules are in [sync.md](sync.md).
 - `secrets_vault.dart` — optional encrypted key sync in a separate file,
   Argon2id in an isolate, AES-256-GCM and authenticated format parameters.
-  Pending snapshots and cached derived keys use OS secure storage. No secret
-  enters the rating file, exports or daily copies.
+  Per-key versions and deletion tombstones merge independent changes from
+  different devices. Pending snapshots and cached derived keys use OS secure
+  storage. No secret enters the rating file, exports or daily copies.
 - `secrets_controller.dart` — account-scoped opt-in state, unlocking, applying
   restored keys and `divergence_source`, and uploading subsequent edits.
   The onboarding restore route is available before the required TMDB key.

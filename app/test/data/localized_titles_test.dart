@@ -63,6 +63,9 @@ void main() {
       await library.rate([first], scoreHalf: 16, note: 'note');
       await library.addToWatchlist([second]);
       final before = await db.select(db.ratings).getSingle();
+      final firstRowSnapshotAt = (await db.select(db.works).get())
+          .firstWhere((w) => w.workKey == 'tmdb:movie:1')
+          .snapshotUpdatedAt;
       final container = ProviderContainer(
         overrides: [
           sharedPreferencesProvider.overrideWithValue(prefs),
@@ -100,6 +103,10 @@ void main() {
       expect(after.updatedAt, before.updatedAt);
       expect(after.scoreHalf, 16);
       expect(after.note, 'note');
+      expect(
+        works.firstWhere((w) => w.workKey == 'tmdb:movie:1').snapshotUpdatedAt,
+        firstRowSnapshotAt,
+      );
       container.dispose();
       await db.close();
     },

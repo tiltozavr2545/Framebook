@@ -255,14 +255,13 @@ class SecretsController extends Notifier<SecretsStatus> {
     if (_valid(account, epoch)) state = const SecretsStatus();
   }
 
-  Future<void> prepareForDeletion() async {
+  Future<String?> prepareForDeletion() async {
     _epoch++;
     _dirty = false;
     final account = _account;
-    if (account == null) return;
-    state = const SecretsStatus();
-    await _rememberEnabled(false, account);
+    if (account == null) return null;
     await _waitOperations();
+    return account;
   }
 
   Future<void> _waitOperations() async {
@@ -275,10 +274,9 @@ class SecretsController extends Notifier<SecretsStatus> {
     }
   }
 
-  Future<void> resetForDeletedDrive() async {
+  Future<void> resetForDeletedDrive([String? selectedAccount]) async {
     _epoch++;
-    if (_account == null) return;
-    final account = _account;
+    final account = selectedAccount ?? _account;
     if (account == null) return;
     await _rememberEnabled(false, account);
     await SecretsVault.resetLocal(

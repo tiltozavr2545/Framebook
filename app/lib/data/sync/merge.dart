@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:crypto/crypto.dart';
+import 'package:drift/drift.dart' show Value;
 
 import '../db/database.dart';
 import '../work_key.dart';
@@ -86,11 +87,34 @@ int compareWatchlist(WatchlistEntry a, WatchlistEntry b) => _version(
 );
 int compareWorks(Work a, Work b) {
   final time = a.snapshotUpdatedAt.compareTo(b.snapshotUpdatedAt);
+  if (time != 0) return time;
+  final snapshot = _canonical(
+    _versionJson(a),
+  ).compareTo(_canonical(_versionJson(b)));
+  if (snapshot != 0) return snapshot;
+  final imdb = _compareNullable(a.imdbId, b.imdbId);
+  return imdb != 0 ? imdb : _compareNullable(a.kpId, b.kpId);
+}
+
+Map<String, Object?> _snapshotJson(Work work) =>
+    Map<String, Object?>.from(SyncFile.workToJson(work))
+      ..remove('imdb_id')
+      ..remove('kp_id');
+
+Map<String, Object?> _versionJson(Work work) =>
+    _snapshotJson(work)..remove('title');
+
+int _compareNullable<T extends Comparable<T>>(T? a, T? b) {
+  if (a == null) return b == null ? 0 : -1;
+  if (b == null) return 1;
+  return a.compareTo(b);
+}
+
+int _compareWorkSnapshot(Work a, Work b) {
+  final time = a.snapshotUpdatedAt.compareTo(b.snapshotUpdatedAt);
   return time != 0
       ? time
-      : _canonical(
-          SyncFile.workToJson(a),
-        ).compareTo(_canonical(SyncFile.workToJson(b)));
+      : _canonical(_snapshotJson(a)).compareTo(_canonical(_snapshotJson(b)));
 }
 
 int compareRatingDeletion(Rating r, DeletionRecord d) => _version(
@@ -127,6 +151,30 @@ List<T> _merge<T>(
   }
   final keys = rows.keys.toList()..sort();
   return [for (final k in keys) rows[k] as T];
+}
+
+List<Work> _mergeWorks(List<Work> a, List<Work> b) {
+  final rows = <String, Work>{};
+  for (final row in [...a, ...b]) {
+    final current = rows[row.workKey];
+    if (current == null) {
+      rows[row.workKey] = row;
+      continue;
+    }
+    final winner = _compareWorkSnapshot(row, current) > 0 ? row : current;
+    rows[row.workKey] = winner.copyWith(
+      imdbId: Value(
+        _compareNullable(row.imdbId, current.imdbId) > 0
+            ? row.imdbId
+            : current.imdbId,
+      ),
+      kpId: Value(
+        _compareNullable(row.kpId, current.kpId) > 0 ? row.kpId : current.kpId,
+      ),
+    );
+  }
+  final keys = rows.keys.toList()..sort();
+  return [for (final key in keys) rows[key] as Work];
 }
 
 int compareFences(WatchlistFence a, WatchlistFence b) {
@@ -174,7 +222,7 @@ SyncState mergeStates(SyncState a, SyncState b) {
   final rm = {for (final d in rd) d.workKey: d};
   final wm = {for (final d in wd) d.workKey: d};
   return SyncState(
-    works: _merge(a.works, b.works, (w) => w.workKey, compareWorks),
+    works: _mergeWorks(a.works, b.works),
     ratings: [
       for (final r in _merge(
         a.ratings,

@@ -271,4 +271,6 @@ When a key is entered, one trial request:
 - PoiskKino — `GET /movie/{a known kp_id}`; it is charged to the budget.
 
 An invalid key isn't saved; with no network the key is saved marked "not
-checked".
+checked". Trial requests receive plain text and parse JSON explicitly. A
+malformed or proxy HTML response is a source failure and does not save the key
+as if the phone were merely offline.

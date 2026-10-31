@@ -122,6 +122,14 @@ void main() {
     }
   });
 
+  test('a malformed response is not mistaken for no connection', () async {
+    for (final source in ApiSource.values) {
+      serve((_) => (status: 200, body: '<html>proxy error</html>'));
+      expect(await validator.check(source, 'eyJkey'), KeyCheck.failed);
+      expect(http.requests.single.responseType, ResponseType.plain);
+    }
+  });
+
   test('an empty key is invalid without any request', () async {
     serve((_) => throw StateError('must not be called'));
     expect(await validator.check(ApiSource.tmdb, '   '), KeyCheck.invalid);

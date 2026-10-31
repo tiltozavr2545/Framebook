@@ -76,4 +76,24 @@ void main() {
       expect(await controller.check(manual: true), UpdateResult.failed);
     },
   );
+
+  test('a failed automatic check can retry before 24 hours', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final source = FakeSource()..fail = true;
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        appVersionProvider.overrideWithValue('0.7.0+9'),
+        updateChecksEnabledProvider.overrideWithValue(false),
+        updateSourceProvider.overrideWithValue(source),
+      ],
+    );
+    addTearDown(container.dispose);
+    final controller = container.read(updateControllerProvider.notifier);
+
+    expect(await controller.check(), UpdateResult.failed);
+    expect(await controller.check(), UpdateResult.failed);
+    expect(source.calls, 2);
+  });
 }

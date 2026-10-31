@@ -101,8 +101,8 @@ class _Header extends StatelessWidget {
             onTap: person.profilePath == null
                 ? null
                 : () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => CoverViewer(
+                    coverViewerRoute(
+                      (_) => CoverViewer(
                         currentPath: person.profilePath!,
                         personId: person.id,
                         previewSize: ImageSize.w185,

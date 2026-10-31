@@ -150,8 +150,10 @@ Invariants:
   after sync and on resume, using the evictable TMDB response cache. Offline
   snapshots remain available until a refresh succeeds. A translated season or
   episode is not adopted when its TMDB id indicates a pending renumbering.
-  A refresh changes the snapshot and `snapshot_updated_at`, never a rating's
-  `updated_at`. An upsert
+  A content-language refresh changes only the device's local `title`; it does
+  not advance `snapshot_updated_at` or compete with another device's language
+  during sync. Other snapshot refreshes advance `snapshot_updated_at`, never a
+  rating's `updated_at`. An upsert
   never wipes a `kp_id` or an `imdb_id` found earlier: an unknown one is left
   out of the write rather than written as NULL.
 - `works` rows that no `ratings` / `watchlist` row refers to (including

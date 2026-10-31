@@ -73,6 +73,9 @@ Format rules:
   is also needed for importing old exports.
 - The file gets retained `ratings` and `watchlist` rows, their compact deletion
   records, and the `works` rows the retained rows refer to, with their ancestors.
+- Translated `title` text is device-local at an equal snapshot version:
+  changing language neither advances `snapshot_updated_at` nor makes one
+  device upload its language over another's.
 - Version 2 adds `purged_before` and compact deletion records; version 1
   reads with a zero watermark and no compact records. Version 3 adds
   `watchlist_fences`; versions 1 and 2 are read with a series-selection
@@ -93,7 +96,9 @@ rules. At an identical timestamp and device id, deletion wins over a live
 row; remaining ties use a SHA-256 digest of canonical row JSON. A compact
 deletion retains that digest as `tie_break`, so compaction preserves its
 ordering against full rows. `works` rows merge by `snapshot_updated_at`,
-then canonical JSON.
+then canonical snapshot JSON. `imdb_id` and `kp_id` are sticky independent
+fields: a side that found an id cannot lose it to an otherwise winning
+snapshot where that id is null.
 
 This merge is **commutative, associative and idempotent**: whatever order and
 however many times the devices synced, the states converge. This property is
@@ -159,6 +164,11 @@ write or deletion.
 - 30 seconds after the last change (debounce);
 - changes during a pass schedule another pass after the debounce;
 - with the "Sync" button in settings.
+
+Automatic startup first restores the saved Google session silently. If that
+cannot be done while offline, the account remains configured and retry waits
+for a later resume instead of showing "sign in again". Every Drive request has
+a 30-second timeout.
 
 With no network it is quietly put off until the next occasion. In the MVP
 there is no sync in the background (while the app is closed).
@@ -285,14 +295,22 @@ Disabling key sync waits for already started operations before clearing the
 local cached key and snapshot. The encrypted file already on Drive remains
 until the user deletes the app's Drive data.
 
-Edits and key removals automatically update the encrypted whole-file LWW
-snapshot. Its version is a monotonic UTC timestamp plus device id; there is
-no per-key merge. A failed upload keeps pending changes for retry. Applying
-a remote snapshot must not turn it into a new local edit or create an upload
-loop. The same Drive metadata-check/write race described above also applies
-here: a device retains its newer snapshot in secure storage and repairs a
-concurrent older upload on a subsequent sync. The main rating sync continues
-to use its independent merge rules.
+Edits and key removals automatically update per-source LWW registers inside
+the encrypted file. Each API key has its own monotonic UTC timestamp and
+device id; removal is an explicit versioned tombstone. The comparison source
+has a separate register. Enabling or unlocking therefore merges keys that
+exist only on this phone with keys from Drive instead of replacing either
+side wholesale. The authenticated envelope is version 2; the app reads
+version 1 and upgrades it on the next successful write, while older clients
+reject version 2 rather than discarding its per-key metadata.
+
+A failed upload keeps pending changes for retry. Applying a remote snapshot
+must not turn it into a new local edit or create an upload loop. The same
+Drive metadata-check/write race described above also applies here: a device
+retains its newer registers in secure storage and repairs a concurrent older
+upload on a subsequent sync. The main rating sync continues to use its
+independent merge rules. Drive operations time out after 30 seconds and are
+retried on a later sync occasion.
 
 If the password is forgotten, the existing encrypted content cannot be
 recovered. After entering the API keys again, the user can explicitly

@@ -373,14 +373,8 @@ final class Library {
         row.title == title) {
       return;
     }
-    await (_db.update(
-      _db.works,
-    )..where((w) => w.workKey.equals(row.workKey))).write(
-      WorksCompanion(
-        title: Value(title),
-        snapshotUpdatedAt: Value(_next(_now(), row.snapshotUpdatedAt)),
-      ),
-    );
+    await (_db.update(_db.works)..where((w) => w.workKey.equals(row.workKey)))
+        .write(WorksCompanion(title: Value(title)));
   });
 
   /// The live ratings of [series]' seasons, or of its episodes in every

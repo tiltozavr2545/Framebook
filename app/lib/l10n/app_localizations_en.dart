@@ -171,6 +171,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get keyStatusInvalid => 'The service rejected this key';
 
   @override
+  String get keyStatusFailed =>
+      'The service returned an invalid response; the key was not saved';
+
+  @override
   String get keyStatusLimit =>
       'Key works, but today\'s request limit is used up';
 

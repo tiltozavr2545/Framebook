@@ -41,6 +41,19 @@ final personImagesProvider = FutureProvider.autoDispose
       (ref, id) => ref.watch(tmdbProvider).personImages(id),
     );
 
+/// A full-screen image must have its final geometry from the first frame.
+/// Android's default material route scales the new page in, which looks like
+/// the cover opens at two different sizes.
+Route<void> coverViewerRoute(WidgetBuilder builder) => PageRouteBuilder<void>(
+  pageBuilder: (context, _, _) => builder(context),
+  transitionDuration: const Duration(milliseconds: 160),
+  reverseTransitionDuration: const Duration(milliseconds: 120),
+  transitionsBuilder: (_, animation, _, child) => FadeTransition(
+    opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+    child: child,
+  ),
+);
+
 /// Opens immediately with the current cover, including while variants load.
 class CoverViewer extends ConsumerStatefulWidget {
   const CoverViewer({

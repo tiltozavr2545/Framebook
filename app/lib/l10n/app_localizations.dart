@@ -404,6 +404,12 @@ abstract class AppLocalizations {
   /// **'The service rejected this key'**
   String get keyStatusInvalid;
 
+  /// No description provided for @keyStatusFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The service returned an invalid response; the key was not saved'**
+  String get keyStatusFailed;
+
   /// No description provided for @keyStatusLimit.
   ///
   /// In en, this message translates to:

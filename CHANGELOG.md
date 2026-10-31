@@ -185,3 +185,17 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
   upload; first sync waits for confirmation, including with a watchlist.
   Invalid backups are rejected before import, and searches discard stale
   responses as soon as a new query is entered.
+
+## 0.7.2 — Sync correctness fixes (build 11)
+
+- Sync preserves Kinopoisk and IMDb ids when snapshots tie, and translated
+  titles stay local to each device instead of being uploaded back and forth.
+- Encrypted key sync merges each API key independently, including deletions
+  and edits made while locked. Drive requests time out, offline session
+  restore stays quiet, and failed Drive deletion keeps key sync enabled.
+- Key checks reject malformed service responses instead of saving the key as
+  unverified, and failed update checks can retry before the daily interval.
+- Sync no longer drops a Keep/Discard answer or runs a redundant pass after
+  applying remote changes.
+- Full-screen images fade in at their final size instead of scaling through an
+  intermediate size.

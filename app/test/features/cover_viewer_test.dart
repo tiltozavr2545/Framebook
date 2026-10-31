@@ -12,6 +12,35 @@ import 'package:framebook/shared/poster.dart';
 import '../support/api_fixtures.dart';
 
 void main() {
+  testWidgets('full-screen route fades without scaling the image', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => Navigator.of(context).push(
+              coverViewerRoute(
+                (_) => const ColoredBox(
+                  key: ValueKey('viewer-page'),
+                  color: Colors.black,
+                ),
+              ),
+            ),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 40));
+    expect(find.byKey(const ValueKey('viewer-page')), findsOneWidget);
+    expect(find.byType(FadeTransition), findsWidgets);
+    expect(find.byType(ScaleTransition), findsNothing);
+  });
+
   test(
     'current cover then UI, original and textless images, with no duplicates',
     () {

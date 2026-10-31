@@ -107,6 +107,7 @@ class SyncController extends Notifier<SyncStatus> {
   bool _changedDuringSync = false;
   bool _suspended = false;
   bool _firstSyncPending = false;
+  bool _sessionReady = false;
 
   AppDatabase get _db => ref.read(databaseProvider);
 
@@ -122,7 +123,9 @@ class SyncController extends Notifier<SyncStatus> {
           TableUpdateQuery.onAllTables([_db.ratings, _db.watchlist]),
         )
         .listen((_) => _changed());
-    final lifecycle = AppLifecycleListener(onResume: () => _maybeSync());
+    final lifecycle = AppLifecycleListener(
+      onResume: () => unawaited(_restoreAndMaybeSync()),
+    );
     ref.onDispose(() {
       changes.cancel();
       lifecycle.dispose();
@@ -146,12 +149,24 @@ class SyncController extends Notifier<SyncStatus> {
       error: () => SyncFailure.values.where((f) => f.name == error).firstOrNull,
     );
     if (account == null) return;
-    await _google.restore();
+    await _restoreAndMaybeSync();
+  }
+
+  Future<void> _restoreAndMaybeSync() async {
+    if (state.account == null || _suspended) return;
+    final restored = await _google.restore();
+    if (!ref.mounted || restored == null) return;
+    _sessionReady = true;
     await _maybeSync();
   }
 
   Future<void> _maybeSync() async {
-    if (state.account == null || _suspended || _firstSyncPending) return;
+    if (state.account == null ||
+        !_sessionReady ||
+        _suspended ||
+        _firstSyncPending) {
+      return;
+    }
     final last = state.lastSyncAt;
     final now = DateTime.now().toUtc().millisecondsSinceEpoch;
     if (last != null && now - last < resumeAfter.inMilliseconds) return;
@@ -159,7 +174,7 @@ class SyncController extends Notifier<SyncStatus> {
   }
 
   void _changed() {
-    if (state.account == null || _firstSyncPending) return;
+    if (state.account == null || !_sessionReady || _firstSyncPending) return;
     if (_suspended || state.busy) {
       _changedDuringSync = true;
       return;
@@ -174,6 +189,7 @@ class SyncController extends Notifier<SyncStatus> {
   /// [SignInException] and [SyncException].
   Future<FirstSync?> signIn() async {
     final email = await _google.signIn();
+    _sessionReady = true;
     final drive = await _withDrive((engine) => engine.peek());
     final device = await _store.read();
     final hasLocalData =
@@ -220,9 +236,13 @@ class SyncController extends Notifier<SyncStatus> {
   Future<void> _pass(StaleChoice? stale, String? fingerprint) =>
       _suspended || _firstSyncPending
       ? Future.value()
-      : _running ??= _sync(stale, fingerprint).whenComplete(() {
+      : _running == null
+      ? _running = _sync(stale, fingerprint).whenComplete(() {
           _running = null;
-        });
+        })
+      : stale == null
+      ? _running!
+      : _running!.then((_) => _pass(stale, fingerprint));
 
   Future<void> _sync(StaleChoice? stale, String? fingerprint) async {
     if (state.account == null) return;
@@ -242,6 +262,7 @@ class SyncController extends Notifier<SyncStatus> {
         }
         return;
       }
+      _changedDuringSync = report.pendingChanges;
       await _store.setStateValue(_errorKey, null);
       if (ref.mounted) {
         state = state.copyWith(
@@ -307,6 +328,7 @@ class SyncController extends Notifier<SyncStatus> {
     await ref.read(sharedPreferencesProvider).remove(_accountKey);
     await _store.setStateValue(_errorKey, null);
     _firstSyncPending = false;
+    _sessionReady = false;
     state = state.copyWith(
       account: () => null,
       error: () => null,

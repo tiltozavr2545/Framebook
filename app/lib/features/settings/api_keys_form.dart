@@ -46,7 +46,16 @@ class ApiKeysForm extends StatelessWidget {
   }
 }
 
-enum _Status { missing, empty, checking, valid, limit, unverified, invalid }
+enum _Status {
+  missing,
+  empty,
+  checking,
+  valid,
+  limit,
+  unverified,
+  invalid,
+  failed,
+}
 
 class _KeyCard extends ConsumerStatefulWidget {
   const _KeyCard({required this.source});
@@ -100,8 +109,9 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
       KeyCheck.limitReached => _Status.limit,
       KeyCheck.offline => _Status.unverified,
       KeyCheck.invalid => _Status.invalid,
+      KeyCheck.failed => _Status.failed,
     };
-    if (status != _Status.invalid) {
+    if (status != _Status.invalid && status != _Status.failed) {
       await keys.save(
         _source,
         StoredKey(value, verified: status != _Status.unverified),
@@ -264,6 +274,11 @@ class _StatusLine extends StatelessWidget {
         Icons.error_outline,
         colors.error,
         l10n.keyStatusInvalid,
+      ),
+      _Status.failed => (
+        Icons.error_outline,
+        colors.error,
+        l10n.keyStatusFailed,
       ),
     };
     return Row(

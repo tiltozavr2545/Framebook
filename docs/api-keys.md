@@ -206,7 +206,9 @@ non-commercial use only.
 phone's secure storage. Optionally enable encrypted key sync in Settings →
 Sync and backup to keep a password-encrypted copy in your own Google Drive.
 A new phone can restore it from the first-launch screen. Rating exports and
-daily rating backups do not contain the keys.
+daily rating backups do not contain the keys. Each service is merged
+independently, so unlocking does not replace a key that exists only on one
+phone; removals are synchronized too.
 
 **For the developer, to capture fixtures** — in a file outside the
 repository:

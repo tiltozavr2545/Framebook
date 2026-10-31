@@ -123,10 +123,10 @@ class UpdateController extends Notifier<UpdateRelease?> {
     }
     final source = ref.read(updateSourceProvider);
     final installed = UpdateVersion.parse(ref.read(appVersionProvider));
-    await prefs.setInt(_checked, now);
     try {
       final release = await source.latest();
       if (installed == null) throw const FormatException('Invalid app version');
+      await prefs.setInt(_checked, now);
       final newer =
           release != null &&
           UpdateVersion.parse(release.version)!.compareTo(installed) > 0;

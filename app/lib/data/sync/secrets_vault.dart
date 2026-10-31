@@ -30,15 +30,44 @@ final class SecretsKey {
   final bool verified;
 }
 
+final class SecretsVersion {
+  const SecretsVersion(this.updatedAt, this.updatedBy);
+  final int updatedAt;
+  final String updatedBy;
+
+  Map<String, Object> toJson() => {
+    'updated_at': updatedAt,
+    'updated_by': updatedBy,
+  };
+
+  factory SecretsVersion.fromJson(Object? json) {
+    if (json is! Map ||
+        json['updated_at'] is! int ||
+        (json['updated_at'] as int) < 0 ||
+        json['updated_by'] is! String ||
+        (json['updated_by'] as String).isEmpty) {
+      throw const FormatException('Invalid secrets version');
+    }
+    return SecretsVersion(
+      json['updated_at'] as int,
+      json['updated_by'] as String,
+    );
+  }
+}
+
 final class SecretsSnapshot {
   const SecretsSnapshot({
     required this.keys,
+    this.keyVersions = const {},
     required this.divergenceSource,
+    this.divergenceVersion,
     required this.updatedAt,
     required this.updatedBy,
   });
   final Map<String, SecretsKey> keys;
+  final Map<String, SecretsVersion> keyVersions;
   final String? divergenceSource;
+  final SecretsVersion? divergenceVersion;
   final int updatedAt;
   final String updatedBy;
 
@@ -47,7 +76,11 @@ final class SecretsSnapshot {
       for (final e in keys.entries)
         e.key: {'value': e.value.value, 'verified': e.value.verified},
     },
+    'key_versions': {
+      for (final e in keyVersions.entries) e.key: e.value.toJson(),
+    },
     'divergence_source': divergenceSource,
+    'divergence_version': divergenceVersion?.toJson(),
     'updated_at': updatedAt,
     'updated_by': updatedBy,
   };
@@ -78,9 +111,41 @@ final class SecretsSnapshot {
         verified: entry['verified'] as bool,
       );
     }
+    final global = SecretsVersion(
+      json['updated_at'] as int,
+      json['updated_by'] as String,
+    );
+    final versions = <String, SecretsVersion>{};
+    final rawVersions = json['key_versions'];
+    if (rawVersions == null) {
+      // Legacy snapshots represented the whole map as one LWW value.
+      for (final source in const {'tmdb', 'poiskkino', 'omdb'}) {
+        versions[source] = global;
+      }
+    } else if (rawVersions is Map) {
+      for (final e in rawVersions.entries) {
+        if (e.key is! String ||
+            !{'tmdb', 'poiskkino', 'omdb'}.contains(e.key)) {
+          throw const FormatException('Invalid secrets key version');
+        }
+        versions[e.key as String] = SecretsVersion.fromJson(e.value);
+      }
+    } else {
+      throw const FormatException('Invalid secrets key versions');
+    }
+    if (keys.keys.any((source) => !versions.containsKey(source))) {
+      throw const FormatException('Missing secrets key version');
+    }
+    final sourceVersion = json.containsKey('divergence_version')
+        ? (json['divergence_version'] == null
+              ? null
+              : SecretsVersion.fromJson(json['divergence_version']))
+        : global;
     return SecretsSnapshot(
       keys: keys,
+      keyVersions: versions,
       divergenceSource: json['divergence_source'] as String?,
+      divergenceVersion: sourceVersion,
       updatedAt: json['updated_at'] as int,
       updatedBy: json['updated_by'] as String,
     );
@@ -126,10 +191,25 @@ final class SecretsVault {
     final raw = await storage.read(key);
     final old = raw == null ? null : SecretsSnapshot.fromJson(jsonDecode(raw));
     final now = DateTime.now().toUtc().millisecondsSinceEpoch;
+    final updatedAt = max(now, (old?.updatedAt ?? 0) + 1);
+    final version = SecretsVersion(updatedAt, deviceId);
+    final versions = Map<String, SecretsVersion>.of(
+      old?.keyVersions ?? const {},
+    );
+    for (final source in const {'tmdb', 'poiskkino', 'omdb'}) {
+      final before = old?.keys[source];
+      final after = keys[source];
+      final changed =
+          before?.value != after?.value || before?.verified != after?.verified;
+      if (changed && (old != null || after != null)) versions[source] = version;
+    }
+    final sourceChanged = old?.divergenceSource != divergenceSource;
     final snapshot = SecretsSnapshot(
       keys: Map.unmodifiable(keys),
+      keyVersions: Map.unmodifiable(versions),
       divergenceSource: divergenceSource,
-      updatedAt: max(now, (old?.updatedAt ?? 0) + 1),
+      divergenceVersion: sourceChanged ? version : old?.divergenceVersion,
+      updatedAt: updatedAt,
       updatedBy: deviceId,
     );
     await storage.write(key, jsonEncode(snapshot.toJson()));
@@ -161,8 +241,8 @@ final class SecretsVault {
     return List.generate(n, (_) => r.nextInt(256));
   }
 
-  Map<String, Object> _params(List<int> salt) => {
-    'version': 1,
+  Map<String, Object> _params(List<int> salt, {int version = 2}) => {
+    'version': version,
     'kdf': 'argon2id',
     'memory': 19456,
     'iterations': 2,
@@ -186,10 +266,10 @@ final class SecretsVault {
   );
   Map<String, Object> _parseParams(Object? raw) {
     if (raw is! Map) throw const FormatException('Invalid vault');
-    if (raw['version'] is int && (raw['version'] as int) > 1) {
+    if (raw['version'] is int && (raw['version'] as int) > 2) {
       throw const SecretsUnsupported();
     }
-    if (raw['version'] != 1 ||
+    if ((raw['version'] != 1 && raw['version'] != 2) ||
         raw['kdf'] != 'argon2id' ||
         raw['memory'] != 19456 ||
         raw['iterations'] != 2 ||
@@ -200,7 +280,7 @@ final class SecretsVault {
     }
     final salt = base64Decode(raw['salt'] as String);
     if (salt.length != 16) throw const FormatException('Invalid vault salt');
-    return _params(salt);
+    return _params(salt, version: raw['version'] as int);
   }
 
   Map<String, Object?> _decode(List<int> bytes) {
@@ -296,8 +376,63 @@ final class SecretsVault {
     return {'params': p, 'key': k, 'pending': v['pending'] == true};
   }
 
-  bool _sameParams(Map<String, Object> a, Map<String, Object> b) =>
-      jsonEncode(a) == jsonEncode(b);
+  bool _sameParams(Map<String, Object> a, Map<String, Object> b) {
+    final left = Map<String, Object>.of(a)..remove('version');
+    final right = Map<String, Object>.of(b)..remove('version');
+    return jsonEncode(left) == jsonEncode(right);
+  }
+
+  int _compareVersion(SecretsVersion? a, SecretsVersion? b) {
+    if (a == null) return b == null ? 0 : -1;
+    if (b == null) return 1;
+    final time = a.updatedAt.compareTo(b.updatedAt);
+    return time != 0 ? time : a.updatedBy.compareTo(b.updatedBy);
+  }
+
+  SecretsSnapshot _merge(SecretsSnapshot a, SecretsSnapshot b) {
+    final keys = <String, SecretsKey>{};
+    final versions = <String, SecretsVersion>{};
+    for (final source in const {'tmdb', 'poiskkino', 'omdb'}) {
+      final comparison = _compareVersion(
+        a.keyVersions[source],
+        b.keyVersions[source],
+      );
+      var takeA = comparison > 0;
+      if (comparison == 0) {
+        String value(SecretsKey? key) =>
+            key == null ? '' : '${key.value}\u0000${key.verified ? '1' : '0'}';
+        takeA = value(a.keys[source]).compareTo(value(b.keys[source])) >= 0;
+      }
+      final selected = takeA ? a : b;
+      final selectedVersion = selected.keyVersions[source];
+      if (selectedVersion != null) versions[source] = selectedVersion;
+      final key = selected.keys[source];
+      if (key != null) keys[source] = key;
+    }
+    final sourceComparison = _compareVersion(
+      a.divergenceVersion,
+      b.divergenceVersion,
+    );
+    final sourceFromA =
+        sourceComparison > 0 ||
+        (sourceComparison == 0 &&
+            (a.divergenceSource ?? '').compareTo(b.divergenceSource ?? '') >=
+                0);
+    final sourceSnapshot = sourceFromA ? a : b;
+    final latest = _compare(a, b) >= 0 ? a : b;
+    return SecretsSnapshot(
+      keys: Map.unmodifiable(keys),
+      keyVersions: Map.unmodifiable(versions),
+      divergenceSource: sourceSnapshot.divergenceSource,
+      divergenceVersion: sourceSnapshot.divergenceVersion,
+      updatedAt: latest.updatedAt,
+      updatedBy: latest.updatedBy,
+    );
+  }
+
+  bool _sameSnapshot(SecretsSnapshot a, SecretsSnapshot b) =>
+      jsonEncode(a.toJson()) == jsonEncode(b.toJson());
+
   int _compare(SecretsSnapshot a, SecretsSnapshot b) {
     final n = a.updatedAt.compareTo(b.updatedAt);
     if (n != 0) return n;
@@ -338,22 +473,24 @@ final class SecretsVault {
       params = p;
       key ??= await _derive(password, base64Decode(p['salt'] as String));
       final s = await _decrypt(env, key);
-      if (winner == null || _compare(s, winner) > 0) winner = s;
+      winner = winner == null ? s : _merge(winner, s);
     }
     return _atomic(() async {
       final oldCache = await storage.read(_cacheKey);
-      var sameIdentity = false;
+      var sameIdentity = oldCache == null;
       if (oldCache != null) {
         final previous = jsonDecode(oldCache) as Map;
         sameIdentity = _sameParams(_parseParams(previous['params']), params!);
       }
       await _cache(params!, key!);
       final local = await _local();
-      if (!sameIdentity || local == null || _compare(winner!, local) > 0) {
+      if (!sameIdentity || local == null) {
         await _put(winner!);
         return winner;
       }
-      return local;
+      final merged = _merge(local, winner!);
+      if (!_sameSnapshot(merged, local)) await _put(merged);
+      return merged;
     });
   }
 
@@ -371,6 +508,10 @@ final class SecretsVault {
         ? _pending!
         : await _cached();
     final params = cache['params'] as Map<String, Object>;
+    final writeParams = _params(
+      base64Decode(params['salt'] as String),
+      version: 2,
+    );
     final key = cache['key'] as List<int>;
     for (var attempt = 0; attempt < 5; attempt++) {
       var local = await _local();
@@ -383,24 +524,25 @@ final class SecretsVault {
           throw const SecretsLocked();
         }
         final s = await _decrypt(env, key);
-        if (winner == null || _compare(s, winner) > 0) winner = s;
+        winner = winner == null ? s : _merge(winner, s);
       }
       local = await _atomic(() async {
         final current = (await _local())!;
-        if (winner != null && _compare(winner, current) > 0) {
-          await _put(winner);
-          return winner;
+        if (winner != null) {
+          final merged = _merge(current, winner);
+          if (!_sameSnapshot(merged, current)) await _put(merged);
+          return merged;
         }
         return current;
       });
-      final bytes = await _encrypt(local, params, key);
+      final bytes = await _encrypt(local, writeParams, key);
       if (files.isEmpty) {
         if (!createIfMissing && cache['pending'] != true) {
           throw const SecretsLocked();
         }
-        await _cache(params, key, pending: true);
+        await _cache(writeParams, key, pending: true);
         await remote.create(filename, bytes);
-        await _cache(params, key);
+        await _cache(writeParams, key);
         _pending = null;
       } else {
         for (final f in files) {
@@ -418,6 +560,7 @@ final class SecretsVault {
           }
           await remote.delete(extra.id);
         }
+        await _cache(writeParams, key);
       }
       final latest = await _local();
       if (latest != null && _compare(latest, local) > 0) continue;

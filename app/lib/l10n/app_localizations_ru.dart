@@ -171,6 +171,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get keyStatusInvalid => 'Сервис не принял этот ключ';
 
   @override
+  String get keyStatusFailed =>
+      'Сервис вернул некорректный ответ — ключ не сохранён';
+
+  @override
   String get keyStatusLimit =>
       'Ключ рабочий, но лимит запросов на сегодня исчерпан';
 

@@ -431,9 +431,9 @@ class SyncScreen extends ConsumerWidget {
     );
     if (!confirmed) return;
     try {
-      await secrets.prepareForDeletion();
-      await secrets.resetForDeletedDrive();
+      final account = await secrets.prepareForDeletion();
       await controller.deleteDriveData();
+      await secrets.resetForDeletedDrive(account);
       if (context.mounted) _snack(context, l10n.syncDeleted);
     } on SyncException catch (e) {
       if (context.mounted) _snack(context, _failureText(l10n, e.failure));

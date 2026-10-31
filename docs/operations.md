@@ -161,8 +161,9 @@ Building:
 - Installing at a friend's: download the APK from the release page, allow
   installs from that source, install. An update is a new APK over the old
   one, and the data stays (the same signing key, a higher `versionCode`).
-- The app checks GitHub Releases on startup at most once per 24 hours and
-  offers the release page when a newer version is available. Settings also
+- The app checks GitHub Releases on startup at most once per 24 hours after a
+  successful response and offers the release page when a newer version is
+  available. A failed request may retry on the next launch; Settings also
   offers a manual check.
 
 ---

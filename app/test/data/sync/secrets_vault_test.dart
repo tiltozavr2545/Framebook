@@ -74,6 +74,44 @@ class MemoryRemote implements SyncRemote {
 }
 
 void main() {
+  test('merges keys per source and keeps deletions', () async {
+    final remote = MemoryRemote();
+    final first = SecretsVault(
+      remote: remote,
+      storage: MemoryStorage(),
+      accountId: 'a',
+      deviceId: 'first',
+    );
+    await first.unlock('password');
+    await first.save({
+      'tmdb': const SecretsKey('remote-tmdb', verified: true),
+    }, 'kp');
+    await first.sync(createIfMissing: true);
+
+    final second = SecretsVault(
+      remote: remote,
+      storage: MemoryStorage(),
+      accountId: 'a',
+      deviceId: 'second',
+    );
+    await second.save({
+      'omdb': const SecretsKey('local-omdb', verified: false),
+    }, 'imdb');
+    final unlocked = await second.unlock('password');
+    expect(unlocked!.keys['tmdb']!.value, 'remote-tmdb');
+    expect(unlocked.keys['omdb']!.value, 'local-omdb');
+    await second.sync();
+
+    await first.sync();
+    await first.save({
+      'omdb': const SecretsKey('local-omdb', verified: false),
+    }, 'imdb');
+    final deleted = await first.sync();
+    expect(deleted.keys.containsKey('tmdb'), isFalse);
+    expect(deleted.keys['omdb']!.value, 'local-omdb');
+    expect((await second.sync()).keys.containsKey('tmdb'), isFalse);
+  });
+
   test(
     'vault roundtrip, deletion, authentication and explicit creation',
     () async {
@@ -159,7 +197,7 @@ void main() {
       expect(remote.values.length, 1);
       final valid = List<int>.of(remote.values['1']!);
       final future = jsonDecode(utf8.decode(valid)) as Map<String, dynamic>;
-      (future['params'] as Map<String, dynamic>)['version'] = 2;
+      (future['params'] as Map<String, dynamic>)['version'] = 3;
       remote.values['1'] = utf8.encode(jsonEncode(future));
       await expectLater(a.sync(), throwsA(isA<SecretsUnsupported>()));
       remote.values['1'] = valid;

@@ -5,6 +5,7 @@ import 'api_source.dart';
 import 'db/database.dart';
 import 'db/database_provider.dart';
 import 'http.dart';
+import 'source_failure.dart';
 import 'sources/tmdb/tmdb_client.dart';
 
 /// The result of a trial request with a key.
@@ -20,6 +21,9 @@ enum KeyCheck {
 
   /// The service wasn't reached — save it marked "not checked".
   offline,
+
+  /// The service answered, but the response could not validate the key.
+  failed,
 }
 
 /// Checks a key with one request (docs/external-sources.md, "Key checks"). The
@@ -55,16 +59,15 @@ final class KeyValidator {
 
   Future<KeyCheck> _checkTmdb(String key) async {
     final auth = TmdbClient.auth(key);
-    final response = await _dio.get<Object?>(
+    final response = await _dio.get<String>(
       'https://api.themoviedb.org/3/configuration',
       queryParameters: auth.query,
-      options: Options(headers: auth.headers),
+      options: Options(headers: auth.headers, responseType: ResponseType.plain),
     );
     return switch (response.statusCode) {
-      200 => KeyCheck.valid,
+      200 when tryJson(response.data) != null => KeyCheck.valid,
       401 => KeyCheck.invalid,
-      // 429 and 5xx are answers, but they say nothing about the key.
-      _ => KeyCheck.offline,
+      _ => KeyCheck.failed,
     };
   }
 
@@ -75,35 +78,37 @@ final class KeyValidator {
       ApiSource.poiskkino,
       AppDatabase.budgetDay(_clock()),
     );
-    final response = await _dio.get<Object?>(
+    final response = await _dio.get<String>(
       'https://api.poiskkino.dev/v1.5/movie/$_probeKpId',
-      options: Options(headers: {'X-API-KEY': key}),
+      options: Options(
+        headers: {'X-API-KEY': key},
+        responseType: ResponseType.plain,
+      ),
     );
     return switch (response.statusCode) {
-      200 => KeyCheck.valid,
+      200 when tryJson(response.data) != null => KeyCheck.valid,
       401 => KeyCheck.invalid,
       403 => KeyCheck.limitReached,
-      _ => KeyCheck.offline,
+      _ => KeyCheck.failed,
     };
   }
 
   Future<KeyCheck> _checkOmdb(String key) async {
     await _db.consumeBudget(ApiSource.omdb, AppDatabase.budgetDay(_clock()));
-    final response = await _dio.get<Object?>(
+    final response = await _dio.get<String>(
       'https://www.omdbapi.com/',
       queryParameters: {'i': _probeImdbId, 'apikey': key},
+      options: Options(responseType: ResponseType.plain),
     );
-    final body = response.data;
-    final error = body is Map<String, Object?> ? body['Error'] : null;
+    final body = tryJson(response.data);
+    final error = body?.string('Error');
     // OMDb errors differ only by their text (docs/external-sources.md).
     if (error == 'Invalid API key!') return KeyCheck.invalid;
     if (error == 'Request limit reached!') return KeyCheck.limitReached;
-    if (response.statusCode == 200 &&
-        body is Map<String, Object?> &&
-        body['Response'] == 'True') {
+    if (response.statusCode == 200 && body?.string('Response') == 'True') {
       return KeyCheck.valid;
     }
-    return KeyCheck.offline;
+    return KeyCheck.failed;
   }
 }
 

@@ -278,6 +278,55 @@ void main() {
   });
 
   group('merge', () {
+    test('keeps external ids when the other snapshot wins a tie', () {
+      const key = 'tmdb:movie:1';
+      final withIds = Work(
+        workKey: key,
+        kind: WorkKind.movie,
+        tmdbId: 1,
+        imdbId: 'tt0000001',
+        kpId: 7,
+        title: 'A',
+        genreIds: '[]',
+        snapshotUpdatedAt: 1,
+      );
+      final withoutIds = Work(
+        workKey: key,
+        kind: WorkKind.movie,
+        tmdbId: 1,
+        title: 'Z',
+        genreIds: '[]',
+        snapshotUpdatedAt: 1,
+      );
+
+      final work = mergeStates(
+        SyncState(works: [withIds]),
+        SyncState(works: [withoutIds]),
+      ).works.single;
+
+      expect(work.title, 'Z');
+      expect(work.imdbId, 'tt0000001');
+      expect(work.kpId, 7);
+    });
+
+    test('a translated title alone is not a synced snapshot change', () {
+      final english = Work(
+        workKey: 'tmdb:movie:1',
+        kind: WorkKind.movie,
+        tmdbId: 1,
+        title: 'Title',
+        genreIds: '[]',
+        snapshotUpdatedAt: 1,
+      );
+      final russian = english.copyWith(title: 'Название');
+      final a = SyncState(works: [english]);
+      final b = SyncState(works: [russian]);
+
+      expect(remoteBehind(a, b), isFalse);
+      expect(remoteBehind(b, a), isFalse);
+      expect(_canonical(mergeStates(a, b)), _canonical(mergeStates(b, a)));
+    });
+
     /// A random state over few keys, times and devices, so that ties and
     /// equal versions with different content come up often.
     SyncState randomState(Random random) {

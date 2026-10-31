@@ -83,6 +83,7 @@ final class SyncReport {
     required this.uploaded,
     required this.modifiedTime,
     this.syncedAt,
+    this.pendingChanges = false,
     this.stale = 0,
     this.staleFingerprint,
   });
@@ -94,7 +95,8 @@ final class SyncReport {
     : applied = 0,
       uploaded = false,
       modifiedTime = null,
-      syncedAt = null;
+      syncedAt = null,
+      pendingChanges = false;
 
   /// Rows that came from Drive and won, or were beaten by a deletion.
   final int applied;
@@ -103,6 +105,7 @@ final class SyncReport {
 
   /// UTC ms the pass started, written to `last_sync_at`; `null` — paused.
   final int? syncedAt;
+  final bool pendingChanges;
   final int stale;
   final String? staleFingerprint;
 
@@ -168,19 +171,25 @@ final class SyncEngine {
       final files = await _remote.list();
       final mains = _mains(files);
       if (mains.isEmpty) {
-        if ((await _store.read()).isEmpty) {
-          return _done(started, applied: 0, uploaded: false, modified: null);
+        var local = await _store.read();
+        if (local.isEmpty) {
+          return _done(
+            started,
+            applied: 0,
+            uploaded: false,
+            modified: null,
+            acknowledged: local,
+          );
         }
-        await _store.purge(_watermark(await _store.read()));
-        final created = await _remote.create(
-          SyncFile.name,
-          _encode(await _store.read()),
-        );
+        await _store.purge(_watermark(local));
+        local = await _store.read();
+        final created = await _remote.create(SyncFile.name, _encode(local));
         return _done(
           started,
           applied: 0,
           uploaded: true,
           modified: created.modifiedTime,
+          acknowledged: local,
         );
       }
 
@@ -223,6 +232,7 @@ final class SyncEngine {
           applied: applied,
           uploaded: false,
           modified: main.modifiedTime,
+          acknowledged: local,
         );
       }
 
@@ -256,6 +266,7 @@ final class SyncEngine {
         applied: applied,
         uploaded: true,
         modified: written.modifiedTime,
+        acknowledged: local,
       );
     }
     throw const SyncException(
@@ -279,6 +290,7 @@ final class SyncEngine {
     required int applied,
     required bool uploaded,
     required String? modified,
+    required SyncState acknowledged,
   }) async {
     await _store.setStateValue(SyncStore.lastSyncKey, '$started');
     await _store.setStateValue(SyncStore.modifiedKey, modified);
@@ -287,6 +299,7 @@ final class SyncEngine {
       uploaded: uploaded,
       modifiedTime: modified,
       syncedAt: started,
+      pendingChanges: remoteBehind(await _store.read(), acknowledged),
     );
   }
 
