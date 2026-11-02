@@ -152,6 +152,24 @@ abstract class AppLocalizations {
   /// **'Open full-screen photo'**
   String get photoOpen;
 
+  /// No description provided for @startupFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Framebook could not open its local data. Try again.'**
+  String get startupFailed;
+
+  /// No description provided for @keyStatusStorageFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not change the key. Your input is still here; try again.'**
+  String get keyStatusStorageFailed;
+
+  /// No description provided for @fileOperationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read or save the file. Try again.'**
+  String get fileOperationFailed;
+
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
@@ -764,6 +782,12 @@ abstract class AppLocalizations {
   /// **'Note'**
   String get ratingNote;
 
+  /// No description provided for @ratingSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save your rating. Your draft is still here; try again.'**
+  String get ratingSaveFailed;
+
   /// No description provided for @ratingSave.
   ///
   /// In en, this message translates to:
@@ -1176,6 +1200,12 @@ abstract class AppLocalizations {
   /// **'Your Google Drive is full, so sync is paused. Everything still works on this device.'**
   String get syncErrorQuota;
 
+  /// No description provided for @syncErrorTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'This file is too large. The limit is 32 MiB compressed and 128 MiB after unpacking.'**
+  String get syncErrorTooLarge;
+
   /// No description provided for @syncErrorBroken.
   ///
   /// In en, this message translates to:
@@ -1245,13 +1275,13 @@ abstract class AppLocalizations {
   /// No description provided for @syncBackupsHint.
   ///
   /// In en, this message translates to:
-  /// **'Google Drive keeps a copy for each of the last 7 days. Restoring one replaces everything on all your devices.'**
+  /// **'Keeps up to seven copies from days when synced data changed. Restoring replaces your retained ratings and watchlist across devices.'**
   String get syncBackupsHint;
 
   /// No description provided for @syncBackupsEmpty.
   ///
   /// In en, this message translates to:
-  /// **'No copies yet: one is made on the first sync of each day.'**
+  /// **'No copies yet: a copy is made before the first overwrite of an existing sync file each day.'**
   String get syncBackupsEmpty;
 
   /// No description provided for @syncRestore.
@@ -1266,10 +1296,16 @@ abstract class AppLocalizations {
   /// **'Restore the copy of {date}?'**
   String syncRestoreTitle(String date);
 
+  /// No description provided for @syncRepairBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore this copy and repair the unreadable sync file? The damaged original will be kept separately in Drive. Existing daily copies and encrypted keys will stay. Newer app formats are never replaced.'**
+  String get syncRepairBody;
+
   /// No description provided for @syncRestoreBody.
   ///
   /// In en, this message translates to:
-  /// **'Everything rated or changed after it will be undone on all your devices.'**
+  /// **'Ratings and watchlist changes after this copy will be rolled back across your devices. Entries permanently removed by cleanup cannot be recovered from an older copy.'**
   String get syncRestoreBody;
 
   /// No description provided for @syncRestored.

@@ -32,7 +32,7 @@ JSON, gzipped. Rows are the same columns as in the database, in
 
 ```json
 {
-  "format_version": 3,
+  "format_version": 4,
   "purged_before": 0,
   "rating_deletions": [],
   "watchlist_deletions": [],
@@ -80,7 +80,10 @@ Format rules:
   reads with a zero watermark and no compact records. Version 3 adds
   `watchlist_fences`; versions 1 and 2 are read with a series-selection
   register derived from each live whole-series entry. Older clients must
-  update before syncing a newer file.
+  update before syncing a newer file. Version 4 changes numbered-part snapshots
+  to complete LWW values so old clients cannot reattach an external ID from a
+  displaced episode. Versions 1–3 remain readable, but their season/episode
+  external IDs are discarded and fetched again. No ratings or notes are dropped.
 - API keys, settings and the rating cache never go into the rating sync
   file. Optional encrypted key sync uses a separate file (see below).
 
@@ -98,7 +101,14 @@ deletion retains that digest as `tie_break`, so compaction preserves its
 ordering against full rows. `works` rows merge by `snapshot_updated_at`,
 then canonical snapshot JSON. `imdb_id` and `kp_id` are sticky independent
 fields: a side that found an id cannot lose it to an otherwise winning
-snapshot where that id is null.
+snapshot where that id is null. This sticky rule applies to films and series,
+whose natural key fixes their identity. Numbered seasons and episodes use one
+complete LWW snapshot, external IDs included; a newer snapshot can clear an ID
+from a displaced object. This avoids synthesizing a snapshot that never existed
+and preserves associative merging even when a number changes identity twice.
+On the first launch of this implementation, a one-time derived-data cleanup
+clears legacy part IDs and cached external ratings and advances only those
+snapshots' versions. User scores, notes and user-row timestamps are untouched.
 
 This merge is **commutative, associative and idempotent**: whatever order and
 however many times the devices synced, the states converge. This property is
@@ -123,7 +133,7 @@ replacement import restores the file's visible selections as new edits.
 An active season rating also hides its list entry, and editing or deleting a
 season rating records a per-key watchlist tombstone so older offline list
 entries do not return when the rating is removed. The group registers live
-in the existing `sync_state` key-value table and travel in format 3 exports.
+in the existing `sync_state` key-value table and travel in format 3 and later exports.
 
 ### One pass of the algorithm
 
@@ -165,7 +175,10 @@ write or deletion.
 - changes during a pass schedule another pass after the debounce;
 - with the "Sync" button in settings.
 
-Automatic startup first restores the saved Google session silently. If that
+Automatic startup first restores the saved Google session. Restoration is guarded
+against overlapping lifecycle callbacks: Google account UI can itself resume
+the activity. Once restored, foreground sync reuses that session instead of
+opening Credential Manager again. If that
 cannot be done while offline, the account remains configured and retry waits
 for a later resume instead of showing "sign in again". Every Drive request has
 a 30-second timeout.
@@ -220,7 +233,10 @@ locally so a retry cannot resurrect an older row.
   merging". A local watchlist also triggers this confirmation. The account
   is remembered for automatic sync only after the user confirms.
 - **Signing out of Google** — the local data stays, the file in Drive stays.
-- **"Delete data from Google Drive"** deletes the file and the copies. Other
+- **"Delete data from Google Drive"** deletes the file and the copies.
+  `SyncActions` suspends encrypted-key operations before draining them and keeps
+  them suspended through rating-file deletion and local vault reset. Failed
+  deletion releases the gate and retries edits made while suspended. Other
   devices still signed in will create the file again from their state on
   their next sync; the confirmation dialog says so.
 
@@ -242,6 +258,13 @@ faithfully as a correct change. So, separately:
   replacement spreads to the other devices instead of being rolled back by
   them.
 - **Restoring from a daily copy** — the same as an import with replacement.
+  When the main file is unreadable, the restore confirmation explicitly offers
+  repair. All state files are validated first: a newer format aborts repair.
+  Corrupt originals are archived under `framebook-corrupt-*`, checked again by
+  metadata, and removed from the active state-file set before ordinary sync.
+  Readable sibling files are merged normally. Daily backups and the encrypted
+  vault are retained. The existing Drive metadata-check/deletion race still
+  applies; repair is an explicit user action, never automatic.
 - Compact deletion records remain authoritative when reading an older file:
   replacement must filter versions already beaten by a known deletion before
   giving retained content a new timestamp. An old export cannot silently
@@ -319,3 +342,18 @@ from a normal unlock attempt: a wrong password never overwrites Drive data.
 
 Algorithm API references: [Argon2id](https://pub.dev/documentation/cryptography/latest/cryptography/Argon2id-class.html)
 and [cryptography](https://pub.dev/documentation/cryptography/latest/).
+
+## Resource limits and client ownership
+
+Rating files are limited to 32 MiB compressed and 128 MiB expanded. Imports
+check file metadata and read through a bounded stream; Drive downloads are
+bounded too. Gzip output is capped before JSON parsing, and production rating
+encoding/decoding runs in an isolate. A test round-trips 10,000 titles with
+1,000-character notes; longer notes and different scripts consume more of the
+byte limit. Oversized files are rejected without modifying Drive. These byte
+limits are a resource boundary, not a promise of a particular title count.
+
+Every Google Drive access owns an authenticated HTTP client. Rating sync
+closes it after success, failure or token retry; encrypted-key controllers
+close their vault's access in `finally`. Account restoration is deduplicated
+in the Google service as well as guarded in the lifecycle controller.

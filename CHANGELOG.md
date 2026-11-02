@@ -199,3 +199,22 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
   applying remote changes.
 - Full-screen images fade in at their final size instead of scaling through an
   intermediate size.
+
+## 0.7.3 — Reliability and recovery fixes (build 12)
+
+- Reuse the restored Google session on resume instead of repeatedly starting
+  account restoration.
+- Preserve phone-only API keys when enabling encrypted sync, suspend key sync
+  throughout Drive deletion, and close authenticated clients after each use.
+- Keep episode/season external IDs attached to their identity during
+  renumbering and sync. Sync format 4 remains readable by this version from
+  older files; older applications must update before syncing new files.
+- Refresh search and recommendation exclusions when their inputs change;
+  enforce Unicode note limits and retain drafts after failed saves.
+- Show retryable startup failures, exclude non-portable secure preferences
+  from Android backup, and explicitly repair corrupt Drive mains from a copy
+  while preserving backups and encrypted keys.
+- Bound file/Drive imports and move sync encoding/decoding off the UI isolate.
+  Reconcile architecture, recovery, privacy and retention documentation.
+- Record the audit, resolution coverage and remaining physical-device checks
+  in `docs/reviews/2026-11-02/README.md`.

@@ -38,6 +38,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get photoOpen => 'Open full-screen photo';
 
   @override
+  String get startupFailed =>
+      'Framebook could not open its local data. Try again.';
+
+  @override
+  String get keyStatusStorageFailed =>
+      'Could not change the key. Your input is still here; try again.';
+
+  @override
+  String get fileOperationFailed =>
+      'Could not read or save the file. Try again.';
+
+  @override
   String get appTitle => 'Framebook';
 
   @override
@@ -393,6 +405,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ratingNote => 'Note';
 
   @override
+  String get ratingSaveFailed =>
+      'Could not save your rating. Your draft is still here; try again.';
+
+  @override
   String get ratingSave => 'Save';
 
   @override
@@ -687,6 +703,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your Google Drive is full, so sync is paused. Everything still works on this device.';
 
   @override
+  String get syncErrorTooLarge =>
+      'This file is too large. The limit is 32 MiB compressed and 128 MiB after unpacking.';
+
+  @override
   String get syncErrorBroken =>
       'The file in Google Drive can\'t be read. It was left as it is; you can restore a daily copy.';
 
@@ -726,11 +746,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncBackupsHint =>
-      'Google Drive keeps a copy for each of the last 7 days. Restoring one replaces everything on all your devices.';
+      'Keeps up to seven copies from days when synced data changed. Restoring replaces your retained ratings and watchlist across devices.';
 
   @override
   String get syncBackupsEmpty =>
-      'No copies yet: one is made on the first sync of each day.';
+      'No copies yet: a copy is made before the first overwrite of an existing sync file each day.';
 
   @override
   String get syncRestore => 'Restore';
@@ -741,8 +761,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get syncRepairBody =>
+      'Restore this copy and repair the unreadable sync file? The damaged original will be kept separately in Drive. Existing daily copies and encrypted keys will stay. Newer app formats are never replaced.';
+
+  @override
   String get syncRestoreBody =>
-      'Everything rated or changed after it will be undone on all your devices.';
+      'Ratings and watchlist changes after this copy will be rolled back across your devices. Entries permanently removed by cleanup cannot be recovered from an older copy.';
 
   @override
   String get syncRestored => 'Copy restored';

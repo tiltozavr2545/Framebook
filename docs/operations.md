@@ -52,7 +52,7 @@ One Google Cloud project per app, set up by the repository owner.
    `https://tiltozavr2545.github.io/Framebook/privacy.html`, authorized
    domain `tiltozavr2545.github.io`. Both pages are GitHub Pages from the
    `gh-pages` branch; their source is `docs/gh-pages/`, copied over by
-   `sync-gh-pages.yml` on every push to `main` (the same scheme as Amicus).
+   `sync-gh-pages.yml` on main pushes that change `docs/gh-pages/**` (the same scheme as Amicus).
 3. **Credentials → OAuth client ID → Android**: package name
    `com.github.tiltozavr2545.framebook` and the signing key's SHA-1. Several
    clients are needed — one for every key that signs builds:
@@ -84,12 +84,12 @@ While the OAuth app is in **Testing** status:
   have to be added by hand;
 - refresh tokens live **7 days**, after which a new sign-in is needed.
 
-For three people the test user list is no problem, but signing in again
-every week is. The plan: move to **Production**. For a non-sensitive scope
-that doesn't require Google's app verification, but the consent screen may
-show an "app not verified" warning **(to be checked when moving)**. If the
-move runs into verification, stay in Testing and make the repeated sign-in
-invisible (a silent re-authorization on launch, without losing local data).
+The repository's Stage 5 record says this app was moved to **Production**.
+This is the recorded setup, not a live check of the Cloud console. For a new
+installation of the Google Cloud project, verify the publishing status there;
+leaving it in Testing requires maintaining the test-user list and can force
+periodic reauthorization. The app never bypasses consent with an automatic
+interactive authorization dialog.
 
 ---
 
@@ -175,3 +175,16 @@ that generated code is up to date, `flutter analyze`, `flutter test`, a
 version bump check on PRs, and an APK build with the debug key. Flutter in CI
 is the same 3.32.8 as on the machines. CI needs no secrets: the tests never
 call external APIs. Only `release-apk.yml` uses the signing secrets.
+
+## Android data recovery
+
+The main manifest references backup rules for Android 8–11 and data-extraction
+rules for Android 12+. Both cloud backup and device transfer exclude the secure
+storage preferences and wrapped-key preferences. Ordinary data can still be
+backed up by Android. After a restore, API keys must be entered again or
+restored through explicitly enabled encrypted key sync. Never test recovery by
+uninstalling a user's only unsynced copy.
+
+An initialization failure now has a retry screen; it does not delete the
+rating database. Confirm cold start, process recreation, secure-key re-entry
+and two-phone sync on physical devices before claiming device-level recovery.

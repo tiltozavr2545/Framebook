@@ -345,7 +345,13 @@ Each item that changes the sync format says so in [sync.md](sync.md) and
 
 ## Stage 7 — Code review, optimization, a second review
 
-**Status:** initial review and 0.7.2 correctness follow-up complete;
+A [repository-wide follow-up audit on 2026-11-02](reviews/2026-11-02/README.md)
+found additional correctness defects, including first-enable key loss and
+incorrect episode identity after renumbering. F01–F10 have been repaired with targeted regressions; physical-device checks
+remain pending. Passing CI is not a correctness sign-off. Measured performance
+work and the independent second review remain outstanding.
+
+**Status:** initial review and correctness follow-ups through 0.7.3 complete;
 optimization and the second independent review pending
 
 The 0.7.1 follow-up refreshes saved titles after a language change, prevents

@@ -127,7 +127,7 @@ void main() {
 
       final json =
           jsonDecode(utf8.decode(gzip.decode(bytes))) as Map<String, Object?>;
-      expect(json['format_version'], 3);
+      expect(json['format_version'], 4);
       expect(json['purged_before'], state.purgedBefore);
       expect(json['written_by'], 'dev-a');
       expect(json['app_version'], '0.5.0+7');
@@ -141,6 +141,37 @@ void main() {
       expect(rating['note'], 'Классика');
       expect(rating['deleted_at'], isNotNull);
     });
+
+    test(
+      'legacy part external IDs are discarded without changing ratings',
+      () async {
+        final device = _Device('a', MemoryRemote());
+        addTearDown(device.db.close);
+        await device.library.rate(_episode, scoreHalf: 18, note: 'keep');
+        final state = await device.store.read();
+        final json =
+            jsonDecode(
+                  utf8.decode(
+                    gzip.decode(
+                      SyncFile.encode(
+                        state,
+                        writtenAt: 1,
+                        writtenBy: 'a',
+                        appVersion: 'test',
+                      ),
+                    ),
+                  ),
+                )
+                as Map<String, dynamic>;
+        json['format_version'] = 3;
+        final restored = SyncFile.decode(_gzipJson(json));
+        expect(
+          restored.works.firstWhere((w) => w.kind == WorkKind.episode).imdbId,
+          isNull,
+        );
+        expect(restored.ratings, state.ratings);
+      },
+    );
 
     test('reads the example from docs/sync.md', () {
       final state = SyncFile.decode(
@@ -189,7 +220,7 @@ void main() {
 
     test('a file written by a newer app is refused, not misread', () {
       expect(
-        () => SyncFile.decode(_gzipJson({'format_version': 4})),
+        () => SyncFile.decode(_gzipJson({'format_version': 5})),
         throwsA(isA<SyncFileTooNew>()),
       );
     });
@@ -278,6 +309,40 @@ void main() {
   });
 
   group('merge', () {
+    test(
+      'numbered-part identities merge without reviving stale external IDs',
+      () {
+        Work part(int at, int ownId, String? imdb) => Work(
+          workKey: 'tmdb:tv:100:s1:e1',
+          kind: WorkKind.episode,
+          parentKey: 'tmdb:tv:100:s1',
+          tmdbId: ownId,
+          seasonNumber: 1,
+          episodeNumber: 1,
+          title: 'Episode',
+          imdbId: imdb,
+          genreIds: '[]',
+          snapshotUpdatedAt: at,
+        );
+        final states = [
+          SyncState(works: [part(1, 101, 'tt1111111')]),
+          SyncState(works: [part(2, 102, null)]),
+          SyncState(works: [part(3, 101, null)]),
+        ];
+        for (final a in states) {
+          for (final b in states) {
+            for (final c in states) {
+              expect(
+                _canonical(mergeStates(mergeStates(a, b), c)),
+                _canonical(mergeStates(a, mergeStates(b, c))),
+              );
+            }
+          }
+        }
+        expect(mergeStates(states[0], states[1]).works.single.imdbId, isNull);
+      },
+    );
+
     test('keeps external ids when the other snapshot wins a tie', () {
       const key = 'tmdb:movie:1';
       final withIds = Work(
@@ -433,6 +498,29 @@ void main() {
     setUp(() => device = _Device('dev-a', MemoryRemote()));
     tearDown(() => device.db.close());
 
+    test(
+      'legacy part-ID cleanup is one-time and leaves user rows unchanged',
+      () async {
+        await device.library.rate(_episode, scoreHalf: 18, note: 'keep');
+        final before = (await device.store.read()).ratings.single;
+        await device.store.preparePartIdentities(device.now + 100);
+        final cleaned = await device.store.read();
+        expect(cleaned.ratings.single, before);
+        expect(
+          cleaned.works.firstWhere((w) => w.kind == WorkKind.episode).imdbId,
+          isNull,
+        );
+        await device.library.refreshSnapshots(_episode);
+        await device.store.preparePartIdentities(device.now + 200);
+        expect(
+          (await device.store.read()).works
+              .firstWhere((w) => w.kind == WorkKind.episode)
+              .imdbId,
+          'tt1829962',
+        );
+      },
+    );
+
     test('applying an older version never rolls back an edit', () async {
       await device.library.rate(_film(1), scoreHalf: 16, note: null);
       final mine = (await device.store.read()).ratings.single;
@@ -503,6 +591,26 @@ void main() {
     tearDown(() async {
       await a.db.close();
       await b.db.close();
+    });
+
+    test('repair refuses newer formats before changing local data', () async {
+      await a.library.rate(_film(1), scoreHalf: 16, note: null);
+      final backup = await a.store.read();
+      await a.library.rate(_film(2), scoreHalf: 12, note: null);
+      final before = await a.state();
+      remote.put(SyncFile.name, _gzipJson({'format_version': 99}));
+      await expectLater(
+        a.engine.restoreAndRepair(backup),
+        throwsA(
+          isA<SyncException>().having(
+            (e) => e.failure,
+            'failure',
+            SyncFailure.tooNew,
+          ),
+        ),
+      );
+      expect(await a.state(), before);
+      expect(remote.files, hasLength(1));
     });
 
     test('nothing to share: no file is created', () async {

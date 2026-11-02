@@ -38,6 +38,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get photoOpen => 'Открыть фотографию на весь экран';
 
   @override
+  String get startupFailed =>
+      'Framebook не смог открыть локальные данные. Попробуй ещё раз.';
+
+  @override
+  String get keyStatusStorageFailed =>
+      'Не получилось изменить ключ. Введённое значение осталось здесь — попробуй ещё раз.';
+
+  @override
+  String get fileOperationFailed =>
+      'Не получилось прочитать или сохранить файл. Попробуй ещё раз.';
+
+  @override
   String get appTitle => 'Framebook';
 
   @override
@@ -396,6 +408,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get ratingNote => 'Заметка';
 
   @override
+  String get ratingSaveFailed =>
+      'Не получилось сохранить оценку. Заметка осталась здесь — попробуй ещё раз.';
+
+  @override
   String get ratingSave => 'Сохранить';
 
   @override
@@ -692,6 +708,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Google Диск заполнен, синхронизация приостановлена. На этом устройстве всё работает.';
 
   @override
+  String get syncErrorTooLarge =>
+      'Файл слишком большой. Допускается до 32 МиБ в сжатом виде и до 128 МиБ после распаковки.';
+
+  @override
   String get syncErrorBroken =>
       'Файл на Google Диске не читается. Его не трогали; можно восстановить ежедневную копию.';
 
@@ -732,11 +752,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get syncBackupsHint =>
-      'Google Диск хранит копию за каждый из последних 7 дней. Восстановление копии заменяет всё на всех твоих устройствах.';
+      'Хранится до семи копий за дни, когда данные синхронизации менялись. Восстановление заменяет сохранённые оценки и список на твоих устройствах.';
 
   @override
   String get syncBackupsEmpty =>
-      'Копий пока нет: копия делается при первой синхронизации за день.';
+      'Копий пока нет: копия создаётся перед первым изменением существующего файла синхронизации за день.';
 
   @override
   String get syncRestore => 'Восстановить';
@@ -747,8 +767,12 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get syncRepairBody =>
+      'Восстановить эту копию и исправить нечитаемый файл синхронизации? Повреждённый оригинал останется отдельно на Диске. Ежедневные копии и зашифрованные ключи сохранятся. Файлы более новой версии приложения не заменяются.';
+
+  @override
   String get syncRestoreBody =>
-      'Всё, что оценено или изменено после неё, откатится на всех твоих устройствах.';
+      'Изменения оценок и списка после этой копии откатятся на твоих устройствах. Записи, окончательно удалённые при очистке, из старой копии не восстановятся.';
 
   @override
   String get syncRestored => 'Копия восстановлена';
@@ -979,17 +1003,17 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get secretsError =>
-      'Не удалось открыть или синхронизировать зашифрованную копию. Проверьте пароль и подключение.';
+      'Не удалось открыть или синхронизировать зашифрованную копию. Проверь пароль и подключение.';
 
   @override
   String get secretsUnlock => 'Открыть зашифрованную копию';
 
   @override
-  String get secretsForgot => 'Забыли пароль?';
+  String get secretsForgot => 'Забыл пароль?';
 
   @override
   String get secretsForgotHint =>
-      'Перед заменой копии введите ключи на этом устройстве вручную.';
+      'Перед заменой копии введи ключи на этом устройстве вручную.';
 
   @override
   String get secretsOverwriteConfirm =>

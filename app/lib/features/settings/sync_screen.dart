@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
+import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'package:intl/intl.dart';
 
 import '../../data/sync/google_account.dart';
 import '../../data/sync/sync_controller.dart';
+import '../../data/sync/sync_actions.dart';
 import '../../data/sync/sync_engine.dart';
 import '../../data/sync/sync_file.dart';
 import '../../data/sync/secrets_controller.dart';
@@ -118,8 +120,11 @@ class SyncScreen extends ConsumerWidget {
                     label: Text(l10n.syncNow),
                   ),
                   OutlinedButton(
-                    onPressed: () =>
-                        ref.read(syncControllerProvider.notifier).signOut(),
+                    onPressed: secrets.busy || status.busy
+                        ? null
+                        : () => ref
+                              .read(syncControllerProvider.notifier)
+                              .signOut(),
                     child: Text(l10n.syncSignOut),
                   ),
                 ],
@@ -131,7 +136,7 @@ class SyncScreen extends ConsumerWidget {
                 secrets.error == null ? l10n.secretsHint : l10n.secretsError,
               ),
               value: secrets.enabled,
-              onChanged: secrets.busy
+              onChanged: secrets.busy || status.busy
                   ? null
                   : (enabled) async {
                       if (!enabled) {
@@ -146,14 +151,14 @@ class SyncScreen extends ConsumerWidget {
             if (secrets.enabled && secrets.locked)
               ListTile(
                 title: Text(l10n.secretsUnlock),
-                onTap: secrets.busy
+                onTap: secrets.busy || status.busy
                     ? null
                     : () => _secretsPassword(context, ref),
               ),
             ListTile(
               title: Text(l10n.secretsForgot),
               subtitle: Text(l10n.secretsForgotHint),
-              onTap: secrets.busy
+              onTap: secrets.busy || status.busy
                   ? null
                   : () => _secretsPassword(context, ref, overwrite: true),
             ),
@@ -172,7 +177,9 @@ class SyncScreen extends ConsumerWidget {
                 l10n.syncDelete,
                 style: TextStyle(color: theme.colorScheme.error),
               ),
-              onTap: () => _deleteDriveData(context, ref),
+              onTap: status.busy || secrets.busy
+                  ? null
+                  : () => _deleteDriveData(context, ref),
             ),
           ],
           const Divider(height: 32),
@@ -362,6 +369,7 @@ class SyncScreen extends ConsumerWidget {
   Future<void> _showBackups(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
     final controller = ref.read(syncControllerProvider.notifier);
+    final repair = ref.read(syncControllerProvider).error == SyncFailure.broken;
     final List<RemoteFile> backups;
     try {
       backups = await controller.backups();
@@ -399,12 +407,12 @@ class SyncScreen extends ConsumerWidget {
     final confirmed = await _confirm(
       context,
       title: l10n.syncRestoreTitle(_backupDate(context, chosen)),
-      body: l10n.syncRestoreBody,
+      body: repair ? l10n.syncRepairBody : l10n.syncRestoreBody,
       action: l10n.syncRestore,
     );
     if (!confirmed) return;
     try {
-      await controller.restore(chosen);
+      await controller.restore(chosen, repairBroken: repair);
       if (context.mounted) _snack(context, l10n.syncRestored);
     } on SyncException catch (e) {
       if (context.mounted) _snack(context, _failureText(l10n, e.failure));
@@ -420,8 +428,7 @@ class SyncScreen extends ConsumerWidget {
   }
 
   Future<void> _deleteDriveData(BuildContext context, WidgetRef ref) async {
-    final controller = ref.read(syncControllerProvider.notifier);
-    final secrets = ref.read(secretsControllerProvider.notifier);
+    final actions = ref.read(syncActionsProvider);
     final l10n = AppLocalizations.of(context);
     final confirmed = await _confirm(
       context,
@@ -431,9 +438,7 @@ class SyncScreen extends ConsumerWidget {
     );
     if (!confirmed) return;
     try {
-      final account = await secrets.prepareForDeletion();
-      await controller.deleteDriveData();
-      await secrets.resetForDeletedDrive(account);
+      await actions.deleteDriveData();
       if (context.mounted) _snack(context, l10n.syncDeleted);
     } on SyncException catch (e) {
       if (context.mounted) _snack(context, _failureText(l10n, e.failure));
@@ -442,31 +447,61 @@ class SyncScreen extends ConsumerWidget {
 
   Future<void> _export(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
-    final bytes = await ref.read(syncControllerProvider.notifier).export();
-    final day = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    final saved = await FilePicker.saveFile(
-      fileName: 'framebook-export-$day.json.gz',
-      bytes: Uint8List.fromList(bytes),
-    );
-    if (saved != null && context.mounted) _snack(context, l10n.exportDone);
+    final controller = ref.read(syncControllerProvider.notifier);
+    try {
+      final bytes = await controller.export();
+      final day = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      final saved = await FilePicker.saveFile(
+        fileName: 'framebook-export-$day.json.gz',
+        bytes: Uint8List.fromList(bytes),
+      );
+      if (saved != null && context.mounted) _snack(context, l10n.exportDone);
+    } catch (error) {
+      if (context.mounted) {
+        _snack(
+          context,
+          error is SyncFileTooLarge
+              ? l10n.syncErrorTooLarge
+              : l10n.fileOperationFailed,
+        );
+      }
+    }
   }
 
   Future<void> _import(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
     final controller = ref.read(syncControllerProvider.notifier);
-    final picked = await FilePicker.pickFiles(withData: true);
-    final bytes = picked?.files.singleOrNull?.bytes;
-    if (bytes == null || !context.mounted) return;
     ImportPreview preview;
     try {
+      final picked = await FilePicker.pickFiles(
+        withData: false,
+        withReadStream: true,
+      );
+      final file = picked?.files.singleOrNull;
+      if (file == null || !context.mounted) return;
+      if (file.size > SyncFile.maxCompressedBytes) {
+        throw const SyncFileTooLarge();
+      }
+      final stream =
+          file.readStream ??
+          (file.path == null ? null : File(file.path!).openRead());
+      if (stream == null) throw const SyncFileBroken('No readable file');
+      final bytes = await readSyncBytes(stream);
       preview = await controller.previewImport(bytes);
     } on SyncFileException catch (e) {
       if (context.mounted) {
         _snack(
           context,
-          e is SyncFileTooNew ? l10n.importTooNew : l10n.importBroken,
+          e is SyncFileTooLarge
+              ? l10n.syncErrorTooLarge
+              : e is SyncFileTooNew
+              ? l10n.importTooNew
+              : l10n.importBroken,
         );
       }
+      return;
+    } catch (_) {
+      if (context.mounted) _snack(context, l10n.fileOperationFailed);
       return;
     }
     if (!context.mounted) return;
@@ -554,6 +589,7 @@ class SyncScreen extends ConsumerWidget {
   static String _failureText(AppLocalizations l10n, SyncFailure failure) =>
       switch (failure) {
         SyncFailure.offline => l10n.syncOffline,
+        SyncFailure.tooLarge => l10n.syncErrorTooLarge,
         SyncFailure.unauthorized => l10n.syncErrorUnauthorized,
         SyncFailure.quotaExceeded => l10n.syncErrorQuota,
         SyncFailure.broken => l10n.syncErrorBroken,

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/widgets.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +11,7 @@ import 'package:framebook/data/sync/google_account.dart';
 import 'package:framebook/data/sync/secrets_controller.dart';
 import 'package:framebook/data/sync/secrets_vault.dart';
 import 'package:framebook/data/sync/sync_controller.dart';
+import 'package:framebook/data/sync/sync_actions.dart';
 import 'package:framebook/data/sync/sync_engine.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -18,6 +20,9 @@ import 'support/memory_key_storage.dart';
 import 'support/memory_remote.dart';
 
 class TestSync extends SyncController {
+  Future<void> Function()? onDelete;
+  @override
+  Future<void> deleteDriveData() => onDelete?.call() ?? Future.value();
   @override
   SyncStatus build() =>
       const SyncStatus(configured: true, account: 'me@example.com');
@@ -100,6 +105,101 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 10));
     }
   }
+
+  test('first enable preserves and uploads phone-only keys', () async {
+    await setup();
+    final other = SecretsVault(
+      remote: remote,
+      storage: MemoryKeyStorage(),
+      accountId: 'other',
+      deviceId: 'other',
+    );
+    await other.unlock('password123');
+    await other.save({
+      'tmdb': const SecretsKey('remote', verified: true),
+    }, 'imdb');
+    await other.sync(createIfMissing: true);
+    start();
+    await settle();
+    await container
+        .read(apiKeysProvider.notifier)
+        .save(ApiSource.omdb, const StoredKey('local', verified: true));
+    await container
+        .read(secretsControllerProvider.notifier)
+        .enable('password123');
+    final keys = container.read(apiKeysProvider);
+    expect(keys[ApiSource.tmdb]?.value, 'remote');
+    expect(keys[ApiSource.omdb]?.value, 'local');
+    expect((await ApiKeyStore(storage).load())[ApiSource.omdb]?.value, 'local');
+    final shared = await other.sync();
+    expect(shared.keys['omdb']?.value, 'local');
+    expect(shared.divergenceSource, 'imdb');
+    container.dispose();
+  });
+
+  test(
+    'deletion suspends edits, resume and overwrite until completion',
+    () async {
+      await setup();
+      start();
+      await settle();
+      final controller = container.read(secretsControllerProvider.notifier);
+      await controller.enable('password123');
+      await controller.prepareForDeletion();
+      final calls = remote.listCalls;
+      await container
+          .read(apiKeysProvider.notifier)
+          .save(
+            ApiSource.omdb,
+            const StoredKey('during-delete', verified: true),
+          );
+      await controller.overwrite('otherpassword');
+      final binding = WidgetsBinding.instance;
+      binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await settle();
+      expect(remote.listCalls, calls);
+      expect(container.read(secretsControllerProvider).busy, isTrue);
+      controller.cancelDeletion();
+      await settle();
+      expect(remote.listCalls, greaterThan(calls));
+      container.dispose();
+    },
+  );
+
+  test(
+    'coordinated deletion releases the key gate after a remote failure',
+    () async {
+      await setup();
+      start();
+      await settle();
+      final secrets = container.read(secretsControllerProvider.notifier);
+      await secrets.enable('password123');
+      final entered = Completer<void>(), release = Completer<void>();
+      sync.onDelete = () async {
+        entered.complete();
+        await release.future;
+        throw const SyncException(SyncFailure.offline);
+      };
+      final actions = SyncActions(sync, secrets);
+      final deletion = actions.deleteDriveData();
+      final failed = expectLater(deletion, throwsA(isA<SyncException>()));
+      await entered.future;
+      final calls = remote.listCalls;
+      await container
+          .read(apiKeysProvider.notifier)
+          .save(ApiSource.omdb, const StoredKey('pending', verified: true));
+      await settle();
+      expect(remote.listCalls, calls);
+      release.complete();
+      await failed;
+      await settle();
+      expect(container.read(secretsControllerProvider).enabled, isTrue);
+      expect(container.read(secretsControllerProvider).busy, isFalse);
+      expect(remote.listCalls, greaterThan(calls));
+      container.dispose();
+    },
+  );
 
   test('restore with no vault never creates one', () async {
     await setup();

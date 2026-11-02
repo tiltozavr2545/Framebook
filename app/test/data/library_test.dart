@@ -69,6 +69,41 @@ void main() {
 
   tearDown(() => db.close());
 
+  test(
+    'moving an episode transfers its IMDb identity and Keep clears it',
+    () async {
+      List<WorkSnapshot> part(int n, int id, String? imdb) => [
+        const WorkSnapshot(key: WorkKey.tv(100), tmdbId: 100, title: 'TV'),
+        const WorkSnapshot(
+          key: WorkKey.season(100, 1),
+          tmdbId: 200,
+          title: 'S',
+        ),
+        WorkSnapshot(
+          key: WorkKey.episode(100, 1, n),
+          tmdbId: id,
+          title: 'Episode',
+          imdbId: imdb,
+        ),
+      ];
+      await library.rate(part(1, 101, 'tt1111111'), scoreHalf: 10, note: null);
+      await library.rate(part(2, 102, 'tt2222222'), scoreHalf: 12, note: null);
+      await library.moveRatings([
+        (from: const WorkKey.episode(100, 1, 1), to: part(2, 101, null)),
+      ]);
+      final moved = (await library.lineage(
+        const WorkKey.episode(100, 1, 2),
+      ))!.last;
+      expect(moved.tmdbId, 101);
+      expect(moved.imdbId, 'tt1111111');
+      await library.keepRatings({const WorkKey.episode(100, 1, 2): 103});
+      expect(
+        (await library.lineage(const WorkKey.episode(100, 1, 2)))!.last.imdbId,
+        isNull,
+      );
+    },
+  );
+
   group('snapshots', () {
     test('a film keeps what the offline list needs, and no more', () async {
       await library.rate([matrix], scoreHalf: 17, note: null);
@@ -665,10 +700,13 @@ void main() {
       now = now.add(const Duration(hours: 1));
       await library.refreshSnapshots(episode(5));
       final work = (await workRow(e5.toString()))!;
-      // Everything else is refreshed; the id waits for the user's answer.
+      // Keep the pending identity's metadata too, not the replacement's title.
       expect(work.tmdbId, 63058);
-      expect(work.title, season1.episodes[4].name);
-      expect(work.snapshotUpdatedAt, ms(now));
+      expect(work.title, 'Old 5');
+      expect(
+        work.snapshotUpdatedAt,
+        ms(now.subtract(const Duration(hours: 1))),
+      );
     });
 
     test('an unrated snapshot takes the new id; none is lost to the '

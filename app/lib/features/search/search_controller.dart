@@ -54,6 +54,13 @@ class SearchNotifier extends Notifier<SearchState> {
   @override
   SearchState build() {
     ref.onDispose(() => _debounce?.cancel());
+    ref.listen(tmdbProvider, (previous, next) {
+      if (identical(previous, next)) return;
+      _generation++;
+      _debounce?.cancel();
+      final query = state.query;
+      if (query.isNotEmpty) unawaited(_load(query, 1));
+    });
     return const SearchState();
   }
 

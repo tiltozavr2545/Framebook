@@ -108,6 +108,7 @@ class SyncController extends Notifier<SyncStatus> {
   bool _suspended = false;
   bool _firstSyncPending = false;
   bool _sessionReady = false;
+  bool _restoring = false;
 
   AppDatabase get _db => ref.read(databaseProvider);
 
@@ -153,11 +154,22 @@ class SyncController extends Notifier<SyncStatus> {
   }
 
   Future<void> _restoreAndMaybeSync() async {
-    if (state.account == null || _suspended) return;
-    final restored = await _google.restore();
-    if (!ref.mounted || restored == null) return;
-    _sessionReady = true;
-    await _maybeSync();
+    if (state.account == null || _suspended || _restoring) return;
+    if (_sessionReady) {
+      await _maybeSync();
+      return;
+    }
+    // Credential Manager can resume the activity while restoring an account.
+    // Keep the guard until that operation finishes to prevent recursive UI.
+    _restoring = true;
+    try {
+      final restored = await _google.restore();
+      if (!ref.mounted || restored == null) return;
+      _sessionReady = true;
+      await _maybeSync();
+    } finally {
+      _restoring = false;
+    }
   }
 
   Future<void> _maybeSync() async {
@@ -253,25 +265,7 @@ class SyncController extends Notifier<SyncStatus> {
       final report = await _withDrive(
         (engine) => engine.sync(stale: stale, reviewedFingerprint: fingerprint),
       );
-      if (report.paused) {
-        if (ref.mounted) {
-          state = state.copyWith(
-            stale: () => report.stale,
-            staleFingerprint: () => report.staleFingerprint,
-          );
-        }
-        return;
-      }
-      _changedDuringSync = report.pendingChanges;
-      await _store.setStateValue(_errorKey, null);
-      if (ref.mounted) {
-        state = state.copyWith(
-          lastSyncAt: () => report.syncedAt,
-          error: () => null,
-          stale: () => null,
-          staleFingerprint: () => null,
-        );
-      }
+      await _acceptReport(report);
     } on SyncException catch (e) {
       await _fail(e.failure);
     } finally {
@@ -279,6 +273,28 @@ class SyncController extends Notifier<SyncStatus> {
         state = state.copyWith(busy: false);
         if (_changedDuringSync && state.stale == null) _changed();
       }
+    }
+  }
+
+  Future<void> _acceptReport(SyncReport report) async {
+    if (report.paused) {
+      if (ref.mounted) {
+        state = state.copyWith(
+          stale: () => report.stale,
+          staleFingerprint: () => report.staleFingerprint,
+        );
+      }
+      return;
+    }
+    _changedDuringSync = report.pendingChanges;
+    await _store.setStateValue(_errorKey, null);
+    if (ref.mounted) {
+      state = state.copyWith(
+        lastSyncAt: () => report.syncedAt,
+        error: () => null,
+        stale: () => null,
+        staleFingerprint: () => null,
+      );
     }
   }
 
@@ -292,15 +308,18 @@ class SyncController extends Notifier<SyncStatus> {
   /// Runs [action] with Drive access; once Drive says the token expired,
   /// drops it and tries again with a fresh one.
   Future<T> _withDrive<T>(Future<T> Function(SyncEngine engine) action) async {
-    var access = await _google.drive();
-    try {
-      return await action(_engine(access.remote));
-    } on SyncException catch (e) {
-      if (e.failure != SyncFailure.unauthorized) rethrow;
-      await access.expire();
-      access = await _google.drive();
-      return action(_engine(access.remote));
+    for (var attempt = 0; attempt < 2; attempt++) {
+      final access = await _google.drive();
+      try {
+        return await action(_engine(access.remote));
+      } on SyncException catch (e) {
+        if (e.failure != SyncFailure.unauthorized || attempt > 0) rethrow;
+        await access.expire();
+      } finally {
+        access.close();
+      }
     }
+    throw const SyncException(SyncFailure.unauthorized);
   }
 
   SyncEngine _engine(SyncRemote remote) => SyncEngine(
@@ -361,13 +380,37 @@ class SyncController extends Notifier<SyncStatus> {
 
   /// Restoring a daily copy is an import that replaces everything (its
   /// watermark clamped as the file's is). Throws [SyncException].
-  Future<void> restore(RemoteFile backup) async {
-    final copy = await _withDrive((engine) => engine.readBackup(backup));
-    await _replace(copy);
+  Future<void> restore(RemoteFile backup, {bool repairBroken = false}) async {
+    if (!repairBroken) {
+      final copy = await _withDrive((engine) => engine.readBackup(backup));
+      await _replace(copy);
+      return;
+    }
+    if (_suspended) return;
+    _suspended = true;
+    _debounce?.cancel();
+    try {
+      await _running;
+      state = state.copyWith(busy: true);
+      final report = await _withDrive((engine) async {
+        final copy = await engine.readBackup(backup);
+        return engine.restoreAndRepair(copy);
+      });
+      await _acceptReport(report);
+    } on SyncException catch (e) {
+      await _fail(e.failure);
+      rethrow;
+    } finally {
+      _suspended = false;
+      if (ref.mounted) {
+        state = state.copyWith(busy: false);
+        if (_changedDuringSync && state.stale == null) _changed();
+      }
+    }
   }
 
   /// The export file: the same format as the file in Drive.
-  Future<List<int>> export() async => SyncFile.encode(
+  Future<List<int>> export() async => SyncFile.encodeAsync(
     await _store.read(),
     writtenAt: _now,
     writtenBy: ref.read(deviceIdProvider),
@@ -377,7 +420,7 @@ class SyncController extends Notifier<SyncStatus> {
   /// Reads an import file; its watermark is clamped to this device's clock,
   /// as Drive's is. Throws [SyncFileException].
   Future<ImportPreview> previewImport(List<int> bytes) async {
-    final read = SyncFile.decode(bytes);
+    final read = await SyncFile.decodeAsync(bytes);
     final file = read.withPurgedBefore(clampWatermark(read.purgedBefore, _now));
     return _preview(file);
   }

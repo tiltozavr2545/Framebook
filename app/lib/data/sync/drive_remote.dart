@@ -7,6 +7,7 @@ import 'package:googleapis_auth/googleapis_auth.dart'
 import 'package:http/http.dart' as http;
 
 import 'sync_engine.dart';
+import 'sync_file.dart';
 
 /// [SyncRemote] on Google Drive's `appDataFolder` (docs/sync.md): a hidden
 /// folder only this app sees, through the `drive.appdata` scope.
@@ -14,11 +15,13 @@ final class DriveRemote implements SyncRemote {
   DriveRemote(
     http.Client client, {
     Duration timeout = const Duration(seconds: 30),
+    this.downloadLimit = SyncFile.maxCompressedBytes,
   }) : _api = drive.DriveApi(client),
        _timeout = timeout;
 
   final drive.DriveApi _api;
   final Duration _timeout;
+  final int downloadLimit;
 
   static const _space = 'appDataFolder';
   static const _fields = 'id,name,modifiedTime,createdTime';
@@ -56,9 +59,11 @@ final class DriveRemote implements SyncRemote {
               downloadOptions: drive.DownloadOptions.fullMedia,
             )
             as drive.Media;
-    final bytes = <int>[];
-    await media.stream.forEach(bytes.addAll);
-    return bytes;
+    try {
+      return await readSyncBytes(media.stream, limit: downloadLimit);
+    } on SyncFileTooLarge {
+      throw const SyncException(SyncFailure.tooLarge);
+    }
   });
 
   @override

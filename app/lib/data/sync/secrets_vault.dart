@@ -159,12 +159,15 @@ final class SecretsVault {
     required this.storage,
     required this.accountId,
     required this.deviceId,
+    this.onClose,
   });
   static const filename = 'framebook-secrets.json';
   final SyncRemote remote;
   final KeyStorage storage;
   final String accountId;
   final String deviceId;
+  final void Function()? onClose;
+  void close() => onClose?.call();
   Map<String, Object?>? _pending;
   static final _queues = <String, Future<void>>{};
   static Future<T> _serialized<T>(String account, Future<T> Function() action) {
@@ -448,7 +451,11 @@ final class SecretsVault {
     return canonical(a).compareTo(canonical(b));
   }
 
-  Future<SecretsSnapshot?> unlock(String password) async {
+  Future<SecretsSnapshot?> unlock(
+    String password, {
+    Map<String, SecretsKey> initialKeys = const {},
+    String? initialSource,
+  }) async {
     final files = await _files();
     if (files.isEmpty) {
       if (password.length < 8) {
@@ -483,7 +490,26 @@ final class SecretsVault {
         sameIdentity = _sameParams(_parseParams(previous['params']), params!);
       }
       await _cache(params!, key!);
-      final local = await _local();
+      var local = await _local();
+      // Only bootstrap a new account snapshot after authenticating the vault.
+      // A changed encryption identity must still discard stale cached keys.
+      if (sameIdentity && local == null && initialKeys.isNotEmpty) {
+        final at = DateTime.now().toUtc().millisecondsSinceEpoch;
+        local = SecretsSnapshot(
+          keys: Map.unmodifiable(initialKeys),
+          keyVersions: {
+            for (final source in initialKeys.keys)
+              source: SecretsVersion(at, deviceId),
+          },
+          divergenceSource: initialSource,
+          // The remote preference wins over this phone's initial default.
+          divergenceVersion: initialSource == null
+              ? null
+              : SecretsVersion(0, deviceId),
+          updatedAt: at,
+          updatedBy: deviceId,
+        );
+      }
       if (!sameIdentity || local == null) {
         await _put(winner!);
         return winner;

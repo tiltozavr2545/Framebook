@@ -4,6 +4,7 @@ import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/widgets.dart';
 import 'package:framebook/app/preferences.dart';
 import 'package:framebook/data/db/database.dart';
 import 'package:framebook/data/db/database_provider.dart';
@@ -33,6 +34,7 @@ final class _ExpiringGoogle extends FakeGoogleAccount {
     return (
       remote: _Unauthorized() as SyncRemote,
       expire: () async => expired++,
+      close: access.close,
     );
   }
 }
@@ -54,6 +56,22 @@ final class _UnavailableRestoreGoogle extends FakeGoogleAccount {
   Future<DriveAccess> drive() async {
     driveCalls++;
     return super.drive();
+  }
+}
+
+final class _ResumingGoogle extends FakeGoogleAccount {
+  _ResumingGoogle(super.remote);
+
+  int restores = 0;
+
+  @override
+  Future<String?> restore() async {
+    restores++;
+    final binding = WidgetsBinding.instance;
+    binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await Future<void>.delayed(Duration.zero);
+    return email;
   }
 }
 
@@ -143,6 +161,52 @@ void main() {
   final other = [
     const WorkSnapshot(key: WorkKey.movie(27205), tmdbId: 27205, title: 'Inc'),
   ];
+
+  test('account restoration cannot recursively restore on resume', () async {
+    final google = _ResumingGoogle(MemoryRemote())..signedIn = true;
+    await device('a', google, storedAccount: google.email);
+    await pumpEventQueue();
+    expect(google.restores, 1);
+    final binding = WidgetsBinding.instance;
+    binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await pumpEventQueue();
+    expect(google.restores, 1);
+  });
+
+  test('confirmed backup repair replaces only a broken main file', () async {
+    final remote = MemoryRemote();
+    final google = FakeGoogleAccount(remote);
+    final (container, library) = await device('a', google);
+    final controller = container.read(syncControllerProvider.notifier);
+    await library.rate(film, scoreHalf: 17, note: null);
+    await controller.signIn();
+    final bytes = await controller.export();
+    final backup = remote.put(
+      SyncEngine.backupName(DateTime(2026, 11, 1)),
+      bytes,
+    );
+    remote.put('framebook-secrets.json', [42]);
+    final main = (await remote.list()).firstWhere(
+      (f) => f.name == SyncFile.name,
+    );
+    remote.put(SyncFile.name, [1, 2, 3], id: main.id);
+    await controller.sync();
+    expect(container.read(syncControllerProvider).error, SyncFailure.broken);
+    await controller.restore(backup, repairBroken: true);
+    expect(container.read(syncControllerProvider).error, isNull);
+    final repaired = remote.files.values.firstWhere(
+      (f) => f.name == SyncFile.name,
+    );
+    expect(SyncFile.decode(repaired.bytes).liveRatings, 1);
+    expect(remote.names, contains(backup.name));
+    expect(remote.names, contains('framebook-secrets.json'));
+    expect(
+      remote.names.where((n) => n.startsWith('framebook-corrupt-')),
+      hasLength(1),
+    );
+    expect(google.closedAccesses, greaterThan(0));
+  });
 
   test('an export imports elsewhere by merging', () async {
     final (a, libraryA) = await device('a', FakeGoogleAccount(MemoryRemote()));
@@ -302,6 +366,7 @@ void main() {
     google.signedIn = true;
     await a.read(syncControllerProvider.notifier).signIn();
     expect(google.expired, 1);
+    expect(google.closedAccesses, 3);
     expect(a.read(syncControllerProvider).error, isNull);
     expect(remote.names, [SyncFile.name]);
   });

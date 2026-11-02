@@ -1,6 +1,3 @@
-import '../sync/sync_store.dart';
-import '../sync/sync_file.dart';
-import '../sync/merge.dart';
 import 'dart:math';
 
 import 'package:drift/drift.dart';
@@ -9,100 +6,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../api_source.dart';
 import '../db/database.dart';
 import '../db/database_provider.dart';
+import '../sync/merge.dart';
+import '../sync/sync_file.dart';
+import '../sync/sync_store.dart';
 import '../work_key.dart';
 import 'divergence.dart';
+import 'library_models.dart';
+import 'rating_note.dart';
 import 'renumbering.dart';
 import 'work_snapshot.dart';
 
-/// A live rating with its title's snapshot and, for a season or an episode,
-/// the snapshots of its ancestors — what a list row needs to say
-/// "Game of Thrones · S1E3".
-final class RatedTitle {
-  const RatedTitle({
-    required this.rating,
-    required this.work,
-    this.series,
-    this.season,
-    this.external = const {},
-  });
-
-  final Rating rating;
-  final Work work;
-
-  /// The cached Kinopoisk and IMDb rows, of any status — what "My ratings"
-  /// and the statistics compare with. Only [watchRatings] fills them.
-  final Map<RatingSource, ExternalRating> external;
-
-  /// The series of a season or an episode.
-  final Work? series;
-
-  /// The season of an episode.
-  final Work? season;
-
-  WorkKey get key => WorkKey.parse(work.workKey);
-
-  /// A poster for the row: an episode has none of its own, so the season's
-  /// or the series' is used.
-  String? get posterPath =>
-      work.posterPath ?? season?.posterPath ?? series?.posterPath;
-
-  /// "Mine − theirs" against [source], `null` without a cached value.
-  double? divergenceFrom(RatingSource source) =>
-      divergence(rating.scoreHalf, external[source]);
-
-  /// The genres a title counts under: a season and an episode take the
-  /// series' (docs/data-model.md, `works.genre_ids`).
-  List<int> get genreIds => WorkSnapshot.fromWork(series ?? work).genreIds;
-}
-
-/// A live watchlist entry with its title's snapshot (films and series only).
-final class WatchlistTitle {
-  const WatchlistTitle({required this.entry, required this.work, this.series});
-
-  final WatchlistEntry entry;
-  final Work work;
-  final Work? series;
-
-  WorkKey get key => WorkKey.parse(work.workKey);
-}
-
-/// The average of a series' or a season's rated parts — a hint next to its
-/// own score (docs/data-model.md, "Key queries").
-final class PartsAverage {
-  const PartsAverage({
-    required this.average,
-    required this.count,
-    required this.parts,
-  });
-
-  /// In points, 1.0…10.0.
-  final double average;
-  final int count;
-
-  /// [WorkKind.season] or [WorkKind.episode].
-  final WorkKind parts;
-}
-
-/// What the calibration sheet shows after a score is saved: titles of the
-/// same kind with the same score, and the nearest existing scores above and
-/// below (docs/data-model.md, "Key queries").
-final class Calibration {
-  const Calibration({
-    required this.same,
-    required this.above,
-    required this.below,
-  });
-
-  /// What fits under the score reel: four of the same, two each side.
-  static const sameLimit = 4;
-  static const neighbourLimit = 2;
-
-  final List<RatedTitle> same;
-  final List<RatedTitle> above;
-  final List<RatedTitle> below;
-
-  bool get isEmpty => same.isEmpty && above.isEmpty && below.isEmpty;
-}
+export 'library_models.dart';
+export 'library_sort.dart';
 
 /// The user's own data: ratings, notes, the watchlist. Every write keeps the
 /// sync invariants (AGENTS.md): snapshots of the title and its ancestors go
@@ -138,6 +53,9 @@ final class Library {
   /// An empty or blank note is no note.
   static String? _cleanNote(String? note) {
     final trimmed = note?.trim();
+    if (!validRatingNote(trimmed)) {
+      throw ArgumentError('Note exceeds the code point limit');
+    }
     return trimmed == null || trimmed.isEmpty ? null : trimmed;
   }
 
@@ -433,8 +351,22 @@ final class Library {
         rating.workKey: rating,
     };
 
+    final sourceWorks = {
+      for (final work in await (_db.select(
+        _db.works,
+      )..where((w) => w.workKey.isIn(sources))).get())
+        work.workKey: work,
+    };
     for (final move in moves) {
       await _putSnapshots(move.to, now, adopt: move.to.last.key);
+      final source = sourceWorks[move.from.toString()];
+      if (source != null &&
+          source.tmdbId == move.to.last.tmdbId &&
+          source.imdbId != null) {
+        await (_db.update(_db.works)
+              ..where((w) => w.workKey.equals(move.to.last.key.toString())))
+            .write(WorksCompanion(imdbId: Value(source.imdbId)));
+      }
     }
     bool live(Rating? rating) => rating != null && rating.deletedAt == null;
     for (final source in sources) {
@@ -630,11 +562,22 @@ final class Library {
           )..where((w) => w.workKey.equals(key.toString()))).write(
             WorksCompanion(
               tmdbId: Value(id ?? key.tmdbId),
+              imdbId: old?.tmdbId == (id ?? key.tmdbId)
+                  ? const Value.absent()
+                  : const Value(null),
+              kpId: old?.tmdbId == (id ?? key.tmdbId)
+                  ? const Value.absent()
+                  : const Value(null),
               snapshotUpdatedAt: Value(
                 old == null ? now : _next(now, old.snapshotUpdatedAt),
               ),
             ),
           );
+          if (old?.tmdbId != (id ?? key.tmdbId)) {
+            await (_db.delete(
+              _db.externalRatings,
+            )..where((r) => r.workKey.equals(key.toString()))).go();
+          }
         }
       });
 
@@ -907,7 +850,17 @@ final class Library {
         );
       }
       if (snapshot.key != adopt && await _keepsOwnId(stored, snapshot)) {
-        row = row.copyWith(tmdbId: const Value.absent());
+        continue;
+      }
+      if (stored.tmdbId != snapshot.tmdbId &&
+          stored.tmdbId != snapshot.key.tmdbId) {
+        row = row.copyWith(
+          imdbId: Value(snapshot.imdbId),
+          kpId: const Value(null),
+        );
+        await (_db.delete(
+          _db.externalRatings,
+        )..where((r) => r.workKey.equals(k))).go();
       }
       await (_db.update(
         _db.works,
@@ -1023,96 +976,6 @@ final class Library {
         ? ancestors[key.parent.toString()]
         : null,
   );
-}
-
-/// How "My ratings" is ordered.
-enum RatingsSort { scoredAt, score, year, title, divergence }
-
-/// The direction of the divergence sort.
-enum DivergenceOrder {
-  /// The largest gap either way first.
-  furthest,
-
-  /// Where I rate higher than [compareWith] first.
-  higher,
-
-  /// Where I rate lower first.
-  lower,
-}
-
-/// Filters "My ratings" by kind (`null` — all) and sorts it. Ties are broken
-/// by the most recent score, so the order is stable. Sorting by divergence
-/// compares with [compareWith]; titles without its value go to the end rather
-/// than dropping out (docs/data-model.md, "Key queries").
-List<RatedTitle> arrangeRatings(
-  Iterable<RatedTitle> titles, {
-  WorkKind? kind,
-  RatingsSort sort = RatingsSort.scoredAt,
-  RatingSource compareWith = RatingSource.kp,
-  DivergenceOrder order = DivergenceOrder.furthest,
-}) {
-  int byRecent(RatedTitle a, RatedTitle b) =>
-      b.rating.scoredAt.compareTo(a.rating.scoredAt);
-  int byDivergence(RatedTitle a, RatedTitle b) {
-    final da = a.divergenceFrom(compareWith);
-    final db = b.divergenceFrom(compareWith);
-    if (da == null || db == null) {
-      return da == db ? 0 : (da == null ? 1 : -1);
-    }
-    return switch (order) {
-      DivergenceOrder.furthest => db.abs().compareTo(da.abs()),
-      DivergenceOrder.higher => db.compareTo(da),
-      DivergenceOrder.lower => da.compareTo(db),
-    };
-  }
-
-  final list = [
-    for (final title in titles)
-      if (kind == null || title.work.kind == kind) title,
-  ];
-  list.sort(
-    (a, b) => switch (sort) {
-      RatingsSort.scoredAt => byRecent(a, b),
-      RatingsSort.score => _then(
-        b.rating.scoreHalf.compareTo(a.rating.scoreHalf),
-        () => byRecent(a, b),
-      ),
-      // Newest first; titles without a year go last.
-      RatingsSort.year => _then(
-        _yearDescending(a.work.year, b.work.year),
-        () => byRecent(a, b),
-      ),
-      RatingsSort.title => _then(
-        sortTitle(a).compareTo(sortTitle(b)),
-        () => byRecent(a, b),
-      ),
-      RatingsSort.divergence => _then(byDivergence(a, b), () => byRecent(a, b)),
-    },
-  );
-  return list;
-}
-
-/// What a title sorts by: a season or an episode sorts under its series, in
-/// number order.
-String sortTitle(RatedTitle title) {
-  final key = title.key;
-  final name = (title.series?.title ?? title.work.title).toLowerCase();
-  String pad(int? n) => (n ?? 0).toString().padLeft(4, '0');
-  return switch (key.kind) {
-    WorkKind.movie || WorkKind.tv => name,
-    WorkKind.season => '$name\u0000${pad(key.season)}',
-    WorkKind.episode => '$name\u0000${pad(key.season)}${pad(key.episode)}',
-  };
-}
-
-int _then(int first, int Function() next) => first != 0 ? first : next();
-
-/// Newer years first; a title without a year goes after every dated one.
-int _yearDescending(int? a, int? b) {
-  if (a == b) return 0;
-  if (a == null) return 1;
-  if (b == null) return -1;
-  return b.compareTo(a);
 }
 
 /// Overridden in `main()`: the id is read from the database before `runApp`.

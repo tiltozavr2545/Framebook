@@ -4,6 +4,9 @@
          this app comes from TMDB, PoiskKino and OMDb. -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
+        android:allowBackup="true"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:label="Framebook"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">

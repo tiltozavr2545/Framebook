@@ -55,6 +55,7 @@ enum _Status {
   unverified,
   invalid,
   failed,
+  storageFailed,
 }
 
 class _KeyCard extends ConsumerStatefulWidget {
@@ -103,29 +104,36 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
     final keys = ref.read(apiKeysProvider.notifier);
     final validator = ref.read(keyValidatorProvider);
 
-    final result = await validator.check(_source, value);
-    final status = switch (result) {
-      KeyCheck.valid => _Status.valid,
-      KeyCheck.limitReached => _Status.limit,
-      KeyCheck.offline => _Status.unverified,
-      KeyCheck.invalid => _Status.invalid,
-      KeyCheck.failed => _Status.failed,
-    };
-    if (status != _Status.invalid && status != _Status.failed) {
-      await keys.save(
-        _source,
-        StoredKey(value, verified: status != _Status.unverified),
-      );
+    try {
+      final result = await validator.check(_source, value);
+      final status = switch (result) {
+        KeyCheck.valid => _Status.valid,
+        KeyCheck.limitReached => _Status.limit,
+        KeyCheck.offline => _Status.unverified,
+        KeyCheck.invalid => _Status.invalid,
+        KeyCheck.failed => _Status.failed,
+      };
+      if (status != _Status.invalid && status != _Status.failed) {
+        await keys.save(
+          _source,
+          StoredKey(value, verified: status != _Status.unverified),
+        );
+      }
+      if (mounted) setState(() => _status = status);
+    } catch (_) {
+      if (mounted) setState(() => _status = _Status.storageFailed);
     }
-    if (!mounted) return;
-    setState(() => _status = status);
   }
 
   Future<void> _remove() async {
-    await ref.read(apiKeysProvider.notifier).remove(_source);
-    if (!mounted) return;
-    _controller.clear();
-    setState(() => _status = _Status.missing);
+    try {
+      await ref.read(apiKeysProvider.notifier).remove(_source);
+      if (!mounted) return;
+      _controller.clear();
+      setState(() => _status = _Status.missing);
+    } catch (_) {
+      if (mounted) setState(() => _status = _Status.storageFailed);
+    }
   }
 
   @override
@@ -274,6 +282,11 @@ class _StatusLine extends StatelessWidget {
         Icons.error_outline,
         colors.error,
         l10n.keyStatusInvalid,
+      ),
+      _Status.storageFailed => (
+        Icons.error_outline,
+        colors.error,
+        l10n.keyStatusStorageFailed,
       ),
       _Status.failed => (
         Icons.error_outline,

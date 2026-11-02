@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../app/preferences.dart';
+import '../../app/ratings_preferences.dart';
+export '../../app/ratings_preferences.dart';
 import '../../app/router.dart';
 import '../../data/api_source.dart';
 import '../../data/library/divergence.dart';
 import '../../data/library/library.dart';
-import '../../data/work_key.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/coverage_line.dart';
 import '../../shared/format.dart';
@@ -15,74 +15,6 @@ import '../../shared/kind_filter.dart';
 import '../../shared/title_row.dart';
 import '../../shared/title_text.dart';
 import '../title/title_routes.dart';
-
-/// The chosen filter and order of "My ratings". Kept while the app is open;
-/// the source to compare with is remembered across launches
-/// (docs/data-model.md, "Outside the database").
-typedef RatingsListView = ({
-  WorkKind? kind,
-  RatingsSort sort,
-  RatingSource compareWith,
-  DivergenceOrder order,
-});
-
-const _compareWithKey = 'divergence_source';
-
-class RatingsListViewNotifier extends Notifier<RatingsListView> {
-  @override
-  RatingsListView build() {
-    final stored = ref
-        .watch(sharedPreferencesProvider)
-        .getString(_compareWithKey);
-    return (
-      kind: null,
-      sort: RatingsSort.scoredAt,
-      compareWith: compareSources.firstWhere(
-        (s) => s.name == stored,
-        orElse: () => RatingSource.kp,
-      ),
-      order: DivergenceOrder.furthest,
-    );
-  }
-
-  void filter(WorkKind? kind) => state = (
-    kind: kind,
-    sort: state.sort,
-    compareWith: state.compareWith,
-    order: state.order,
-  );
-
-  void sortBy(RatingsSort sort) => state = (
-    kind: state.kind,
-    sort: sort,
-    compareWith: state.compareWith,
-    order: state.order,
-  );
-
-  Future<void> compareWith(RatingSource source) async {
-    state = (
-      kind: state.kind,
-      sort: state.sort,
-      compareWith: source,
-      order: state.order,
-    );
-    await ref
-        .read(sharedPreferencesProvider)
-        .setString(_compareWithKey, source.name);
-  }
-
-  void orderBy(DivergenceOrder order) => state = (
-    kind: state.kind,
-    sort: state.sort,
-    compareWith: state.compareWith,
-    order: order,
-  );
-}
-
-final ratingsViewProvider =
-    NotifierProvider<RatingsListViewNotifier, RatingsListView>(
-      RatingsListViewNotifier.new,
-    );
 
 /// "My ratings": everything rated, from the local database — works offline.
 class RatingsScreen extends ConsumerWidget {

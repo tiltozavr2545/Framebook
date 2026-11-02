@@ -14,6 +14,7 @@ class FakeGoogleAccount implements GoogleAccount {
   final MemoryRemote remote;
   final String email;
   bool signedIn = false;
+  int closedAccesses = 0;
 
   @override
   final bool configured;
@@ -30,7 +31,13 @@ class FakeGoogleAccount implements GoogleAccount {
   @override
   Future<DriveAccess> drive() async {
     if (!signedIn) throw const SyncException(SyncFailure.unauthorized);
-    return (remote: remote as SyncRemote, expire: () async {});
+    return (
+      remote: remote as SyncRemote,
+      expire: () async {},
+      close: () {
+        closedAccesses++;
+      },
+    );
   }
 
   @override

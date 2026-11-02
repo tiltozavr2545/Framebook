@@ -99,9 +99,9 @@ own, and nothing moves without the user's answer.
 - **Keep** (`Library.keepRatings`): the rating stays on its number and now
   belongs to the title TMDB has there, so the snapshot takes that title's
   id (or the stand-in when the screen doesn't know it — the next refresh of
-  that card takes the real one) and the question doesn't come back. There
+  that card takes the real one), clearing the displaced external IDs and cache and the question doesn't come back. There
   is no separate "dismissed" state.
-- Until answered, the stored id survives every snapshot write — the
+- Until answered, the complete stored snapshot survives every identity-changing snapshot write — the
   refresh on opening a card, the ancestors saved with another rating, an
   edit of the rating itself: a live-rated season's or episode's own id is
   kept when TMDB now has another one under its number. Only Move, Keep, or
@@ -154,8 +154,10 @@ Invariants:
   not advance `snapshot_updated_at` or compete with another device's language
   during sync. Other snapshot refreshes advance `snapshot_updated_at`, never a
   rating's `updated_at`. An upsert
-  never wipes a `kp_id` or an `imdb_id` found earlier: an unknown one is left
-  out of the write rather than written as NULL.
+  keeps known external IDs while identity is unchanged. A numbered part that
+  adopts another TMDB object clears the displaced object's IDs and external
+  rating cache; Move can transfer the known source IMDb ID. A pending
+  renumbering retains the complete old snapshot until the user answers.
 - `works` rows that no `ratings` / `watchlist` row refers to (including
   through descendants) can be deleted locally on cleanup. A snapshot has no
   tombstone: it is derived data, there is nothing to "delete on other
@@ -178,7 +180,7 @@ Invariants:
 |---|---|---|
 | `work_key` | text PK, FK → `works` | one rating per title |
 | `score_half` | int | 2…20, CHECK; score × 2 (7.5 → 15) |
-| `note` | text null | note/review, up to 10,000 characters |
+| `note` | text null | note/review, up to 10,000 Unicode code points |
 | `created_at` | int | UTC ms, the first rating |
 | `scored_at` | int | UTC ms, the last change of the **score** (not the note) — for "by date" sorting and "recent" in the calibration |
 | `updated_at` | int | UTC ms, the last user change of any kind — merging goes by it |
@@ -327,3 +329,13 @@ and the sort itself is a pure function (`arrangeRatings`).
 
 Indexes: `ratings(deleted_at, score_half)`, `ratings(scored_at)`,
 `works(kind)`, `works(parent_key)`, `works(year)`.
+
+Notes use one limit at every boundary: 10,000 Unicode code points, matching
+SQLite `length(TEXT)` and sync rune validation. The editor preserves whole
+grapheme clusters while enforcing that cap. Failed saves leave the editor
+open with its draft. This changes no table or CHECK constraint.
+
+`sync_state.part_identity_merge_v4` records the one-time cleanup of legacy
+season/episode external IDs; it does not change the database schema version.
+Android backup excludes the secure-storage preferences and wrapped-key files,
+while retaining ordinary app data. See the client design for startup recovery.

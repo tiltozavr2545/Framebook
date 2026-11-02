@@ -29,6 +29,37 @@ final class SyncStore {
   static const watchlistDeletionsKey = 'watchlist_deletions';
   static const watchlistFencesKey = 'watchlist_fences';
 
+  /// One-time derived-data repair for clients predating identity-aware merging.
+  /// User rows and their timestamps are never changed.
+  Future<void> preparePartIdentities(int now) => _db.transaction(() async {
+    const marker = 'part_identity_merge_v4';
+    if (await stateValue(marker) != null) return;
+    final parts =
+        await (_db.select(_db.works)..where(
+              (w) =>
+                  w.kind.equalsValue(WorkKind.season) |
+                  w.kind.equalsValue(WorkKind.episode),
+            ))
+            .get();
+    for (final work in parts) {
+      await (_db.update(
+        _db.works,
+      )..where((w) => w.workKey.equals(work.workKey))).write(
+        WorksCompanion(
+          imdbId: const Value(null),
+          kpId: const Value(null),
+          snapshotUpdatedAt: Value(_next(now, work.snapshotUpdatedAt)),
+        ),
+      );
+    }
+    for (final chunk in _chunks(parts.map((w) => w.workKey).toList())) {
+      await (_db.delete(
+        _db.externalRatings,
+      )..where((r) => r.workKey.isIn(chunk))).go();
+    }
+    await setStateValue(marker, '1');
+  });
+
   /// Everything that goes into the file: every rating and watchlist row,
   /// tombstones included, the snapshots they refer to with their ancestors,
   /// and this device's purge watermark.
@@ -115,6 +146,11 @@ final class SyncStore {
     for (final work in _parentsFirst(merged.works)) {
       final old = await _work(work.workKey);
       if (old == null || compareWorks(work, old) > 0) {
+        if (old != null && old.tmdbId != work.tmdbId) {
+          await (_db.delete(
+            _db.externalRatings,
+          )..where((r) => r.workKey.equals(work.workKey))).go();
+        }
         await _db.into(_db.works).insertOnConflictUpdate(_full(work));
         changed++;
       }
@@ -310,6 +346,11 @@ final class SyncStore {
     for (final work in _parentsFirst(file.works)) {
       final local = await _work(work.workKey);
       if (local == null || compareWorks(work, local) > 0) {
+        if (local != null && local.tmdbId != work.tmdbId) {
+          await (_db.delete(
+            _db.externalRatings,
+          )..where((r) => r.workKey.equals(work.workKey))).go();
+        }
         await _db.into(_db.works).insertOnConflictUpdate(_full(work));
       }
     }

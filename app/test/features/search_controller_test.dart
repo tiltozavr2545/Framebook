@@ -19,6 +19,30 @@ class _SearchApi implements TmdbApi {
 }
 
 void main() {
+  test('client changes restart the query and reject old answers', () async {
+    final oldApi = _SearchApi(), newApi = _SearchApi();
+    final container = ProviderContainer(
+      overrides: [tmdbProvider.overrideWithValue(oldApi)],
+    );
+    addTearDown(container.dispose);
+    final search = container.read(searchProvider.notifier);
+    search.submit('matrix');
+    container.updateOverrides([tmdbProvider.overrideWithValue(newApi)]);
+    await pumpEventQueue();
+    expect(newApi.requests.containsKey('matrix'), isTrue);
+    oldApi.requests['matrix']!.complete(
+      const SearchPage([], page: 9, pages: 9),
+    );
+    await pumpEventQueue();
+    expect(container.read(searchProvider).page, 0);
+    newApi.requests['matrix']!.complete(
+      const SearchPage([], page: 1, pages: 1),
+    );
+    await pumpEventQueue();
+    expect(container.read(searchProvider).query, 'matrix');
+    expect(container.read(searchProvider).page, 1);
+  });
+
   test(
     'typing a new query immediately invalidates the previous answer',
     () async {

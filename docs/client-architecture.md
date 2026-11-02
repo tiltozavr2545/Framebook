@@ -111,7 +111,7 @@ lib/
     source_failure.dart — why a source failed; JSON reading
     library/            — the user's ratings and watchlist; title snapshots
     work_key.dart       — building and parsing work_key
-  sync/                 — file format, merging (pure functions), Drive transport
+    sync/               — file format, merging (pure functions), Drive transport
   features/
     search/  title/  ratings/  watchlist/  stats/  settings/  onboarding/
   shared/               — poster, error screen, formatting
@@ -133,11 +133,15 @@ Rules:
 
 ## Startup and keys (Stage 1)
 
-Before `runApp`, `main()` opens the database (creating `device_id` if there
+`main()` immediately renders `StartupApp`. Its initializer opens the database (creating `device_id` if there
 is none), reads `SharedPreferences` and the keys, and passes all of it into
 `ProviderScope` through overrides. The single reason: the first frame needs
 the theme, the language and whether there is a TMDB key, otherwise the app
-flashes the wrong theme or the main screen before onboarding.
+flashes the main screen before onboarding. Successful initialization hands
+control to the app with the saved theme and locale. While initialization is
+pending, the minimal progress UI follows the system. An initialization error
+shows a localized retry screen without raw exception details or destructive
+reset; failed attempts close the database before retrying.
 
 The router keeps the user on onboarding while there is no TMDB key, and sends
 them back there if the key is removed. The Drive restore route is also
@@ -145,8 +149,8 @@ available without a key. The user leaves onboarding themselves,
 with a button: after TMDB they may want to add the optional keys too.
 
 A key check is one request (`KeyValidator`, `lib/data/key_validator.dart`)
-with four outcomes: works / works but the limit is used up / rejected /
-not reached. A rejected key isn't saved; "not reached" is saved marked "not
+with five outcomes: works / works but the limit is used up / rejected /
+not reached / invalid source response. A rejected key isn't saved; "not reached" is saved marked "not
 checked". The trial request to PoiskKino and OMDb is charged to the daily
 budget like any other.
 
@@ -289,7 +293,7 @@ All writes of the user's own data go through `Library`
   kind, sort by date rated, score, year or title (`arrangeRatings`, a pure
   function with tests; a season or an episode sorts under its series, in
   number order). The chosen filter and order last while the app is open.
-- **Watchlist** — films and series, most recently added first. Removing is
+- **Watchlist** — films, series and grouped seasons, most recently added first. Removing is
   instant with "Undo" in a snackbar; rating a title removes it by itself.
 - Both read the database through `watch()` streams, so they work offline and
   update by themselves. A row opens the card inside its own tab.
@@ -444,9 +448,9 @@ ink, film stock, and the editor's grease pencil.
 
 Without a network everything that rests on the database works: both lists,
 sorting (including divergence by already cached ratings), statistics,
-changing and deleting ratings, notes. Search and opening a card that isn't
-in the HTTP cache aren't available offline; the screen says so plainly
-instead of spinning an indicator.
+changing and deleting ratings, notes. Search needs a network or a cached response. An uncached card can still open
+from the mini snapshots saved with a rating or watchlist entry; a title with
+neither a cached response nor a snapshot shows a clear error with retry.
 
 ---
 
@@ -457,3 +461,26 @@ unmounted in the meantime. Capture the `ProviderContainer` before the
 `await`. Here it matters most for saving a rating, after which other tabs
 update (lists, statistics). Thanks to drift's `watch()` streams there should
 be few such places — but not zero.
+
+## Correctness boundaries after the November 2026 audit
+
+- Search listens for catalog-client changes and restarts the current query;
+  older answers cannot mix pages from different content languages.
+- Recommendation requests depend only on seed titles; a separate reactive
+  filter excludes all currently rated keys without refetching unchanged seeds.
+- Shared comparison-source state lives in `app/ratings_preferences.dart`, not
+  a screen module. Library view models and pure sorting are separated into
+  `library_models.dart` and `library_sort.dart`; mutation transactions stay in
+  `Library`.
+- `SyncActions` owns the sequence for deleting rating and encrypted-key data.
+  The encrypted controller gates new operations until completion or recovery.
+- Numbered-part IDs belong to one snapshot identity; merging them is described
+  in [sync.md](sync.md), format 4. Movie and series IDs retain sticky behavior.
+- Notes enforce the storage code-point limit without splitting a grapheme;
+  the editor awaits persistence and retains its draft on failure.
+- Android cloud backup and device-transfer rules exclude `FlutterSecureStorage`
+  and `FlutterSecureKeyStorage` shared preferences, including cached vault keys.
+  Ordinary app data remains eligible for OS backup; restore depends on Android
+  settings and still needs validation on physical devices.
+- Rating file parsing/encoding runs in an isolate with bounded compressed and
+  expanded bytes; imports read streams, not the entire selected file eagerly.

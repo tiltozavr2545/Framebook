@@ -1011,7 +1011,17 @@ void main() {
     go(tester, Routes.sync);
     await settle(tester);
     await tester.tap(find.text('Sign in with Google'));
-    await settle(tester);
+    // The real isolate is outside fake widget-test time.
+    for (
+      var i = 0;
+      i < 50 && find.text('Merge with Google Drive?').evaluate().isEmpty;
+      i++
+    ) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)),
+      );
+      await tester.pump(const Duration(milliseconds: 50));
+    }
 
     expect(find.text('Merge with Google Drive?'), findsOneWidget);
     expect(
@@ -1021,7 +1031,16 @@ void main() {
       findsOneWidget,
     );
     await tester.tap(find.text('Merge'));
-    await settle(tester);
+    for (
+      var i = 0;
+      i < 50 && find.textContaining('Last synced').evaluate().isEmpty;
+      i++
+    ) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)),
+      );
+      await tester.pump(const Duration(milliseconds: 50));
+    }
     expect(find.text('Signed in as me@example.com'), findsOneWidget);
     expect(find.textContaining('Last synced'), findsOneWidget);
 

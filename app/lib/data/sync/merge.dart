@@ -161,6 +161,17 @@ List<Work> _mergeWorks(List<Work> a, List<Work> b) {
       rows[row.workKey] = row;
       continue;
     }
+    if (row.kind == WorkKind.season || row.kind == WorkKind.episode) {
+      // Numbered parts can change identity. Keep their external IDs in the
+      // same LWW value as the snapshot, never combine IDs across identities.
+      final version = compareWorks(row, current);
+      rows[row.workKey] =
+          version > 0 ||
+              (version == 0 && _compareWorkSnapshot(row, current) > 0)
+          ? row
+          : current;
+      continue;
+    }
     final winner = _compareWorkSnapshot(row, current) > 0 ? row : current;
     rows[row.workKey] = winner.copyWith(
       imdbId: Value(

@@ -42,7 +42,11 @@ final class SignInException implements Exception {
 
 /// Drive access for one sync: the remote, and a way to drop its token when
 /// Drive says it has expired.
-typedef DriveAccess = ({SyncRemote remote, Future<void> Function() expire});
+typedef DriveAccess = ({
+  SyncRemote remote,
+  Future<void> Function() expire,
+  void Function() close,
+});
 
 /// The Google account sync goes through. An interface so that widget tests
 /// can run without Google.
@@ -70,6 +74,8 @@ final class GoogleSignInAccountService implements GoogleAccount {
   final String serverClientId;
   Future<void>? _initialized;
   GoogleSignInAccount? _account;
+  Future<String?>? _restoring;
+  int _epoch = 0;
 
   @override
   bool get configured => serverClientId.isNotEmpty;
@@ -79,13 +85,20 @@ final class GoogleSignInAccountService implements GoogleAccount {
   );
 
   @override
-  Future<String?> restore() async {
+  Future<String?> restore() => _restoring ??= _restore().whenComplete(() {
+    _restoring = null;
+  });
+
+  Future<String?> _restore() async {
     if (!configured) return null;
-    await _init();
+    if (_account != null) return _account!.email;
+    final epoch = _epoch;
     try {
-      _account =
-          await GoogleSignIn.instance.attemptLightweightAuthentication() ??
-          _account;
+      await _init();
+      final restored = await GoogleSignIn.instance
+          .attemptLightweightAuthentication();
+      if (epoch != _epoch) return null;
+      _account = restored ?? _account;
     } on GoogleSignInException {
       return null;
     }
@@ -95,6 +108,7 @@ final class GoogleSignInAccountService implements GoogleAccount {
   @override
   Future<String> signIn() async {
     if (!configured) throw const SignInException(SignInFailure.misconfigured);
+    _epoch++;
     await _init();
     try {
       final account = await GoogleSignIn.instance.authenticate(
@@ -132,8 +146,10 @@ final class GoogleSignInAccountService implements GoogleAccount {
     if (authorization == null) {
       throw const SyncException(SyncFailure.unauthorized, 'no Drive access');
     }
+    final client = authorization.authClient(scopes: driveScopes);
     return (
-      remote: DriveRemote(authorization.authClient(scopes: driveScopes)),
+      remote: DriveRemote(client),
+      close: client.close,
       expire: () => account.authorizationClient.clearAuthorizationToken(
         accessToken: authorization!.accessToken,
       ),
@@ -144,6 +160,7 @@ final class GoogleSignInAccountService implements GoogleAccount {
   Future<void> signOut() async {
     if (!configured) return;
     await _init();
+    _epoch++;
     _account = null;
     await GoogleSignIn.instance.signOut();
   }

@@ -1,8 +1,12 @@
 import 'dart:convert';
+import 'dart:isolate';
+import 'dart:typed_data';
+import 'package:drift/drift.dart' show Value;
 import 'dart:io' show gzip;
 
 import '../db/database.dart';
 import '../work_key.dart';
+import '../library/rating_note.dart';
 
 /// A permanent, compact version of a deleted row.
 final class DeletionRecord {
@@ -133,7 +137,7 @@ sealed class SyncFileException implements Exception {
 }
 
 /// Not gzip, not JSON, or rows that don't hold together. Such a file is never
-/// overwritten: docs/sync.md, "Errors".
+/// overwritten automatically: docs/sync.md, "Errors".
 final class SyncFileBroken extends SyncFileException {
   const SyncFileBroken(this.reason);
 
@@ -141,6 +145,10 @@ final class SyncFileBroken extends SyncFileException {
 
   @override
   String toString() => 'SyncFileBroken($reason)';
+}
+
+final class SyncFileTooLarge extends SyncFileException {
+  const SyncFileTooLarge();
 }
 
 /// Written by a newer app. This one may neither merge it nor overwrite it.
@@ -161,7 +169,28 @@ final class SyncFileTooNew extends SyncFileException {
 /// earlier version working, for old exports: version 1 had no
 /// `purged_before` and reads as 0.
 abstract final class SyncFile {
-  static const formatVersion = 3;
+  static const formatVersion = 4;
+  // Supports a 10,000-title library even with 10,000-byte notes; protects
+  // against accidental huge imports and excessive decompression expansion.
+  static const maxCompressedBytes = 32 * 1024 * 1024;
+  static const maxExpandedBytes = 128 * 1024 * 1024;
+
+  static Future<SyncState> decodeAsync(List<int> bytes) =>
+      Isolate.run(() => decode(bytes));
+
+  static Future<List<int>> encodeAsync(
+    SyncState state, {
+    required int writtenAt,
+    required String writtenBy,
+    required String appVersion,
+  }) => Isolate.run(
+    () => encode(
+      state,
+      writtenAt: writtenAt,
+      writtenBy: writtenBy,
+      appVersion: appVersion,
+    ),
+  );
 
   /// The state file in `appDataFolder`.
   static const name = 'framebook-sync.json.gz';
@@ -171,7 +200,7 @@ abstract final class SyncFile {
     required int writtenAt,
     required String writtenBy,
     required String appVersion,
-  }) => gzip.encode(
+  }) => _compress(
     utf8.encode(
       jsonEncode({
         'format_version': formatVersion,
@@ -191,11 +220,27 @@ abstract final class SyncFile {
     ),
   );
 
+  static List<int> _compress(List<int> bytes) {
+    if (bytes.length > maxExpandedBytes) throw const SyncFileTooLarge();
+    final compressed = gzip.encode(bytes);
+    if (compressed.length > maxCompressedBytes) throw const SyncFileTooLarge();
+    return compressed;
+  }
+
   /// Throws [SyncFileException].
-  static SyncState decode(List<int> bytes) {
+  static SyncState decode(
+    List<int> bytes, {
+    int compressedLimit = maxCompressedBytes,
+    int expandedLimit = maxExpandedBytes,
+  }) {
+    if (bytes.length > compressedLimit) throw const SyncFileTooLarge();
     final Object? json;
     try {
-      json = jsonDecode(utf8.decode(gzip.decode(bytes)));
+      final output = _BoundedBytes(expandedLimit);
+      final decoder = gzip.decoder.startChunkedConversion(output);
+      decoder.add(bytes);
+      decoder.close();
+      json = jsonDecode(utf8.decode(output.bytes.takeBytes()));
     } on FormatException catch (e) {
       throw SyncFileBroken(e.message);
     }
@@ -227,6 +272,19 @@ abstract final class SyncFile {
         throw const _BadRow('missing watchlist fences');
       }
       final works = [for (final w in _list(json, 'works')) workFromJson(w)];
+      // Legacy clients could attach an ID from a displaced numbered part.
+      // These are derived identifiers; rediscover them rather than trust them.
+      if (version < 4) {
+        for (var i = 0; i < works.length; i++) {
+          if (works[i].kind == WorkKind.season ||
+              works[i].kind == WorkKind.episode) {
+            works[i] = works[i].copyWith(
+              imdbId: const Value(null),
+              kpId: const Value(null),
+            );
+          }
+        }
+      }
       final ratings = [
         for (final r in _list(json, 'ratings')) ratingFromJson(r),
       ];
@@ -369,7 +427,7 @@ abstract final class SyncFile {
     final score = row.integer('score_half');
     if (score < 2 || score > 20) throw _BadRow('ratings: score_half $score');
     final note = row.stringOrNull('note');
-    if (note != null && note.runes.length > 10000) {
+    if (!validRatingNote(note)) {
       throw const _BadRow('ratings: note too long');
     }
     return Rating(
@@ -471,4 +529,35 @@ extension type _Row._(Map<String, Object?> raw) {
       list.cast<int>(),
     _ => throw _BadRow('$key is not a list of integers'),
   };
+}
+
+/// The decompressor cannot accumulate more than the supported expanded size.
+final class _BoundedBytes implements Sink<List<int>> {
+  _BoundedBytes(this.limit);
+  final int limit;
+  final bytes = BytesBuilder(copy: false);
+  @override
+  void add(List<int> data) {
+    if (bytes.length + data.length > limit) throw const SyncFileTooLarge();
+    bytes.add(data);
+  }
+
+  @override
+  void close() {}
+}
+
+/// Bound a stream before retaining its bytes in memory.
+Future<List<int>> readSyncBytes(
+  Stream<List<int>> stream, {
+  int limit = SyncFile.maxCompressedBytes,
+}) async {
+  final output = _BoundedBytes(limit);
+  try {
+    await for (final chunk in stream) {
+      output.add(chunk);
+    }
+    return output.bytes.takeBytes();
+  } finally {
+    output.close();
+  }
 }

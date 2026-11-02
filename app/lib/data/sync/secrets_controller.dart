@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/widgets.dart';
 
 import '../../app/preferences.dart';
-import '../../features/ratings/ratings_screen.dart';
+import '../../app/ratings_preferences.dart';
 import '../api_keys.dart';
 import '../api_source.dart';
 import '../library/library.dart';
@@ -48,12 +48,14 @@ class SecretsController extends Notifier<SecretsStatus> {
   Map<ApiSource, StoredKey>? _remoteKeys;
   RatingSource? _remoteSource;
   bool _dirty = false;
+  bool _suspended = false;
   Future<void>? _running;
   String? _account;
   int _epoch = 0;
   int _revision = 0;
   final Set<Future<void>> _operations = {};
   Future<void> _track(Future<void> Function() action) {
+    if (_suspended) return Future.value();
     final operation = action();
     _operations.add(operation);
     return operation.whenComplete(() {
@@ -62,7 +64,7 @@ class SecretsController extends Notifier<SecretsStatus> {
   }
 
   bool _valid(String? account, int epoch) =>
-      ref.mounted && _account == account && _epoch == epoch;
+      ref.mounted && !_suspended && _account == account && _epoch == epoch;
   String _enabledKey(String account) => 'secrets_enabled.$account';
 
   @override
@@ -107,12 +109,16 @@ class SecretsController extends Notifier<SecretsStatus> {
   Future<SecretsVault> _vault([String? selectedAccount]) async {
     final account = selectedAccount ?? _account;
     if (account == null) throw StateError('No Google account');
-    final access = await ref.read(googleAccountProvider).drive();
+    final google = ref.read(googleAccountProvider);
+    final storage = ref.read(secretsStorageProvider);
+    final deviceId = ref.read(deviceIdProvider);
+    final access = await google.drive();
     return SecretsVault(
       remote: access.remote,
-      storage: ref.read(secretsStorageProvider),
+      storage: storage,
       accountId: account,
-      deviceId: ref.read(deviceIdProvider),
+      deviceId: deviceId,
+      onClose: access.close,
     );
   }
 
@@ -128,8 +134,9 @@ class SecretsController extends Notifier<SecretsStatus> {
     if (!ref.mounted) return;
     state = SecretsStatus(enabled: enabled, locked: enabled);
     if (!enabled) return;
+    SecretsVault? vault;
     try {
-      final vault = await _vault(account);
+      vault = await _vault(account);
       if (!_valid(account, epoch) ||
           !await vault.isUnlocked ||
           !_valid(account, epoch)) {
@@ -154,6 +161,8 @@ class SecretsController extends Notifier<SecretsStatus> {
           error: () => e,
         );
       }
+    } finally {
+      vault?.close();
     }
   }
 
@@ -185,11 +194,16 @@ class SecretsController extends Notifier<SecretsStatus> {
     final epoch = _epoch;
     if (account == null) throw StateError('No Google account');
     state = state.copyWith(busy: true, error: () => null);
+    SecretsVault? vault;
     try {
-      final vault = await _vault(account);
+      vault = await _vault(account);
       if (!_valid(account, epoch)) return;
       final revision = _revision;
-      final snapshot = await vault.unlock(password);
+      final snapshot = await vault.unlock(
+        password,
+        initialKeys: _keys(),
+        initialSource: _source,
+      );
       if (!_valid(account, epoch) || _revision != revision) return;
       if (snapshot == null) {
         if (!createIfMissing) throw const SecretsMissing();
@@ -197,7 +211,9 @@ class SecretsController extends Notifier<SecretsStatus> {
         if (!_valid(account, epoch)) return;
         await vault.sync(createIfMissing: true);
       } else {
-        await _apply(snapshot, revision);
+        final merged = await vault.sync();
+        if (!_valid(account, epoch) || _revision != revision) return;
+        await _apply(merged, revision);
       }
       if (!_valid(account, epoch)) return;
       await _rememberEnabled(true, account);
@@ -208,6 +224,7 @@ class SecretsController extends Notifier<SecretsStatus> {
       if (_valid(account, epoch)) state = state.copyWith(error: () => e);
       rethrow;
     } finally {
+      vault?.close();
       if (_valid(account, epoch)) state = state.copyWith(busy: false);
     }
   }
@@ -220,8 +237,9 @@ class SecretsController extends Notifier<SecretsStatus> {
     final epoch = _epoch;
     if (account == null) throw StateError('No Google account');
     state = state.copyWith(busy: true, error: () => null);
+    SecretsVault? vault;
     try {
-      final vault = await _vault(account);
+      vault = await _vault(account);
       if (!_valid(account, epoch)) return;
       await vault.save(_keys(), _source);
       if (!_valid(account, epoch)) return;
@@ -235,11 +253,13 @@ class SecretsController extends Notifier<SecretsStatus> {
       if (_valid(account, epoch)) state = state.copyWith(error: () => e);
       rethrow;
     } finally {
+      vault?.close();
       if (_valid(account, epoch)) state = state.copyWith(busy: false);
     }
   }
 
   Future<void> disable() async {
+    if (_suspended) return;
     _epoch++;
     _dirty = false;
     final account = _account;
@@ -258,10 +278,19 @@ class SecretsController extends Notifier<SecretsStatus> {
   Future<String?> prepareForDeletion() async {
     _epoch++;
     _dirty = false;
+    _suspended = true;
+    state = state.copyWith(busy: true);
     final account = _account;
-    if (account == null) return null;
     await _waitOperations();
     return account;
+  }
+
+  /// Resume normal operation after a failed destructive action.
+  void cancelDeletion() {
+    _suspended = false;
+    if (!ref.mounted) return;
+    state = state.copyWith(busy: false);
+    if (_dirty) _changed();
   }
 
   Future<void> _waitOperations() async {
@@ -277,12 +306,17 @@ class SecretsController extends Notifier<SecretsStatus> {
   Future<void> resetForDeletedDrive([String? selectedAccount]) async {
     _epoch++;
     final account = selectedAccount ?? _account;
-    if (account == null) return;
+    if (account == null) {
+      cancelDeletion();
+      return;
+    }
     await _rememberEnabled(false, account);
     await SecretsVault.resetLocal(
       storage: ref.read(secretsStorageProvider),
       accountId: account,
     );
+    _suspended = false;
+    _dirty = false;
     if (ref.mounted) state = const SecretsStatus();
   }
 
@@ -322,14 +356,15 @@ class SecretsController extends Notifier<SecretsStatus> {
     _revision++;
     if (!state.enabled) return;
     _dirty = true;
+    if (_suspended) return;
     _running ??= _track(_upload).whenComplete(() {
       _running = null;
-      if (_dirty && ref.mounted) _changed();
+      if (_dirty && ref.mounted && !_suspended) _changed();
     });
   }
 
   Future<void> _upload() async {
-    while (_dirty && ref.mounted && state.enabled) {
+    while (_dirty && ref.mounted && state.enabled && !_suspended) {
       _dirty = false;
       final account = _account;
       final epoch = _epoch;
@@ -337,6 +372,7 @@ class SecretsController extends Notifier<SecretsStatus> {
       final keys = _keys();
       final source = _source;
       final revision = _revision;
+      SecretsVault? vault;
       try {
         await SecretsVault.saveLocal(
           storage: ref.read(secretsStorageProvider),
@@ -346,7 +382,7 @@ class SecretsController extends Notifier<SecretsStatus> {
           divergenceSource: source,
         );
         if (!_valid(account, epoch) || !state.enabled || state.locked) return;
-        final vault = await _vault(account);
+        vault = await _vault(account);
         if (!_valid(account, epoch) || !state.enabled) return;
         final snapshot = await vault.sync();
         if (!_valid(account, epoch) || !state.enabled) return;
@@ -360,6 +396,8 @@ class SecretsController extends Notifier<SecretsStatus> {
           );
         }
         return;
+      } finally {
+        vault?.close();
       }
     }
   }

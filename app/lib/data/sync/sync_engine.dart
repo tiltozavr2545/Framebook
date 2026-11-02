@@ -39,13 +39,16 @@ enum SyncFailure {
   /// Quietly put off until the next occasion.
   offline,
 
+  /// The file exceeds the supported byte limits.
+  tooLarge,
+
   /// "Sign in again" in settings.
   unauthorized,
 
   /// Drive is full; local work doesn't suffer.
   quotaExceeded,
 
-  /// The file in Drive can't be read; it is never overwritten.
+  /// The file in Drive cannot be read; automatic sync leaves it untouched.
   broken,
 
   /// Written by a newer app: sync is off until this one is updated.
@@ -149,7 +152,7 @@ final class SyncEngine {
     if (mains.isEmpty) return null;
     var state = const SyncState();
     for (final file in mains) {
-      state = mergeStates(state, _decode(await _download(file.id)));
+      state = mergeStates(state, await _decode(await _download(file.id)));
     }
     return state;
   }
@@ -183,7 +186,10 @@ final class SyncEngine {
         }
         await _store.purge(_watermark(local));
         local = await _store.read();
-        final created = await _remote.create(SyncFile.name, _encode(local));
+        final created = await _remote.create(
+          SyncFile.name,
+          await _encode(local),
+        );
         return _done(
           started,
           applied: 0,
@@ -198,9 +204,9 @@ final class SyncEngine {
       final main = mains.first;
       final extras = mains.skip(1).toList();
       final bytes = await _download(main.id);
-      var remote = _decode(bytes);
+      var remote = await _decode(bytes);
       for (final extra in extras) {
-        remote = mergeStates(remote, _decode(await _download(extra.id)));
+        remote = mergeStates(remote, await _decode(await _download(extra.id)));
       }
 
       try {
@@ -251,7 +257,7 @@ final class SyncEngine {
         }
       }
       if (changed) continue;
-      final written = await _remote.update(main.id, _encode(local));
+      final written = await _remote.update(main.id, await _encode(local));
       for (final extra in extras) {
         if ((await _remote.metadata(extra.id)).modifiedTime !=
             extra.modifiedTime) {
@@ -273,6 +279,43 @@ final class SyncEngine {
       SyncFailure.failed,
       'the file kept changing during sync',
     );
+  }
+
+  /// Explicit repair only: preserve corrupt originals and leave newer formats alone.
+  Future<SyncReport> restoreAndRepair(SyncState backup) async {
+    final files = await _remote.list();
+    final broken = <({RemoteFile file, List<int> bytes})>[];
+    for (final file in _mains(files)) {
+      final bytes = await _download(file.id);
+      try {
+        await _decode(bytes);
+      } on SyncException catch (e) {
+        if (e.failure != SyncFailure.broken) rethrow;
+        broken.add((file: file, bytes: bytes));
+      }
+    }
+    if (broken.isEmpty) {
+      throw const SyncException(SyncFailure.failed, 'No broken file to repair');
+    }
+    await _store.replaceWith(backup, deviceId: deviceId, now: _now);
+    for (final item in broken) {
+      final archive = 'framebook-corrupt-${item.file.id}-$_now.json.gz';
+      await _remote.create(archive, item.bytes);
+    }
+    // Check every state file before deleting any corrupt one. A readable
+    // sibling remains for ordinary merging, including stale-edit consent.
+    for (final file in _mains(files)) {
+      if ((await _remote.metadata(file.id)).modifiedTime != file.modifiedTime) {
+        throw const SyncException(
+          SyncFailure.failed,
+          'File changed during repair',
+        );
+      }
+    }
+    for (final item in broken) {
+      await _remote.delete(item.file.id);
+    }
+    return sync();
   }
 
   /// The daily copies, newest first.
@@ -328,19 +371,27 @@ final class SyncEngine {
     }
   }
 
-  List<int> _encode(SyncState state) => SyncFile.encode(
-    state,
-    writtenAt: _clock().toUtc().millisecondsSinceEpoch,
-    writtenBy: deviceId,
-    appVersion: appVersion,
-  );
+  Future<List<int>> _encode(SyncState state) async {
+    try {
+      return await SyncFile.encodeAsync(
+        state,
+        writtenAt: _clock().toUtc().millisecondsSinceEpoch,
+        writtenBy: deviceId,
+        appVersion: appVersion,
+      );
+    } on SyncFileTooLarge {
+      throw const SyncException(SyncFailure.tooLarge);
+    }
+  }
 
   /// A file that can't be read is an error, never something to overwrite.
   /// Its watermark is clamped to this device's clock.
-  SyncState _decode(List<int> bytes) {
+  Future<SyncState> _decode(List<int> bytes) async {
     try {
-      final state = SyncFile.decode(bytes);
+      final state = await SyncFile.decodeAsync(bytes);
       return state.withPurgedBefore(clampWatermark(state.purgedBefore, _now));
+    } on SyncFileTooLarge {
+      throw const SyncException(SyncFailure.tooLarge);
     } on SyncFileTooNew catch (e) {
       throw SyncException(SyncFailure.tooNew, 'format ${e.version}');
     } on SyncFileBroken catch (e) {

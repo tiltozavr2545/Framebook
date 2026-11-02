@@ -25,39 +25,49 @@ const _seeds = 3;
 /// "Like your favourites": TMDB's recommendations for your latest films and
 /// series rated 8 or higher, interleaved, without what you have rated.
 /// Empty until there is such a rating.
+final recommendationsShelfProvider =
+    FutureProvider.autoDispose<List<TitleSummary>>((ref) async {
+      final tmdb = ref.watch(tmdbProvider);
+      // Rebuilt when the seeds change, not on every new external rating.
+      final seeds = await ref.watch(
+        ratedTitlesProvider.selectAsync((titles) {
+          final favourites = [
+            for (final t in titles)
+              if ((t.key.kind == WorkKind.movie || t.key.kind == WorkKind.tv) &&
+                  t.rating.scoreHalf >= 16)
+                t,
+          ]..sort((a, b) => b.rating.scoredAt.compareTo(a.rating.scoredAt));
+          return [
+            for (final t in favourites.take(_seeds)) t.key.toString(),
+          ].join(',');
+        }),
+      );
+      if (seeds.isEmpty) return const [];
+      final lists = await Future.wait([
+        for (final key in seeds.split(','))
+          // One seed failing doesn't empty the shelf.
+          tmdb
+              .recommendations(WorkKey.parse(key))
+              .catchError((Object _) => const <TitleSummary>[]),
+      ]);
+      return _interleave(lists);
+    });
+
+/// Filtering is reactive without refetching recommendations for unchanged seeds.
 final forYouShelfProvider = FutureProvider.autoDispose<List<TitleSummary>>((
   ref,
 ) async {
-  final tmdb = ref.watch(tmdbProvider);
-  // Rebuilt when the seeds change, not on every new external rating.
-  final seeds = await ref.watch(
-    ratedTitlesProvider.selectAsync((titles) {
-      final favourites = [
-        for (final t in titles)
-          if ((t.key.kind == WorkKind.movie || t.key.kind == WorkKind.tv) &&
-              t.rating.scoreHalf >= 16)
-            t,
-      ]..sort((a, b) => b.rating.scoredAt.compareTo(a.rating.scoredAt));
-      return [
-        for (final t in favourites.take(_seeds)) t.key.toString(),
-      ].join(',');
-    }),
+  final candidates = ref.watch(recommendationsShelfProvider.future);
+  final rated = ref.watch(
+    ratedTitlesProvider.selectAsync(
+      (titles) =>
+          (titles.map((t) => t.key.toString()).toList()..sort()).join(','),
+    ),
   );
-  if (seeds.isEmpty) return const [];
-  final rated = {
-    for (final t in await ref.read(ratedTitlesProvider.future))
-      t.key.toString(),
-  };
-  final lists = await Future.wait([
-    for (final key in seeds.split(','))
-      // One seed failing doesn't empty the shelf.
-      tmdb
-          .recommendations(WorkKey.parse(key))
-          .catchError((Object _) => const <TitleSummary>[]),
-  ]);
+  final excluded = (await rated).split(',').toSet();
   return [
-    for (final title in _interleave(lists))
-      if (!rated.contains(title.key.toString())) title,
+    for (final title in await candidates)
+      if (!excluded.contains(title.key.toString())) title,
   ];
 });
 

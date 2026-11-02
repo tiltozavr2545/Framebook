@@ -10,6 +10,8 @@ import '../../data/library/work_snapshot.dart';
 import '../../data/work_key.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/format.dart';
+import '../../shared/note_length_formatter.dart';
+import '../../data/library/rating_note.dart';
 import '../../data/sources/tmdb/tmdb_models.dart';
 import '../../shared/poster.dart';
 import '../../shared/title_text.dart';
@@ -124,7 +126,7 @@ class _MyRatingSectionState extends ConsumerState<MyRatingSection> {
     final lineage = widget.lineage;
     final showComparison = await library.hasCalibration(lineage.last.key);
     if (!mounted) return;
-    final draft = await showModalBottomSheet<RatingDraft>(
+    await showModalBottomSheet<RatingDraft>(
       context: context,
       // Over the navigation bar: the reel needs the whole width and the
       // attention.
@@ -136,10 +138,10 @@ class _MyRatingSectionState extends ConsumerState<MyRatingSection> {
         initialScoreHalf: current?.scoreHalf,
         initialNote: current?.note,
         compare: (half) => library.calibration(lineage.last.key, half),
+        onSave: (draft) =>
+            library.rate(lineage, scoreHalf: draft.scoreHalf, note: draft.note),
       ),
     );
-    if (draft == null) return;
-    await library.rate(lineage, scoreHalf: draft.scoreHalf, note: draft.note);
   }
 
   Future<void> _delete() async {
@@ -350,9 +352,11 @@ class RatingEditor extends StatefulWidget {
     this.initialNote,
     this.showComparison = true,
     required this.compare,
+    this.onSave,
   });
 
   final int? initialScoreHalf;
+  final Future<void> Function(RatingDraft draft)? onSave;
   final String? initialNote;
   final bool showComparison;
 
@@ -371,7 +375,27 @@ class _RatingEditorState extends State<RatingEditor> {
   /// screen while the next one loads, so the panel doesn't blink.
   ({int scoreHalf, Calibration calibration})? _shown;
 
-  static const _maxNote = 10000;
+  static const _maxNote = maxNoteCodePoints;
+  bool _saving = false;
+  bool _saveFailed = false;
+
+  Future<void> _save() async {
+    final score = _scoreHalf;
+    if (_saving || score == null || !validRatingNote(_note.text)) return;
+    final draft = (scoreHalf: score, note: _note.text);
+    setState(() {
+      _saving = true;
+      _saveFailed = false;
+    });
+    try {
+      await widget.onSave?.call(draft);
+      if (mounted) Navigator.pop<RatingDraft>(context, draft);
+    } catch (_) {
+      if (mounted) setState(() => _saveFailed = true);
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
 
   @override
   void initState() {
@@ -446,6 +470,9 @@ class _RatingEditorState extends State<RatingEditor> {
                 minLines: 2,
                 maxLines: 6,
                 maxLength: _maxNote,
+                enabled: !_saving,
+                inputFormatters: const [NoteLengthFormatter()],
+                onChanged: (_) => setState(() {}),
                 textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(labelText: l10n.ratingNote),
                 // The counter only matters near the limit.
@@ -455,20 +482,23 @@ class _RatingEditorState extends State<RatingEditor> {
                       required currentLength,
                       required isFocused,
                       maxLength,
-                    }) => currentLength > _maxNote - 500
-                    ? Text('$currentLength / $maxLength')
+                    }) => _note.text.runes.length > _maxNote - 500
+                    ? Text('${_note.text.runes.length} / $maxLength')
                     : null,
               ),
             ),
+            if (_saveFailed)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(l10n.ratingSaveFailed),
+              ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
               child: FilledButton(
-                onPressed: score == null
+                onPressed:
+                    score == null || _saving || !validRatingNote(_note.text)
                     ? null
-                    : () => Navigator.pop<RatingDraft>(context, (
-                        scoreHalf: score,
-                        note: _note.text,
-                      )),
+                    : _save,
                 child: Text(l10n.ratingSave),
               ),
             ),

@@ -108,7 +108,8 @@ final class WorkSnapshot {
   int? get year => yearOf(releaseDate);
 
   /// The row to upsert. `kp_id` is left absent on purpose, and so is an
-  /// unknown `imdb_id`: an upsert must not wipe an id found earlier.
+  /// unknown `imdb_id`: Library preserves it while identity is unchanged,
+  /// and explicitly clears displaced identifiers when adopting another part.
   WorksCompanion toCompanion(int now) => WorksCompanion(
     workKey: Value(key.toString()),
     kind: Value(key.kind),
