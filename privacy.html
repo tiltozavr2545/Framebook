@@ -49,6 +49,9 @@
       <li><strong>Settings</strong> (language, theme) stay on the phone.</li>
     </ul>
 
+    <h2>Android system backup</h2>
+    <p>Depending on your Android backup settings, the operating system may back up ordinary app data, including ratings, notes, the watchlist and preferences, or transfer it to another device. Framebook excludes API keys and cached vault keys from both Android cloud backup and device transfer. Enter those keys again or use the optional encrypted key restore after moving to another device.</p>
+
     <h2>Google Drive (optional)</h2>
     <p>If you sign in with Google in Settings → Sync and backup, Framebook asks for a single permission, <code>drive.appdata</code>: access to a hidden folder in <em>your own</em> Google Drive that only this app can see. Framebook cannot see, read or change any other file in your Drive, and it does not read your contacts, mail or anything else in your Google account. Your email address is shown only on the sync screen, so you know which account is signed in.</p>
     <p>In that folder the app keeps one file with your ratings, notes and watchlist, and up to seven daily copies of it — that is how your devices stay in sync and how a mistake can be undone. The data travels from your phone straight to your Google account. The developer never receives it and has no way to read it.</p>
@@ -59,7 +62,7 @@
     <p>To show titles, posters and ratings, the app sends requests to <a href="https://www.themoviedb.org" target="_blank" rel="noopener">TMDB</a>, <a href="https://poiskkino.dev" target="_blank" rel="noopener">PoiskKino</a> and <a href="https://www.omdbapi.com" target="_blank" rel="noopener">OMDb</a> with the keys you entered: the text you search for, or the ids of the title you open. Those services' own privacy policies apply to those requests. Your ratings and notes are never sent to them.</p>
 
     <h2>Update checks</h2>
-    <p>Framebook checks GitHub Releases for updates on startup at most once every 24 hours, and when you request a manual check. GitHub receives the network request, including your IP address. The request does not include your API keys, ratings or notes.</p>
+    <p>Framebook checks GitHub Releases for updates on startup at most once every 24 hours after a successful check, and when you request a manual check. Failed automatic checks may retry on a later launch. GitHub receives the network request, including your IP address. The request does not include your API keys, ratings or notes.</p>
 
     <h2>What we don't do</h2>
     <p>No analytics, no tracking, no advertising, no crash reporting services. The developer does not sell your data.</p>
@@ -76,7 +79,7 @@
     <h2>Changes to this policy</h2>
     <p>If how the app handles data changes, this page is updated and the date below changes with it.</p>
 
-    <p class="updated">Last updated: October 31, 2026</p>
+    <p class="updated">Last updated: November 2, 2026</p>
   </div>
 </body>
 </html>
