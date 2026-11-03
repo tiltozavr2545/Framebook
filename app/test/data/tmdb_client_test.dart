@@ -61,6 +61,81 @@ void main() {
     },
   );
 
+  test(
+    'people search parses results and uses its own cached endpoint',
+    () async {
+      final page = await client().searchPeople('Киану', page: 1);
+      expect(http.requests.last.uri.path, '/3/search/person');
+      expect(http.requests.last.uri.queryParameters['include_adult'], 'false');
+      expect(page.people.single.id, 6384);
+      expect(page.people.single.knownFor, ['Матрица']);
+      expect(page.results, isEmpty);
+      await client().searchPeople('Киану');
+      expect(http.requests.length, 1);
+    },
+  );
+
+  test('filmography groups actual jobs without duplicating titles', () {
+    final person = Person.fromJson(
+      const Json({
+        'id': 1,
+        'name': 'Author',
+        'combined_credits': {
+          'cast': [
+            {
+              'id': 10,
+              'media_type': 'movie',
+              'title': 'Film',
+              'character': 'Hero',
+            },
+          ],
+          'crew': [
+            {
+              'id': 10,
+              'media_type': 'movie',
+              'title': 'Film',
+              'job': 'Director',
+            },
+            {
+              'id': 10,
+              'media_type': 'movie',
+              'title': 'Film',
+              'job': 'Producer',
+            },
+            {
+              'id': 10,
+              'media_type': 'movie',
+              'title': 'Film',
+              'job': 'Executive Producer',
+            },
+            {
+              'id': 10,
+              'media_type': 'movie',
+              'title': 'Film',
+              'job': 'Screenplay',
+            },
+            {
+              'id': 11,
+              'media_type': 'tv',
+              'name': 'Series',
+              'job': 'Assistant Director',
+            },
+          ],
+        },
+      }),
+    );
+    final groups = person.filmography;
+    expect(groups[FilmographyRole.directing]!.single.roles, ['Director']);
+    expect(groups[FilmographyRole.production]!.single.roles, [
+      'Producer',
+      'Executive Producer',
+    ]);
+    expect(groups[FilmographyRole.writing]!.single.roles, ['Screenplay']);
+    expect(groups[FilmographyRole.acting]!.single.roles, ['Hero']);
+    expect(groups[FilmographyRole.other]!.single.roles, ['Assistant Director']);
+    expect(groups.containsKey(FilmographyRole.music), isFalse);
+  });
+
   group('search', () {
     test('keeps films and series, in TMDB order', () async {
       final page = await client().search('Матрица');

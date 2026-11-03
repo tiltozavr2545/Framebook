@@ -446,6 +446,66 @@ abstract class AppLocalizations {
   /// **'Try again'**
   String get retry;
 
+  /// No description provided for @searchTitles.
+  ///
+  /// In en, this message translates to:
+  /// **'Films and series'**
+  String get searchTitles;
+
+  /// No description provided for @searchPeople.
+  ///
+  /// In en, this message translates to:
+  /// **'People'**
+  String get searchPeople;
+
+  /// No description provided for @searchPeopleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Actor, director, filmmaker'**
+  String get searchPeopleHint;
+
+  /// No description provided for @filmographyActing.
+  ///
+  /// In en, this message translates to:
+  /// **'Acting'**
+  String get filmographyActing;
+
+  /// No description provided for @filmographyDirecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Directing'**
+  String get filmographyDirecting;
+
+  /// No description provided for @filmographyProduction.
+  ///
+  /// In en, this message translates to:
+  /// **'Production'**
+  String get filmographyProduction;
+
+  /// No description provided for @filmographyWriting.
+  ///
+  /// In en, this message translates to:
+  /// **'Writing'**
+  String get filmographyWriting;
+
+  /// No description provided for @filmographyMusic.
+  ///
+  /// In en, this message translates to:
+  /// **'Music'**
+  String get filmographyMusic;
+
+  /// No description provided for @filmographyCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get filmographyCamera;
+
+  /// No description provided for @filmographyOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other work'**
+  String get filmographyOther;
+
   /// No description provided for @searchHint.
   ///
   /// In en, this message translates to:

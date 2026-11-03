@@ -91,8 +91,14 @@ final class TitleSummary {
 }
 
 final class SearchPage {
-  const SearchPage(this.results, {required this.page, required this.pages});
+  const SearchPage(
+    this.results, {
+    required this.page,
+    required this.pages,
+    this.people = const [],
+  });
 
+  final List<PersonSummary> people;
   final List<TitleSummary> results;
   final int page;
   final int pages;

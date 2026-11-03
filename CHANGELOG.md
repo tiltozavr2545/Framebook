@@ -232,3 +232,17 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
   `docs/operations.md`. On 2026-11-03 the user confirmed the signed 0.7.4
   build works after testing with the affected friend. No affected-device logs
   were captured locally, so the exact upstream cause is still inferred.
+
+## 0.8.0 — People search and filmography (build 14)
+
+- Search for actors, directors and other filmmakers in a dedicated People
+  mode. Results show portraits and known-for titles; returning from a profile
+  preserves the query and results.
+- Filter a person's filmography by acting, directing, production, writing,
+  music, camera and other work. Each category counts unique titles and shows
+  the relevant jobs, including multiple roles on the same film or series.
+- Keep the current Discover design in both themes, with wrapping role filters
+  and English/Russian labels. Regression tests cover parsing, role grouping,
+  pagination, stale responses, large text and navigation. The user confirmed
+  the signed test build works on a connected Samsung Galaxy S23.
+- No database or sync format changes; sync compatibility remains at format 4.

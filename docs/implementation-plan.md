@@ -384,3 +384,14 @@ release. Reproduction, scope and manual checks are in
    first one's results: a fresh look at the code as it is then, so that the
    first review's blind spots and anything the optimization broke get
    caught.
+
+## 0.8.0 — Discover extension: people and filmography
+
+Implemented separate people search and filmography filters for acting,
+directing, production, writing, music, camera and other work. The UI reuses
+Discover's result rows and theme chips. Regression coverage includes endpoint
+parsing, category membership, pagination, stale responses and profile navigation.
+
+Validation: `make verify` passed with 376 tests and 18 skipped. The user
+confirmed the release-signed test build works on Samsung Galaxy S23 on
+2026-11-03.

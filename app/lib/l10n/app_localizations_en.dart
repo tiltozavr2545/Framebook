@@ -197,6 +197,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get retry => 'Try again';
 
   @override
+  String get searchTitles => 'Films and series';
+
+  @override
+  String get searchPeople => 'People';
+
+  @override
+  String get searchPeopleHint => 'Actor, director, filmmaker';
+
+  @override
+  String get filmographyActing => 'Acting';
+
+  @override
+  String get filmographyDirecting => 'Directing';
+
+  @override
+  String get filmographyProduction => 'Production';
+
+  @override
+  String get filmographyWriting => 'Writing';
+
+  @override
+  String get filmographyMusic => 'Music';
+
+  @override
+  String get filmographyCamera => 'Camera';
+
+  @override
+  String get filmographyOther => 'Other work';
+
+  @override
   String get searchHint => 'Film or series';
 
   @override

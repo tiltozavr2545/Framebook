@@ -30,9 +30,7 @@ class PersonScreen extends ConsumerStatefulWidget {
 }
 
 class _PersonScreenState extends ConsumerState<PersonScreen> {
-  /// Acting or behind the camera; `null` until chosen — acting first, unless
-  /// the person only worked behind the camera.
-  bool? _acting;
+  FilmographyRole? _role;
 
   @override
   Widget build(BuildContext context) {
@@ -41,29 +39,31 @@ class _PersonScreenState extends ConsumerState<PersonScreen> {
       value: ref.watch(personProvider(widget.id)),
       onRetry: () => ref.invalidate(personProvider(widget.id)),
       builder: (context, person) {
-        final acting = _acting ?? person.acting.isNotEmpty;
-        final credits = acting ? person.acting : person.crew;
+        final groups = person.filmography;
+        final role = groups.containsKey(_role)
+            ? _role
+            : groups.keys.firstOrNull;
+        final credits = groups[role] ?? const <PersonCredit>[];
         return [
           _Header(person: person),
           if (person.biography case final bio? when bio.trim().isNotEmpty)
             _Biography(text: bio.trim()),
           SectionTitle(l10n.personFilmography),
-          if (person.acting.isNotEmpty && person.crew.isNotEmpty)
+          if (groups.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Wrap(
                 spacing: 8,
+                runSpacing: 4,
                 children: [
-                  ChoiceChip(
-                    label: Text(l10n.personActing(person.acting.length)),
-                    selected: acting,
-                    onSelected: (_) => setState(() => _acting = true),
-                  ),
-                  ChoiceChip(
-                    label: Text(l10n.personCrew(person.crew.length)),
-                    selected: !acting,
-                    onSelected: (_) => setState(() => _acting = false),
-                  ),
+                  for (final entry in groups.entries)
+                    ChoiceChip(
+                      label: Text(
+                        '${filmographyLabel(l10n, entry.key)} · ${entry.value.length}',
+                      ),
+                      selected: role == entry.key,
+                      onSelected: (_) => setState(() => _role = entry.key),
+                    ),
                 ],
               ),
             ),
@@ -265,3 +265,14 @@ class _CreditRow extends StatelessWidget {
     );
   }
 }
+
+String filmographyLabel(AppLocalizations l10n, FilmographyRole role) =>
+    switch (role) {
+      FilmographyRole.acting => l10n.filmographyActing,
+      FilmographyRole.directing => l10n.filmographyDirecting,
+      FilmographyRole.production => l10n.filmographyProduction,
+      FilmographyRole.writing => l10n.filmographyWriting,
+      FilmographyRole.music => l10n.filmographyMusic,
+      FilmographyRole.camera => l10n.filmographyCamera,
+      FilmographyRole.other => l10n.filmographyOther,
+    };

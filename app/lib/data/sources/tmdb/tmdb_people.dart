@@ -107,6 +107,77 @@ final class Credits {
   };
 }
 
+/// A compact person result from catalog search.
+final class PersonSummary {
+  const PersonSummary({
+    required this.id,
+    required this.name,
+    this.profilePath,
+    this.knownFor = const [],
+  });
+  final int id;
+  final String name;
+  final String? profilePath;
+  final List<String> knownFor;
+
+  static PersonSummary? fromJson(Json json) {
+    final id = json.integer('id');
+    final name = json.string('name');
+    if (id == null || id <= 0 || name == null || name.trim().isEmpty) {
+      return null;
+    }
+    return PersonSummary(
+      id: id,
+      name: name,
+      profilePath: json.string('profile_path'),
+      knownFor: [
+        for (final item in json.objects('known_for'))
+          if (TitleSummary.fromSearchJson(item) case final title?) title.title,
+      ],
+    );
+  }
+}
+
+enum FilmographyRole {
+  acting,
+  directing,
+  production,
+  writing,
+  music,
+  camera,
+  other,
+}
+
+FilmographyRole filmographyRole(String job) => switch (job) {
+  'Director' || 'Co-Director' => FilmographyRole.directing,
+  'Producer' ||
+  'Executive Producer' ||
+  'Co-Producer' ||
+  'Associate Producer' ||
+  'Co-Executive Producer' ||
+  'Supervising Producer' ||
+  'Line Producer' => FilmographyRole.production,
+  'Writer' ||
+  'Screenplay' ||
+  'Teleplay' ||
+  'Story' ||
+  'Novel' ||
+  'Characters' ||
+  'Original Story' ||
+  'Original Film Writer' ||
+  'Comic Book' ||
+  'Adaptation' ||
+  'Creator' => FilmographyRole.writing,
+  'Original Music Composer' ||
+  'Music' ||
+  'Music Director' ||
+  'Songs' => FilmographyRole.music,
+  'Director of Photography' ||
+  'Cinematography' ||
+  'Camera Operator' => FilmographyRole.camera,
+  _ => FilmographyRole.other,
+};
+
 /// One title in a person's filmography, with what they did on it.
 final class PersonCredit {
   const PersonCredit({required this.title, required this.roles});
@@ -164,6 +235,28 @@ final class Person {
   /// Newest first; undated (announced) titles on top.
   final List<PersonCredit> acting;
   final List<PersonCredit> crew;
+
+  Map<FilmographyRole, List<PersonCredit>> get filmography {
+    final groups = <FilmographyRole, List<PersonCredit>>{
+      if (acting.isNotEmpty) FilmographyRole.acting: acting,
+    };
+    for (final credit in crew) {
+      final jobs = <FilmographyRole, List<String>>{};
+      for (final job in credit.roles) {
+        jobs.putIfAbsent(filmographyRole(job), () => []).add(job);
+      }
+      if (jobs.isEmpty) jobs[FilmographyRole.other] = [];
+      for (final entry in jobs.entries) {
+        groups
+            .putIfAbsent(entry.key, () => [])
+            .add(PersonCredit(title: credit.title, roles: entry.value));
+      }
+    }
+    return {
+      for (final role in FilmographyRole.values)
+        if (groups[role] case final entries?) role: entries,
+    };
+  }
 
   /// Talk shows, news and award ceremonies where someone appears as
   /// themselves would bury the actual films.

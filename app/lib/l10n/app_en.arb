@@ -70,6 +70,16 @@
 
   "retry": "Try again",
 
+  "searchTitles": "Films and series",
+  "searchPeople": "People",
+  "searchPeopleHint": "Actor, director, filmmaker",
+  "filmographyActing": "Acting",
+  "filmographyDirecting": "Directing",
+  "filmographyProduction": "Production",
+  "filmographyWriting": "Writing",
+  "filmographyMusic": "Music",
+  "filmographyCamera": "Camera",
+  "filmographyOther": "Other work",
   "searchHint": "Film or series",
   "searchClear": "Clear",
   "searchEmpty": "Find a film or series by title.",

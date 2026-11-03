@@ -435,7 +435,10 @@ ink, film stock, and the editor's grease pencil.
   which is 350 KB for Game of Thrones): a strip of actors with their roles,
   and lines for creators, directors, writers, music and cinematography.
 - **A person** (`features/person/`): dates, a folded biography, the
-  filmography split into acting and behind the camera, without talk shows
+  filmography filtered by acting, directing, production, writing, music, camera
+  and other work, with a unique-title count for each role. A title can appear
+  in several categories; each category shows only its relevant jobs. Empty
+  categories are hidden. This excludes talk shows
   and news where they appear as themselves; your score next to what you
   rated. The person route sits at the tab's level and is pushed, since
   people and titles link to each other without end; back walks the pushes.
@@ -484,3 +487,13 @@ be few such places — but not zero.
   settings and still needs validation on physical devices.
 - Rating file parsing/encoding runs in an isolate with bounded compressed and
   expanded bytes; imports read streams, not the entire selected file eagerly.
+
+## People search and filmography
+
+Discover offers Films and series / People chips using the existing theme.
+People search uses TMDB `/search/person` with the same debounce, pagination,
+HTTP cache and stale-response protection as title search. Results show a
+portrait, name and known-for titles; opening a profile preserves search on back.
+Role filters derive from actual credit jobs: an assistant director is not
+classified as the director. Unclassified jobs remain available in Other work.
+No catalog data is added to the database or synchronization file.

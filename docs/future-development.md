@@ -74,3 +74,10 @@ format change.
 - **A home screen widget** — the watchlist or a random film from it.
 - **A web/desktop version** — Flutter Web would hit CORS on some of the APIs;
   unlikely without a proxy server.
+
+## Discover accessibility follow-up
+
+The existing recommendation shelf tiles can overflow vertically at 1.8× text
+scale (112×232 constraints, 9 pixels of overflow in `shelves.dart`). Observed
+while testing the people-search extension. Give shelf text enough height at
+large scales; the person filmography test isolates its own screen from shelves.

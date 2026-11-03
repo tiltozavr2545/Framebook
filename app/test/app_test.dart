@@ -25,6 +25,7 @@ import 'package:framebook/data/sync/sync_file.dart';
 import 'package:framebook/data/sync/sync_store.dart';
 import 'package:framebook/data/work_key.dart';
 import 'package:framebook/features/person/person_screen.dart';
+import 'package:framebook/features/search/search_controller.dart';
 import 'package:framebook/features/title/movie_screen.dart';
 import 'package:framebook/features/title/score_reel.dart';
 import 'package:framebook/shared/poster.dart';
@@ -1098,6 +1099,54 @@ void main() {
           .first,
     );
     expect(find.text('Best of all time'), findsOneWidget);
+  });
+
+  cardTest('filmography filters roles at large text scale', (tester) async {
+    await pumpApp(tester, keys: tmdbOnly);
+    ProviderScope.containerOf(
+      tester.element(find.byType(FramebookApp)),
+      listen: false,
+    ).read(searchProvider.notifier).selectKind(SearchKind.people);
+    go(tester, '/search/person/999');
+    await settle(tester);
+    tester.platformDispatcher.textScaleFactorTestValue = 1.8;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await settle(tester);
+    for (final category in [
+      'Directing',
+      'Production',
+      'Writing',
+      'Other work',
+    ]) {
+      final chip = find.widgetWithText(ChoiceChip, '$category · 1');
+      await tester.ensureVisible(chip);
+      await tester.tap(chip);
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Test Film'),
+        150,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('Test Film'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    }
+  });
+
+  cardTest('people search opens a profile and back keeps the search', (
+    tester,
+  ) async {
+    await pumpApp(tester, keys: tmdbOnly);
+    await tester.tap(find.text('People'));
+    await tester.enterText(find.byType(TextField), 'Киану');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await settle(tester);
+    await tester.tap(find.text('Киану Ривз'));
+    await settle(tester);
+    expect(find.byType(PersonScreen), findsOneWidget);
+    await tester.tap(find.byTooltip('Back'));
+    await settle(tester);
+    expect(find.text('Киану Ривз'), findsOneWidget);
+    expect(find.text('Киану'), findsOneWidget);
   });
 
   cardTest('the cast opens a person, their filmography opens a card', (

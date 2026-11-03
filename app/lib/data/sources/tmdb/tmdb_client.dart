@@ -7,8 +7,9 @@ import 'tmdb_models.dart';
 
 /// The catalog: search, cards, seasons, images. Errors are [SourceException].
 abstract interface class TmdbApi {
-  /// Films and series only: people are dropped.
+  /// Films and series only; people have a separate search mode.
   Future<SearchPage> search(String query, {int page = 1});
+  Future<SearchPage> searchPeople(String query, {int page = 1});
   Future<MovieDetails> movie(int id);
   Future<TvDetails> tv(int id);
   Future<SeasonDetails> season(int tvId, int season);
@@ -119,6 +120,24 @@ final class TmdbClient implements TmdbApi {
       [
         for (final item in json.objects('results'))
           if (TitleSummary.fromSearchJson(item) case final parsed?) parsed,
+      ],
+      page: json.integer('page') ?? page,
+      pages: json.integer('total_pages') ?? page,
+    );
+  }
+
+  @override
+  Future<SearchPage> searchPeople(String query, {int page = 1}) async {
+    final json = await _get('/search/person', {
+      'query': query,
+      'page': '$page',
+      'include_adult': 'false',
+    }, TmdbTtl.search);
+    return SearchPage(
+      const [],
+      people: [
+        for (final item in json.objects('results'))
+          if (PersonSummary.fromJson(item) case final person?) person,
       ],
       page: json.integer('page') ?? page,
       pages: json.integer('total_pages') ?? page,

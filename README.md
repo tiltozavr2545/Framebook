@@ -8,10 +8,10 @@ A project for myself and a couple of friends. The original idea and the decision
 
 ## Status
 
-In development, version 0.7.4 — the MVP is complete. Working: Discover
-with search and shelves, film and series cards down to single episodes with
+In development, version 0.8.0 — the MVP is complete. Working: Discover
+with title and people search and shelves, film and series cards down to single episodes with
 cast and crew and ratings from Kinopoisk, IMDb, Rotten Tomatoes, Metacritic
-and TMDB, people with their filmographies; your own ratings with notes on a
+and TMDB, people with filmographies filtered by their jobs; your own ratings with notes on a
 score reel that compares as it moves, My ratings (including the sort by
 divergence from Kinopoisk or IMDb) and the watchlist; background refresh of
 ratings and statistics; sync and daily copies through your own Google
@@ -35,7 +35,7 @@ platform is Android (an APK for myself and friends); iOS is postponed
 
 ## What the MVP will do
 
-- Search for films and series; a card with poster, overview, seasons and episodes
+- Search for films, series and people; title cards with poster, overview, seasons and episodes, and person profiles with filmographies filtered by role
 - Your own score from 1 to 10 in steps of 0.5 — for a film, a series, a single season and a single episode; the scores are independent, and a series or season shows the average of its already rated parts as a hint
 - A text note with the score
 - A calibration sheet right after rating: what else you rated the same, and the neighbours one step above and below — always within the same kind (films with films, episodes with episodes)

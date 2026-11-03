@@ -24,6 +24,7 @@ Reply? apiFixtures(RequestOptions request) {
         '/3/tv/1399/season/1/episode/3/credits' => ok(
           'tmdb/tv_1399_s1e3_credits_ru.json',
         ),
+        '/3/person/999' => ok('tmdb/person_roles.json'),
         '/3/person/6384' => ok('tmdb/person_6384_ru.json'),
         '/3/person/6384/images' => (
           status: 200,
@@ -41,6 +42,7 @@ Reply? apiFixtures(RequestOptions request) {
           'tmdb/tv_1399_recommendations_ru.json',
         ),
         '/3/genre/tv/list' => ok('tmdb/genre_tv_ru.json'),
+        '/3/search/person' => ok('tmdb/search_person_ru.json'),
         '/3/search/multi' => ok('tmdb/search_multi_matrix_ru.json'),
         '/3/movie/603' => ok('tmdb/movie_603_ru.json'),
         '/3/tv/1399' => ok('tmdb/tv_1399_ru.json'),

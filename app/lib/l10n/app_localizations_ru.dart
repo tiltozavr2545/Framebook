@@ -197,6 +197,36 @@ class AppLocalizationsRu extends AppLocalizations {
   String get retry => 'Повторить';
 
   @override
+  String get searchTitles => 'Фильмы и сериалы';
+
+  @override
+  String get searchPeople => 'Люди';
+
+  @override
+  String get searchPeopleHint => 'Актёр, режиссёр, автор';
+
+  @override
+  String get filmographyActing => 'В кадре';
+
+  @override
+  String get filmographyDirecting => 'Режиссура';
+
+  @override
+  String get filmographyProduction => 'Продюсирование';
+
+  @override
+  String get filmographyWriting => 'Сценарий';
+
+  @override
+  String get filmographyMusic => 'Музыка';
+
+  @override
+  String get filmographyCamera => 'Операторская работа';
+
+  @override
+  String get filmographyOther => 'Другие работы';
+
+  @override
   String get searchHint => 'Фильм или сериал';
 
   @override

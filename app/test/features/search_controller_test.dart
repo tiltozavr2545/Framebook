@@ -14,11 +14,53 @@ class _SearchApi implements TmdbApi {
   Future<SearchPage> search(String query, {int page = 1}) =>
       requests.putIfAbsent(query, Completer<SearchPage>.new).future;
 
+  final peopleRequests = <int, Completer<SearchPage>>{};
+  @override
+  Future<SearchPage> searchPeople(String query, {int page = 1}) =>
+      peopleRequests.putIfAbsent(page, Completer<SearchPage>.new).future;
+
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 void main() {
+  test(
+    'switching mode rejects old answers and paginates people by id',
+    () async {
+      final api = _SearchApi();
+      final container = ProviderContainer(
+        overrides: [tmdbProvider.overrideWithValue(api)],
+      );
+      addTearDown(container.dispose);
+      final notifier = container.read(searchProvider.notifier);
+      notifier.submit('name');
+      notifier.selectKind(SearchKind.people);
+      api.requests['name']!.complete(const SearchPage([], page: 1, pages: 9));
+      const person = PersonSummary(id: 1, name: 'Name');
+      api.peopleRequests[1]!.complete(
+        const SearchPage([], people: [person], page: 1, pages: 2),
+      );
+      await pumpEventQueue();
+      notifier.loadMore();
+      api.peopleRequests[2]!.complete(
+        const SearchPage(
+          [],
+          people: [
+            person,
+            PersonSummary(id: 2, name: 'Other'),
+          ],
+          page: 2,
+          pages: 2,
+        ),
+      );
+      await pumpEventQueue();
+      expect(container.read(searchProvider).people.map((p) => p.id), [1, 2]);
+      expect(container.read(searchProvider).results, isEmpty);
+      notifier.typed('');
+      expect(container.read(searchProvider).kind, SearchKind.people);
+    },
+  );
+
   test('client changes restart the query and reject old answers', () async {
     final oldApi = _SearchApi(), newApi = _SearchApi();
     final container = ProviderContainer(

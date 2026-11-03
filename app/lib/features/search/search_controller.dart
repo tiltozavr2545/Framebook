@@ -6,9 +6,13 @@ import '../../data/source_failure.dart';
 import '../../data/sources/providers.dart';
 import '../../data/sources/tmdb/tmdb_models.dart';
 
+enum SearchKind { titles, people }
+
 final class SearchState {
   const SearchState({
     this.query = '',
+    this.kind = SearchKind.titles,
+    this.people = const [],
     this.results = const [],
     this.page = 0,
     this.pages = 0,
@@ -16,6 +20,9 @@ final class SearchState {
     this.failure,
   });
 
+  final SearchKind kind;
+  final List<PersonSummary> people;
+  bool get isEmpty => results.isEmpty && people.isEmpty;
   final String query;
   final List<TitleSummary> results;
 
@@ -32,6 +39,8 @@ final class SearchState {
   SearchState copyWith({bool? loading, SourceFailure? Function()? failure}) =>
       SearchState(
         query: query,
+        kind: kind,
+        people: people,
         results: results,
         page: page,
         pages: pages,
@@ -64,17 +73,25 @@ class SearchNotifier extends Notifier<SearchState> {
     return const SearchState();
   }
 
+  void selectKind(SearchKind kind) {
+    if (kind == state.kind) return;
+    _debounce?.cancel();
+    _generation++;
+    state = SearchState(query: state.query, kind: kind);
+    if (state.query.isNotEmpty) unawaited(_load(state.query, 1));
+  }
+
   void typed(String text) {
     final query = text.trim();
     if (query == state.query && state.failure == null) return;
     _debounce?.cancel();
     if (query.isEmpty) {
       _generation++;
-      state = const SearchState();
+      state = SearchState(kind: state.kind);
       return;
     }
     _generation++;
-    state = SearchState(query: query, loading: true);
+    state = SearchState(query: query, kind: state.kind, loading: true);
     _debounce = Timer(debounce, () => _load(query, 1));
   }
 
@@ -100,15 +117,24 @@ class SearchNotifier extends Notifier<SearchState> {
     final generation = ++_generation;
     final tmdb = ref.read(tmdbProvider);
     state = page == 1
-        ? SearchState(query: query, loading: true)
+        ? SearchState(query: query, kind: state.kind, loading: true)
         : state.copyWith(loading: true, failure: () => null);
     try {
-      final found = await tmdb.search(query, page: page);
+      final kind = state.kind;
+      final found = await (kind == SearchKind.people
+          ? tmdb.searchPeople(query, page: page)
+          : tmdb.search(query, page: page));
       if (!ref.mounted || generation != _generation) return;
       // Results can shift between pages; skip duplicates.
       final seen = {for (final r in state.results) r.key};
+      final seenPeople = {for (final p in state.people) p.id};
       state = SearchState(
         query: query,
+        kind: kind,
+        people: [
+          ...state.people,
+          ...found.people.where((p) => seenPeople.add(p.id)),
+        ],
         results: [
           ...state.results,
           ...found.results.where((r) => seen.add(r.key)),

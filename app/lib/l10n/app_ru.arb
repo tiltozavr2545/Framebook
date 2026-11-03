@@ -69,6 +69,16 @@
 
   "retry": "Повторить",
 
+  "searchTitles": "Фильмы и сериалы",
+  "searchPeople": "Люди",
+  "searchPeopleHint": "Актёр, режиссёр, автор",
+  "filmographyActing": "В кадре",
+  "filmographyDirecting": "Режиссура",
+  "filmographyProduction": "Продюсирование",
+  "filmographyWriting": "Сценарий",
+  "filmographyMusic": "Музыка",
+  "filmographyCamera": "Операторская работа",
+  "filmographyOther": "Другие работы",
   "searchHint": "Фильм или сериал",
   "searchClear": "Очистить",
   "searchEmpty": "Найди фильм или сериал по названию.",

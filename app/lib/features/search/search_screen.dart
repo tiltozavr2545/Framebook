@@ -71,7 +71,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 controller: _controller,
                 textInputAction: TextInputAction.search,
                 decoration: InputDecoration(
-                  hintText: l10n.searchHint,
+                  hintText: search.kind == SearchKind.people
+                      ? l10n.searchPeopleHint
+                      : l10n.searchHint,
                   prefixIcon: const Icon(Icons.search),
                   suffixIcon: ListenableBuilder(
                     listenable: _controller,
@@ -91,17 +93,40 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 onSubmitted: notifier.submit,
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  for (final kind in SearchKind.values)
+                    ChoiceChip(
+                      label: Text(
+                        kind == SearchKind.titles
+                            ? l10n.searchTitles
+                            : l10n.searchPeople,
+                      ),
+                      selected: search.kind == kind,
+                      onSelected: (_) => notifier.selectKind(kind),
+                    ),
+                ],
+              ),
+            ),
             Expanded(
               child: switch (search) {
+                SearchState(query: '', kind: SearchKind.people) => _Message(
+                  icon: Icons.people_outline,
+                  text: l10n.searchPeopleHint,
+                ),
                 SearchState(query: '') => const Shelves(),
-                SearchState(results: [], loading: true) => const Center(
+                SearchState(isEmpty: true, loading: true) => const Center(
                   child: CircularProgressIndicator(),
                 ),
-                SearchState(results: [], :final failure?) => FailureView(
+                SearchState(isEmpty: true, :final failure?) => FailureView(
                   error: SourceException(failure),
                   onRetry: notifier.retry,
                 ),
-                SearchState(results: [], hasMore: false) => _Message(
+                SearchState(isEmpty: true, hasMore: false) => _Message(
                   icon: Icons.search_off,
                   text: l10n.searchNothing(search.query),
                 ),
@@ -122,7 +147,9 @@ class _Results extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final results = search.results;
+    final results = search.kind == SearchKind.people
+        ? search.people
+        : search.results;
     final tail = search.hasMore || search.loading || search.failure != null;
     return ListView.builder(
       // Dragging the list hides the keyboard, which otherwise covers half of
@@ -130,7 +157,12 @@ class _Results extends ConsumerWidget {
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       itemCount: results.length + (tail ? 1 : 0),
       itemBuilder: (context, index) {
-        if (index < results.length) return _ResultTile(results[index]);
+        if (index < results.length) {
+          if (search.kind == SearchKind.people) {
+            return _PersonTile(search.people[index]);
+          }
+          return _ResultTile(search.results[index]);
+        }
         return _Tail(search: search);
       },
     );
@@ -245,6 +277,51 @@ class _Message extends StatelessWidget {
             text,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyLarge,
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _PersonTile extends StatelessWidget {
+  const _PersonTile(this.person);
+  final PersonSummary person;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: () => context.push('${Routes.search}/person/${person.id}'),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Poster(
+            person.profilePath,
+            size: ImageSize.w185,
+            width: 48,
+            icon: Icons.person_outline,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  person.name,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                if (person.knownFor.isNotEmpty)
+                  Text(
+                    person.knownFor.join(' · '),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+              ],
+            ),
           ),
         ],
       ),
