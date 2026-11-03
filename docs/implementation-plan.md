@@ -363,6 +363,13 @@ merging, different-language sync churn, Drive timeouts and offline session
 restore, key validation, update-check retries and sync-controller races. Its
 regression tests cover the vault, timeouts and the full-screen route.
 
+The 0.7.4 fix adds a Samsung Android 14 surface-relayout workaround for the
+reopened S23 black screen after a long background pause. Native compilation
+and the automated suite pass; on 2026-11-03 the user confirmed successful
+testing of the release-signed APK with the affected friend and authorized
+release. Reproduction, scope and manual checks are in
+[operations.md](operations.md#samsung-android-14-resume-investigation).
+
 1. ✅ Initial review of correctness, security, tests and documentation. Fixed
    synchronization races around edits, duplicate files, first sign-in and
    deletion, and waited for key-sync operations before disabling them.

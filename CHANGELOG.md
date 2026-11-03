@@ -218,3 +218,17 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
   Reconcile architecture, recovery, privacy and retention documentation.
 - Record the audit, resolution coverage and remaining physical-device checks
   in `docs/reviews/2026-11-02/README.md`.
+
+## 0.7.4 — Samsung background-resume workaround (build 13)
+
+- Request layout again on the Flutter surface after returning to the app or
+  regaining window focus on Samsung Android 14. This targets a black screen
+  reported on S23 after about five minutes in the background; immediate
+  returns and the Nothing Phone were reported unaffected.
+- Delay the request by 100 ms, cancel it when leaving the foreground or
+  destroying/replacing the surface, and check focus/attachment before running.
+  Other Android versions and manufacturers retain their existing behavior.
+- Document the upstream evidence and physical-device validation procedure in
+  `docs/operations.md`. On 2026-11-03 the user confirmed the signed 0.7.4
+  build works after testing with the affected friend. No affected-device logs
+  were captured locally, so the exact upstream cause is still inferred.

@@ -325,8 +325,13 @@ listed above have been reconciled, including backup retention and localization.
 
 Physical Android backup/transfer, process recreation, and convergence between
 two phones using real Google transport remain manual checks. The Samsung S23 /
-Android 14 / One UI 6.0 black-screen report concerned version 0.6.0 and stopped
-reproducing after update; this repair pass does not establish its original cause.
+Android 14 / One UI 6.0 black-screen report initially appeared resolved after
+update. On 2026-11-03 the user confirmed it still occurs on 0.7.3 after about
+five minutes in the background, while the Nothing Phone is unaffected. The
+incident was reopened and a native Samsung API 34 surface-relayout workaround
+added in 0.7.4. After receiving the release-signed APK, the user confirmed it
+works on 2026-11-03 and authorized release; see `docs/operations.md`.
+The original repair pass did not establish its cause.
 No emulator, installation, account change or publication was performed.
 
 Performance-sensitive queries still require query counts and frame timings on
