@@ -140,18 +140,22 @@ void main() {
     });
 
     test('where I rate higher first', () {
-      expect(arrange(RatingSource.kp, DivergenceOrder.higher).take(3), [
+      expect(arrange(RatingSource.kp, DivergenceOrder.higher), [
         'tmdb:movie:1',
         'tmdb:movie:3',
         'tmdb:movie:2',
+        'tmdb:tv:5:s1',
+        'tmdb:movie:4',
       ]);
     });
 
     test('where I rate lower first', () {
-      expect(arrange(RatingSource.kp, DivergenceOrder.lower).take(3), [
+      expect(arrange(RatingSource.kp, DivergenceOrder.lower), [
         'tmdb:movie:2',
         'tmdb:movie:3',
         'tmdb:movie:1',
+        'tmdb:tv:5:s1',
+        'tmdb:movie:4',
       ]);
     });
 

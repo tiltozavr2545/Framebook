@@ -428,3 +428,25 @@ additional cached-only layout assertion.
 The photo-layout fix passed the full suite (389 passed, 18 skipped) and a
 release-signed APK build. The APK was installed over the existing app on Nothing Phone 3a without
 clearing data. The user confirmed that the photo-layout fix works on the phone.
+
+## Test-suite audit, 2026-11-04
+
+Expanded regression coverage for the Drive HTTP transport, coordinated deletion
+and failure recovery, preference persistence and system-language changes,
+background-refresh lifecycle, cache corruption and pruning boundaries, and
+UI cancellation plus watchlist/rating/statistics transitions. Existing sorting
+assertions now verify the full result, background-refresh assertions reject
+empty results, and UI test cleanup runs even after an assertion fails.
+
+The scope, commands and remaining platform checks are in
+[testing.md](testing.md). Coverage is an audit aid, not a release sign-off.
+
+Validation: `make verify TEST_ARGS=--coverage` passed: 421 tests passed and
+18 opt-in screenshot renderers skipped; formatting and analysis are clean.
+
+Physical-device smoke check: built the release-signed APK and installed it over
+0.8.1+15 on Nothing Phone 3a (Android 16) without clearing app data. Cold launch,
+Discover, saved ratings, statistics and return to the same statistics screen
+after a short background pause passed. This does not validate destructive
+Drive operations, Android file-picker flows, two-device sync or the Samsung
+long-background scenario.

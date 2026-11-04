@@ -108,9 +108,12 @@ void main() {
   /// every screen past onboarding has such a stream.
   void cardTest(String description, Future<void> Function(WidgetTester) body) =>
       testWidgets(description, (tester) async {
-        await body(tester);
-        await tester.pumpWidget(const SizedBox());
-        await tester.pump(const Duration(milliseconds: 1));
+        try {
+          await body(tester);
+        } finally {
+          await tester.pumpWidget(const SizedBox());
+          await tester.pump(const Duration(milliseconds: 1));
+        }
       });
 
   cardTest('recent titles appear in a dropdown and reopen their cards', (
@@ -726,6 +729,108 @@ void main() {
     expect(inList('Матрица'), findsOneWidget);
   });
 
+  /// The Matrix, rated before the test starts.
+  Future<void> matrixRated(Library library, int scoreHalf) => library.rate(
+    [
+      const WorkSnapshot(
+        key: WorkKey.movie(603),
+        tmdbId: 603,
+        title: 'Матрица',
+        releaseDate: '1999-03-31',
+        imdbId: 'tt0133093',
+      ),
+    ],
+    scoreHalf: scoreHalf,
+    note: null,
+  );
+
+  cardTest('canceling an editor preserves the score, note and version', (
+    tester,
+  ) async {
+    await pumpApp(
+      tester,
+      keys: tmdbOnly,
+      seed: (library) async {
+        await library.rate(
+          const [
+            WorkSnapshot(key: WorkKey.movie(603), tmdbId: 603, title: 'Matrix'),
+          ],
+          scoreHalf: 17,
+          note: 'Original note',
+        );
+      },
+    );
+    go(tester, '/search/movie/603');
+    await settle(tester);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(FramebookApp)),
+    );
+    final before = container
+        .read(myRatingProvider(const WorkKey.movie(603)))
+        .value;
+    expect(before, isNotNull);
+    await tester.tap(find.byTooltip('Change'));
+    await settle(tester);
+    await tester.enterText(find.byType(TextField), 'Unsaved note');
+    await pickScore(tester, 3);
+    container.read(routerProvider).pop();
+    await settle(tester);
+    final after = container
+        .read(myRatingProvider(const WorkKey.movie(603)))
+        .value;
+    expect(after, before);
+    expect(find.text('Original note'), findsOneWidget);
+    expect(find.text('Unsaved note'), findsNothing);
+  });
+
+  cardTest('canceling deletion keeps the rating in the card and list', (
+    tester,
+  ) async {
+    await pumpApp(
+      tester,
+      keys: tmdbOnly,
+      seed: (library) => matrixRated(library, 17),
+    );
+    go(tester, '/search/movie/603');
+    await settle(tester);
+    await tester.tap(find.byTooltip('Delete'));
+    await settle(tester);
+    await tester.tap(find.text('Cancel'));
+    await settle(tester);
+    expect(find.text('My rating'), findsOneWidget);
+    await tester.tap(tab('Ratings'));
+    await settle(tester);
+    expect(inList('Матрица'), findsOneWidget);
+    expect(inList('8.5'), findsOneWidget);
+  });
+
+  cardTest('rating a watchlisted film removes it and updates statistics', (
+    tester,
+  ) async {
+    await pumpApp(tester, keys: tmdbOnly);
+    go(tester, '/search/movie/603');
+    await settle(tester);
+    await tester.tap(find.text('Want to watch'));
+    await settle(tester);
+    await tester.tap(find.text('Rate'));
+    await settle(tester);
+    await tester.enterText(find.byType(TextField), 'Saved from the editor');
+    await tester.tap(find.text('Save'));
+    await settle(tester);
+    expect(find.text('Saved from the editor'), findsOneWidget);
+    await tester.tap(tab('Watchlist'));
+    await settle(tester);
+    expect(inList('Матрица'), findsNothing);
+    await tester.tap(tab('Ratings'));
+    await settle(tester);
+    expect(inList('Матрица'), findsOneWidget);
+    expect(inList('5'), findsOneWidget);
+    await tester.tap(tab('Stats'));
+    await settle(tester);
+    expect(find.text('your score, the only one so far'), findsOneWidget);
+    expect(find.text('5.0'), findsOneWidget);
+  });
+
   cardTest('deleting a rating asks first', (tester) async {
     await pumpApp(
       tester,
@@ -774,7 +879,6 @@ void main() {
     expect(find.text('Nothing of this kind is rated yet.'), findsOneWidget);
   });
 
-  /// The Matrix, rated before the test starts.
   // Stage 6.5: TMDB renumbering. The fixtures are as TMDB answers now; a
   // rating "from before" is seeded with another title's id under its number.
 
@@ -912,20 +1016,6 @@ void main() {
       findsOneWidget,
     );
   });
-
-  Future<void> matrixRated(Library library, int scoreHalf) => library.rate(
-    [
-      const WorkSnapshot(
-        key: WorkKey.movie(603),
-        tmdbId: 603,
-        title: 'Матрица',
-        releaseDate: '1999-03-31',
-        imdbId: 'tt0133093',
-      ),
-    ],
-    scoreHalf: scoreHalf,
-    note: null,
-  );
 
   cardTest('the card shows mine minus theirs on the 1–10 ratings', (
     tester,

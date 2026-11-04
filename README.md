@@ -95,6 +95,7 @@ Current:
 - [Sync and backup](docs/sync.md) — the Google Drive file format, the merge algorithm, export/import
 - [Client design](docs/client-architecture.md) — what the app is built with, and default decisions
 - [Getting the API keys](docs/api-keys.md) — TMDB, PoiskKino, OMDb step by step, what goes in each field ([in Russian](docs/api-keys.ru.md))
+- [Testing](docs/testing.md) — verification commands, automated scenarios and remaining device checks
 - [Operations](docs/operations.md) — keys, Google Cloud OAuth, signing and distributing the APK
 - [Postponed features](docs/future-development.md) — iOS, importing from other services, open questions
 - [Implementation plan](docs/implementation-plan.md) — MVP stages and their progress

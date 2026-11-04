@@ -255,14 +255,28 @@ void main() {
             : apiFixtures(r),
       );
       await run(service());
+      final failed = await db.externalRatingsFor('tmdb:movie:1');
+      final missing = await db.externalRatingsFor('tmdb:movie:2');
       expect(
-        (await db.externalRatingsFor('tmdb:movie:1')).map((r) => r.status),
-        everyElement(RatingStatus.error),
+        failed.map((r) => r.source),
+        unorderedEquals([
+          RatingSource.kp,
+          RatingSource.imdb,
+          RatingSource.rt,
+          RatingSource.metacritic,
+        ]),
       );
       expect(
-        (await db.externalRatingsFor('tmdb:movie:2')).map((r) => r.status),
-        everyElement(RatingStatus.notFound),
+        missing.map((r) => r.source),
+        unorderedEquals([
+          RatingSource.kp,
+          RatingSource.imdb,
+          RatingSource.rt,
+          RatingSource.metacritic,
+        ]),
       );
+      expect(failed.map((r) => r.status), everyElement(RatingStatus.error));
+      expect(missing.map((r) => r.status), everyElement(RatingStatus.notFound));
     });
 
     test('stops when cancelled', () async {

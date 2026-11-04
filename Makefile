@@ -6,12 +6,14 @@ APP_DIR := app
 FLUTTER ?= $(HOME)/development/flutter/bin/flutter
 DART ?= $(HOME)/development/flutter/bin/dart
 BASE_REF ?= origin/main
+TEST_ARGS ?=
 
-.PHONY: help codegen deps format-check analyze test verify verify-version bump-build bump-patch bump-minor bump-major build-apk build-apk-check pre-commit pre-push install-hooks uninstall-hooks
+.PHONY: help codegen deps format-check analyze test test-coverage verify verify-version bump-build bump-patch bump-minor bump-major build-apk build-apk-check pre-commit pre-push install-hooks uninstall-hooks
 
 help:
 	@printf '%s\n' \
 		'make verify          Run dependency, format, analysis, and test checks' \
+		'make test-coverage   Run tests and write app/coverage/lcov.info' \
 		'make codegen         Regenerate drift code, localizations and schema snapshots' \
 		'make verify-version  Verify a version bump against BASE_REF (default: origin/main)' \
 		'make bump-build      Bump only versionCode, keep versionName the same' \
@@ -42,7 +44,10 @@ analyze:
 	cd $(APP_DIR) && $(FLUTTER) analyze
 
 test:
-	cd $(APP_DIR) && $(FLUTTER) test
+	cd $(APP_DIR) && $(FLUTTER) test $(TEST_ARGS)
+
+test-coverage:
+	cd $(APP_DIR) && $(FLUTTER) test --coverage
 
 verify: deps format-check analyze test
 
