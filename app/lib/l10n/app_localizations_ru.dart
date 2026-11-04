@@ -230,6 +230,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get searchHint => 'Фильм или сериал';
 
   @override
+  String get searchHistory => 'Недавно открытые';
+
+  @override
+  String get searchHistoryClear => 'Очистить историю';
+
+  @override
+  String get searchHistoryRemove => 'Удалить из истории';
+
+  @override
   String get searchClear => 'Очистить';
 
   @override

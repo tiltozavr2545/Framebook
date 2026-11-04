@@ -230,6 +230,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchHint => 'Film or series';
 
   @override
+  String get searchHistory => 'Recently opened';
+
+  @override
+  String get searchHistoryClear => 'Clear history';
+
+  @override
+  String get searchHistoryRemove => 'Remove from history';
+
+  @override
   String get searchClear => 'Clear';
 
   @override

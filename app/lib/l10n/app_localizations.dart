@@ -512,6 +512,24 @@ abstract class AppLocalizations {
   /// **'Film or series'**
   String get searchHint;
 
+  /// No description provided for @searchHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently opened'**
+  String get searchHistory;
+
+  /// No description provided for @searchHistoryClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear history'**
+  String get searchHistoryClear;
+
+  /// No description provided for @searchHistoryRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from history'**
+  String get searchHistoryRemove;
+
   /// No description provided for @searchClear.
   ///
   /// In en, this message translates to:

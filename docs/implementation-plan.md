@@ -395,3 +395,16 @@ parsing, category membership, pagination, stale responses and profile navigation
 Validation: `make verify` passed with 376 tests and 18 skipped. The user
 confirmed the release-signed test build works on Samsung Galaxy S23 on
 2026-11-03.
+
+## 0.8.1 — Search history
+
+Implemented an anchored dropdown of recently opened title-search results,
+with posters, titles and years, direct card navigation, a 20-entry limit,
+persistence across restarts, individual removal and clearing. Only mini
+snapshots of selected films/series are stored locally; queries and people
+are excluded. No database or sync format changes.
+
+Validation: `make codegen`, `make verify` (379 passed, 18 skipped) and
+`make verify-version` passed. Regression coverage includes persistence, typed-id
+deduplication, the history limit, damaged preferences, dropdown navigation,
+removal/clearing and recording selected results rather than query text.

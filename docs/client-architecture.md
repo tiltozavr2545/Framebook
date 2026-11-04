@@ -497,3 +497,17 @@ portrait, name and known-for titles; opening a profile preserves search on back.
 Role filters derive from actual credit jobs: an assistant director is not
 classified as the director. Unclassified jobs remain available in Other work.
 No catalog data is added to the database or synchronization file.
+
+## Search history (0.8.1)
+
+Tapping Discover's title-search field opens an anchored dropdown of the last
+20 films and series selected from search results. Each entry contains only a
+mini snapshot: typed work key, title, year and poster path. SharedPreferences
+persists this bounded device-local list; it is excluded from rating exports,
+backups and Drive sync. No database migration or sync format change is needed.
+Opening a result moves its key to the top and refreshes its mini snapshot.
+Typing or submitting a query, pagination, and people search do not add entries.
+The dropdown shows posters and title/year/type, opens cards directly, supports
+individual removal and clearing, and closes on typing, selection or loss of
+focus. It overlays existing content without moving Discover shelves or results.
+Malformed stored entries are skipped so Discover can still open.

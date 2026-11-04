@@ -246,3 +246,12 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
   pagination, stale responses, large text and navigation. The user confirmed
   the signed test build works on a connected Samsung Galaxy S23.
 - No database or sync format changes; sync compatibility remains at format 4.
+
+## 0.8.1 — Search history (build 15)
+
+- Reopen recently selected films and series from a dropdown below Discover's
+  search field. Entries show a poster, title, media type and year.
+- Keep the latest 20 opened search results across app restarts; opening the
+  same title again moves it to the top. Queries themselves are not saved.
+- Remove individual entries or clear history. History stays on the device
+  and is excluded from exports and Google Drive sync.

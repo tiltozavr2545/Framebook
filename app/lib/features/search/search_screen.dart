@@ -12,6 +12,7 @@ import '../../shared/poster.dart';
 import '../title/title_layout.dart';
 import '../title/title_routes.dart';
 import 'search_controller.dart';
+import 'search_history.dart';
 import 'shelves.dart';
 
 /// The Discover tab (Stage 6): a search field on top and, while it is empty,
@@ -28,8 +29,25 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     text: ref.read(searchProvider).query,
   );
 
+  final _focus = FocusNode();
+  final _historyOverlay = OverlayPortalController();
+  final _fieldLink = LayerLink();
+
+  @override
+  void initState() {
+    super.initState();
+    _focus.addListener(() {
+      if (_focus.hasFocus) {
+        _historyOverlay.show();
+      } else {
+        _historyOverlay.hide();
+      }
+    });
+  }
+
   @override
   void dispose() {
+    _focus.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -67,30 +85,76 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-              child: TextField(
-                controller: _controller,
-                textInputAction: TextInputAction.search,
-                decoration: InputDecoration(
-                  hintText: search.kind == SearchKind.people
-                      ? l10n.searchPeopleHint
-                      : l10n.searchHint,
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: ListenableBuilder(
-                    listenable: _controller,
-                    builder: (context, _) => _controller.text.isEmpty
-                        ? const SizedBox.shrink()
-                        : IconButton(
-                            icon: const Icon(Icons.close),
-                            tooltip: l10n.searchClear,
-                            onPressed: () {
-                              _controller.clear();
-                              notifier.typed('');
+              child: CompositedTransformTarget(
+                link: _fieldLink,
+                child: OverlayPortal(
+                  controller: _historyOverlay,
+                  overlayChildBuilder: (context) => Positioned(
+                    left: 0,
+                    top: 0,
+                    child: CompositedTransformFollower(
+                      link: _fieldLink,
+                      showWhenUnlinked: false,
+                      targetAnchor: Alignment.bottomLeft,
+                      offset: const Offset(0, 4),
+                      child: TextFieldTapRegion(
+                        child: SizedBox(
+                          width: MediaQuery.sizeOf(context).width - 32,
+                          child: _SearchHistory(
+                            onSelected: (entry) {
+                              _focus.unfocus();
+                              _historyOverlay.hide();
+                              ref
+                                  .read(searchHistoryProvider.notifier)
+                                  .remember(entry);
+                              context.go(
+                                '${Routes.search}/${TitleRoutes.path(entry.key)}',
+                              );
                             },
                           ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  child: TextField(
+                    focusNode: _focus,
+                    onTap: () => _historyOverlay.show(),
+                    onTapOutside: (_) {
+                      _focus.unfocus();
+                      _historyOverlay.hide();
+                    },
+                    controller: _controller,
+                    textInputAction: TextInputAction.search,
+                    decoration: InputDecoration(
+                      hintText: search.kind == SearchKind.people
+                          ? l10n.searchPeopleHint
+                          : l10n.searchHint,
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: ListenableBuilder(
+                        listenable: _controller,
+                        builder: (context, _) => _controller.text.isEmpty
+                            ? const SizedBox.shrink()
+                            : IconButton(
+                                icon: const Icon(Icons.close),
+                                tooltip: l10n.searchClear,
+                                onPressed: () {
+                                  _controller.clear();
+                                  notifier.typed('');
+                                  _historyOverlay.show();
+                                },
+                              ),
+                      ),
+                    ),
+                    onChanged: (text) {
+                      _historyOverlay.hide();
+                      notifier.typed(text);
+                    },
+                    onSubmitted: (query) {
+                      _historyOverlay.hide();
+                      notifier.submit(query);
+                    },
                   ),
                 ),
-                onChanged: notifier.typed,
-                onSubmitted: notifier.submit,
               ),
             ),
             Padding(
@@ -107,7 +171,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                             : l10n.searchPeople,
                       ),
                       selected: search.kind == kind,
-                      onSelected: (_) => notifier.selectKind(kind),
+                      onSelected: (_) {
+                        _focus.unfocus();
+                        _historyOverlay.hide();
+                        notifier.selectKind(kind);
+                      },
                     ),
                 ],
               ),
@@ -161,7 +229,17 @@ class _Results extends ConsumerWidget {
           if (search.kind == SearchKind.people) {
             return _PersonTile(search.people[index]);
           }
-          return _ResultTile(search.results[index]);
+          return _ResultTile(
+            search.results[index],
+            onOpen: () {
+              FocusScope.of(context).unfocus();
+              ref
+                  .read(searchHistoryProvider.notifier)
+                  .remember(
+                    SearchHistoryEntry.fromTitle(search.results[index]),
+                  );
+            },
+          );
         }
         return _Tail(search: search);
       },
@@ -200,7 +278,9 @@ class _Tail extends ConsumerWidget {
 }
 
 class _ResultTile extends StatelessWidget {
-  const _ResultTile(this.title);
+  const _ResultTile(this.title, {required this.onOpen});
+
+  final VoidCallback onOpen;
 
   final TitleSummary title;
 
@@ -213,8 +293,10 @@ class _ResultTile extends StatelessWidget {
         ? l10n.kindMovie
         : l10n.kindTv;
     return InkWell(
-      onTap: () =>
-          context.go('${Routes.search}/${TitleRoutes.path(title.key)}'),
+      onTap: () {
+        onOpen();
+        context.go('${Routes.search}/${TitleRoutes.path(title.key)}');
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
@@ -290,7 +372,9 @@ class _PersonTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => InkWell(
-    onTap: () => context.push('${Routes.search}/person/${person.id}'),
+    onTap: () {
+      context.push('${Routes.search}/person/${person.id}');
+    },
     child: Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
@@ -327,4 +411,89 @@ class _PersonTile extends StatelessWidget {
       ),
     ),
   );
+}
+
+class _SearchHistory extends ConsumerWidget {
+  const _SearchHistory({required this.onSelected});
+  final ValueChanged<SearchHistoryEntry> onSelected;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final kind = ref.watch(searchProvider.select((s) => s.kind));
+    final entries = ref.watch(searchHistoryProvider);
+    if (entries.isEmpty || kind != SearchKind.titles) {
+      return const SizedBox.shrink();
+    }
+    final notifier = ref.read(searchHistoryProvider.notifier);
+    final l10n = AppLocalizations.of(context);
+    return Material(
+      elevation: 8,
+      borderRadius: BorderRadius.circular(12),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.searchHistory,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ),
+                TextButton(
+                  onPressed: notifier.clear,
+                  child: Text(l10n.searchHistoryClear),
+                ),
+              ],
+            ),
+          ),
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight:
+                  (MediaQuery.sizeOf(context).height -
+                          MediaQuery.viewInsetsOf(context).bottom -
+                          260)
+                      .clamp(80.0, 220.0),
+            ),
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: entries.length,
+              itemBuilder: (context, index) => ListTile(
+                leading: Poster(
+                  entries[index].posterPath,
+                  size: ImageSize.w185,
+                  width: 32,
+                  icon: entries[index].key.kind == WorkKind.movie
+                      ? Icons.movie_outlined
+                      : Icons.live_tv_outlined,
+                ),
+                title: Text(
+                  entries[index].title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                subtitle: Text(
+                  joinFacts([
+                    entries[index].key.kind == WorkKind.movie
+                        ? l10n.kindMovie
+                        : l10n.kindTv,
+                    entries[index].year?.toString(),
+                  ]),
+                ),
+                onTap: () => onSelected(entries[index]),
+                trailing: IconButton(
+                  icon: const Icon(Icons.close),
+                  tooltip: l10n.searchHistoryRemove,
+                  onPressed: () => notifier.remove(entries[index].key),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

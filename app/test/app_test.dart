@@ -26,6 +26,7 @@ import 'package:framebook/data/sync/sync_store.dart';
 import 'package:framebook/data/work_key.dart';
 import 'package:framebook/features/person/person_screen.dart';
 import 'package:framebook/features/search/search_controller.dart';
+import 'package:framebook/features/search/search_history.dart';
 import 'package:framebook/features/title/movie_screen.dart';
 import 'package:framebook/features/title/score_reel.dart';
 import 'package:framebook/shared/poster.dart';
@@ -38,6 +39,10 @@ import 'support/memory_remote.dart';
 import 'support/memory_key_storage.dart';
 
 void main() {
+  final allKeys = ApiKeys.empty
+      .withKey(ApiSource.tmdb, const StoredKey('eyJ', verified: true))
+      .withKey(ApiSource.poiskkino, const StoredKey('PK', verified: true))
+      .withKey(ApiSource.omdb, const StoredKey('OM', verified: true));
   late MemoryKeyStorage storage;
   late MemoryRemote drive;
 
@@ -107,6 +112,50 @@ void main() {
         await tester.pumpWidget(const SizedBox());
         await tester.pump(const Duration(milliseconds: 1));
       });
+
+  cardTest('recent titles appear in a dropdown and reopen their cards', (
+    tester,
+  ) async {
+    await pumpApp(tester, keys: allKeys);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(FramebookApp)),
+    );
+    final history = container.read(searchHistoryProvider.notifier);
+    await history.remember(
+      const SearchHistoryEntry(
+        key: WorkKey.movie(603),
+        title: 'Recent Matrix',
+        year: 1999,
+      ),
+    );
+    await history.remember(
+      const SearchHistoryEntry(
+        key: WorkKey.tv(1399),
+        title: 'Recent series',
+        year: 2011,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Recent Matrix'), findsNothing);
+    await tester.tap(find.byType(TextField));
+    await tester.pumpAndSettle();
+    expect(find.text('Recent Matrix'), findsOneWidget);
+    await tester.tap(find.byTooltip('Remove from history').first);
+    await tester.pumpAndSettle();
+    expect(container.read(searchHistoryProvider).length, 1);
+    await tester.tap(find.text('Recent Matrix'));
+    await tester.pumpAndSettle();
+    expect(find.byType(MovieScreen), findsOneWidget);
+    expect(find.text('Recent Matrix'), findsNothing);
+    container.read(routerProvider).go(Routes.search);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(TextField));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Clear history'));
+    await tester.pumpAndSettle();
+    expect(container.read(searchHistoryProvider), isEmpty);
+    expect(find.text('Recently opened'), findsNothing);
+  });
 
   cardTest('without a TMDB key the app opens on onboarding', (tester) async {
     await pumpApp(tester);
@@ -210,11 +259,6 @@ void main() {
     const Duration(seconds: 10),
   );
 
-  final allKeys = ApiKeys.empty
-      .withKey(ApiSource.tmdb, const StoredKey('eyJ', verified: true))
-      .withKey(ApiSource.poiskkino, const StoredKey('PK', verified: true))
-      .withKey(ApiSource.omdb, const StoredKey('OM', verified: true));
-
   Finder inList(String text) =>
       find.descendant(of: find.byType(ListView), matching: find.text(text));
 
@@ -227,12 +271,26 @@ void main() {
     await tester.testTextInput.receiveAction(TextInputAction.search);
     await settle(tester);
 
+    final historyContainer = ProviderScope.containerOf(
+      tester.element(find.byType(FramebookApp)),
+    );
+    expect(historyContainer.read(searchHistoryProvider), isEmpty);
+
     expect(inList('Матрица'), findsOneWidget);
     expect(inList('Film · 1999 · The Matrix'), findsOneWidget);
     expect(inList('Series · 2003 · Threat Matrix'), findsOneWidget);
 
     await tester.tap(inList('Матрица'));
     await settle(tester);
+
+    expect(
+      historyContainer.read(searchHistoryProvider).single.key,
+      const WorkKey.movie(603),
+    );
+    expect(
+      historyContainer.read(searchHistoryProvider).single.title,
+      'Матрица',
+    );
 
     expect(find.text('«Добро пожаловать в реальный мир»'), findsOneWidget);
     expect(find.text('1999 · 2 h 16 min'), findsOneWidget);
