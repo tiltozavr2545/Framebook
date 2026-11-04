@@ -247,7 +247,7 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
   the signed test build works on a connected Samsung Galaxy S23.
 - No database or sync format changes; sync compatibility remains at format 4.
 
-## 0.8.1 — Search history (build 15)
+## 0.8.1 — Search history and quiet Drive sync (build 15)
 
 - Reopen recently selected films and series from a dropdown below Discover's
   search field. Entries show a poster, title, media type and year.
@@ -255,3 +255,7 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
   same title again moves it to the top. Queries themselves are not saved.
 - Remove individual entries or clear history. History stays on the device
   and is excluded from exports and Google Drive sync.
+- Keep automatic Google Drive sync without showing Google's sign-in window
+  on each launch. Reuse the selected account through noninteractive Drive
+  authorization; request another sign-in only through the settings button
+  when permission needs renewal.

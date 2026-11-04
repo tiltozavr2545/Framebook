@@ -396,7 +396,7 @@ Validation: `make verify` passed with 376 tests and 18 skipped. The user
 confirmed the release-signed test build works on Samsung Galaxy S23 on
 2026-11-03.
 
-## 0.8.1 — Search history
+## 0.8.1 — Search history and quiet Drive sync
 
 Implemented an anchored dropdown of recently opened title-search results,
 with posters, titles and years, direct card navigation, a 20-entry limit,
@@ -404,7 +404,19 @@ persistence across restarts, individual removal and clearing. Only mini
 snapshots of selected films/series are stored locally; queries and people
 are excluded. No database or sync format changes.
 
-Validation: `make codegen`, `make verify` (379 passed, 18 skipped) and
+Validation: `make codegen`, `make verify` (386 passed, 18 skipped) and
 `make verify-version` passed. Regression coverage includes persistence, typed-id
 deduplication, the history limit, damaged preferences, dropdown navigation,
 removal/clearing and recording selected results rather than query text.
+
+The same version also replaces startup Credential Manager authentication with
+account-pinned Drive authorization that forbids UI. Automatic sync timing and
+token renewal remain intact; interactive sign-in is an explicit settings action.
+Tests cover account-pinned requests without UI, missing consent, transient SDK
+failures, explicit interactive sign-in, token invalidation, sign-out races and
+startup error reporting without automatic login prompts.
+A release-signed APK was built and installed over 0.8.1+15 on the connected
+Nothing Phone 3a without clearing data. After two cold launches, ADB reported
+Framebook as the focused activity rather than a Google sign-in activity; this
+is a startup smoke check, not proof of a completed live Drive sync. The user
+also confirmed that the quiet startup behavior works on the phone.

@@ -1,8 +1,11 @@
 import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sign_in_as_googleapis_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:google_sign_in_platform_interface/google_sign_in_platform_interface.dart'
+    as platform;
 import 'package:googleapis/drive/v3.dart' as drive;
 
+import '../../app/preferences.dart';
 import 'drive_remote.dart';
 import 'sync_engine.dart';
 
@@ -13,6 +16,9 @@ import 'sync_engine.dart';
 /// id is not a secret, so it lives here rather than in a build variable.
 const googleServerClientId =
     '682712190545-e1qbllq2u8htfgugv8h0a20on0ab1ffo.apps.googleusercontent.com';
+
+/// The account explicitly selected for synchronization.
+const syncAccountPreferenceKey = 'sync_account';
 
 /// The only scope: the app's own hidden folder, nothing else on Drive.
 const driveScopes = [drive.DriveApi.driveAppdataScope];
@@ -54,7 +60,7 @@ abstract interface class GoogleAccount {
   /// Whether this build can sign in at all.
   bool get configured;
 
-  /// The account signed in earlier, without any UI; `null` if none.
+  /// The previously selected account, without UI; Drive access may need renewal.
   Future<String?> restore();
 
   /// Signs in and asks for Drive access, with Google's own dialogs. Returns
@@ -69,12 +75,15 @@ abstract interface class GoogleAccount {
 }
 
 final class GoogleSignInAccountService implements GoogleAccount {
-  GoogleSignInAccountService({this.serverClientId = googleServerClientId});
+  GoogleSignInAccountService({
+    required this.readStoredAccount,
+    this.serverClientId = googleServerClientId,
+  });
 
   final String serverClientId;
+  final String? Function() readStoredAccount;
   Future<void>? _initialized;
-  GoogleSignInAccount? _account;
-  Future<String?>? _restoring;
+  String? _accountEmail;
   int _epoch = 0;
 
   @override
@@ -85,37 +94,27 @@ final class GoogleSignInAccountService implements GoogleAccount {
   );
 
   @override
-  Future<String?> restore() => _restoring ??= _restore().whenComplete(() {
-    _restoring = null;
-  });
-
-  Future<String?> _restore() async {
+  Future<String?> restore() async {
     if (!configured) return null;
-    if (_account != null) return _account!.email;
-    final epoch = _epoch;
-    try {
-      await _init();
-      final restored = await GoogleSignIn.instance
-          .attemptLightweightAuthentication();
-      if (epoch != _epoch) return null;
-      _account = restored ?? _account;
-    } on GoogleSignInException {
-      return null;
-    }
-    return _account?.email;
+    // This is the user's previous selection, not proof of current Drive access.
+    // Credential Manager's lightweight authentication can show UI on Android.
+    return _accountEmail ??= readStoredAccount();
   }
 
   @override
   Future<String> signIn() async {
     if (!configured) throw const SignInException(SignInFailure.misconfigured);
-    _epoch++;
+    final epoch = ++_epoch;
     await _init();
     try {
       final account = await GoogleSignIn.instance.authenticate(
         scopeHint: driveScopes,
       );
       await account.authorizationClient.authorizeScopes(driveScopes);
-      _account = account;
+      if (epoch != _epoch) {
+        throw const SignInException(SignInFailure.canceled);
+      }
+      _accountEmail = account.email;
       return account.email;
     } on GoogleSignInException catch (e) {
       throw SignInException(switch (e.code) {
@@ -131,41 +130,69 @@ final class GoogleSignInAccountService implements GoogleAccount {
 
   @override
   Future<DriveAccess> drive() async {
-    final account = _account ?? (await restore() == null ? null : _account);
-    if (account == null) {
+    final email = await restore();
+    if (email == null) {
       throw const SyncException(SyncFailure.unauthorized, 'not signed in');
     }
-    final GoogleSignInClientAuthorization? authorization;
+    final epoch = _epoch;
+    final GoogleSignInClientAuthorization authorization;
     try {
-      authorization = await account.authorizationClient.authorizationForScopes(
-        driveScopes,
+      await _init();
+      // The public account-less client cannot bind an explicit email. Use the
+      // plugin's platform API so Android calls AuthorizationRequest.setAccount
+      // and never silently falls back to a different account on the device.
+      final tokens = await platform.GoogleSignInPlatform.instance
+          .clientAuthorizationTokensForScopes(
+            platform.ClientAuthorizationTokensForScopesParameters(
+              request: platform.AuthorizationRequestDetails(
+                scopes: driveScopes,
+                userId: null,
+                email: email,
+                promptIfUnauthorized: false,
+              ),
+            ),
+          );
+      if (epoch != _epoch || email != _accountEmail) {
+        throw const SyncException(SyncFailure.unauthorized, 'account changed');
+      }
+      if (tokens == null) {
+        throw const SyncException(SyncFailure.unauthorized, 'no Drive access');
+      }
+      authorization = GoogleSignInClientAuthorization(
+        accessToken: tokens.accessToken,
       );
     } on GoogleSignInException catch (e) {
-      throw SyncException(SyncFailure.unauthorized, e.description);
-    }
-    if (authorization == null) {
-      throw const SyncException(SyncFailure.unauthorized, 'no Drive access');
+      // Unknown SDK failures can be transient (for example a network outage),
+      // and do not prove that permission was revoked.
+      throw SyncException(
+        e.code == GoogleSignInExceptionCode.unknownError
+            ? SyncFailure.failed
+            : SyncFailure.unauthorized,
+        e.description,
+      );
     }
     final client = authorization.authClient(scopes: driveScopes);
     return (
       remote: DriveRemote(client),
       close: client.close,
-      expire: () => account.authorizationClient.clearAuthorizationToken(
-        accessToken: authorization!.accessToken,
-      ),
+      expire: () => GoogleSignIn.instance.authorizationClient
+          .clearAuthorizationToken(accessToken: authorization.accessToken),
     );
   }
 
   @override
   Future<void> signOut() async {
     if (!configured) return;
-    await _init();
     _epoch++;
-    _account = null;
+    _accountEmail = null;
+    await _init();
     await GoogleSignIn.instance.signOut();
   }
 }
 
 final googleAccountProvider = Provider<GoogleAccount>(
-  (ref) => GoogleSignInAccountService(),
+  (ref) => GoogleSignInAccountService(
+    readStoredAccount: () =>
+        ref.read(sharedPreferencesProvider).getString(syncAccountPreferenceKey),
+  ),
 );

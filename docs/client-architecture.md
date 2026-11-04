@@ -372,17 +372,21 @@ The design is [sync.md](sync.md); here is what lives where in
 - `sync_engine.dart` — one pass over a `SyncRemote`, with the daily copies;
   `drive_remote.dart` is that remote on Drive's `appDataFolder`, with a
   30-second timeout around each complete operation.
-- `google_account.dart` — google_sign_in 7: Credential Manager sign-in with
-  the Web client id, then Drive authorization for `drive.appdata` only. An
-  interface, so widget tests run on a fake account and an in-memory Drive.
+- `google_account.dart` — google_sign_in 7: Credential Manager sign-in only
+  after an explicit user action, then authorization for `drive.appdata` only.
+  Startup restores the selected email from preferences. Drive requests use
+  google_sign_in_platform_interface (already used by the plugin) to pass that
+  email and forbid UI, without relying on a Credential Manager session or
+  the device's default account. An interface lets widget tests use a fake
+  account and an in-memory Drive.
 - `sync_controller.dart` — when to sync (launch and resume after 5 min, 30 s
   after a change to ratings or the watchlist, the button), the last sync and
   the last error for the screen, sign-out, deleting from Drive, the daily
   copies, export and import. Offline isn't shown as an error; an expired
   token is dropped and the call retried once.
-  Automatic cold-start sync waits for silent Google-session restoration;
-  failure to restore while offline is retried later without an authorization
-  error.
+  Automatic cold-start sync uses the saved selection and requests Drive
+  authorization without UI. Missing consent appears as a settings error with
+  an explicit sign-in action; generic SDK failures do not imply revoked access.
 - Settings → Sync and backup is `features/settings/sync_screen.dart`; export
   and import go through the system "Save to…" / file picker (file_picker).
   A paused-sync warning asks before applying compact deletions over unsynced

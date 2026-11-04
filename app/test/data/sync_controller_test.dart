@@ -59,6 +59,24 @@ final class _UnavailableRestoreGoogle extends FakeGoogleAccount {
   }
 }
 
+final class _DeniedDriveGoogle extends FakeGoogleAccount {
+  _DeniedDriveGoogle(super.remote);
+  int interactiveCalls = 0;
+
+  @override
+  Future<String?> restore() async => email;
+
+  @override
+  Future<DriveAccess> drive() async =>
+      throw const SyncException(SyncFailure.unauthorized);
+
+  @override
+  Future<String> signIn() async {
+    interactiveCalls++;
+    return super.signIn();
+  }
+}
+
 final class _ResumingGoogle extends FakeGoogleAccount {
   _ResumingGoogle(super.remote);
 
@@ -357,6 +375,26 @@ void main() {
     expect(container.read(syncControllerProvider).error, isNull);
     expect(google.driveCalls, 0);
   });
+
+  test(
+    'missing Drive consent on startup reports status without interactive login',
+    () async {
+      final google = _DeniedDriveGoogle(MemoryRemote());
+      final (container, _) = await device(
+        'a',
+        google,
+        storedAccount: google.email,
+      );
+      await pumpEventQueue();
+      expect(container.read(syncControllerProvider).account, google.email);
+      expect(
+        container.read(syncControllerProvider).error,
+        SyncFailure.unauthorized,
+      );
+      expect(container.read(syncControllerProvider).busy, isFalse);
+      expect(google.interactiveCalls, 0);
+    },
+  );
 
   test('an expired token is dropped and the sync retried', () async {
     final remote = MemoryRemote();

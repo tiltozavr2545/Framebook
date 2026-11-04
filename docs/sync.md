@@ -175,13 +175,18 @@ write or deletion.
 - changes during a pass schedule another pass after the debounce;
 - with the "Sync" button in settings.
 
-Automatic startup first restores the saved Google session. Restoration is guarded
-against overlapping lifecycle callbacks: Google account UI can itself resume
-the activity. Once restored, foreground sync reuses that session instead of
-opening Credential Manager again. If that
-cannot be done while offline, the account remains configured and retry waits
-for a later resume instead of showing "sign in again". Every Drive request has
-a 30-second timeout.
+Automatic startup reads the previously selected account from local preferences;
+it never calls Credential Manager or lightweight authentication. Each Drive
+access uses the Google plugin's authorization API with that explicit account
+email and `promptIfUnauthorized: false`. On Android this pins the request with
+`AuthorizationRequest.setAccount`, preventing fallback to another device account.
+Access tokens remain managed by Google rather than persisted by the app.
+If consent is missing or revoked, sync records an authorization error and the
+settings screen offers "Sign in again"; only that explicit action launches
+Google's account/consent UI. Other SDK failures are not treated as proof of
+revoked consent. Startup/resume calls are coalesced; the existing five-minute
+interval, edit debounce and expired-token retry remain unchanged. Every Drive
+request has a 30-second timeout.
 
 With no network it is quietly put off until the next occasion. In the MVP
 there is no sync in the background (while the app is closed).

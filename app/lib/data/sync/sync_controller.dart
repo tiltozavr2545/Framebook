@@ -97,7 +97,7 @@ class SyncController extends Notifier<SyncStatus> {
   static const resumeAfter = Duration(minutes: 5);
   static const debounce = Duration(seconds: 30);
 
-  static const _accountKey = 'sync_account';
+  static const _accountKey = syncAccountPreferenceKey;
   static const _errorKey = 'last_sync_error';
 
   late GoogleAccount _google;
@@ -159,8 +159,7 @@ class SyncController extends Notifier<SyncStatus> {
       await _maybeSync();
       return;
     }
-    // Credential Manager can resume the activity while restoring an account.
-    // Keep the guard until that operation finishes to prevent recursive UI.
+    // Coalesce startup/resume restoration and its pending sync pass.
     _restoring = true;
     try {
       final restored = await _google.restore();
