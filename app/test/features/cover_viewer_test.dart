@@ -1,4 +1,8 @@
+import 'dart:async';
 import 'dart:io';
+import 'dart:ui' as ui;
+
+import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +14,29 @@ import 'package:framebook/features/title/cover_viewer.dart';
 import 'package:framebook/shared/poster.dart';
 
 import '../support/api_fixtures.dart';
+
+class _PendingImage extends ImageProvider<_PendingImage> {
+  final frame = Completer<ImageInfo>();
+
+  @override
+  Future<_PendingImage> obtainKey(ImageConfiguration configuration) =>
+      SynchronousFuture(this);
+
+  @override
+  ImageStreamCompleter loadImage(
+    _PendingImage key,
+    ImageDecoderCallback decode,
+  ) => OneFrameImageStreamCompleter(frame.future);
+}
+
+Future<ui.Image> _raster(int width, int height) async {
+  final recorder = ui.PictureRecorder();
+  Canvas(recorder).drawColor(Colors.blue, BlendMode.src);
+  final picture = recorder.endRecording();
+  final image = await picture.toImage(width, height);
+  picture.dispose();
+  return image;
+}
 
 void main() {
   testWidgets('full-screen route fades without scaling the image', (
@@ -62,6 +89,84 @@ void main() {
       );
     },
   );
+
+  for (final kind in ['poster', 'person', 'still']) {
+    testWidgets(
+      '$kind preview fills the final image area before the large image loads',
+      (tester) async {
+        tester.view.physicalSize = const Size(360, 780);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        final preview = _PendingImage();
+        final large = _PendingImage();
+        final width = kind == 'still' ? 160 : 64;
+        final height = kind == 'still' ? 90 : 96;
+        final smallRaster = (await tester.runAsync(
+          () => _raster(width, height),
+        ))!;
+        final largeRaster = (await tester.runAsync(
+          () => _raster(width * 5, height * 5),
+        ))!;
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              contentLanguageProvider.overrideWithValue('en-US'),
+              imageConfigProvider.overrideWith(
+                (ref) async => ImageConfig.fallback,
+              ),
+              coverVariantsProvider.overrideWith((ref, key) async => []),
+              personImagesProvider.overrideWith((ref, key) async => []),
+              posterImageProvider.overrideWithValue(
+                (url, key) => key.startsWith('w185') ? preview : large,
+              ),
+            ],
+            child: MaterialApp(
+              home: CoverViewer(
+                currentPath: '/delayed-$kind',
+                personId: kind == 'person' ? 1 : null,
+                keyForImages: kind == 'person'
+                    ? null
+                    : kind == 'still'
+                    ? const WorkKey.episode(1, 1, 1)
+                    : const WorkKey.movie(1),
+                previewSize: ImageSize.w185,
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        preview.frame.complete(ImageInfo(image: smallRaster));
+        await tester.pumpAndSettle();
+        final viewport = tester.getSize(find.byType(InteractiveViewer));
+        final smallImage = find.byWidgetPredicate(
+          (widget) => widget is Image && identical(widget.image, preview),
+        );
+        expect(tester.getSize(smallImage), viewport);
+        final previewPaintSize = applyBoxFit(
+          BoxFit.contain,
+          Size(width.toDouble(), height.toDouble()),
+          viewport,
+        ).destination;
+        large.frame.complete(ImageInfo(image: largeRaster));
+        await tester.pumpAndSettle();
+        final bigImage = find.byWidgetPredicate(
+          (widget) => widget is Image && identical(widget.image, large),
+        );
+        expect(tester.getSize(bigImage), viewport);
+        expect(
+          applyBoxFit(
+            BoxFit.contain,
+            Size(width * 5.0, height * 5.0),
+            tester.getSize(bigImage),
+          ).destination,
+          previewPaintSize,
+        );
+        await tester.pumpWidget(const SizedBox());
+        PaintingBinding.instance.imageCache.clear();
+        PaintingBinding.instance.imageCache.clearLiveImages();
+      },
+    );
+  }
 
   testWidgets('online cover shows variants and allows paging and zoom', (
     tester,
@@ -183,6 +288,10 @@ void main() {
       expect(variantRequests, 0);
       expect(networkImages, 0);
       expect(find.byType(Image), findsOneWidget);
+      expect(
+        tester.getSize(find.byType(Image)),
+        tester.getSize(find.byType(InteractiveViewer)),
+      );
     },
   );
 }

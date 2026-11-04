@@ -259,3 +259,6 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
   on each launch. Reuse the selected account through noninteractive Drive
   authorization; request another sign-in only through the settings button
   when permission needs renewal.
+- Show full-screen photo previews at their final display size immediately,
+  avoiding the small-photo flash before the higher-resolution image loads.
+  This also applies to posters, episode stills and cached offline covers.

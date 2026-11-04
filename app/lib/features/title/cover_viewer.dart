@@ -167,6 +167,9 @@ class _CoverPageState extends ConsumerState<_CoverPage> {
       final provider = ref.watch(posterImageProvider);
       final large = widget.still ? config.stillLarge : config.posterLarge;
       preview = Stack(
+        // Give both resolutions the same viewport constraints. BoxFit.contain
+        // alone leaves a small preview at its intrinsic size under loose bounds.
+        fit: StackFit.expand,
         alignment: Alignment.center,
         children: [
           Image(
@@ -194,7 +197,7 @@ class _CoverPageState extends ConsumerState<_CoverPage> {
       panEnabled: _transform.value.getMaxScaleOnAxis() > 1.001,
       onInteractionUpdate: (_) =>
           widget.onZoom(_transform.value.getMaxScaleOnAxis() > 1.001),
-      child: SizedBox.expand(child: Center(child: preview)),
+      child: SizedBox.expand(child: preview),
     );
   }
 }

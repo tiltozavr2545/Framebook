@@ -404,7 +404,7 @@ persistence across restarts, individual removal and clearing. Only mini
 snapshots of selected films/series are stored locally; queries and people
 are excluded. No database or sync format changes.
 
-Validation: `make codegen`, `make verify` (386 passed, 18 skipped) and
+Validation: `make codegen`, `make verify` (389 passed, 18 skipped) and
 `make verify-version` passed. Regression coverage includes persistence, typed-id
 deduplication, the history limit, damaged preferences, dropdown navigation,
 removal/clearing and recording selected results rather than query text.
@@ -420,3 +420,11 @@ Nothing Phone 3a without clearing data. After two cold launches, ADB reported
 Framebook as the focused activity rather than a Google sign-in activity; this
 is a startup smoke check, not proof of a completed live Drive sync. The user
 also confirmed that the quiet startup behavior works on the phone.
+
+Full-screen image loading now gives the preview and large image identical
+viewport constraints. Delayed-image regression tests reproduce the previous
+intrinsic-size flash for posters, person photos and episode stills, with an
+additional cached-only layout assertion.
+The photo-layout fix passed the full suite (389 passed, 18 skipped) and a
+release-signed APK build. The APK was installed over the existing app on Nothing Phone 3a without
+clearing data. The user confirmed that the photo-layout fix works on the phone.
