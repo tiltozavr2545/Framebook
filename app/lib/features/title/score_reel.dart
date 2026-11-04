@@ -4,10 +4,11 @@ import 'package:flutter/services.dart';
 import '../../app/theme.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/format.dart';
+import '../../shared/score_color.dart';
 
 /// The score picker: a strip of film pulled through a gate. Frames run from
-/// 1 to 10 in steps of 0.5; whatever stands in the gate — outlined in red,
-/// the editor's grease pencil — is the score. Each step clicks.
+/// 1 to 10 in steps of 0.5; the frame in the gate is the selected score.
+/// Its colour follows the shared rating scale. Each step clicks.
 ///
 /// An unrated title starts at 5; a rated title starts at its saved score.
 class ScoreReel extends StatefulWidget {
@@ -109,7 +110,9 @@ class _ScoreReelState extends State<ScoreReel> {
                     ),
                   ),
                 ),
-                const IgnorePointer(child: Center(child: _Gate())),
+                IgnorePointer(
+                  child: Center(child: _Gate(half: half)),
+                ),
               ],
             );
           },
@@ -134,7 +137,7 @@ class _Frame extends StatelessWidget {
     // Every frame prints its score the same size: "7" and "7.5" are equal
     // steps, and should look it.
     final style = theme.textTheme.headlineMedium?.copyWith(
-      color: inGate ? theme.colorScheme.primary : reel.onFrame,
+      color: inGate ? scoreColorFor(Brightness.light, half / 2) : reel.onFrame,
       fontWeight: FontWeight.w800,
     );
     return CustomPaint(
@@ -196,17 +199,16 @@ class _StripPainter extends CustomPainter {
 
 /// The grease-pencil box around the frame in the gate.
 class _Gate extends StatelessWidget {
-  const _Gate();
+  const _Gate({required this.half});
+
+  final int half;
 
   @override
   Widget build(BuildContext context) => Container(
     width: ScoreReel.extent + 4,
     height: ScoreReel.height - 30,
     decoration: BoxDecoration(
-      border: Border.all(
-        color: Theme.of(context).colorScheme.primary,
-        width: 2.5,
-      ),
+      border: Border.all(color: scoreColor(context, half / 2), width: 2.5),
       borderRadius: BorderRadius.circular(7),
     ),
   );

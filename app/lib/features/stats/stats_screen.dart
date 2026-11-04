@@ -14,6 +14,7 @@ import '../../data/work_key.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/coverage_line.dart';
 import '../../shared/format.dart';
+import '../../shared/score_color.dart';
 import '../../shared/kind_filter.dart';
 import '../../shared/title_row.dart';
 
@@ -126,7 +127,7 @@ class _StatsBody extends StatelessWidget {
             Text(
               formatScore(stats.average!),
               style: theme.textTheme.displayLarge?.copyWith(
-                color: theme.colorScheme.primary,
+                color: scoreColor(context, stats.average!),
               ),
             ),
             const SizedBox(width: 14),
@@ -242,7 +243,7 @@ class _Distribution extends StatelessWidget {
                   BarChartRodData(
                     toY: counts[i].toDouble(),
                     width: 10,
-                    color: scheme.primary,
+                    color: scoreColor(context, (i + 2) / 2),
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(3),
                     ),
@@ -395,6 +396,7 @@ class _GroupRow extends StatelessWidget {
               Text(
                 formatScore(group.average),
                 style: theme.textTheme.titleMedium?.copyWith(
+                  color: scoreColor(context, group.average),
                   fontWeight: FontWeight.w600,
                 ),
               ),

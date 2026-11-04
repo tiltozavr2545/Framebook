@@ -73,7 +73,7 @@ final class PartsAverage {
   final WorkKind parts;
 }
 
-/// What the calibration sheet shows after a score is saved: titles of the
+/// What the calibration sheet shows while choosing a score: titles of the
 /// same kind with the same score, and the nearest existing scores above and
 /// below (docs/data-model.md, "Key queries").
 final class Calibration {
@@ -82,10 +82,6 @@ final class Calibration {
     required this.above,
     required this.below,
   });
-
-  /// What fits under the score reel: four of the same, two each side.
-  static const sameLimit = 4;
-  static const neighbourLimit = 2;
 
   final List<RatedTitle> same;
   final List<RatedTitle> above;

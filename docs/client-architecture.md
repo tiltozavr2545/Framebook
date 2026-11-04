@@ -275,9 +275,11 @@ All writes of the user's own data go through `Library`
   `ratings` + a tombstone in `watchlist`. Saving the same score and note
   again writes no new version — it would needlessly win a merge.
 - The **calibration** runs under the reel while it moves (Stage 6; in
-  Stage 3 it was a sheet after saving): up to four titles of the same kind
-  at the score in the gate, and two each at the nearest scores below and
-  above, laid out the way the strip runs — lower on the left. The queries
+  Stage 3 it was a sheet after saving): all titles of the same kind
+  at the score in the gate, and all titles at each nearest score below and
+  above. Each group is an independent horizontal shelf inside a bordered
+  panel; the matching score is a full-width panel above two neighbouring
+  panels, lower on the left. The area stays a fixed height as the reel moves. The queries
   are in [data-model.md](data-model.md). It is shown only once there are
   enough ratings of the kind: more than 20 for films, more than 10 for
   series, seasons and episodes each.
@@ -412,18 +414,19 @@ The design is [sync.md](sync.md); here is what lives where in
 The look is an editing table (`lib/app/theme.dart`): a cool lightbox,
 ink, film stock, and the editor's grease pencil.
 
-- **Red is only yours.** The grease-pencil red (`primary`) marks your own
-  score — on a card, in lists, on posters, the average in Stats — and your
-  actions (Rate, Save). Section labels, warnings and statuses are never red.
-  Edge-print amber (`tertiary`, `Reel.edge`) is for secondary figures:
-  years, dates, vote counts.
+- **Scores follow their value.** Below 4 is red, 4–6.5 inclusive amber and above 6.5 green,
+  with separate readable light/dark palettes. The same scale applies to your
+  scores, source scores, list badges and statistics; 100-point sources are
+  normalized before choosing a colour. The lit reel frame and poster badges
+  use the light palette even in dark mode. Muted violet (`primary`, #75608F in the light theme) is the action
+  accent, separate from all three score colours. Edge-print amber (`tertiary`, `Reel.edge`) is for years and dates.
 - **Type:** Sofia Sans, bundled (OFL, `assets/fonts/`): Extra Condensed for
   figures and titles — tall narrow numerals like edge print on film — and
   the normal width for reading. Static weights cut from the variable fonts,
   so `FontWeight` picks the right file.
 - **No plates.** Ratings on a card, the comparison blocks in Stats are
   columns ruled on top, not grey rounded cards; a note sits in the margin
-  with a red rule.
+  with a rule matching its score.
 - **One bold element:** the score reel. Everything around it stays quiet.
 - Light and dark follow the system; both are designed, not inverted.
 - `test/screenshots/` renders the main screens to PNG with the real fonts
@@ -520,3 +523,36 @@ The dropdown shows posters and title/year/type, opens cards directly, supports
 individual removal and clearing, and closes on typing, selection or loss of
 focus. It overlays existing content without moving Discover shelves or results.
 Malformed stored entries are skipped so Discover can still open.
+
+## Rich title cards and keyboard restoration
+
+Movie cards show their facts to the right of the poster: the earliest valid
+known release date across TMDB's appended
+`release_dates` and primary date, production countries, positive production
+budget and worldwide box office in USD. The full date replaces the standalone
+year in the header; the facts are not repeated below the source ratings. Missing amounts are omitted. Country
+names are displayed as provided by TMDB, which may be in English. Series show
+the first air date (and last air date when ended/cancelled) and production countries; movie finances are not inferred
+for series. These details stay in the evictable HTTP cache, outside snapshots,
+the local schema and synchronization.
+
+The header samples at most 4,096 pixels from the same cached w342 poster used
+for display, groups them into a small colour histogram and prefers chromatic midtones
+over dark borders and white lettering. The selected colour is adjusted for
+theme brightness, blended into the surface at 24% (light) / 38% (dark), and
+repeated in a visible border. Missing/failed images use the normal
+surface. A saved-only offline card never starts a tint image request.
+
+Movie collections and movie/TV similar lists load independently of the main
+card, have their own retry, omit empty sections, deduplicate typed work keys
+and exclude the current title. Collections are ordered by release date, with
+undated titles last. Opening a related title pushes within the current tab,
+so Back returns to the previous card. TMDB movie collections do not supply TV
+franchise membership; series therefore show only the similar section.
+
+`KeyboardRestore` observes app lifecycle transitions above all app routes. On
+leaving the foreground it remembers the active editor only if the keyboard
+is visible. On return it requests that editor's keyboard after the frame,
+only if the editor is still mounted and owns the same primary focus. This
+covers search, notes and settings without persisting keyboard state across
+process restarts or reopening a keyboard the user had already dismissed.

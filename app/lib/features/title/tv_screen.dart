@@ -8,10 +8,12 @@ import '../../data/sources/tmdb/tmdb_models.dart';
 import '../../data/work_key.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/poster.dart';
+import '../../shared/format.dart';
 import '../../shared/title_text.dart';
 import 'cast_section.dart';
 import 'my_rating.dart';
 import 'ratings_panel.dart';
+import 'related_titles.dart';
 import 'renumber_notice.dart';
 import 'title_layout.dart';
 import 'title_providers.dart';
@@ -40,7 +42,7 @@ class TvScreen extends ConsumerWidget {
           title: tv.title,
           originalTitle: tv.originalTitle,
           facts: [
-            joinFacts([_years(tv), _status(l10n, tv.status)]),
+            joinFacts([_dates(context, tv), _status(l10n, tv.status)]),
             joinFacts([
               if (tv.regularSeasonCount > 0)
                 l10n.seasonCount(tv.regularSeasonCount),
@@ -48,6 +50,7 @@ class TvScreen extends ConsumerWidget {
                 l10n.episodeCount(count),
             ]),
             tv.genres.map((g) => g.name).join(', '),
+            if (tv.countries.isNotEmpty) tv.countries.join(', '),
           ],
           tagline: tv.tagline,
         ),
@@ -92,21 +95,21 @@ class TvScreen extends ConsumerWidget {
               '$location/${TitleRoutes.seasonSegment(season.number)}',
             ),
           ),
+        RelatedTitles(current: tv.key),
       ],
     );
   }
 
-  /// "2011–2019", "2011–" while running, "2011" if it started and ended in
-  /// the same year.
-  static String? _years(TvDetails tv) {
-    final first = tv.firstYear;
-    if (first == null) return null;
-    final last = tv.lastYear;
-    return switch (tv.status) {
-      TvStatus.running => '$first–',
-      _ when last == null || last == first => '$first',
-      _ => '$first–$last',
-    };
+  static String? _dates(BuildContext context, TvDetails tv) {
+    final first = context.formatDate(tv.firstAirDate);
+    final last = context.formatDate(tv.lastAirDate);
+    if (first != null &&
+        last != null &&
+        first != last &&
+        (tv.status == TvStatus.ended || tv.status == TvStatus.canceled)) {
+      return '$first–$last';
+    }
+    return first;
   }
 
   static String? _status(AppLocalizations l10n, TvStatus status) =>

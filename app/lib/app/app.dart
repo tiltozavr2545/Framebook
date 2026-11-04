@@ -5,6 +5,7 @@ import '../l10n/app_localizations.dart';
 import '../data/sync/secrets_controller.dart';
 import '../data/update_checker.dart';
 import 'preferences.dart';
+import 'keyboard_restore.dart';
 import 'router.dart';
 import 'theme.dart';
 
@@ -29,7 +30,7 @@ class FramebookApp extends ConsumerWidget {
       builder: (context, child) => MediaQuery.withClampedTextScaling(
         minScaleFactor: 1.0,
         maxScaleFactor: 1.3,
-        child: child!,
+        child: KeyboardRestore(child: child!),
       ),
       routerConfig: ref.watch(routerProvider),
     );

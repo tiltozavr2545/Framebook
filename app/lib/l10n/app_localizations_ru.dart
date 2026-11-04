@@ -9,6 +9,24 @@ class AppLocalizationsRu extends AppLocalizations {
   AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
   @override
+  String get titlePremiere => 'Мировая премьера';
+
+  @override
+  String get titleCountries => 'Страны производства';
+
+  @override
+  String get titleBudget => 'Бюджет';
+
+  @override
+  String get titleRevenue => 'Мировые сборы';
+
+  @override
+  String get titleCollection => 'Связанные фильмы';
+
+  @override
+  String get titleSimilar => 'Похожие фильмы и сериалы';
+
+  @override
   String updateAvailable(String version) {
     return 'Доступно обновление $version';
   }

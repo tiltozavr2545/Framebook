@@ -11,6 +11,7 @@ import '../../data/library/library.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/coverage_line.dart';
 import '../../shared/format.dart';
+import '../../shared/score_color.dart';
 import '../../shared/kind_filter.dart';
 import '../../shared/title_row.dart';
 import '../../shared/title_text.dart';
@@ -161,7 +162,7 @@ class _RatedRow extends StatelessWidget {
     final score = Text(
       formatMyScore(title.rating.scoreHalf),
       style: theme.textTheme.headlineSmall?.copyWith(
-        color: theme.colorScheme.primary,
+        color: scoreColor(context, title.rating.scoreHalf / 2),
         fontWeight: FontWeight.w600,
       ),
     );

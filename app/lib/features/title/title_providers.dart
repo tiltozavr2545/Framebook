@@ -17,6 +17,16 @@ final tvProvider = FutureProvider.autoDispose.family<TvDetails, int>(
   (ref, id) => ref.watch(tmdbProvider).tv(id),
 );
 
+final similarTitlesProvider = FutureProvider.autoDispose
+    .family<List<TitleSummary>, WorkKey>(
+      (ref, key) => ref.watch(tmdbProvider).similar(key),
+    );
+
+final collectionTitlesProvider = FutureProvider.autoDispose
+    .family<List<TitleSummary>, int>(
+      (ref, id) => ref.watch(tmdbProvider).collection(id),
+    );
+
 /// The argument is the season's key.
 final seasonProvider = FutureProvider.autoDispose
     .family<SeasonDetails, WorkKey>(

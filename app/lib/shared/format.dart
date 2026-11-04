@@ -33,6 +33,13 @@ extension Formatting on BuildContext {
   String formatCount(int count) =>
       NumberFormat.compact(locale: _locale).format(count);
 
+  String formatUsd(int amount) => NumberFormat.currency(
+    locale: _locale,
+    name: 'USD',
+    symbol: r'$',
+    decimalDigits: 0,
+  ).format(amount);
+
   /// 136 → "2 h 16 min".
   String formatRuntime(int minutes) {
     final l10n = AppLocalizations.of(this);

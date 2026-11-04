@@ -40,6 +40,9 @@ abstract interface class TmdbApi {
   /// TMDB's recommendations for a film or a series.
   Future<List<TitleSummary>> recommendations(WorkKey key);
 
+  Future<List<TitleSummary>> similar(WorkKey key);
+  Future<List<TitleSummary>> collection(int id);
+
   /// An episode's cast, guest stars included, and its crew.
   Future<Credits> episodeCredits(int tvId, int season, int episode);
 
@@ -147,7 +150,7 @@ final class TmdbClient implements TmdbApi {
   @override
   Future<MovieDetails> movie(int id) async => MovieDetails.fromJson(
     await _get('/movie/$id', {
-      'append_to_response': 'external_ids,credits',
+      'append_to_response': 'external_ids,credits,release_dates',
     }, TmdbTtl.details),
   );
 
@@ -273,6 +276,37 @@ final class TmdbClient implements TmdbApi {
       TmdbTtl.slowShelf,
     ),
   );
+
+  @override
+  Future<List<TitleSummary>> similar(WorkKey key) async {
+    final kind = key.kind;
+    if (kind != WorkKind.movie && kind != WorkKind.tv) {
+      throw ArgumentError.value(key, 'key');
+    }
+    return _titles(
+      await _get(
+        '/${kind == WorkKind.movie ? 'movie' : 'tv'}/${key.tmdbId}/similar',
+        const {'page': '1'},
+        TmdbTtl.slowShelf,
+      ),
+      kind: kind,
+    );
+  }
+
+  @override
+  Future<List<TitleSummary>> collection(int id) async {
+    final json = await _get('/collection/$id', const {}, TmdbTtl.details);
+    final titles = [
+      for (final part in json.objects('parts'))
+        if (TitleSummary.fromListJson(part, WorkKind.movie) case final title?)
+          title,
+    ];
+    titles.sort((a, b) {
+      final date = (a.releaseDate ?? '9999').compareTo(b.releaseDate ?? '9999');
+      return date != 0 ? date : a.key.tmdbId.compareTo(b.key.tmdbId);
+    });
+    return titles;
+  }
 
   @override
   Future<Credits> episodeCredits(int tvId, int season, int episode) async =>

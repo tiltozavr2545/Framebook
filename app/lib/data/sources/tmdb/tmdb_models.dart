@@ -119,6 +119,11 @@ final class MovieDetails {
     required this.vote,
     this.originalLanguage,
     this.credits = const Credits(),
+    this.budget,
+    this.revenue,
+    this.countries = const [],
+    this.collection,
+    this.premiereDate,
   });
 
   factory MovieDetails.fromJson(Json json) {
@@ -137,6 +142,13 @@ final class MovieDetails {
       overview: json.string('overview'),
       tagline: json.string('tagline'),
       runtime: _positive(json.integer('runtime')),
+      budget: _positive(json.integer('budget')),
+      revenue: _positive(json.integer('revenue')),
+      countries: productionCountries(json),
+      collection: MovieCollection.fromJson(
+        json.object('belongs_to_collection'),
+      ),
+      premiereDate: firstReleaseDate(json),
       // A film has imdb_id both at the root and in external_ids; the root is
       // more reliable.
       imdbId:
@@ -159,6 +171,14 @@ final class MovieDetails {
 
   /// Minutes.
   final int? runtime;
+
+  /// Production budget and worldwide box office in US dollars. Zero in
+  /// TMDB means unknown, so it is represented by null.
+  final int? budget;
+  final int? revenue;
+  final List<String> countries;
+  final MovieCollection? collection;
+  final String? premiereDate;
   final String? imdbId;
   final TmdbVote vote;
 
@@ -186,6 +206,7 @@ final class TvDetails {
     required this.vote,
     this.originalLanguage,
     this.credits = const Credits(),
+    this.countries = const [],
   });
 
   factory TvDetails.fromJson(Json json) {
@@ -202,6 +223,7 @@ final class TvDetails {
       lastAirDate: json.string('last_air_date'),
       posterPath: json.string('poster_path'),
       genres: _genres(json),
+      countries: productionCountries(json),
       overview: json.string('overview'),
       tagline: json.string('tagline'),
       status: TvStatus.parse(json.string('status')),
@@ -227,6 +249,7 @@ final class TvDetails {
   final String? lastAirDate;
   final String? posterPath;
   final List<Genre> genres;
+  final List<String> countries;
   final String? overview;
   final String? tagline;
   final TvStatus status;
@@ -481,3 +504,52 @@ final _imdbPattern = RegExp(r'^tt[0-9]{7,10}$');
 
 String? _imdb(String? value) =>
     value != null && _imdbPattern.hasMatch(value) ? value : null;
+
+/// A collection identifies sequels and prequels, rather than recommendations.
+final class MovieCollection {
+  const MovieCollection(this.id, this.name);
+
+  static MovieCollection? fromJson(Json? json) {
+    if (json == null) return null;
+    final id = _positive(json.integer('id'));
+    return id == null ? null : MovieCollection(id, json.string('name'));
+  }
+
+  final int id;
+  final String? name;
+}
+
+List<String> productionCountries(Json json) => [
+  ...{
+    for (final country in json.objects('production_countries'))
+      if (country.string('name') case final name?) name,
+  },
+];
+
+/// The earliest known release across all countries and release types.
+/// TMDB timestamps describe calendar dates here, not instants to localize.
+String? firstReleaseDate(Json json) {
+  final dates = <String>[];
+  for (final country
+      in json.object('release_dates')?.objects('results') ?? <Json>[]) {
+    for (final release in country.objects('release_dates')) {
+      final raw = release.string('release_date');
+      if (raw == null || raw.length < 10) continue;
+      final date = raw.substring(0, 10);
+      if (validCalendarDate(date)) dates.add(date);
+    }
+  }
+  final primary = json.string('release_date');
+  if (primary != null && validCalendarDate(primary)) dates.add(primary);
+  dates.sort();
+  return dates.firstOrNull;
+}
+
+bool validCalendarDate(String date) {
+  if (!RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(date)) return false;
+  final parsed = DateTime.tryParse(date);
+  return parsed != null &&
+      parsed.year == int.parse(date.substring(0, 4)) &&
+      parsed.month == int.parse(date.substring(5, 7)) &&
+      parsed.day == int.parse(date.substring(8, 10));
+}

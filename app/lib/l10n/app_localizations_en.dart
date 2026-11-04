@@ -9,6 +9,24 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get titlePremiere => 'World premiere';
+
+  @override
+  String get titleCountries => 'Production countries';
+
+  @override
+  String get titleBudget => 'Budget';
+
+  @override
+  String get titleRevenue => 'Worldwide box office';
+
+  @override
+  String get titleCollection => 'Related films';
+
+  @override
+  String get titleSimilar => 'Similar titles';
+
+  @override
   String updateAvailable(String version) {
     return 'Update $version is available';
   }

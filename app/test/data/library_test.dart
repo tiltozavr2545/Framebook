@@ -576,19 +576,21 @@ void main() {
       expect((await library.calibration(matrix.key, 16)).isEmpty, isTrue);
     });
 
-    test('limits: four of the same, two per neighbour', () async {
-      for (var id = 1; id <= 8; id++) {
-        await rate(film(id), 16);
-      }
-      for (var id = 11; id <= 15; id++) {
-        await rate(film(id), 18);
-      }
-      await rate([matrix], 16);
-      final c = await library.calibration(matrix.key, 16);
-      // What fits under the score reel.
-      expect(c.same, hasLength(4));
-      expect(c.above, hasLength(2));
-    });
+    test(
+      'scrollable groups include all titles at the same and nearest scores',
+      () async {
+        for (var id = 1; id <= 8; id++) {
+          await rate(film(id), 16);
+        }
+        for (var id = 11; id <= 15; id++) {
+          await rate(film(id), 18);
+        }
+        await rate([matrix], 16);
+        final c = await library.calibration(matrix.key, 16);
+        expect(c.same.map((t) => t.key.tmdbId), [8, 7, 6, 5, 4, 3, 2, 1]);
+        expect(c.above.map((t) => t.key.tmdbId), [15, 14, 13, 12, 11]);
+      },
+    );
   });
 
   group('parts average', () {

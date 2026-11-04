@@ -692,7 +692,7 @@ final class Library {
         _db.works.kind.equalsValue(key.kind) &
         _db.ratings.workKey.equals(key.toString()).not();
 
-    Future<List<RatedTitle>> withScore(int score, int limit) async {
+    Future<List<RatedTitle>> withScore(int score) async {
       final rows =
           await (_db.select(_db.ratings).join([
                   innerJoin(
@@ -701,8 +701,10 @@ final class Library {
                   ),
                 ])
                 ..where(sameKind() & _db.ratings.scoreHalf.equals(score))
-                ..orderBy([OrderingTerm.desc(_db.ratings.scoredAt)])
-                ..limit(limit))
+                ..orderBy([
+                  OrderingTerm.desc(_db.ratings.scoredAt),
+                  OrderingTerm.asc(_db.ratings.workKey),
+                ]))
               .get();
       return _withAncestors([
         for (final row in rows)
@@ -734,13 +736,9 @@ final class Library {
     final aboveScore = await nearest(true);
     final belowScore = await nearest(false);
     return Calibration(
-      same: await withScore(scoreHalf, Calibration.sameLimit),
-      above: aboveScore == null
-          ? const []
-          : await withScore(aboveScore, Calibration.neighbourLimit),
-      below: belowScore == null
-          ? const []
-          : await withScore(belowScore, Calibration.neighbourLimit),
+      same: await withScore(scoreHalf),
+      above: aboveScore == null ? const [] : await withScore(aboveScore),
+      below: belowScore == null ? const [] : await withScore(belowScore),
     );
   }
 

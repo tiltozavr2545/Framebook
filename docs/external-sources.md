@@ -41,7 +41,9 @@ Base: `https://api.themoviedb.org/3`. The response language is the
 | What | Request |
 |---|---|
 | search | `GET /search/multi?query=…` — only `media_type` `movie` and `tv` are kept |
-| film | `GET /movie/{id}?append_to_response=external_ids` |
+| film | `GET /movie/{id}?append_to_response=external_ids,credits,release_dates` |
+| movie collection | `GET /collection/{id}` — parts of the collection identified by `belongs_to_collection` |
+| similar titles | `GET /movie/{id}/similar`, `/tv/{id}/similar` — first page, based on genres and keywords |
 | series | `GET /tv/{id}?append_to_response=external_ids` — includes the season list |
 | season | `GET /tv/{id}/season/{n}` — includes every episode with its `vote_average` |
 | an episode's ids in other databases | `GET /tv/{id}/season/{n}/episode/{m}/external_ids` |
@@ -274,3 +276,13 @@ An invalid key isn't saved; with no network the key is saved marked "not
 checked". Trial requests receive plain text and parse JSON explicitly. A
 malformed or proxy HTML response is a source failure and does not save the key
 as if the phone were merely offline.
+
+## Additional card facts
+
+Movie details include production countries, budget and worldwide revenue
+(in USD); zero/nonpositive amounts are unknown and omitted. Appended release
+dates supply the earliest known valid calendar date, falling back to the
+primary release date. Movie collections and similar lists use the seven-day
+detail/slow-shelf cache, with the same stale-cache fallback as other TMDB
+responses. They do not consume PoiskKino or OMDb request budgets. They are
+optional sections: failures do not prevent rating or viewing the main card.

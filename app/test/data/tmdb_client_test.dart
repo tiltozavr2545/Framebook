@@ -209,10 +209,132 @@ void main() {
       expect(movie.title, 'Матрица');
       expect(movie.imdbId, 'tt0133093');
       expect(movie.runtime, 136);
+      expect(movie.budget, 63000000);
+      expect(movie.revenue, 463517383);
+      expect(movie.countries, ['United States of America']);
+      expect(movie.collection?.id, 2344);
+      expect(movie.premiereDate, '1999-03-31');
+      expect(
+        http.requests.last.uri.queryParameters['append_to_response'],
+        contains('release_dates'),
+      );
       expect(movie.genres.map((g) => g.name), ['боевик', 'фантастика']);
       expect(movie.tagline, '«Добро пожаловать в реальный мир»');
       expect(movie.vote.count, 29070);
     });
+
+    test('unknown movie finances are absent rather than zero', () {
+      for (final value in [null, 0, -1, 'N/A']) {
+        final movie = MovieDetails.fromJson(
+          Json({'id': 1, 'budget': value, 'revenue': value}),
+        );
+        expect(movie.budget, isNull);
+        expect(movie.revenue, isNull);
+      }
+    });
+
+    test(
+      'world premiere uses the earliest valid calendar date without time zones',
+      () {
+        final movie = MovieDetails.fromJson(
+          const Json({
+            'id': 1,
+            'release_date': '2000-01-10',
+            'release_dates': {
+              'results': [
+                {
+                  'release_dates': [
+                    {'release_date': '2000-01-09T23:00:00.000Z'},
+                    {'release_date': '1999-12-31T00:00:00.000Z'},
+                    {'release_date': '1999-02-30T00:00:00.000Z'},
+                    {'release_date': 'bad'},
+                  ],
+                },
+                {
+                  'release_dates': [
+                    {'release_date': '2000-02-10T00:00:00.000Z'},
+                  ],
+                },
+              ],
+            },
+          }),
+        );
+        expect(movie.premiereDate, '1999-12-31');
+        expect(movie.releaseDate, '2000-01-10');
+        expect(
+          MovieDetails.fromJson(const Json({'id': 1})).premiereDate,
+          isNull,
+        );
+      },
+    );
+
+    test('production countries skip malformed and duplicate entries', () {
+      expect(
+        productionCountries(
+          const Json({
+            'production_countries': [
+              {'name': 'Australia'},
+              {'name': 'Australia'},
+              {'name': ''},
+              {'name': 'United States of America'},
+              {'name': 2},
+              null,
+            ],
+          }),
+        ),
+        ['Australia', 'United States of America'],
+      );
+    });
+
+    test(
+      'collection uses movie identities and release order, with undated parts last',
+      () async {
+        serve(
+          (_) => (
+            status: 200,
+            body: '''{"parts":[
+        {"id":3,"title":"Undated"},
+        {"id":2,"title":"Sequel","release_date":"2003-01-01"},
+        {"id":1,"title":"First","release_date":"1999-01-01"},
+        {"title":"Invalid"}
+      ]}''',
+          ),
+        );
+        final titles = await client().collection(2344);
+        expect(http.requests.single.uri.path, '/3/collection/2344');
+        expect(titles.map((title) => title.key), [
+          const WorkKey.movie(1),
+          const WorkKey.movie(2),
+          const WorkKey.movie(3),
+        ]);
+        await client().collection(2344);
+        expect(http.requests.length, 1);
+      },
+    );
+
+    test(
+      'similar endpoints preserve the movie or TV kind and use the cache',
+      () async {
+        serve(
+          (_) => (
+            status: 200,
+            body: '{"results":[{"id":603,"title":"Film","name":"TV"}]}',
+          ),
+        );
+        final movie = await client().similar(const WorkKey.movie(1));
+        expect(http.requests.last.uri.path, '/3/movie/1/similar');
+        expect(movie.single.key, const WorkKey.movie(603));
+        final tv = await client().similar(const WorkKey.tv(1));
+        expect(http.requests.last.uri.path, '/3/tv/1/similar');
+        expect(tv.single.key, const WorkKey.tv(603));
+        await client().similar(const WorkKey.tv(1));
+        expect(http.requests.length, 2);
+        await expectLater(
+          client().similar(const WorkKey.season(1, 1)),
+          throwsArgumentError,
+        );
+      },
+    );
 
     test('series: imdb id from external_ids, seasons with specials', () async {
       final tv = await client().tv(1399);
@@ -356,7 +478,7 @@ void main() {
       expect(cache.entries.keys.single, isNot(contains('short-v3-key')));
       expect(
         cache.entries.keys.single,
-        'tmdb:/movie/603?append_to_response=external_ids%2Ccredits&language=ru-RU',
+        'tmdb:/movie/603?append_to_response=external_ids%2Ccredits%2Crelease_dates&language=ru-RU',
       );
     });
 

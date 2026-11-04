@@ -304,9 +304,9 @@ files. Details are in [sync.md](sync.md).
 `K` (all queries over live rows, `deleted_at is null`, the same `kind`,
 without the current title); it runs again as the reel moves:
 
-1. "The same" — `score_half = S`, by `scored_at desc`, up to 4 rows.
+1. "The same" — `score_half = S`, by `scored_at desc, work_key asc`, with all matching rows available to scroll.
 2. "Neighbour above" — `score_half = (select min(score_half) … where score_half > S)`,
-   up to 2 rows.
+   all matching rows in the same stable order.
 3. "Neighbour below" — symmetric, with `max(…) < S`.
 
 The calibration appears only when there are enough ratings of this kind to

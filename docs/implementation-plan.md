@@ -248,8 +248,8 @@ release.
    options TMDB has).
 7. ✅ The score reel: a strip of film pulled through a gate, 1–10 by 0.5, a
    haptic click per frame, a blank leader instead of a default score. The
-   calibration sits above it and changes as it moves (4 of the same, 2 each
-   side), in a box of fixed height so the reel never jumps.
+   calibration sits above it and changes as it moves (scrollable groups for the same score and both
+   nearest neighbours), in a box of fixed height so the reel never jumps.
 8. ✅ Cast and crew on every card, and a person page with the filmography.
 
 Along the way:
@@ -450,3 +450,35 @@ Discover, saved ratings, statistics and return to the same statistics screen
 after a short background pause passed. This does not validate destructive
 Drive operations, Android file-picker flows, two-device sync or the Samsung
 long-background scenario.
+
+## 0.8.2 — Title-card expansion
+
+- [x] Restore the active keyboard on returning from the background only if it
+  was visible before leaving, across search, notes and other editors.
+- [x] Value-based score colours for personal and source scores, normalized
+  across 10/100-point scales and adapted to light/dark surfaces.
+- [x] Movie world premiere, production countries, budget and worldwide box
+  office; first air date and production countries on series.
+- [x] Soft header tint from the poster's dominant colour.
+- [x] Movie franchise collections and movie/TV similar-title shelves, with
+  navigation back to the originating card and independent loading/retry.
+
+No local schema or sync format changes. `make codegen` and `make verify` passed
+(436 tests passed, 18 opt-in renderers skipped; format and analysis clean).
+Card renders in light and dark themes were inspected separately. A release-signed
+APK was built successfully (66.9 MB).
+
+
+Title-card refinements: moved the release date, countries and finances beside
+its poster without a duplicate standalone year; changed the global action
+accent to muted violet at the user's choice; score bands are now <4 red,
+4–6.5 inclusive amber, >6.5 green. Poster colour selection prioritizes visible
+artwork hues over dark borders. Calibration now exposes all matching titles
+in three distinct independently scrollable panels, retaining its stable area
+and existing minimum-library thresholds.
+
+Validation of the 0.8.2 refinements: `make verify` passed (436 tests, 18 opt-in
+renderers skipped), `make verify-version` passed, and the release-signed APK
+built successfully. The 0.8.2+16 APK was installed over the existing app on
+Nothing Phone 3a without clearing data; ADB confirmed version 0.8.2/build 16.
+The user confirmed that the installed changes work on 2026-11-04.

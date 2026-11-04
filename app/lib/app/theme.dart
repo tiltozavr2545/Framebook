@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 
-// The look is an editing table: a cool lightbox, ink, film stock, and the
-// editor's grease pencil — red is *your* mark (your score, your actions) and
-// nothing else. Everything else stays quiet so that the score carousel, the
-// one bold element, carries the identity (docs/client-architecture.md,
-// "Design").
+// The look is an editing table: a cool lightbox, ink and film stock.
+// Muted violet is the action accent; scores use their own value-based palette
+// (shared/score_color.dart). See docs/client-architecture.md, "Design".
 
 /// The two typefaces: one superfamily, two widths. Extra Condensed is for
 /// figures and titles — tall narrow numerals like edge print on film and
@@ -80,16 +78,16 @@ abstract final class FramebookTheme {
   static const _lightbox = Color(0xFFF2F4F3);
   static const _ink = Color(0xFF1A2027);
   static const _film = Color(0xFF2B3038);
-  static const _grease = Color(0xFFD33A2C);
+  static const _accent = Color(0xFF75608F);
   static const _muted = Color(0xFF6B737C);
 
   static final light = _build(
     const ColorScheme(
       brightness: Brightness.light,
-      primary: _grease,
+      primary: _accent,
       onPrimary: Color(0xFFFFFFFF),
-      primaryContainer: Color(0xFFFBDAD5),
-      onPrimaryContainer: Color(0xFF5A110A),
+      primaryContainer: Color(0xFFECDFF6),
+      onPrimaryContainer: Color(0xFF2C183F),
       secondary: _film,
       onSecondary: _lightbox,
       secondaryContainer: Color(0xFFDCE1E0),
@@ -112,7 +110,7 @@ abstract final class FramebookTheme {
       outlineVariant: Color(0xFFC5CBCA),
       inverseSurface: _film,
       onInverseSurface: Color(0xFFE4E8EA),
-      inversePrimary: Color(0xFFFF8A7A),
+      inversePrimary: Color(0xFFD4BCEB),
       shadow: Color(0xFF000000),
       scrim: Color(0xFF000000),
     ),
@@ -130,10 +128,10 @@ abstract final class FramebookTheme {
   static final dark = _build(
     const ColorScheme(
       brightness: Brightness.dark,
-      primary: Color(0xFFFF6A57),
-      onPrimary: Color(0xFF2A0A06),
-      primaryContainer: Color(0xFF6B1B12),
-      onPrimaryContainer: Color(0xFFFFDAD4),
+      primary: Color(0xFFD4BCEB),
+      onPrimary: Color(0xFF362346),
+      primaryContainer: Color(0xFF514060),
+      onPrimaryContainer: Color(0xFFECDFF6),
       secondary: Color(0xFFC9D1D6),
       onSecondary: Color(0xFF171B20),
       secondaryContainer: Color(0xFF323941),
@@ -156,7 +154,7 @@ abstract final class FramebookTheme {
       outlineVariant: Color(0xFF3A424B),
       inverseSurface: Color(0xFFE4E8EA),
       onInverseSurface: Color(0xFF1A2027),
-      inversePrimary: _grease,
+      inversePrimary: _accent,
       shadow: Color(0xFF000000),
       scrim: Color(0xFF000000),
     ),
@@ -243,7 +241,7 @@ abstract final class FramebookTheme {
           ),
         ),
       ),
-      // Your actions are red; a secondary action is ink on the lightbox.
+      // Violet marks actions; a secondary action is ink on the lightbox.
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           textStyle: text.labelLarge,

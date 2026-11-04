@@ -1,6 +1,14 @@
 {
   "@@locale": "ru",
 
+  "titlePremiere": "Мировая премьера",
+  "titleCountries": "Страны производства",
+  "titleBudget": "Бюджет",
+  "titleRevenue": "Мировые сборы",
+  "titleCollection": "Связанные фильмы",
+  "titleSimilar": "Похожие фильмы и сериалы",
+
+
 
   "updateAvailable": "Доступно обновление {version}",
   "updateOpen": "Открыть релиз",

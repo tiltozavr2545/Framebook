@@ -73,3 +73,25 @@ Intel development Mac.
 `test/screenshots/screens_test.dart` contains 18 opt-in render scenarios. They
 are skipped without `SCREENSHOTS=<directory>` and produce PNGs for inspection;
 they have no visual baseline assertions and are not functional regression tests.
+
+## Rich title cards
+
+`data/tmdb_client_test.dart` covers unknown finances, earliest valid release
+dates without time-zone shifts, production-country parsing, collection order,
+typed similar results and their cache. `features/card_colors_test.dart` checks
+score-band boundaries (4 and 6.5 inclusive), normal-surface text contrast in
+both themes and characteristic poster-colour sampling despite dark borders.
+`features/calibration_visibility_test.dart` exercises all three independent
+horizontal shelves, including titles beyond the former 4/2-item limits, at
+normal and increased font scales. The library tests assert full group membership
+and stable ordering. `app_test.dart` checks displayed movie facts, current-title and
+duplicate exclusion, and opening collection/similar cards with Back navigation.
+
+Keyboard scenarios in `app_test.dart` and `features/keyboard_restore_test.dart`
+cover an open versus dismissed keyboard across a full lifecycle round trip,
+multiline editors and removing the editor while backgrounded. Before release,
+repeat on a physical phone: focus search or a note, switch apps, return through
+Recents, then repeat after explicitly dismissing the keyboard. The dismissed
+keyboard must stay hidden. Also inspect real-poster tints and collection/similar
+sections with a large system font and unreliable network; automated image
+renders use local placeholder artwork rather than live poster downloads.

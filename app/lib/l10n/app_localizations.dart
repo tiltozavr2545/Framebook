@@ -98,6 +98,42 @@ abstract class AppLocalizations {
     Locale('ru'),
   ];
 
+  /// No description provided for @titlePremiere.
+  ///
+  /// In en, this message translates to:
+  /// **'World premiere'**
+  String get titlePremiere;
+
+  /// No description provided for @titleCountries.
+  ///
+  /// In en, this message translates to:
+  /// **'Production countries'**
+  String get titleCountries;
+
+  /// No description provided for @titleBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget'**
+  String get titleBudget;
+
+  /// No description provided for @titleRevenue.
+  ///
+  /// In en, this message translates to:
+  /// **'Worldwide box office'**
+  String get titleRevenue;
+
+  /// No description provided for @titleCollection.
+  ///
+  /// In en, this message translates to:
+  /// **'Related films'**
+  String get titleCollection;
+
+  /// No description provided for @titleSimilar.
+  ///
+  /// In en, this message translates to:
+  /// **'Similar titles'**
+  String get titleSimilar;
+
   /// No description provided for @updateAvailable.
   ///
   /// In en, this message translates to:

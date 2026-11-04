@@ -262,3 +262,19 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
 - Show full-screen photo previews at their final display size immediately,
   avoiding the small-photo flash before the higher-resolution image loads.
   This also applies to posters, episode stills and cached offline covers.
+
+## 0.8.2 — Richer title cards (build 16)
+
+- Restore the keyboard when returning from the background if it was open.
+- Colour personal and source scores by their value, in both themes.
+- Show world premiere dates, production countries, movie budgets and
+  worldwide box office in dollars.
+- Add a subtle poster-coloured background to title headers.
+- Browse other films in a franchise and similar films/series from a card,
+  with Back returning to the previous title.
+
+- Refine score colours: 4–6.5 inclusive is amber, lower scores red, higher
+  scores green. Use muted violet for general controls.
+- Put release dates, countries and finances beside the poster, and make
+  poster-coloured headers more visible.
+- Scroll through all titles in three clearly separated calibration groups.

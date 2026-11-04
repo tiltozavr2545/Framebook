@@ -1,6 +1,14 @@
 {
   "@@locale": "en",
 
+  "titlePremiere": "World premiere",
+  "titleCountries": "Production countries",
+  "titleBudget": "Budget",
+  "titleRevenue": "Worldwide box office",
+  "titleCollection": "Related films",
+  "titleSimilar": "Similar titles",
+
+
 
   "updateAvailable": "Update {version} is available",
   "updateOpen": "Open release",

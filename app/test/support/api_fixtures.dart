@@ -19,6 +19,11 @@ Reply? apiFixtures(RequestOptions request) {
   switch (uri.host) {
     case 'api.themoviedb.org':
       return switch (uri.path) {
+        // Synthetic empty optional sections; populated/error cases have
+        // dedicated test responses.
+        '/3/collection/2344' => (status: 200, body: '{"parts":[]}'),
+        '/3/movie/603/similar' ||
+        '/3/tv/1399/similar' => (status: 200, body: '{"results":[]}'),
         '/3/configuration' => ok('tmdb/configuration.json'),
         '/3/genre/movie/list' => ok('tmdb/genre_movie_ru.json'),
         '/3/tv/1399/season/1/episode/3/credits' => ok(

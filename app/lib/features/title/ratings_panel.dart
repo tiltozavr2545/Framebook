@@ -11,6 +11,7 @@ import '../../data/source_failure.dart';
 import '../../data/work_key.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/format.dart';
+import '../../shared/score_color.dart';
 import 'title_ratings.dart';
 
 /// A card's external rating cells. Each source is its own cell with its own
@@ -93,7 +94,12 @@ class _RatingCell extends StatelessWidget {
               _value(row.value!, source),
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w600,
-                color: stale ? scheme.outline : null,
+                color: scoreColor(
+                  context,
+                  source == RatingSource.rt || source == RatingSource.metacritic
+                      ? row.value! / 10
+                      : row.value!,
+                ),
               ),
             ),
             if (myScoreHalf case final mine?)

@@ -10,6 +10,7 @@ import '../../data/library/work_snapshot.dart';
 import '../../data/work_key.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/format.dart';
+import '../../shared/score_color.dart';
 import '../../shared/note_length_formatter.dart';
 import '../../data/library/rating_note.dart';
 import '../../data/sources/tmdb/tmdb_models.dart';
@@ -251,7 +252,7 @@ class _Rated extends StatelessWidget {
                 child: Text(
                   formatMyScore(rating.scoreHalf),
                   style: theme.textTheme.displayLarge?.copyWith(
-                    color: theme.colorScheme.primary,
+                    color: scoreColor(context, rating.scoreHalf / 2),
                   ),
                 ),
               ),
@@ -294,7 +295,10 @@ class _Rated extends StatelessWidget {
             padding: const EdgeInsets.only(left: 12),
             decoration: BoxDecoration(
               border: Border(
-                left: BorderSide(color: theme.colorScheme.primary, width: 2),
+                left: BorderSide(
+                  color: scoreColor(context, rating.scoreHalf / 2),
+                  width: 2,
+                ),
               ),
             ),
             child: Text(note, style: theme.textTheme.bodyLarge),
@@ -320,7 +324,9 @@ class MyScoreBadge extends ConsumerWidget {
     final figure = Text(
       formatMyScore(rating.scoreHalf),
       style: theme.textTheme.headlineSmall?.copyWith(
-        color: theme.colorScheme.primary,
+        color: onPoster
+            ? scoreColorFor(Brightness.light, rating.scoreHalf / 2)
+            : scoreColor(context, rating.scoreHalf / 2),
         fontWeight: FontWeight.w800,
         height: 1,
       ),
@@ -509,17 +515,14 @@ class _RatingEditorState extends State<RatingEditor> {
   }
 }
 
-/// Above the reel: what you rated the same, and the nearest scores below and
-/// above, laid out the way the strip runs — lower on the left.
+/// Stable comparison area: each score group has its own horizontal shelf.
 class _Comparison extends StatelessWidget {
   const _Comparison({required this.shown});
 
   final ({int scoreHalf, Calibration calibration})? shown;
 
-  /// Tall enough for a label, a poster and a line of title, so the panel
-  /// keeps its height while the reel moves.
-  static const _rowHeight = 156.0;
-  static const height = _rowHeight * 2;
+  static const _rowHeight = 178.0;
+  static const height = _rowHeight * 2 + 10;
 
   @override
   Widget build(BuildContext context) {
@@ -537,40 +540,40 @@ class _Comparison extends StatelessWidget {
       );
     }
     String scoreOf(List<RatedTitle> group) =>
-        formatMyScore(group.first.rating.scoreHalf);
+        group.isEmpty ? '—' : formatMyScore(group.first.rating.scoreHalf);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SizedBox(
           height: _rowHeight,
           child: _Group(
+            key: ValueKey(('same', shown.scoreHalf)),
             label: l10n.calibrationSame(formatMyScore(shown.scoreHalf)),
             titles: c.same,
-            slots: Calibration.sameLimit,
+            icon: Icons.drag_handle,
+            highlighted: true,
           ),
         ),
+        const SizedBox(height: 10),
         SizedBox(
           height: _rowHeight,
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: _Group(
-                  label: c.below.isEmpty
-                      ? null
-                      : l10n.calibrationBelow(scoreOf(c.below)),
+                  key: ValueKey(('below', shown.scoreHalf)),
+                  label: l10n.calibrationBelow(scoreOf(c.below)),
                   titles: c.below,
-                  slots: Calibration.neighbourLimit,
+                  icon: Icons.south_rounded,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: _Group(
-                  label: c.above.isEmpty
-                      ? null
-                      : l10n.calibrationAbove(scoreOf(c.above)),
+                  key: ValueKey(('above', shown.scoreHalf)),
+                  label: l10n.calibrationAbove(scoreOf(c.above)),
                   titles: c.above,
-                  slots: Calibration.neighbourLimit,
+                  icon: Icons.north_rounded,
                 ),
               ),
             ],
@@ -583,70 +586,96 @@ class _Comparison extends StatelessWidget {
 
 class _Group extends StatelessWidget {
   const _Group({
+    super.key,
     required this.label,
     required this.titles,
-    required this.slots,
+    required this.icon,
+    this.highlighted = false,
   });
 
-  final String? label;
+  final String label;
   final List<RatedTitle> titles;
-
-  /// How many posters the row has room for; they keep their size whether
-  /// there is one title or four.
-  final int slots;
-
-  static const _poster = 64.0;
+  final IconData icon;
+  final bool highlighted;
+  static const _poster = 56.0;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final muted = theme.textTheme.bodySmall?.copyWith(
-      color: theme.colorScheme.onSurfaceVariant,
+      color: scheme.onSurfaceVariant,
     );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label ?? '',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: theme.textTheme.titleSmall,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: highlighted
+            ? scheme.primaryContainer.withValues(alpha: 0.4)
+            : scheme.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: highlighted ? scheme.primary : scheme.outlineVariant,
         ),
-        const SizedBox(height: 6),
-        if (titles.isEmpty)
-          Text(l10n.calibrationNothing, style: muted)
-        else
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (final title in titles.take(slots))
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: SizedBox(
-                    width: _poster,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Poster(
-                          title.posterPath,
-                          size: ImageSize.w185,
-                          width: _poster,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          describeRated(l10n, title).title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: muted,
-                        ),
-                      ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              height: 40,
+              child: Row(
+                children: [
+                  Icon(icon, size: 15, color: scheme.primary),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      label,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelMedium,
                     ),
                   ),
-                ),
-            ],
-          ),
-      ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 6),
+            Expanded(
+              child: titles.isEmpty
+                  ? Text(l10n.calibrationNothing, style: muted)
+                  : ListView.separated(
+                      key: ValueKey(label),
+                      scrollDirection: Axis.horizontal,
+                      itemCount: titles.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 8),
+                      itemBuilder: (context, index) {
+                        final title = titles[index];
+                        return SizedBox(
+                          width: _poster,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Poster(
+                                title.posterPath,
+                                size: ImageSize.w185,
+                                width: _poster,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                describeRated(l10n, title).title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: muted,
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

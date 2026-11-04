@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:framebook/features/title/cover_viewer.dart';
 import 'package:framebook/features/title/title_layout.dart';
+import 'package:framebook/features/title/ratings_panel.dart';
 import 'package:framebook/data/update_checker.dart';
 import 'package:dio/dio.dart';
 import 'package:drift/native.dart';
@@ -115,6 +116,125 @@ void main() {
           await tester.pump(const Duration(milliseconds: 1));
         }
       });
+
+  for (final keyboardOpen in [true, false]) {
+    cardTest('search restores only an open keyboard on resume: $keyboardOpen', (
+      tester,
+    ) async {
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await pumpApp(tester, keys: allKeys);
+      await tester.tap(find.byType(TextField));
+      await tester.pumpAndSettle();
+      tester.view.viewInsets = FakeViewPadding(bottom: keyboardOpen ? 900 : 0);
+      await tester.pump();
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      tester.view.viewInsets = FakeViewPadding.zero;
+      tester.testTextInput.log.clear();
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      expect(
+        tester.testTextInput.log.where(
+          (call) => call.method == 'TextInput.show',
+        ),
+        keyboardOpen ? isNotEmpty : isEmpty,
+      );
+    });
+  }
+
+  cardTest('movie facts and related titles preserve navigation back to the film', (
+    tester,
+  ) async {
+    await pumpApp(
+      tester,
+      keys: allKeys,
+      http: (request) {
+        if (request.uri.path == '/3/collection/2344') {
+          return (
+            status: 200,
+            body:
+                '{"parts":[{"id":603,"title":"Current"},{"id":604,"title":"Related sequel","release_date":"2003-01-01"},{"id":604,"title":"Duplicate"}]}',
+          );
+        }
+        if (request.uri.path.endsWith('/similar')) {
+          return (
+            status: 200,
+            body:
+                '{"results":[{"id":603,"title":"Current"},{"id":604,"title":"Similar sequel","release_date":"2003-01-01"}]}',
+          );
+        }
+        if (request.uri.path == '/3/movie/604') {
+          return (status: 200, body: '{"id":604,"title":"Sequel card"}');
+        }
+        return apiFixtures(request);
+      },
+    );
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(FramebookApp)),
+    );
+    final router = container.read(routerProvider);
+    router.go('/search/movie/603');
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Mar 31, 1999'), findsOneWidget);
+    expect(find.text('United States of America'), findsOneWidget);
+    expect(find.textContaining(r'Budget: $63,000,000'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(TitleHeader),
+        matching: find.textContaining(r'Budget: $63,000,000'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(TitleHeader),
+        matching: find.text('1999 · 2 h 16 min'),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.textContaining(r'Worldwide box office: $463,517,383'),
+      findsOneWidget,
+    );
+    await tester.scrollUntilVisible(
+      find.text('Related sequel'),
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Current'), findsNothing);
+    expect(find.text('Duplicate'), findsNothing);
+    await Scrollable.ensureVisible(
+      tester.element(find.text('Related sequel')),
+      alignment: 0.5,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Related sequel'));
+    await tester.pumpAndSettle();
+    expect(find.text('Sequel card'), findsOneWidget);
+    router.pop();
+    await tester.pumpAndSettle();
+    expect(tester.widget<MovieScreen>(find.byType(MovieScreen)).id, 603);
+    await tester.scrollUntilVisible(
+      find.text('Similar sequel'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await Scrollable.ensureVisible(
+      tester.element(find.text('Similar sequel')),
+      alignment: 0.5,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Similar sequel'));
+    await tester.pumpAndSettle();
+    expect(find.text('Sequel card'), findsOneWidget);
+    router.pop();
+    await tester.pumpAndSettle();
+    expect(tester.widget<MovieScreen>(find.byType(MovieScreen)).id, 603);
+    expect(tester.takeException(), isNull);
+  });
 
   cardTest('recent titles appear in a dropdown and reopen their cards', (
     tester,
@@ -296,7 +416,9 @@ void main() {
     );
 
     expect(find.text('«Добро пожаловать в реальный мир»'), findsOneWidget);
-    expect(find.text('1999 · 2 h 16 min'), findsOneWidget);
+    expect(find.text('Mar 31, 1999 · 2 h 16 min'), findsOneWidget);
+    await tester.ensureVisible(find.byType(RatingsPanel));
+    await tester.pumpAndSettle();
     for (final label in [
       'Kinopoisk',
       'IMDb',
@@ -349,7 +471,7 @@ void main() {
     container.read(routerProvider).go('/search/tv/1399');
     await settle(tester);
 
-    expect(find.text('2011–2019 · ended'), findsOneWidget);
+    expect(find.text('Apr 17, 2011–May 19, 2019 · ended'), findsOneWidget);
     expect(find.text('8 seasons · 73 episodes'), findsOneWidget);
     // The ratings sit below "My rating", past the first screen.
     await tester.scrollUntilVisible(

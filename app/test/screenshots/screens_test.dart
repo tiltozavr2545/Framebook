@@ -205,7 +205,27 @@ void main() {
     });
 
     testWidgets('editor $theme', skip: skip != null, (tester) async {
-      await pump(tester, brightness: brightness, seed: library);
+      await pump(
+        tester,
+        brightness: brightness,
+        seed: (lib, db) async {
+          await library(lib, db);
+          for (var i = 0; i < 21; i++) {
+            await lib.rate(
+              [
+                WorkSnapshot(
+                  key: WorkKey.movie(1000 + i),
+                  tmdbId: 1000 + i,
+                  title: 'Example ${i + 1}',
+                  posterPath: '/example$i.jpg',
+                ),
+              ],
+              scoreHalf: 17 + i % 3,
+              note: null,
+            );
+          }
+        },
+      );
       go(tester, '/search/movie/603');
       await settle(tester);
       await tester.tap(find.byIcon(Icons.edit_outlined));
