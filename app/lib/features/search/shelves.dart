@@ -151,7 +151,6 @@ class _Shelf extends StatelessWidget {
   final AsyncValue<List<TitleSummary>> value;
 
   static const _width = 112.0;
-  static const _height = _width * 3 / 2 + 64;
 
   @override
   Widget build(BuildContext context) {
@@ -168,7 +167,8 @@ class _Shelf extends StatelessWidget {
           child: Text(label, style: Theme.of(context).textTheme.headlineSmall),
         ),
         SizedBox(
-          height: _height,
+          height:
+              _width * 3 / 2 + 76 * MediaQuery.textScalerOf(context).scale(1),
           child: titles == null
               ? const _Skeleton(width: _width)
               : ListView.separated(

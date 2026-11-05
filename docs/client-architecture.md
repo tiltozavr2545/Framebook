@@ -409,6 +409,10 @@ The design is [sync.md](sync.md); here is what lives where in
   restored keys and `divergence_source`, and uploading subsequent edits.
   The onboarding restore route is available before the required TMDB key.
 
+Google initialization shares in-flight and successful attempts; a failed
+attempt can be retried. Initialization errors during explicit sign-in use the
+same typed failure boundary as authentication/authorization errors.
+
 ## Design (Stage 6)
 
 The look is an editing table (`lib/app/theme.dart`): a cool lightbox,

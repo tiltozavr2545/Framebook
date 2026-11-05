@@ -10,12 +10,17 @@ class _GooglePlatform extends GoogleSignInPlatform {
   final cleared = <String>[];
   int lightweightCalls = 0;
   int interactiveCalls = 0;
+  int initCalls = 0;
+  GoogleSignInException? initFailure;
   String? token = 'drive-token';
   GoogleSignInException? failure;
   Completer<ClientAuthorizationTokenData?>? pending;
 
   @override
-  Future<void> init(InitParameters params) async {}
+  Future<void> init(InitParameters params) async {
+    initCalls++;
+    if (initFailure != null) throw initFailure!;
+  }
 
   @override
   Future<AuthenticationResults?> attemptLightweightAuthentication(
@@ -141,6 +146,49 @@ void main() {
     );
     expect(platform.requests.single.promptIfUnauthorized, isFalse);
   });
+
+  test(
+    'a failed initialization can be retried without restarting the app',
+    () async {
+      final service = GoogleSignInAccountService(
+        readStoredAccount: () => 'saved@example.com',
+      );
+      platform.initFailure = const GoogleSignInException(
+        code: GoogleSignInExceptionCode.unknownError,
+      );
+      await expectLater(service.drive(), throwsA(isA<SyncException>()));
+      platform.initFailure = null;
+      final access = await service.drive();
+      access.close();
+      expect(platform.initCalls, 2);
+      expect(platform.requests.single.email, 'saved@example.com');
+      expect(platform.lightweightCalls + platform.interactiveCalls, 0);
+    },
+  );
+
+  test(
+    'interactive initialization errors use the documented sign-in failure',
+    () async {
+      final service = GoogleSignInAccountService(readStoredAccount: () => null);
+      platform.initFailure = const GoogleSignInException(
+        code: GoogleSignInExceptionCode.clientConfigurationError,
+      );
+      await expectLater(
+        service.signIn(),
+        throwsA(
+          isA<SignInException>().having(
+            (error) => error.failure,
+            'failure',
+            SignInFailure.misconfigured,
+          ),
+        ),
+      );
+      expect(platform.interactiveCalls, 0);
+      platform.initFailure = null;
+      expect(await service.signIn(), 'selected@example.com');
+      expect(platform.initCalls, 2);
+    },
+  );
 
   test('without a saved account no Google request is made', () async {
     final service = GoogleSignInAccountService(readStoredAccount: () => null);

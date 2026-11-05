@@ -74,11 +74,12 @@ List<RatedTitle> arrangeRatings(
 String sortTitle(RatedTitle title) {
   final key = title.key;
   final name = (title.series?.title ?? title.work.title).toLowerCase();
-  String pad(int? n) => (n ?? 0).toString().padLeft(4, '0');
+  String pad(int? n, int width) => (n ?? 0).toString().padLeft(width, '0');
   return switch (key.kind) {
     WorkKind.movie || WorkKind.tv => name,
-    WorkKind.season => '$name\u0000${pad(key.season)}',
-    WorkKind.episode => '$name\u0000${pad(key.season)}${pad(key.episode)}',
+    WorkKind.season => '$name\u0000${pad(key.season, 4)}',
+    WorkKind.episode =>
+      '$name\u0000${pad(key.season, 4)}${pad(key.episode, 5)}',
   };
 }
 

@@ -41,49 +41,51 @@ int compareDeletions(DeletionRecord a, DeletionRecord b) => _version(
   a.updatedAt,
   a.updatedBy,
   true,
-  a.tieBreak,
+  () => a.tieBreak,
   b.updatedAt,
   b.updatedBy,
   true,
-  b.tieBreak,
+  () => b.tieBreak,
 );
 int _version(
   int at,
   String by,
   bool deleted,
-  String hash,
+  String Function() hash,
   int bt,
   String bb,
   bool bd,
-  String bh,
+  String Function() bh,
 ) {
   final time = at.compareTo(bt);
   if (time != 0) return time;
   final device = by.compareTo(bb);
   if (device != 0) return device;
   final deletion = (deleted ? 1 : 0).compareTo(bd ? 1 : 0);
-  return deletion != 0 ? deletion : hash.compareTo(bh);
+  // Hash complete payloads only for an exact version tie. Ordinary sync
+  // winners are already determined by time, writer and deletion status.
+  return deletion != 0 ? deletion : hash().compareTo(bh());
 }
 
 int compareRatings(Rating a, Rating b) => _version(
   a.updatedAt,
   a.updatedBy,
   a.deletedAt != null,
-  _hash(SyncFile.ratingToJson(a)),
+  () => _hash(SyncFile.ratingToJson(a)),
   b.updatedAt,
   b.updatedBy,
   b.deletedAt != null,
-  _hash(SyncFile.ratingToJson(b)),
+  () => _hash(SyncFile.ratingToJson(b)),
 );
 int compareWatchlist(WatchlistEntry a, WatchlistEntry b) => _version(
   a.updatedAt,
   a.updatedBy,
   a.deletedAt != null,
-  _hash(SyncFile.watchlistToJson(a)),
+  () => _hash(SyncFile.watchlistToJson(a)),
   b.updatedAt,
   b.updatedBy,
   b.deletedAt != null,
-  _hash(SyncFile.watchlistToJson(b)),
+  () => _hash(SyncFile.watchlistToJson(b)),
 );
 int compareWorks(Work a, Work b) {
   final time = a.snapshotUpdatedAt.compareTo(b.snapshotUpdatedAt);
@@ -121,21 +123,21 @@ int compareRatingDeletion(Rating r, DeletionRecord d) => _version(
   r.updatedAt,
   r.updatedBy,
   r.deletedAt != null,
-  _hash(SyncFile.ratingToJson(r)),
+  () => _hash(SyncFile.ratingToJson(r)),
   d.updatedAt,
   d.updatedBy,
   true,
-  d.tieBreak,
+  () => d.tieBreak,
 );
 int compareWatchlistDeletion(WatchlistEntry w, DeletionRecord d) => _version(
   w.updatedAt,
   w.updatedBy,
   w.deletedAt != null,
-  _hash(SyncFile.watchlistToJson(w)),
+  () => _hash(SyncFile.watchlistToJson(w)),
   d.updatedAt,
   d.updatedBy,
   true,
-  d.tieBreak,
+  () => d.tieBreak,
 );
 
 List<T> _merge<T>(

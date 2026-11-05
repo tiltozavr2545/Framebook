@@ -57,9 +57,13 @@ final class FileResponseCache implements ResponseCache {
   @override
   Future<void> write(String key, CachedResponse response) async {
     final file = _file(key);
-    final temp = File('${file.path}.tmp');
+    Directory? staging;
     try {
       await directory.create(recursive: true);
+      // Each writer owns its staging file, including across client instances
+      // and isolates. Sharing a .tmp file can publish another writer mid-write.
+      staging = await directory.createTemp('response-');
+      final temp = File(p.join(staging.path, 'response.json'));
       await temp.writeAsString(
         jsonEncode({
           'key': key,
@@ -73,6 +77,12 @@ final class FileResponseCache implements ResponseCache {
     } on FileSystemException {
       // A cache is not data: if it wasn't written, the next read goes to the
       // network.
+    } finally {
+      try {
+        await staging?.delete(recursive: true);
+      } on FileSystemException {
+        // The OS may have already evicted the staging directory.
+      }
     }
   }
 

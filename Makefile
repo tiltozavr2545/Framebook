@@ -8,7 +8,7 @@ DART ?= $(HOME)/development/flutter/bin/dart
 BASE_REF ?= origin/main
 TEST_ARGS ?=
 
-.PHONY: help codegen deps format-check analyze test test-coverage verify verify-version bump-build bump-patch bump-minor bump-major build-apk build-apk-check pre-commit pre-push install-hooks uninstall-hooks
+.PHONY: help codegen deps format-check analyze test test-scripts test-coverage verify verify-version bump-build bump-patch bump-minor bump-major build-apk build-apk-check pre-commit pre-push install-hooks uninstall-hooks
 
 help:
 	@printf '%s\n' \
@@ -46,10 +46,13 @@ analyze:
 test:
 	cd $(APP_DIR) && $(FLUTTER) test $(TEST_ARGS)
 
+test-scripts:
+	sh scripts/test-version.sh
+
 test-coverage:
 	cd $(APP_DIR) && $(FLUTTER) test --coverage
 
-verify: deps format-check analyze test
+verify: deps format-check analyze test-scripts test
 
 verify-version:
 	BASE_REF="$(BASE_REF)" ./scripts/verify-version.sh

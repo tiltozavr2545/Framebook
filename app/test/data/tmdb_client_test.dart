@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:framebook/data/http.dart';
+import 'package:framebook/data/response_cache.dart';
 import 'package:framebook/data/source_failure.dart';
 import 'package:framebook/data/sources/tmdb/tmdb_client.dart';
 import 'package:framebook/data/sources/tmdb/tmdb_models.dart';
@@ -10,6 +11,13 @@ import '../support/api_fixtures.dart';
 import '../support/fake_http.dart';
 
 void main() {
+  test('TMDB votes reject values outside the rating scale', () {
+    for (final value in [double.infinity, double.nan, 10.1, -1, 0]) {
+      expect(TmdbVote.fromJson(Json({'vote_average': value})).average, isNull);
+    }
+    expect(TmdbVote.fromJson(const Json({'vote_average': 10})).average, 10);
+  });
+
   late Dio dio;
   late FakeHttpAdapter http;
   late MemoryResponseCache cache;
@@ -435,6 +443,34 @@ void main() {
   });
 
   group('cache', () {
+    test(
+      'a damaged cached body is refetched instead of blocking the card',
+      () async {
+        await client().movie(603);
+        final key = cache.entries.keys.single;
+        cache.entries[key] = CachedResponse(
+          'not JSON',
+          now.millisecondsSinceEpoch,
+        );
+        expect((await client().movie(603)).title, 'Матрица');
+        expect(http.requests, hasLength(2));
+        expect(cache.entries[key]!.body, isNot('not JSON'));
+      },
+    );
+
+    test(
+      'an invalid successful response falls back to the stale card',
+      () async {
+        await client().movie(603);
+        final saved = cache.entries.values.single.body;
+        now = now.add(TmdbTtl.details);
+        serve((_) => (status: 200, body: '<html>Proxy error</html>'));
+        expect((await client().movie(603)).title, 'Матрица');
+        expect(http.requests, hasLength(1));
+        expect(cache.entries.values.single.body, saved);
+      },
+    );
+
     test('a fresh entry answers without the network', () async {
       await client().movie(603);
       now = now.add(const Duration(days: 6));

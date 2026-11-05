@@ -44,34 +44,37 @@ class TitleRatings extends Notifier<RatingsView> {
   @override
   RatingsView build() {
     final service = ref.watch(ratingsServiceProvider);
+    var active = true;
+    ref.onDispose(() => active = false);
     final rows = ref
         .watch(databaseProvider)
         .watchExternalRatings(target.key.toString())
-        .listen(
-          (rows) => state = state.copyWith(
+        .listen((rows) {
+          if (!active) return;
+          state = state.copyWith(
             rows: {for (final row in rows) row.source: row},
-          ),
-        );
+          );
+        });
     ref.onDispose(rows.cancel);
-    unawaited(_refresh(service));
+    unawaited(_refresh(service, () => active));
     return const RatingsView();
   }
 
-  Future<void> _refresh(RatingsService service) async {
-    // After a rebuild (a key changed) the old run may still be answering;
-    // ref.mounted cuts off its callbacks.
+  Future<void> _refresh(RatingsService service, bool Function() active) async {
+    // A Notifier survives dependency rebuilds, so its current ref can be
+    // mounted while an older build's request is still answering.
     final outcomes = await service.refresh(
       target,
       onStart: (api) {
-        if (!ref.mounted) return;
+        if (!active() || !ref.mounted) return;
         state = state.copyWith(loading: {...state.loading, api});
       },
       onDone: (api, _) {
-        if (!ref.mounted) return;
+        if (!active() || !ref.mounted) return;
         state = state.copyWith(loading: {...state.loading}..remove(api));
       },
     );
-    if (!ref.mounted) return;
+    if (!active() || !ref.mounted) return;
     // The outcomes also include sources the service skipped without a request
     // (a recent failure, no budget left): they need a reason too, not an
     // endless spinner.

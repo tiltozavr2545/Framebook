@@ -8,6 +8,19 @@ import '../support/api_fixtures.dart';
 import '../support/fake_http.dart';
 
 void main() {
+  test('invalid rating numbers do not enter the external rating cache', () {
+    for (final value in [double.infinity, double.nan, 10.1, -1, 0]) {
+      final ratings = KpRatings.fromJson(
+        Json({
+          'id': 1,
+          'rating': {'kp': value, 'imdb': value},
+        }),
+      )!;
+      expect(ratings.kp, isNull, reason: '$value');
+      expect(ratings.imdb, isNull, reason: '$value');
+    }
+  });
+
   late Dio dio;
   late FakeHttpAdapter http;
   late PoiskKinoClient client;

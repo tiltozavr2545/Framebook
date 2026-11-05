@@ -93,7 +93,7 @@ final apiKeyStoreProvider = Provider<ApiKeyStore>(
   (ref) => throw UnimplementedError('Overridden in main()'),
 );
 
-/// Keys read before `runApp`: the router must know synchronously whether there
+/// Keys read during startup: the router must know synchronously whether there
 /// is a TMDB key, so as not to flash the main screen before onboarding.
 final initialApiKeysProvider = Provider<ApiKeys>(
   (ref) => throw UnimplementedError('Overridden in main()'),

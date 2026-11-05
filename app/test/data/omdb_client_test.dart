@@ -8,6 +8,42 @@ import '../support/api_fixtures.dart';
 import '../support/fake_http.dart';
 
 void main() {
+  test(
+    'rating strings stay within their scales and vote counts are nonnegative',
+    () {
+      for (final value in ['Infinity', 'NaN', '1e999', '-1', '10.1']) {
+        final parsed = OmdbRatings.fromJson(
+          Json({
+            'imdbRating': value,
+            'imdbVotes': '-1',
+            'Ratings': [
+              {'Source': 'Rotten Tomatoes', 'Value': '101%'},
+              {'Source': 'Metacritic', 'Value': '-1/100'},
+            ],
+          }),
+        );
+        expect(parsed.imdb, isNull, reason: value);
+        expect(parsed.imdbVotes, isNull);
+        expect(parsed.rottenTomatoes, isNull);
+        expect(parsed.metacritic, isNull);
+      }
+      final parsed = OmdbRatings.fromJson(
+        const Json({
+          'imdbRating': '10',
+          'imdbVotes': '0',
+          'Ratings': [
+            {'Source': 'Rotten Tomatoes', 'Value': '0%'},
+            {'Source': 'Metacritic', 'Value': '100/100'},
+          ],
+        }),
+      );
+      expect(parsed.imdb, 10);
+      expect(parsed.imdbVotes, 0);
+      expect(parsed.rottenTomatoes, 0);
+      expect(parsed.metacritic, 100);
+    },
+  );
+
   late Dio dio;
   late FakeHttpAdapter http;
   late OmdbClient client;

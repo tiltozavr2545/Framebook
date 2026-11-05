@@ -145,15 +145,20 @@ final class OmdbClient implements OmdbApi {
 /// OMDb sends numbers as strings; `"N/A"` means none, not zero.
 double? _decimal(String? value) {
   final parsed = value == null ? null : double.tryParse(value);
-  return parsed != null && parsed > 0 ? parsed : null;
+  return parsed != null && parsed.isFinite && parsed > 0 && parsed <= 10
+      ? parsed
+      : null;
 }
 
 /// `"2,284,373"` → 2284373.
-int? _count(String? value) =>
-    value == null ? null : int.tryParse(value.replaceAll(',', ''));
+int? _count(String? value) {
+  final parsed = value == null ? null : int.tryParse(value.replaceAll(',', ''));
+  return parsed != null && parsed >= 0 ? parsed : null;
+}
 
 /// `"83%"` → 83, `"73/100"` → 73.
 int? _leadingInt(String? value, {required String suffix}) {
   if (value == null || !value.endsWith(suffix)) return null;
-  return int.tryParse(value.substring(0, value.length - suffix.length));
+  final parsed = int.tryParse(value.substring(0, value.length - suffix.length));
+  return parsed != null && parsed >= 0 && parsed <= 100 ? parsed : null;
 }

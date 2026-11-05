@@ -45,7 +45,7 @@ final class RatedTitle {
   List<int> get genreIds => WorkSnapshot.fromWork(series ?? work).genreIds;
 }
 
-/// A live watchlist entry with its title's snapshot (films and series only).
+/// A live watchlist entry with its snapshot and a season's parent series.
 final class WatchlistTitle {
   const WatchlistTitle({required this.entry, required this.work, this.series});
 

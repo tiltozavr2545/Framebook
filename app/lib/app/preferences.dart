@@ -4,8 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../l10n/app_localizations.dart';
 
-/// Read in `main()` before `runApp`, so theme and language are right from the
-/// first frame instead of switching after loading.
+/// Read during startup before the main application is built, so its first
+/// frame uses the saved theme and language.
 final sharedPreferencesProvider = Provider<SharedPreferences>(
   (ref) => throw UnimplementedError('Overridden in main()'),
 );

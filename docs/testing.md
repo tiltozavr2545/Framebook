@@ -6,6 +6,23 @@ Flutter 3.32.8 SDK. No API keys, Google account or connected phone are required.
 Tests use recorded API responses, fake HTTP clients, in-memory SQLite and a fake
 Drive; they must never contact the external services.
 
+`make verify` also runs `make test-scripts`: isolated shell fixtures exercise
+the version bump and PR gate, including malformed versions, numeric overflow,
+monotonic builds and exact comparisons of large version components. The
+fixture never changes the checkout's version or creates a Git commit.
+
+An optional host microbenchmark is available with
+`cd app && flutter test test/benchmarks/merge_benchmark.dart`. It measures a
+merge plus the remote-behind check for 6,000 snapshots, 3,000 ratings with
+512-character notes and 3,000 watchlist entries. It warms up twice and prints
+the median of five samples; no timing threshold gates CI. Compare runs on the
+same machine and workload. It does not measure Android frame time or battery.
+
+`test/benchmarks/watchlist_benchmark.dart` measures the existing watchlist
+stream alongside 3,000 ratings with 1,024-character notes and 50 watchlisted
+films. Its joined-query comparison is valid for that movie-only fixture;
+it is an optimization candidate, not a replacement for season/fence logic.
+
 Run `make test-coverage` to write `app/coverage/lcov.info`, or
 `make verify TEST_ARGS=--coverage` to collect it during the full verification. The report is local
 and ignored by Git. Coverage measures executed Dart lines, not requirements or
@@ -35,6 +52,8 @@ by that percentage.
 | Encrypted key merge, passwords, tampering, offline retry and account isolation | `data/sync/secrets_vault_test.dart`, `secrets_controller_test.dart` |
 | Coordinated Drive deletion, repeated taps and failure recovery | `data/sync/sync_actions_test.dart` |
 | Paused-sync confirmation and consent fingerprint | `features/sync_screen_test.dart` |
+| File-import UI cancellation, merge, replacement confirmation, unreadable/oversized files and storage failure | `features/sync_file_ui_test.dart` |
+| Old-key responses after rebuilding a rating card and late failures after successful cache writes | `features/title_ratings_test.dart` |
 
 Paths in the table are relative to `app/test/`. Rows describe the scenarios
 present, not exhaustive coverage of every branch or platform interaction.

@@ -482,3 +482,25 @@ renderers skipped), `make verify-version` passed, and the release-signed APK
 built successfully. The 0.8.2+16 APK was installed over the existing app on
 Nothing Phone 3a without clearing data; ADB confirmed version 0.8.2/build 16.
 The user confirmed that the installed changes work on 2026-11-04.
+
+## 0.8.3 — Reliability and optimization
+
+Version: `0.8.3+17`. Delivered repairs and measured optimization candidates
+are tracked separately below.
+
+- [x] Complete the November 5 review and repair cache corruption, stale-key
+  response races, Google retry handling, import errors and caption layouts.
+- [x] Measure sync comparison overhead and defer payload hashes until an
+  exact version tie without changing merge semantics.
+- [x] Establish a universal-APK size baseline and a synthetic watchlist
+  benchmark; prioritize work in [optimization.md](optimization.md).
+- [ ] Implement and validate the selected further optimizations, keeping
+  season/watchlist conflict rules, offline behavior and universal distribution.
+- [ ] Measure startup, frame time and energy use on a physical device.
+
+`make codegen` passed without generated-code or schema changes. After the
+version bump, `make verify TEST_ARGS=--coverage` passed (464 tests, 18 opt-in
+renderers skipped), `make verify-version BASE_REF=HEAD` passed, and the normal
+universal Android APK built successfully. Its manifest confirms version
+`0.8.3+17`; its size is 66.9 MB. The detailed scope and limitations
+are in [reviews/2026-11-05/README.md](reviews/2026-11-05/README.md).

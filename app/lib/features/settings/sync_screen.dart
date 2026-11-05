@@ -17,6 +17,13 @@ import '../../data/sync/secrets_vault.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/format.dart';
 
+/// The system picker is replaceable in UI tests; file bytes still pass
+/// through the same streaming and size checks as an Android selection.
+final syncFilePickerProvider = Provider<Future<FilePickerResult?> Function()>(
+  (ref) =>
+      () => FilePicker.pickFiles(withData: false, withReadStream: true),
+);
+
 /// Settings → Sync and backup: Google Drive, its daily copies, and export /
 /// import to a file (docs/sync.md).
 class SyncScreen extends ConsumerWidget {
@@ -471,12 +478,10 @@ class SyncScreen extends ConsumerWidget {
   Future<void> _import(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
     final controller = ref.read(syncControllerProvider.notifier);
+    final pick = ref.read(syncFilePickerProvider);
     ImportPreview preview;
     try {
-      final picked = await FilePicker.pickFiles(
-        withData: false,
-        withReadStream: true,
-      );
+      final picked = await pick();
       final file = picked?.files.singleOrNull;
       if (file == null || !context.mounted) return;
       if (file.size > SyncFile.maxCompressedBytes) {
@@ -538,27 +543,31 @@ class SyncScreen extends ConsumerWidget {
         )) {
       return;
     }
-    while (true) {
-      if (!context.mounted) return;
-      var keepStale = true;
-      if (!replace && preview.stale > 0) {
-        final keep = await _staleChoice(
-          context,
-          l10n.importStaleBody(preview.stale),
+    try {
+      while (true) {
+        if (!context.mounted) return;
+        var keepStale = true;
+        if (!replace && preview.stale > 0) {
+          final keep = await _staleChoice(
+            context,
+            l10n.importStaleBody(preview.stale),
+          );
+          if (keep == null) return;
+          keepStale = keep;
+        }
+        final next = await controller.import(
+          preview.file,
+          replace: replace,
+          keepStale: keepStale,
+          reviewedFingerprint: preview.fingerprint,
         );
-        if (keep == null) return;
-        keepStale = keep;
+        if (next == null) break;
+        preview = next;
       }
-      final next = await controller.import(
-        preview.file,
-        replace: replace,
-        keepStale: keepStale,
-        reviewedFingerprint: preview.fingerprint,
-      );
-      if (next == null) break;
-      preview = next;
+      if (context.mounted) _snack(context, l10n.importDone);
+    } catch (_) {
+      if (context.mounted) _snack(context, l10n.fileOperationFailed);
     }
-    if (context.mounted) _snack(context, l10n.importDone);
   }
 
   static Future<bool> _confirm(

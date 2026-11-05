@@ -71,6 +71,27 @@ RatedTitle _rated(
 );
 
 void main() {
+  test('title sorting keeps five-digit episode numbers in numeric order', () {
+    final series = _work('tmdb:tv:9');
+    final keys = [
+      'tmdb:tv:9:s1:e999',
+      'tmdb:tv:9:s1:e9999',
+      'tmdb:tv:9:s1:e10000',
+      'tmdb:tv:9:s1:e99999',
+      'tmdb:tv:9:s2:e1',
+    ];
+    final titles = [
+      for (final key in keys.reversed) _rated(key, 16, series: series),
+    ];
+    expect(
+      arrangeRatings(
+        titles,
+        sort: RatingsSort.title,
+      ).map((title) => title.work.workKey),
+      keys,
+    );
+  });
+
   group('divergence', () {
     test('mine minus theirs, on the same 1–10 scale', () {
       expect(divergence(17, _row('k', RatingSource.kp, 8.0)), 0.5);

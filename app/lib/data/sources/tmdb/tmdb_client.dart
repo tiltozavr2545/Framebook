@@ -348,9 +348,14 @@ final class TmdbClient implements TmdbApi {
     final query = {...params, if (localized) 'language': language};
     final key = cacheKey(path, query);
     final cached = await _cache.read(key);
+    // The cache is evictable and may be damaged. Only a decoded body can
+    // satisfy a request or serve as an offline fallback.
+    final cachedJson = cached == null ? null : tryJson(cached.body);
     final now = _clock().toUtc().millisecondsSinceEpoch;
-    if (cached != null && now - cached.storedAt < ttl.inMilliseconds) {
-      return _decode(cached.body);
+    if (cachedJson != null &&
+        now - cached!.storedAt >= 0 &&
+        now - cached.storedAt < ttl.inMilliseconds) {
+      return cachedJson;
     }
 
     final Response<String> response;
@@ -364,14 +369,18 @@ final class TmdbClient implements TmdbApi {
         ),
       );
     } on DioException catch (e) {
-      if (cached != null) return _decode(cached.body);
+      if (cachedJson != null) return cachedJson;
       throw SourceException.fromDio(e);
     }
 
     final body = response.data ?? '';
     switch (response.statusCode) {
       case 200:
-        final json = _decode(body);
+        final json = tryJson(body);
+        if (json == null) {
+          if (cachedJson != null) return cachedJson;
+          throw const SourceException(SourceFailure.failed, 'not JSON');
+        }
         await _cache.write(key, CachedResponse(body, now));
         return json;
       case 401:
@@ -379,15 +388,11 @@ final class TmdbClient implements TmdbApi {
       case 404:
         throw const SourceException(SourceFailure.notFound);
       default:
-        if (cached != null) return _decode(cached.body);
+        if (cachedJson != null) return cachedJson;
         throw SourceException(
           SourceFailure.failed,
           'HTTP ${response.statusCode}',
         );
     }
   }
-
-  static Json _decode(String body) =>
-      tryJson(body) ??
-      (throw const SourceException(SourceFailure.failed, 'not JSON'));
 }

@@ -120,7 +120,7 @@ class _StatsBody extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       children: [
-        // Your average is yours: the big red figure, as on a card.
+        // The personal average uses the same score colours as title cards.
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [

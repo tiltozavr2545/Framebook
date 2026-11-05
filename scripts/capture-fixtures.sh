@@ -57,7 +57,7 @@ if [ -n "${TMDB_TOKEN:-}" ]; then
 	fetch "$out/tmdb/search_multi_matrix_ru.json" "$t/search/multi?query=%D0%9C%D0%B0%D1%82%D1%80%D0%B8%D1%86%D0%B0&language=ru-RU" "$h"
 	# Cards carry their cast and crew (Stage 6). `credits`, not
 	# `aggregate_credits`: the aggregate for Game of Thrones is 350 KB.
-	fetch "$out/tmdb/movie_603_ru.json" "$t/movie/603?language=ru-RU&append_to_response=external_ids%2Ccredits" "$h"
+	fetch "$out/tmdb/movie_603_ru.json" "$t/movie/603?language=ru-RU&append_to_response=external_ids%2Ccredits%2Crelease_dates" "$h"
 	fetch "$out/tmdb/tv_1399_ru.json" "$t/tv/1399?language=ru-RU&append_to_response=external_ids%2Ccredits" "$h"
 	fetch "$out/tmdb/tv_1399_season_1_ru.json" "$t/tv/1399/season/1?language=ru-RU&append_to_response=credits" "$h"
 	fetch "$out/tmdb/tv_1399_s1e3_credits_ru.json" "$t/tv/1399/season/1/episode/3/credits?language=ru-RU" "$h"

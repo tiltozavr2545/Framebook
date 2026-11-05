@@ -119,6 +119,14 @@ class AppDatabase extends _$AppDatabase {
     ]),
   );
 
+  /// A failed request may report an error only where no answer exists at
+  /// write time. Another service instance can finish a refresh in between.
+  Future<void> putMissingExternalRatings(List<ExternalRating> rows) => batch(
+    (b) => b.insertAll(externalRatings, [
+      for (final row in rows) row.toCompanion(false),
+    ], onConflict: DoNothing()),
+  );
+
   /// A known Kinopoisk id exists only for what is in `works` (rated or on
   /// the watchlist). Everything else is matched again: a lookup by imdb id
   /// costs the same single request as a refresh by kp id.

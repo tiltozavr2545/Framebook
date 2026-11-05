@@ -11,8 +11,8 @@ import '../../shared/title_row.dart';
 import '../../shared/title_text.dart';
 import '../title/title_routes.dart';
 
-/// Films and series to watch, most recently added first. Rating a title takes
-/// it off the list by itself.
+/// Films, series and grouped seasons, most recently added first. Rating a
+/// title takes it off the list by itself.
 class WatchlistScreen extends ConsumerWidget {
   const WatchlistScreen({super.key});
 

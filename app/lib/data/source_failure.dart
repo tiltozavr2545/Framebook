@@ -55,12 +55,21 @@ extension type const Json(Map<String, Object?> raw) {
 
   int? integer(String key) {
     final value = raw[key];
-    return value is num ? value.toInt() : null;
+    if (value is int) return value;
+    // Do not round a fractional id into another title or clamp an overflow.
+    // Doubles beyond the exact-integer range cannot reliably name an object.
+    if (value is double &&
+        value.isFinite &&
+        value.abs() <= 9007199254740991 &&
+        value == value.truncateToDouble()) {
+      return value.toInt();
+    }
+    return null;
   }
 
   double? number(String key) {
     final value = raw[key];
-    return value is num ? value.toDouble() : null;
+    return value is num && value.isFinite ? value.toDouble() : null;
   }
 
   bool? boolean(String key) {

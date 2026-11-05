@@ -33,6 +33,8 @@ jobs:
           cache: true
           pub-cache: true
       - run: flutter pub get --enforce-lockfile
+      - name: Test version tools in disposable fixtures
+        run: make -C .. test-scripts
       - name: Verify PR version bump
         if: github.event_name == 'pull_request'
         env:

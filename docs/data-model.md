@@ -187,10 +187,11 @@ Invariants:
 | `updated_by` | text | `device_id` of the last writer — breaks ties on equal `updated_at` |
 | `deleted_at` | int null | tombstone; a row with it is never shown |
 
-Why integer half points: the calibration looks for "exactly the same"
-score, and `7.5` as a `double` after a couple of round trips through JSON is
-not guaranteed to be `7.5`. An integer compares without surprises. It becomes
-1–10 only for display.
+Why integer half points: the storage and sync boundaries must enforce a
+discrete scale, and calibration compares scores exactly. Half points such as
+`7.5` are exactly representable in binary floating point, but an integer in
+2…20 also rules out arbitrary fractional scores at the schema boundary.
+It becomes 1–10 only for display.
 
 Why the score and the note are one row: a note without a score isn't planned
 in the MVP, and one row means one conflict in merging instead of two linked

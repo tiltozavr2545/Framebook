@@ -17,7 +17,8 @@ final class TmdbVote {
   factory TmdbVote.fromJson(Json json) {
     final average = json.number('vote_average');
     final count = json.integer('vote_count');
-    final voted = average != null && average > 0 && (count ?? 1) > 0;
+    final voted =
+        average != null && average > 0 && average <= 10 && (count ?? 1) > 0;
     return TmdbVote(voted ? average : null, count);
   }
 

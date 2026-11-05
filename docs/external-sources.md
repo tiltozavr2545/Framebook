@@ -44,8 +44,8 @@ Base: `https://api.themoviedb.org/3`. The response language is the
 | film | `GET /movie/{id}?append_to_response=external_ids,credits,release_dates` |
 | movie collection | `GET /collection/{id}` — parts of the collection identified by `belongs_to_collection` |
 | similar titles | `GET /movie/{id}/similar`, `/tv/{id}/similar` — first page, based on genres and keywords |
-| series | `GET /tv/{id}?append_to_response=external_ids` — includes the season list |
-| season | `GET /tv/{id}/season/{n}` — includes every episode with its `vote_average` |
+| series | `GET /tv/{id}?append_to_response=external_ids,credits` — includes the season list |
+| season | `GET /tv/{id}/season/{n}?append_to_response=credits` — includes every episode with its `vote_average` |
 | an episode's ids in other databases | `GET /tv/{id}/season/{n}/episode/{m}/external_ids` |
 | genres | `GET /genre/movie/list`, `GET /genre/tv/list` — names for the statistics by genre; the lists share most ids |
 | cover variants | `GET /movie/{id}/images`, `/tv/{id}/images`, `/tv/{id}/season/{n}/images`, `/tv/{id}/season/{n}/episode/{m}/images` — posters, or episode stills |
@@ -213,7 +213,10 @@ How failures are handled (as implemented in Stage 2,
 
 - A failure never overwrites an earlier value. An `error` row is written
   only where there was no row at all, so the card shows "source error"
-  instead of an endless spinner.
+  instead of an endless spinner. Absence is checked atomically at insertion,
+  so a late failure from an older service instance cannot erase a successful
+  refresh. Card request statuses are scoped to each provider build, preventing
+  a response using an old key from replacing the new request's status.
 - The one-hour pause before retrying lives in the service's memory, not in
   the table: changing a key recreates the service, and the retry should
   happen right away, not an hour later. An `error` row in the table is
@@ -221,7 +224,17 @@ How failures are handled (as implemented in Stage 2,
 - Offline is not the source's answer: nothing is written and nothing is
   remembered, so the next card open retries.
 - The HTTP cache (TMDB only) serves a stale entry when the network is down
-  or TMDB answers with an error — an old overview beats an error screen.
+  or TMDB returns a transient/service error, including an unreadable HTTP 200
+  body. Explicit HTTP 401/404 responses remain rejected-key/not-found errors. A
+  damaged cached body is a miss and is fetched again. Concurrent writes use
+  separate staging files before atomically replacing the published entry.
+
+Numeric API fields are optional when malformed: identifiers and counts must
+be integers, and floating-point values must be finite. Ratings must fit their
+source scale (positive and at most 10 for TMDB/Kinopoisk/IMDb; 0–100 for
+Rotten Tomatoes/Metacritic). Invalid values are omitted, including overflowing
+JSON exponents and string values such as `Infinity`; a bad field must not
+attach data to a rounded title ID or poison statistics.
 
 ---
 

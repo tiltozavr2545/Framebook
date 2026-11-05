@@ -1,5 +1,6 @@
 #!/bin/sh
 set -eu
+. "$(dirname -- "$0")/version-format.sh"
 
 pubspec="app/pubspec.yaml"
 
@@ -42,38 +43,42 @@ current_version=$(awk '/^version:[[:space:]]/ { print $2; exit }' "$pubspec")
 	exit 1
 }
 
-current_name=${current_version%+*}
-current_code=${current_version##*+}
-
-if [ "$current_name" = "$current_version" ] || [ "$current_code" = "$current_version" ]; then
-	echo "Error: $pubspec's version must use the name+build format, e.g. 0.18.8+61 (found: $current_version)" >&2
+if ! valid_version "$current_version"; then
+	echo "Error: expected canonical major.minor.patch+build with a positive versionCode up to 2100000000 (found: $current_version)" >&2
 	exit 1
 fi
 
-case "$current_name" in
-	*[!0-9.]* | '' )
-		echo "Error: versionName must be X.Y.Z (found: $current_name)" >&2
-		exit 1
-		;;
-esac
+current_name=${current_version%+*}
+current_code=${current_version##*+}
 
 major=$(printf '%s' "$current_name" | cut -d. -f1)
 minor=$(printf '%s' "$current_name" | cut -d. -f2)
 patch=$(printf '%s' "$current_name" | cut -d. -f3)
 
-case "$major:$minor:$patch" in
-	*[!0-9:]*)
-		echo "Error: versionName must be X.Y.Z with three numeric parts (found: $current_name)" >&2
-		exit 1
+case "$kind" in
+	build) ;;
+	patch | minor | major)
+		case "$kind" in
+			patch) part=$patch ;;
+			minor) part=$minor ;;
+			major) part=$major ;;
+		esac
+		if [ "$part" = 9223372036854775807 ]; then
+			echo "Error: version component would overflow" >&2
+			exit 1
+		fi
+		case "$kind" in
+			patch) patch=$((patch + 1)) ;;
+			minor) minor=$((minor + 1)); patch=0 ;;
+			major) major=$((major + 1)); minor=0; patch=0 ;;
+		esac
 		;;
 esac
 
-case "$kind" in
-	build) ;;
-	patch) patch=$((patch + 1)) ;;
-	minor) minor=$((minor + 1)); patch=0 ;;
-	major) major=$((major + 1)); minor=0; patch=0 ;;
-esac
+if [ "$current_code" -ge 2100000000 ]; then
+	echo "Error: versionCode would exceed 2100000000" >&2
+	exit 1
+fi
 
 new_name="$major.$minor.$patch"
 new_code=$((current_code + 1))

@@ -123,4 +123,5 @@ final class PoiskKinoClient implements PoiskKinoApi {
 
 /// Zero on Kinopoisk means "no ratings yet" (that is how an unreleased
 /// title looks), not a 0.
-double? _rating(double? value) => value != null && value > 0 ? value : null;
+double? _rating(double? value) =>
+    value != null && value.isFinite && value > 0 && value <= 10 ? value : null;

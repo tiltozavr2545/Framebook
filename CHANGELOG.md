@@ -278,3 +278,21 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
 - Put release dates, countries and finances beside the poster, and make
   poster-coloured headers more visible.
 - Scroll through all titles in three clearly separated calibration groups.
+
+## 0.8.3 — Reliability and performance (build 17)
+
+- Preserve successful source ratings when an older API-key request fails,
+  and keep old request statuses from replacing the current card's state.
+- Recover from damaged TMDB cache entries and unreadable service responses;
+  keep concurrent cache writes from corrupting each other.
+- Retry Google initialization after a transient failure without restarting
+  the app, and show initialization failures through the sign-in UI.
+- Report failed imports instead of leaving an unhandled storage error.
+- Give Discover shelf captions enough room with larger text and sort long
+  episode numbers numerically.
+- Omit invalid numeric source fields and out-of-scale ratings.
+- Avoid hashing complete sync rows when their versions already determine
+  the winner. The file format and merge ordering stay unchanged.
+- Expand regression coverage and validate version tools in CI. Record the
+  size/performance investigation and its remaining work in
+  [docs/optimization.md](docs/optimization.md).

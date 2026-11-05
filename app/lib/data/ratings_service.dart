@@ -280,7 +280,7 @@ final class RatingsService {
         _failures[(key, api)] = (e.failure, now);
         // A failure never overwrites an earlier value: a stale rating beats
         // an empty cell. It is written only where there was nothing.
-        await _db.putExternalRatings([
+        await _db.putMissingExternalRatings([
           for (final s in sources)
             if (existing[s] == null) _row(key, s, api, now, RatingStatus.error),
         ]);

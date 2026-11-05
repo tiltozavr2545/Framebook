@@ -23,6 +23,25 @@ void main() {
     expect(read.storedAt, 42);
   });
 
+  test(
+    'overlapping writers publish one complete response and clean up',
+    () async {
+      final other = FileResponseCache(cache.directory);
+      final bodies = [for (var i = 1; i <= 24; i++) '$i:${'x' * (i * 10000)}'];
+      await Future.wait([
+        for (var i = 0; i < bodies.length; i++)
+          (i.isEven ? cache : other).write(
+            'same',
+            CachedResponse(bodies[i], i),
+          ),
+      ]);
+      final response = await cache.read('same');
+      expect(response, isNotNull);
+      expect(response!.body, bodies[response.storedAt]);
+      expect(await cache.directory.list().length, 1);
+    },
+  );
+
   test('a miss, a missing directory and a broken file are all null', () async {
     expect(await cache.read('nothing'), isNull);
     await cache.write('k', const CachedResponse('{}', 1));

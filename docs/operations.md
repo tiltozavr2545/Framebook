@@ -7,6 +7,10 @@ external API keys, the Google OAuth client, and distributing the APK.
 **Status: keys, signing and releases are in use since Stages 0–2; the
 Google Cloud project for Drive sync since Stage 5 (0.5.0).**
 
+Current version: **0.8.3+17**. Size/performance measurements and
+candidate build options are tracked in [optimization.md](optimization.md).
+The distribution target remains a universal APK.
+
 ---
 
 ## External API keys (every user does this)
@@ -17,9 +21,9 @@ step-by-step guide for all three services, with what to enter in every form
 field, is in [api-keys.md](api-keys.md) (Russian translation:
 [api-keys.ru.md](api-keys.ru.md)).
 
-The developer needs their own keys for tests. They never reach the
-repository or the test fixtures (fixtures are recorded responses, without
-request headers).
+The developer needs keys only to capture new live fixtures. Automated tests
+use recorded responses and fakes without keys or external requests. Keys
+never reach the repository or fixtures, which omit request headers.
 
 ### Capturing fixtures
 

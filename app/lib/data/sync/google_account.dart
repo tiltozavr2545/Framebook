@@ -89,9 +89,18 @@ final class GoogleSignInAccountService implements GoogleAccount {
   @override
   bool get configured => serverClientId.isNotEmpty;
 
-  Future<void> _init() => _initialized ??= GoogleSignIn.instance.initialize(
-    serverClientId: serverClientId,
-  );
+  Future<void> _init() => _initialized ??= _initialize();
+
+  Future<void> _initialize() async {
+    try {
+      await GoogleSignIn.instance.initialize(serverClientId: serverClientId);
+    } catch (_) {
+      // Share an in-flight initialization, but let a later user action retry
+      // a failed one instead of retaining a failed future until app restart.
+      _initialized = null;
+      rethrow;
+    }
+  }
 
   @override
   Future<String?> restore() async {
@@ -105,8 +114,8 @@ final class GoogleSignInAccountService implements GoogleAccount {
   Future<String> signIn() async {
     if (!configured) throw const SignInException(SignInFailure.misconfigured);
     final epoch = ++_epoch;
-    await _init();
     try {
+      await _init();
       final account = await GoogleSignIn.instance.authenticate(
         scopeHint: driveScopes,
       );
