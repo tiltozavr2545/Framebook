@@ -280,3 +280,23 @@ Its package/version and release certificate were verified before it was copied
 to Downloads for the user. The user then confirmed successful testing.
 A different phone passing resume tests alone would not establish this Samsung
 fix.
+
+## CI Java and release recovery
+
+CI and release jobs explicitly select Temurin JDK 21 through a pinned
+`actions/setup-java` action. Gradle 8.12 supports this runtime; the hosted
+runner's default Java 25 is incompatible. The first 0.8.4 release attempt
+passed all tests but stopped during Gradle startup for this reason.
+
+To publish an existing tag after fixing workflow infrastructure, dispatch the
+current workflow from `main` instead of moving the tag:
+
+```sh
+gh workflow run release-apk.yml --ref main -f release_tag=v0.8.4
+```
+
+The job checks out the requested tag, checks its pubspec version, reruns tests,
+builds with JDK 21, checks the certificate and publishes matching symbols.
+The symbols README records the checked-out commit, not the dispatch commit.
+Use this recovery path only when the release has not already been published;
+the workflow deliberately does not overwrite existing release assets.

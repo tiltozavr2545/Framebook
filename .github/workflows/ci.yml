@@ -24,6 +24,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+      # Gradle 8.12 cannot run on the runner's default Java 25.
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
       - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.21.0
         with:
           # Same SDK as the dev machines: newer Flutter needs macOS 14+, which
@@ -32,6 +38,9 @@ jobs:
           channel: 'stable'
           cache: true
           pub-cache: true
+
+      - name: Select Android build JDK
+        run: flutter config --jdk-dir="$JAVA_HOME"
       - run: flutter pub get --enforce-lockfile
       - name: Test version tools in disposable fixtures
         run: make -C .. test-scripts
