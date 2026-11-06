@@ -252,7 +252,7 @@
 
   "settingsSync": "Sync and backup",
   "syncDrive": "Google Drive",
-  "syncIntro": "Your ratings, notes and watchlist are kept in a hidden folder of your own Google Drive and merged between your devices. The app sees only that folder.",
+  "syncIntro": "Your ratings, notes, watchlist and favourite people are kept in a hidden folder of your own Google Drive and merged between your devices. The app sees only that folder.",
   "syncNotConfigured": "Google sign-in isn't set up in this build of the app.",
   "syncSignIn": "Sign in with Google",
   "syncSignedInAs": "Signed in as {email}",
@@ -277,13 +277,13 @@
   "@syncFirstBody": {"placeholders": {"device": {"type": "int"}, "drive": {"type": "int"}, "merged": {"type": "int"}}},
   "syncMerge": "Merge",
   "syncBackups": "Daily copies",
-  "syncBackupsHint": "Keeps up to seven copies from days when synced data changed. Restoring replaces your retained ratings and watchlist across devices.",
+  "syncBackupsHint": "Keeps up to seven copies from days when synced data changed. Restoring replaces your retained ratings, watchlist and favourite people across devices.",
   "syncBackupsEmpty": "No copies yet: a copy is made before the first overwrite of an existing sync file each day.",
   "syncRestore": "Restore",
   "syncRestoreTitle": "Restore the copy of {date}?",
   "@syncRestoreTitle": {"placeholders": {"date": {"type": "String"}}},
   "syncRepairBody": "Restore this copy and repair the unreadable sync file? The damaged original will be kept separately in Drive. Existing daily copies and encrypted keys will stay. Newer app formats are never replaced.",
-  "syncRestoreBody": "Ratings and watchlist changes after this copy will be rolled back across your devices. Entries permanently removed by cleanup cannot be recovered from an older copy.",
+  "syncRestoreBody": "Ratings, watchlist and favourite-people changes after this copy will be rolled back across your devices. Entries permanently removed by cleanup cannot be recovered from an older copy.",
   "syncRestored": "Copy restored",
   "syncDelete": "Delete data from Google Drive",
   "syncDeleteTitle": "Delete the data from Google Drive?",
@@ -299,7 +299,7 @@
 
   "backupFile": "Export and import",
   "exportFile": "Export to a file",
-  "exportFileHint": "Everything you rated, in one file. Works without Google.",
+  "exportFileHint": "Your ratings, notes, watchlist and favourite people in one file. Works without Google.",
   "exportDone": "Saved",
   "importFile": "Import from a file",
   "importTitle": "Import ratings",
@@ -308,7 +308,7 @@
   "importMerge": "Merge",
   "importReplace": "Replace everything",
   "importReplaceTitle": "Replace everything with the file?",
-  "importReplaceBody": "Ratings that aren't in the file will be deleted on all your devices.",
+  "importReplaceBody": "Ratings, watchlist entries and favourite people absent from the file will be removed on all your devices.",
   "importBroken": "This file can't be read.",
   "importTooNew": "This file was written by a newer Framebook. Update the app to import it.",
   "importDone": "Imported",
@@ -322,7 +322,7 @@
   "navRatings": "Ratings",
   "navWatchlist": "Watchlist",
   "navStats": "Stats",
-  "shelfForYou": "Like your favourites",
+  "shelfForYou": "For you",
   "shelfTrending": "Trending this week",
   "shelfNowPlaying": "In cinemas now",
   "shelfBest": "Best of all time",
@@ -373,5 +373,156 @@
   "secretsPasswordHint": "At least 8 characters",
   "secretsContinue": "Continue",
   "secretsMissing": "No encrypted key backup found. Enable it on your other device first.",
-  "secretsWrongPassword": "The password is incorrect or the encrypted file is damaged."
+  "secretsWrongPassword": "The password is incorrect or the encrypted file is damaged.",
+
+  "ratingDayToday": "Today",
+  "ratingDayYesterday": "Yesterday",
+  "peopleFavorites": "Favourite people",
+  "peopleFrequent": "Often in your ratings",
+  "peoplePopular": "Popular people",
+  "peopleAddFavorite": "Add to favourites",
+  "peopleRemoveFavorite": "Remove from favourites",
+  "peopleFavoriteFailed": "Could not update favourites. Try again.",
+  "peopleFavoritesEmpty": "Save people from their pages to find them here.",
+  "peopleLoadContinue": "Continue loading",
+  "peopleLoadHint": "Credits load in short batches. You can use the screen while loading. Missing credits are excluded from people statistics.",
+  "peopleNoCredits": "People will appear as credits are loaded.",
+  "filmographyAll": "All work",
+  "statsAllTime": "All time · rated titles",
+  "statsBest": "Your highest scores",
+  "statsWorst": "Your lowest scores",
+  "statsFinds": "Personal discoveries",
+  "statsDisappointments": "Personal disappointments",
+  "statsFindsHint": "Scores at least 1 point above or below the source. Tap to explore.",
+  "statsTasteAgreement": "Preference agreement",
+  "statsAgreementMissing": "Needs at least 3 shared ratings and scores that vary.",
+  "statsCorrelationHint": "Rank agreement: +1 means the same order of preferences, 0 no rank relationship, −1 the reverse. This is not a percentage of matching scores.",
+  "statsReliableGenres": "Reliable genres",
+  "statsPeople": "People in your library",
+  "statsPeopleFrequent": "Most often rated",
+  "statsPeopleHighest": "Highest average",
+  "statsPeopleReliable": "Most often 8+",
+  "statsPeoplePolarizing": "Mixed feelings",
+  "statsDuos": "Favourite creative pairs",
+  "statsBreadth": "Breadth of taste",
+  "statsBreadthHint": "Effective diversity grows when ratings are spread evenly between categories. Genres overlap; a title can belong to several.",
+  "statsMinimumWorks": "Average and reliability rankings need 3 works. Mixed feelings means at least one 8+ and one 4 or below. Spread is the standard deviation.",
+  "statsNoQualifying": "Not enough qualifying works yet.",
+  "statsShowAll": "Show all",
+  "statsScoreHigh": "Scores 8–10",
+  "statsScoreLow": "Scores 1–4",
+  "statsScoreMiddle": "Scores 4.5–7.5",
+  "statsMedian": "Median",
+  "statsSourceWorks": "Shared ratings",
+  "peopleLoadProgress": "People: {loaded} of {total} works",
+  "@peopleLoadProgress": {
+    "placeholders": {
+      "loaded": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "statsProfile": "{count} works · avg {average} · 8+: {percent}% · spread {spread}",
+  "@statsProfile": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "average": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "int"
+      },
+      "spread": {
+        "type": "String"
+      }
+    }
+  },
+  "statsAgreementValue": "{value} · {count} shared ratings",
+  "@statsAgreementValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "statsBreadthSummary": "{genres} genres · {decades} decades · {people} people",
+  "@statsBreadthSummary": {
+    "placeholders": {
+      "genres": {
+        "type": "int"
+      },
+      "decades": {
+        "type": "int"
+      },
+      "people": {
+        "type": "int"
+      }
+    }
+  },
+  "statsEffectiveDiversity": "Effective diversity: {genres} genres · {decades} decades",
+  "@statsEffectiveDiversity": {
+    "placeholders": {
+      "genres": {
+        "type": "String"
+      },
+      "decades": {
+        "type": "String"
+      }
+    }
+  },
+
+  "recommendationsWatchlist": "What to choose from my watchlist",
+  "recommendationsPeople": "Work by favourite people",
+  "recommendationsExplore": "Something different",
+  "recommendationsNotInterested": "Not interested",
+  "recommendationsActions": "Recommendation actions",
+  "recommendationsHidden": "Hidden recommendations",
+  "recommendationsRestoreHint": "Show all recommendations hidden on this device again? Your ratings and watchlist will stay as they are.",
+  "recommendationsRestore": "Show again",
+  "recommendationsSaveFailed": "Could not save this preference. Try again.",
+  "recommendationsRetry": "Retry recommendations",
+  "recommendationsEmpty": "No suggestions right now. You can show hidden recommendations again.",
+  "recommendationsBecauseTaste": "Matches your favourite genres",
+  "recommendationsBecauseExplore": "Explore something different",
+  "recommendationsBecauseWatchlist": "From your watchlist",
+  "recommendationsBecauseTitle": "Because you liked {title}",
+  "@recommendationsBecauseTitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "recommendationsBecausePerson": "A favourite: {name}",
+  "@recommendationsBecausePerson": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "recommendationsBecauseAuthor": "You rate their work highly: {name}",
+  "@recommendationsBecauseAuthor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "recommendationsHiddenTitle": "“{title}” hidden from recommendations",
+  "@recommendationsHiddenTitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  }
 }

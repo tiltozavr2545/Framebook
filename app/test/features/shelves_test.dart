@@ -3,6 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:framebook/app/theme.dart';
 import 'package:framebook/l10n/app_localizations.dart';
 import 'package:framebook/features/search/shelves.dart';
+import 'package:framebook/app/preferences.dart';
+import 'package:framebook/data/library/favorite_people.dart';
+import 'package:framebook/data/library/people_index.dart';
+import 'package:framebook/data/recommendations/candidates.dart';
+import 'package:framebook/data/recommendations/hidden.dart';
+import 'package:framebook/data/recommendations/providers.dart';
+import 'package:framebook/data/recommendations/ranking.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:framebook/data/db/database.dart';
@@ -49,67 +57,105 @@ class Api implements TmdbApi {
   }
 
   @override
+  Future<List<TitleSummary>> discoverRecommendations(
+    WorkKind kind, {
+    int? genre,
+  }) async => [];
+  @override
+  Future<List<TitleSummary>> trending() async => [];
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _Index extends PeopleIndex {
+  @override
+  PeopleIndexState build() => const PeopleIndexState();
 }
 
 void main() {
   for (final scale in [1.0, 1.8, 2.0, 3.0]) {
-    testWidgets('Discover shelf captions fit at text scale $scale', (
-      tester,
-    ) async {
-      tester.view.physicalSize = const Size(640, 1560);
-      tester.view.devicePixelRatio = 2;
-      addTearDown(tester.view.reset);
-      const title = 'A long film title that wraps across both caption lines';
-      final titles = [
-        TitleSummary(
-          key: const WorkKey.movie(1),
-          title: title,
-          originalTitle: null,
-          releaseDate: '2000-01-01',
-          posterPath: null,
-          vote: const TmdbVote(null, null),
-          genreIds: const [],
-        ),
-      ];
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            forYouShelfProvider.overrideWith((ref) async => const []),
-            trendingShelfProvider.overrideWith((ref) async => titles),
-            nowPlayingShelfProvider.overrideWith((ref) async => const []),
-            bestShelfProvider.overrideWith((ref) async => const []),
-            myRatingProvider.overrideWith((ref, key) => Stream.value(null)),
-          ],
-          child: MaterialApp(
-            theme: FramebookTheme.light,
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            builder: (context, child) => MediaQuery(
-              data: MediaQuery.of(
-                context,
-              ).copyWith(textScaler: TextScaler.linear(scale)),
-              child: child!,
+    for (final withReason in [false, true]) {
+      testWidgets(
+        'Discover shelf captions fit at text scale $scale, reason $withReason',
+        (tester) async {
+          tester.view.physicalSize = const Size(640, 1560);
+          tester.view.devicePixelRatio = 2;
+          addTearDown(tester.view.reset);
+          const title =
+              'A long film title that wraps across both caption lines';
+          final titles = [
+            TitleSummary(
+              key: const WorkKey.movie(1),
+              title: title,
+              originalTitle: null,
+              releaseDate: '2000-01-01',
+              posterPath: null,
+              vote: const TmdbVote(null, null),
+              genreIds: const [],
             ),
-            home: const Scaffold(body: Shelves()),
-          ),
-        ),
+          ];
+          SharedPreferences.setMockInitialValues({});
+          final prefs = await SharedPreferences.getInstance();
+          await tester.pumpWidget(
+            ProviderScope(
+              overrides: [
+                recommendationFeedProvider.overrideWith(
+                  (ref) => RecommendationFeed(
+                    forYou: withReason
+                        ? [
+                            RecommendationPick(
+                              titles.single,
+                              RecommendationReason.similar,
+                              detail:
+                                  'A favourite title with a long explanation',
+                            ),
+                          ]
+                        : const [],
+                  ),
+                ),
+                recommendationPoolProvider.overrideWith(
+                  (ref) => Stream.value(const RecommendationPool()),
+                ),
+                sharedPreferencesProvider.overrideWithValue(prefs),
+                trendingShelfProvider.overrideWith(
+                  (ref) async => withReason ? const [] : titles,
+                ),
+                nowPlayingShelfProvider.overrideWith((ref) async => const []),
+                bestShelfProvider.overrideWith((ref) async => const []),
+                myRatingProvider.overrideWith((ref, key) => Stream.value(null)),
+              ],
+              child: MaterialApp(
+                theme: FramebookTheme.light,
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+                supportedLocales: AppLocalizations.supportedLocales,
+                builder: (context, child) => MediaQuery(
+                  data: MediaQuery.of(
+                    context,
+                  ).copyWith(textScaler: TextScaler.linear(scale)),
+                  child: child!,
+                ),
+                home: const Scaffold(body: Shelves()),
+              ),
+            ),
+          );
+          try {
+            await tester.pumpAndSettle();
+            expect(tester.takeException(), isNull);
+            expect(find.text(title), findsOneWidget);
+            expect(find.text('2000'), findsOneWidget);
+            final bounds = tester.getRect(find.byType(ListView).last);
+            expect(
+              tester.getRect(find.text('2000')).bottom,
+              lessThanOrEqualTo(bounds.bottom),
+            );
+          } finally {
+            await tester.pumpWidget(const SizedBox());
+            await tester.pump();
+          }
+        },
       );
-      try {
-        await tester.pumpAndSettle();
-        expect(tester.takeException(), isNull);
-        expect(find.text(title), findsOneWidget);
-        expect(find.text('2000'), findsOneWidget);
-        final bounds = tester.getRect(find.byType(ListView).last);
-        expect(
-          tester.getRect(find.text('2000')).bottom,
-          lessThanOrEqualTo(bounds.bottom),
-        );
-      } finally {
-        await tester.pumpWidget(const SizedBox());
-        await tester.pump();
-      }
-    });
+    }
   }
 
   test(
@@ -136,27 +182,53 @@ void main() {
         ),
       );
       final api = Api('RU');
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
       final c = ProviderContainer(
         overrides: [
           tmdbProvider.overrideWithValue(api),
           ratedTitlesProvider.overrideWith((ref) => changes.stream),
+          favoritePeopleProvider.overrideWith((ref) => Stream.value([])),
+          watchlistTitlesProvider.overrideWith((ref) => Stream.value([])),
+          peopleIndexProvider.overrideWith(_Index.new),
+          sharedPreferencesProvider.overrideWithValue(prefs),
         ],
       );
       addTearDown(c.dispose);
-      c.listen(forYouShelfProvider, (_, __) {});
+      c.listen(recommendationFeedProvider, (_, __) {});
       changes.add([rated(1, 18)]);
-      await pumpEventQueue();
-      expect((await c.read(forYouShelfProvider.future)).map((x) => x.key), [
-        WorkKey.movie(2),
-      ]);
+      for (
+        var i = 0;
+        i < 50 && c.read(recommendationFeedProvider).forYou.isEmpty;
+        i++
+      ) {
+        await pumpEventQueue();
+      }
+      expect(
+        c.read(recommendationFeedProvider).forYou.map((x) => x.title.key),
+        [WorkKey.movie(2)],
+      );
       changes.add([rated(1, 18), rated(2, 12)]);
       await pumpEventQueue();
-      expect(await c.read(forYouShelfProvider.future), isEmpty);
+      expect(c.read(recommendationFeedProvider).forYou, isEmpty);
       changes.add([rated(1, 18)]);
       await pumpEventQueue();
-      expect((await c.read(forYouShelfProvider.future)).map((x) => x.key), [
+      expect(
+        c.read(recommendationFeedProvider).forYou.map((x) => x.title.key),
+        [const WorkKey.movie(2)],
+      );
+      expect(api.requests, 1);
+      await c
+          .read(hiddenRecommendationsProvider.notifier)
+          .hide(const WorkKey.movie(2));
+      expect(c.read(recommendationFeedProvider).forYou, isEmpty);
+      await c
+          .read(hiddenRecommendationsProvider.notifier)
+          .restore(const WorkKey.movie(2));
+      expect(
+        c.read(recommendationFeedProvider).forYou.single.title.key,
         const WorkKey.movie(2),
-      ]);
+      );
       expect(api.requests, 1);
     },
   );

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/router.dart';
 import '../../data/background_refresh.dart';
 import '../../data/library/localized_titles.dart';
+import '../../data/recommendations/providers.dart';
 import '../../data/update_checker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../data/sync/sync_controller.dart';
@@ -45,6 +46,9 @@ class ShellScreen extends ConsumerWidget {
     ref.watch(localizedTitlesProvider);
     // Sync too: on launch, on returning to the app, after changes.
     ref.listen(syncControllerProvider, (_, _) {});
+    // Keep streamed recommendation dependencies current while a nested card
+    // pauses Discover's widget subscriptions, so back can resume them safely.
+    ref.listen(recommendationFeedProvider, (_, _) {});
     final l10n = AppLocalizations.of(context);
     return Scaffold(
       body: Column(

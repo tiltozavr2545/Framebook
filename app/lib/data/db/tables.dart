@@ -97,6 +97,21 @@ class Watchlist extends Table {
   Set<Column<Object>> get primaryKey => {workKey};
 }
 
+/// A favourite person as a whole, independent of their jobs. Tombstones stay
+/// permanently: removing a favourite must survive an offline device's return.
+@DataClassName('FavoritePerson')
+class FavoritePeople extends Table {
+  IntColumn get personId => integer().check(personId.isBiggerThanValue(0))();
+  TextColumn get name => text()();
+  TextColumn get profilePath => text().nullable()();
+  IntColumn get updatedAt => integer()();
+  TextColumn get updatedBy => text()();
+  IntColumn get deletedAt => integer().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {personId};
+}
+
 /// Cache of external ratings. Local only; no foreign key to `works`, because
 /// titles that were opened but never rated are cached too.
 @DataClassName('ExternalRating')

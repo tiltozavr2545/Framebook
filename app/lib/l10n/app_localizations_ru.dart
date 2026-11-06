@@ -728,7 +728,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get syncIntro =>
-      'Оценки, заметки и список «Хочу посмотреть» хранятся в скрытой папке твоего Google Диска и объединяются между устройствами. Приложение видит только эту папку.';
+      'Оценки, заметки, список «Буду смотреть» и избранные люди хранятся в скрытой папке твоего Google Диска и объединяются между устройствами. Приложение видит только эту папку.';
 
   @override
   String get syncNotConfigured =>
@@ -809,7 +809,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get syncBackupsHint =>
-      'Хранится до семи копий за дни, когда данные синхронизации менялись. Восстановление заменяет сохранённые оценки и список на твоих устройствах.';
+      'Храним до семи копий за дни, когда синхронизируемые данные менялись. Восстановление заменяет сохранённые оценки, список «Буду смотреть» и избранных людей на всех устройствах.';
 
   @override
   String get syncBackupsEmpty =>
@@ -829,7 +829,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get syncRestoreBody =>
-      'Изменения оценок и списка после этой копии откатятся на твоих устройствах. Записи, окончательно удалённые при очистке, из старой копии не восстановятся.';
+      'Изменения оценок, списка «Буду смотреть» и избранных людей после этой копии будут отменены на всех устройствах. Записи, окончательно удалённые при очистке, нельзя вернуть из старой копии.';
 
   @override
   String get syncRestored => 'Копия восстановлена';
@@ -875,7 +875,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get exportFileHint =>
-      'Всё, что ты оценил, в одном файле. Работает без Google.';
+      'Оценки, заметки, список «Буду смотреть» и избранные люди в одном файле. Работает без Google.';
 
   @override
   String get exportDone => 'Сохранено';
@@ -902,7 +902,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get importReplaceBody =>
-      'Оценки, которых нет в файле, будут удалены на всех твоих устройствах.';
+      'Оценки, записи списка «Буду смотреть» и избранные люди, которых нет в файле, будут удалены на всех твоих устройствах.';
 
   @override
   String get importBroken => 'Этот файл не читается.';
@@ -940,7 +940,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get navStats => 'Статистика';
 
   @override
-  String get shelfForYou => 'Похоже на твои любимые';
+  String get shelfForYou => 'Для тебя';
 
   @override
   String get shelfTrending => 'В тренде на неделе';
@@ -1095,4 +1095,220 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get secretsWrongPassword =>
       'Неверный пароль или зашифрованный файл повреждён.';
+
+  @override
+  String get ratingDayToday => 'Сегодня';
+
+  @override
+  String get ratingDayYesterday => 'Вчера';
+
+  @override
+  String get peopleFavorites => 'Избранные люди';
+
+  @override
+  String get peopleFrequent => 'Часто встречаются в ваших оценках';
+
+  @override
+  String get peoplePopular => 'Популярные люди';
+
+  @override
+  String get peopleAddFavorite => 'Добавить в избранное';
+
+  @override
+  String get peopleRemoveFavorite => 'Убрать из избранного';
+
+  @override
+  String get peopleFavoriteFailed =>
+      'Не удалось изменить избранное. Попробуйте ещё раз.';
+
+  @override
+  String get peopleFavoritesEmpty =>
+      'Добавляйте людей в избранное на их страницах — они появятся здесь.';
+
+  @override
+  String get peopleLoadContinue => 'Продолжить загрузку';
+
+  @override
+  String get peopleLoadHint =>
+      'Участники загружаются короткими порциями. Экран доступен во время загрузки. Работы без сведений об участниках пока не учитываются в статистике людей.';
+
+  @override
+  String get peopleNoCredits =>
+      'Люди появятся по мере загрузки участников работ.';
+
+  @override
+  String get filmographyAll => 'Все работы';
+
+  @override
+  String get statsAllTime => 'За всё время · оценённые работы';
+
+  @override
+  String get statsBest => 'Ваши лучшие оценки';
+
+  @override
+  String get statsWorst => 'Ваши худшие оценки';
+
+  @override
+  String get statsFinds => 'Личные находки';
+
+  @override
+  String get statsDisappointments => 'Личные разочарования';
+
+  @override
+  String get statsFindsHint =>
+      'Оценки минимум на 1 балл выше или ниже источника. Нажмите, чтобы посмотреть работы.';
+
+  @override
+  String get statsTasteAgreement => 'Совпадение предпочтений';
+
+  @override
+  String get statsAgreementMissing =>
+      'Нужно минимум 3 общие оценки и различающиеся баллы.';
+
+  @override
+  String get statsCorrelationHint =>
+      'Совпадение порядка предпочтений: +1 — одинаковый, 0 — нет связи, −1 — противоположный. Это не процент одинаковых оценок.';
+
+  @override
+  String get statsReliableGenres => 'Надёжные жанры';
+
+  @override
+  String get statsPeople => 'Люди в вашей библиотеке';
+
+  @override
+  String get statsPeopleFrequent => 'Чаще всего оцениваете';
+
+  @override
+  String get statsPeopleHighest => 'Высокая средняя оценка';
+
+  @override
+  String get statsPeopleReliable => 'Чаще получаются 8+';
+
+  @override
+  String get statsPeoplePolarizing => 'Неоднозначные авторы';
+
+  @override
+  String get statsDuos => 'Любимые творческие пары';
+
+  @override
+  String get statsBreadth => 'Широта вкуса';
+
+  @override
+  String get statsBreadthHint =>
+      'Эффективное разнообразие растёт, когда оценки равномерно распределены между категориями. Жанры пересекаются: у работы может быть несколько.';
+
+  @override
+  String get statsMinimumWorks =>
+      'Для рейтингов по среднему баллу и надёжности нужны 3 работы. Неоднозначность — есть хотя бы одна оценка 8+ и одна 4 или ниже. Разброс — стандартное отклонение.';
+
+  @override
+  String get statsNoQualifying => 'Пока недостаточно подходящих работ.';
+
+  @override
+  String get statsShowAll => 'Показать все';
+
+  @override
+  String get statsScoreHigh => 'Оценки 8–10';
+
+  @override
+  String get statsScoreLow => 'Оценки 1–4';
+
+  @override
+  String get statsScoreMiddle => 'Оценки 4,5–7,5';
+
+  @override
+  String get statsMedian => 'Медиана';
+
+  @override
+  String get statsSourceWorks => 'Общие оценки';
+
+  @override
+  String peopleLoadProgress(int loaded, int total) {
+    return 'Участники: $loaded из $total работ';
+  }
+
+  @override
+  String statsProfile(int count, String average, int percent, String spread) {
+    return '$count работ · средняя $average · 8+: $percent% · разброс $spread';
+  }
+
+  @override
+  String statsAgreementValue(String value, int count) {
+    return '$value · $count общих оценок';
+  }
+
+  @override
+  String statsBreadthSummary(int genres, int decades, int people) {
+    return '$genres жанров · $decades десятилетий · $people людей';
+  }
+
+  @override
+  String statsEffectiveDiversity(String genres, String decades) {
+    return 'Эффективное разнообразие: $genres жанров · $decades десятилетий';
+  }
+
+  @override
+  String get recommendationsWatchlist => 'Что выбрать из моего списка';
+
+  @override
+  String get recommendationsPeople => 'Работы избранных людей';
+
+  @override
+  String get recommendationsExplore => 'Попробовать необычное';
+
+  @override
+  String get recommendationsNotInterested => 'Не интересно';
+
+  @override
+  String get recommendationsActions => 'Действия с рекомендацией';
+
+  @override
+  String get recommendationsHidden => 'Скрытые рекомендации';
+
+  @override
+  String get recommendationsRestoreHint =>
+      'Снова показывать все рекомендации, скрытые на этом устройстве? Оценки и список «Посмотреть» останутся прежними.';
+
+  @override
+  String get recommendationsRestore => 'Показывать снова';
+
+  @override
+  String get recommendationsSaveFailed =>
+      'Не удалось сохранить настройку. Попробуй ещё раз.';
+
+  @override
+  String get recommendationsRetry => 'Обновить рекомендации';
+
+  @override
+  String get recommendationsEmpty =>
+      'Пока нет предложений. Можно вернуть скрытые рекомендации.';
+
+  @override
+  String get recommendationsBecauseTaste => 'По твоим любимым жанрам';
+
+  @override
+  String get recommendationsBecauseExplore => 'Открой что-то новое';
+
+  @override
+  String get recommendationsBecauseWatchlist => 'Из твоего списка «Посмотреть»';
+
+  @override
+  String recommendationsBecauseTitle(String title) {
+    return 'Потому что тебе понравился «$title»';
+  }
+
+  @override
+  String recommendationsBecausePerson(String name) {
+    return 'В избранном: $name';
+  }
+
+  @override
+  String recommendationsBecauseAuthor(String name) {
+    return 'Ты высоко оцениваешь: $name';
+  }
+
+  @override
+  String recommendationsHiddenTitle(String title) {
+    return '«$title» скрыт из рекомендаций';
+  }
 }

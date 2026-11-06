@@ -9,6 +9,8 @@ import 'package:framebook/app/preferences.dart';
 import 'package:framebook/data/db/database.dart';
 import 'package:framebook/data/db/database_provider.dart';
 import 'package:framebook/data/library/library.dart';
+import 'package:framebook/data/library/favorite_people.dart';
+import 'package:framebook/data/sources/tmdb/tmdb_models.dart';
 import 'package:framebook/data/library/work_snapshot.dart';
 import 'package:framebook/data/sync/google_account.dart';
 import 'package:framebook/data/sync/sync_controller.dart';
@@ -501,6 +503,47 @@ void main() {
     }
     fail('The edit made during upload was not synced');
   });
+
+  test(
+    'favorites-only library syncs automatically after adding and removing',
+    () async {
+      final remote = MemoryRemote();
+      final (container, _) = await device(
+        'a',
+        FakeGoogleAccount(remote),
+        debounce: Duration.zero,
+      );
+      final controller = container.read(syncControllerProvider.notifier);
+      await controller.signIn();
+      final people = PeopleLibrary(container.read(databaseProvider));
+      const person = PersonSummary(id: 138, name: 'Quentin Tarantino');
+      Future<void> waitFor(bool deleted) async {
+        for (var attempt = 0; attempt < 200; attempt++) {
+          await Future<void>.delayed(const Duration(milliseconds: 10));
+          final files = remote.files.values.where(
+            (f) => f.name == SyncFile.name,
+          );
+          if (files.isEmpty) continue;
+          final rows = SyncFile.decode(files.single.bytes).favoritePeople;
+          if (rows.length == 1 && (rows.single.deletedAt != null) == deleted) {
+            return;
+          }
+        }
+        fail('Favorite change was not automatically uploaded');
+      }
+
+      await people.setFavorite(person, true);
+      await waitFor(false);
+      await people.setFavorite(person, false);
+      await waitFor(true);
+      expect(
+        SyncFile.decode(
+          await controller.export(),
+        ).favoritePeople.single.deletedAt,
+        isNotNull,
+      );
+    },
+  );
 
   test('deleting the data from Drive removes every file', () async {
     final remote = MemoryRemote();

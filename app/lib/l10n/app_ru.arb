@@ -217,7 +217,7 @@
 
   "settingsSync": "Синхронизация и копии",
   "syncDrive": "Google Диск",
-  "syncIntro": "Оценки, заметки и список «Хочу посмотреть» хранятся в скрытой папке твоего Google Диска и объединяются между устройствами. Приложение видит только эту папку.",
+  "syncIntro": "Оценки, заметки, список «Буду смотреть» и избранные люди хранятся в скрытой папке твоего Google Диска и объединяются между устройствами. Приложение видит только эту папку.",
   "syncNotConfigured": "В этой сборке приложения вход через Google не настроен.",
   "syncSignIn": "Войти через Google",
   "syncSignedInAs": "Вход выполнен: {email}",
@@ -239,12 +239,12 @@
   "syncFirstBody": "Оценок на устройстве: {device}. На Google Диске: {drive}. После объединения: {merged}. Ничего не потеряется: для каждого тайтла побеждает последнее изменение.",
   "syncMerge": "Объединить",
   "syncBackups": "Ежедневные копии",
-  "syncBackupsHint": "Хранится до семи копий за дни, когда данные синхронизации менялись. Восстановление заменяет сохранённые оценки и список на твоих устройствах.",
+  "syncBackupsHint": "Храним до семи копий за дни, когда синхронизируемые данные менялись. Восстановление заменяет сохранённые оценки, список «Буду смотреть» и избранных людей на всех устройствах.",
   "syncBackupsEmpty": "Копий пока нет: копия создаётся перед первым изменением существующего файла синхронизации за день.",
   "syncRestore": "Восстановить",
   "syncRestoreTitle": "Восстановить копию от {date}?",
   "syncRepairBody": "Восстановить эту копию и исправить нечитаемый файл синхронизации? Повреждённый оригинал останется отдельно на Диске. Ежедневные копии и зашифрованные ключи сохранятся. Файлы более новой версии приложения не заменяются.",
-  "syncRestoreBody": "Изменения оценок и списка после этой копии откатятся на твоих устройствах. Записи, окончательно удалённые при очистке, из старой копии не восстановятся.",
+  "syncRestoreBody": "Изменения оценок, списка «Буду смотреть» и избранных людей после этой копии будут отменены на всех устройствах. Записи, окончательно удалённые при очистке, нельзя вернуть из старой копии.",
   "syncRestored": "Копия восстановлена",
   "syncDelete": "Удалить данные с Google Диска",
   "syncDeleteTitle": "Удалить данные с Google Диска?",
@@ -259,7 +259,7 @@
 
   "backupFile": "Экспорт и импорт",
   "exportFile": "Экспорт в файл",
-  "exportFileHint": "Всё, что ты оценил, в одном файле. Работает без Google.",
+  "exportFileHint": "Оценки, заметки, список «Буду смотреть» и избранные люди в одном файле. Работает без Google.",
   "exportDone": "Сохранено",
   "importFile": "Импорт из файла",
   "importTitle": "Импорт оценок",
@@ -267,7 +267,7 @@
   "importMerge": "Объединить",
   "importReplace": "Заменить всё",
   "importReplaceTitle": "Заменить всё содержимым файла?",
-  "importReplaceBody": "Оценки, которых нет в файле, будут удалены на всех твоих устройствах.",
+  "importReplaceBody": "Оценки, записи списка «Буду смотреть» и избранные люди, которых нет в файле, будут удалены на всех твоих устройствах.",
   "importBroken": "Этот файл не читается.",
   "importTooNew": "Файл записан более новой версией Framebook. Обнови приложение, чтобы его импортировать.",
   "importDone": "Импортировано",
@@ -280,7 +280,7 @@
   "navRatings": "Оценки",
   "navWatchlist": "Посмотреть",
   "navStats": "Статистика",
-  "shelfForYou": "Похоже на твои любимые",
+  "shelfForYou": "Для тебя",
   "shelfTrending": "В тренде на неделе",
   "shelfNowPlaying": "Сейчас в кино",
   "shelfBest": "Лучшее всех времён",
@@ -321,5 +321,156 @@
   "secretsPasswordHint": "Не менее 8 символов",
   "secretsContinue": "Продолжить",
   "secretsMissing": "Зашифрованная копия ключей не найдена. Сначала включите её на другом устройстве.",
-  "secretsWrongPassword": "Неверный пароль или зашифрованный файл повреждён."
+  "secretsWrongPassword": "Неверный пароль или зашифрованный файл повреждён.",
+
+  "ratingDayToday": "Сегодня",
+  "ratingDayYesterday": "Вчера",
+  "peopleFavorites": "Избранные люди",
+  "peopleFrequent": "Часто встречаются в ваших оценках",
+  "peoplePopular": "Популярные люди",
+  "peopleAddFavorite": "Добавить в избранное",
+  "peopleRemoveFavorite": "Убрать из избранного",
+  "peopleFavoriteFailed": "Не удалось изменить избранное. Попробуйте ещё раз.",
+  "peopleFavoritesEmpty": "Добавляйте людей в избранное на их страницах — они появятся здесь.",
+  "peopleLoadContinue": "Продолжить загрузку",
+  "peopleLoadHint": "Участники загружаются короткими порциями. Экран доступен во время загрузки. Работы без сведений об участниках пока не учитываются в статистике людей.",
+  "peopleNoCredits": "Люди появятся по мере загрузки участников работ.",
+  "filmographyAll": "Все работы",
+  "statsAllTime": "За всё время · оценённые работы",
+  "statsBest": "Ваши лучшие оценки",
+  "statsWorst": "Ваши худшие оценки",
+  "statsFinds": "Личные находки",
+  "statsDisappointments": "Личные разочарования",
+  "statsFindsHint": "Оценки минимум на 1 балл выше или ниже источника. Нажмите, чтобы посмотреть работы.",
+  "statsTasteAgreement": "Совпадение предпочтений",
+  "statsAgreementMissing": "Нужно минимум 3 общие оценки и различающиеся баллы.",
+  "statsCorrelationHint": "Совпадение порядка предпочтений: +1 — одинаковый, 0 — нет связи, −1 — противоположный. Это не процент одинаковых оценок.",
+  "statsReliableGenres": "Надёжные жанры",
+  "statsPeople": "Люди в вашей библиотеке",
+  "statsPeopleFrequent": "Чаще всего оцениваете",
+  "statsPeopleHighest": "Высокая средняя оценка",
+  "statsPeopleReliable": "Чаще получаются 8+",
+  "statsPeoplePolarizing": "Неоднозначные авторы",
+  "statsDuos": "Любимые творческие пары",
+  "statsBreadth": "Широта вкуса",
+  "statsBreadthHint": "Эффективное разнообразие растёт, когда оценки равномерно распределены между категориями. Жанры пересекаются: у работы может быть несколько.",
+  "statsMinimumWorks": "Для рейтингов по среднему баллу и надёжности нужны 3 работы. Неоднозначность — есть хотя бы одна оценка 8+ и одна 4 или ниже. Разброс — стандартное отклонение.",
+  "statsNoQualifying": "Пока недостаточно подходящих работ.",
+  "statsShowAll": "Показать все",
+  "statsScoreHigh": "Оценки 8–10",
+  "statsScoreLow": "Оценки 1–4",
+  "statsScoreMiddle": "Оценки 4,5–7,5",
+  "statsMedian": "Медиана",
+  "statsSourceWorks": "Общие оценки",
+  "peopleLoadProgress": "Участники: {loaded} из {total} работ",
+  "@peopleLoadProgress": {
+    "placeholders": {
+      "loaded": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "statsProfile": "{count} работ · средняя {average} · 8+: {percent}% · разброс {spread}",
+  "@statsProfile": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "average": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "int"
+      },
+      "spread": {
+        "type": "String"
+      }
+    }
+  },
+  "statsAgreementValue": "{value} · {count} общих оценок",
+  "@statsAgreementValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "statsBreadthSummary": "{genres} жанров · {decades} десятилетий · {people} людей",
+  "@statsBreadthSummary": {
+    "placeholders": {
+      "genres": {
+        "type": "int"
+      },
+      "decades": {
+        "type": "int"
+      },
+      "people": {
+        "type": "int"
+      }
+    }
+  },
+  "statsEffectiveDiversity": "Эффективное разнообразие: {genres} жанров · {decades} десятилетий",
+  "@statsEffectiveDiversity": {
+    "placeholders": {
+      "genres": {
+        "type": "String"
+      },
+      "decades": {
+        "type": "String"
+      }
+    }
+  },
+
+  "recommendationsWatchlist": "Что выбрать из моего списка",
+  "recommendationsPeople": "Работы избранных людей",
+  "recommendationsExplore": "Попробовать необычное",
+  "recommendationsNotInterested": "Не интересно",
+  "recommendationsActions": "Действия с рекомендацией",
+  "recommendationsHidden": "Скрытые рекомендации",
+  "recommendationsRestoreHint": "Снова показывать все рекомендации, скрытые на этом устройстве? Оценки и список «Посмотреть» останутся прежними.",
+  "recommendationsRestore": "Показывать снова",
+  "recommendationsSaveFailed": "Не удалось сохранить настройку. Попробуй ещё раз.",
+  "recommendationsRetry": "Обновить рекомендации",
+  "recommendationsEmpty": "Пока нет предложений. Можно вернуть скрытые рекомендации.",
+  "recommendationsBecauseTaste": "По твоим любимым жанрам",
+  "recommendationsBecauseExplore": "Открой что-то новое",
+  "recommendationsBecauseWatchlist": "Из твоего списка «Посмотреть»",
+  "recommendationsBecauseTitle": "Потому что тебе понравился «{title}»",
+  "@recommendationsBecauseTitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "recommendationsBecausePerson": "В избранном: {name}",
+  "@recommendationsBecausePerson": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "recommendationsBecauseAuthor": "Ты высоко оцениваешь: {name}",
+  "@recommendationsBecauseAuthor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "recommendationsHiddenTitle": "«{title}» скрыт из рекомендаций",
+  "@recommendationsHiddenTitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  }
 }

@@ -127,7 +127,7 @@ void main() {
 
       final json =
           jsonDecode(utf8.decode(gzip.decode(bytes))) as Map<String, Object?>;
-      expect(json['format_version'], 4);
+      expect(json['format_version'], 5);
       expect(json['purged_before'], state.purgedBefore);
       expect(json['written_by'], 'dev-a');
       expect(json['app_version'], '0.5.0+7');
@@ -220,7 +220,7 @@ void main() {
 
     test('a file written by a newer app is refused, not misread', () {
       expect(
-        () => SyncFile.decode(_gzipJson({'format_version': 5})),
+        () => SyncFile.decode(_gzipJson({'format_version': 6})),
         throwsA(isA<SyncFileTooNew>()),
       );
     });

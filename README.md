@@ -44,7 +44,9 @@ platform is Android (an APK for myself and friends); iOS is postponed
 - Ratings next to yours: Kinopoisk, IMDb, TMDB, Rotten Tomatoes, Metacritic — with the "mine − theirs" difference
 - "My ratings" sortable by divergence from Kinopoisk or IMDb
 - A watchlist
-- Statistics: the distribution of your scores, the average deviation from Kinopoisk/IMDb, a breakdown by genre and decade
+- Statistics: interactive scores, genres and decades; discoveries and disagreements with Kinopoisk/IMDb; favourite authors, creative pairs and breadth of taste
+- Favourite people with Drive sync, all-role filmographies and people discovery shelves
+- Hybrid personal recommendations, a ranked watchlist, favourite-people work and exploration, with reasons and Not interested/Undo
 - Offline use for what is already rated: the list, sorting, statistics
 - Sync and backup through Google Drive (the app's hidden folder), plus export/import to a file
 - Optional password-encrypted API key and comparison-source sync, including restore on first launch

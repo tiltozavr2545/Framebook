@@ -723,7 +723,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncIntro =>
-      'Your ratings, notes and watchlist are kept in a hidden folder of your own Google Drive and merged between your devices. The app sees only that folder.';
+      'Your ratings, notes, watchlist and favourite people are kept in a hidden folder of your own Google Drive and merged between your devices. The app sees only that folder.';
 
   @override
   String get syncNotConfigured =>
@@ -803,7 +803,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncBackupsHint =>
-      'Keeps up to seven copies from days when synced data changed. Restoring replaces your retained ratings and watchlist across devices.';
+      'Keeps up to seven copies from days when synced data changed. Restoring replaces your retained ratings, watchlist and favourite people across devices.';
 
   @override
   String get syncBackupsEmpty =>
@@ -823,7 +823,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncRestoreBody =>
-      'Ratings and watchlist changes after this copy will be rolled back across your devices. Entries permanently removed by cleanup cannot be recovered from an older copy.';
+      'Ratings, watchlist and favourite-people changes after this copy will be rolled back across your devices. Entries permanently removed by cleanup cannot be recovered from an older copy.';
 
   @override
   String get syncRestored => 'Copy restored';
@@ -869,7 +869,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get exportFileHint =>
-      'Everything you rated, in one file. Works without Google.';
+      'Your ratings, notes, watchlist and favourite people in one file. Works without Google.';
 
   @override
   String get exportDone => 'Saved';
@@ -896,7 +896,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get importReplaceBody =>
-      'Ratings that aren\'t in the file will be deleted on all your devices.';
+      'Ratings, watchlist entries and favourite people absent from the file will be removed on all your devices.';
 
   @override
   String get importBroken => 'This file can\'t be read.';
@@ -934,7 +934,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navStats => 'Stats';
 
   @override
-  String get shelfForYou => 'Like your favourites';
+  String get shelfForYou => 'For you';
 
   @override
   String get shelfTrending => 'Trending this week';
@@ -1089,4 +1089,218 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get secretsWrongPassword =>
       'The password is incorrect or the encrypted file is damaged.';
+
+  @override
+  String get ratingDayToday => 'Today';
+
+  @override
+  String get ratingDayYesterday => 'Yesterday';
+
+  @override
+  String get peopleFavorites => 'Favourite people';
+
+  @override
+  String get peopleFrequent => 'Often in your ratings';
+
+  @override
+  String get peoplePopular => 'Popular people';
+
+  @override
+  String get peopleAddFavorite => 'Add to favourites';
+
+  @override
+  String get peopleRemoveFavorite => 'Remove from favourites';
+
+  @override
+  String get peopleFavoriteFailed => 'Could not update favourites. Try again.';
+
+  @override
+  String get peopleFavoritesEmpty =>
+      'Save people from their pages to find them here.';
+
+  @override
+  String get peopleLoadContinue => 'Continue loading';
+
+  @override
+  String get peopleLoadHint =>
+      'Credits load in short batches. You can use the screen while loading. Missing credits are excluded from people statistics.';
+
+  @override
+  String get peopleNoCredits => 'People will appear as credits are loaded.';
+
+  @override
+  String get filmographyAll => 'All work';
+
+  @override
+  String get statsAllTime => 'All time · rated titles';
+
+  @override
+  String get statsBest => 'Your highest scores';
+
+  @override
+  String get statsWorst => 'Your lowest scores';
+
+  @override
+  String get statsFinds => 'Personal discoveries';
+
+  @override
+  String get statsDisappointments => 'Personal disappointments';
+
+  @override
+  String get statsFindsHint =>
+      'Scores at least 1 point above or below the source. Tap to explore.';
+
+  @override
+  String get statsTasteAgreement => 'Preference agreement';
+
+  @override
+  String get statsAgreementMissing =>
+      'Needs at least 3 shared ratings and scores that vary.';
+
+  @override
+  String get statsCorrelationHint =>
+      'Rank agreement: +1 means the same order of preferences, 0 no rank relationship, −1 the reverse. This is not a percentage of matching scores.';
+
+  @override
+  String get statsReliableGenres => 'Reliable genres';
+
+  @override
+  String get statsPeople => 'People in your library';
+
+  @override
+  String get statsPeopleFrequent => 'Most often rated';
+
+  @override
+  String get statsPeopleHighest => 'Highest average';
+
+  @override
+  String get statsPeopleReliable => 'Most often 8+';
+
+  @override
+  String get statsPeoplePolarizing => 'Mixed feelings';
+
+  @override
+  String get statsDuos => 'Favourite creative pairs';
+
+  @override
+  String get statsBreadth => 'Breadth of taste';
+
+  @override
+  String get statsBreadthHint =>
+      'Effective diversity grows when ratings are spread evenly between categories. Genres overlap; a title can belong to several.';
+
+  @override
+  String get statsMinimumWorks =>
+      'Average and reliability rankings need 3 works. Mixed feelings means at least one 8+ and one 4 or below. Spread is the standard deviation.';
+
+  @override
+  String get statsNoQualifying => 'Not enough qualifying works yet.';
+
+  @override
+  String get statsShowAll => 'Show all';
+
+  @override
+  String get statsScoreHigh => 'Scores 8–10';
+
+  @override
+  String get statsScoreLow => 'Scores 1–4';
+
+  @override
+  String get statsScoreMiddle => 'Scores 4.5–7.5';
+
+  @override
+  String get statsMedian => 'Median';
+
+  @override
+  String get statsSourceWorks => 'Shared ratings';
+
+  @override
+  String peopleLoadProgress(int loaded, int total) {
+    return 'People: $loaded of $total works';
+  }
+
+  @override
+  String statsProfile(int count, String average, int percent, String spread) {
+    return '$count works · avg $average · 8+: $percent% · spread $spread';
+  }
+
+  @override
+  String statsAgreementValue(String value, int count) {
+    return '$value · $count shared ratings';
+  }
+
+  @override
+  String statsBreadthSummary(int genres, int decades, int people) {
+    return '$genres genres · $decades decades · $people people';
+  }
+
+  @override
+  String statsEffectiveDiversity(String genres, String decades) {
+    return 'Effective diversity: $genres genres · $decades decades';
+  }
+
+  @override
+  String get recommendationsWatchlist => 'What to choose from my watchlist';
+
+  @override
+  String get recommendationsPeople => 'Work by favourite people';
+
+  @override
+  String get recommendationsExplore => 'Something different';
+
+  @override
+  String get recommendationsNotInterested => 'Not interested';
+
+  @override
+  String get recommendationsActions => 'Recommendation actions';
+
+  @override
+  String get recommendationsHidden => 'Hidden recommendations';
+
+  @override
+  String get recommendationsRestoreHint =>
+      'Show all recommendations hidden on this device again? Your ratings and watchlist will stay as they are.';
+
+  @override
+  String get recommendationsRestore => 'Show again';
+
+  @override
+  String get recommendationsSaveFailed =>
+      'Could not save this preference. Try again.';
+
+  @override
+  String get recommendationsRetry => 'Retry recommendations';
+
+  @override
+  String get recommendationsEmpty =>
+      'No suggestions right now. You can show hidden recommendations again.';
+
+  @override
+  String get recommendationsBecauseTaste => 'Matches your favourite genres';
+
+  @override
+  String get recommendationsBecauseExplore => 'Explore something different';
+
+  @override
+  String get recommendationsBecauseWatchlist => 'From your watchlist';
+
+  @override
+  String recommendationsBecauseTitle(String title) {
+    return 'Because you liked $title';
+  }
+
+  @override
+  String recommendationsBecausePerson(String name) {
+    return 'A favourite: $name';
+  }
+
+  @override
+  String recommendationsBecauseAuthor(String name) {
+    return 'You rate their work highly: $name';
+  }
+
+  @override
+  String recommendationsHiddenTitle(String title) {
+    return '“$title” hidden from recommendations';
+  }
 }

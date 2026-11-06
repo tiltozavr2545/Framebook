@@ -78,7 +78,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                     AppTab.stats => const StatsScreen(),
                   },
                   // Cards open inside the tab they were opened from.
-                  routes: tab == AppTab.stats ? const [] : TitleRoutes.routes(),
+                  routes: TitleRoutes.routes(),
                 ),
               ],
             ),

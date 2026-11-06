@@ -25,6 +25,7 @@ import 'package:framebook/data/db/database.dart';
 import 'package:framebook/data/db/database_provider.dart';
 import 'package:framebook/data/http.dart';
 import 'package:framebook/data/library/library.dart';
+import 'package:framebook/data/library/favorite_people.dart';
 import 'package:framebook/data/library/work_snapshot.dart';
 import 'package:framebook/data/ratings_service.dart';
 import 'package:framebook/data/response_cache.dart';
@@ -315,6 +316,43 @@ void main() {
     testWidgets('search $theme', skip: skip != null, (tester) async {
       await pump(tester, brightness: brightness);
       await shoot(tester, 'search-$theme');
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(milliseconds: 1));
+    });
+
+    testWidgets('recommendations $theme', skip: skip != null, (tester) async {
+      await pump(
+        tester,
+        brightness: brightness,
+        seed: (lib, db) async {
+          await library(lib, db);
+          await PeopleLibrary(db).setFavorite(
+            const PersonSummary(id: 6384, name: 'Киану Ривз'),
+            true,
+          );
+          await lib.addToWatchlist(const [
+            WorkSnapshot(
+              key: WorkKey.movie(605),
+              tmdbId: 605,
+              title: 'Матрица: Революция',
+              releaseDate: '2003-11-05',
+              genreIds: [28, 878],
+            ),
+          ]);
+        },
+      );
+      await shoot(tester, 'recommendations-$theme');
+      await tester.scrollUntilVisible(
+        find.text('Работы избранных людей'),
+        250,
+        scrollable: find
+            .descendant(
+              of: find.byType(ListView).first,
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      await shoot(tester, 'recommendations-people-$theme');
       await tester.pumpWidget(const SizedBox());
       await tester.pump(const Duration(milliseconds: 1));
     });

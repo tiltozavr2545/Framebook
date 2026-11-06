@@ -21,6 +21,73 @@ are settled before anything is built on top of them.
 - [x] Stage 6.5 — Required items from the postponed list (0.7.0; item 5 postponed)
 - [ ] Stage 7 — Code review, optimization, a second review
 
+## 0.8.5 — Library insights, favourite people and recommendations
+
+Version: `0.8.5+19`. Scope agreed on 2026-11-06.
+
+- [x] Local-day headings in the default score-date order; other sorts stay flat.
+- [x] All-time interactive statistics in one screen, separated by title kind:
+  scores, genres, decades, source agreement, discoveries/disappointments,
+  people frequency/reliability/polarization, creative pairs and taste breadth.
+- [x] People favourites across all professions, combined default filmography,
+  favourites/frequent/popular/role shelves in empty People search.
+- [x] Drift v1 → v2 migration and sync format v5 with favourite tombstones,
+  backward reading, merge/replace/export coverage and automatic sync.
+- [x] Bounded parallel loading and evictable cache of analytics credits,
+  partial coverage, offline display and continuation.
+- [x] Automated checks and updated documentation.
+- [x] Recent-title history only on empty Discover, never over active search
+  or results (additional request during implementation).
+
+Title sharing via links remains postponed in
+[future-development.md](future-development.md). Subsequent hybrid
+recommendation work is tracked below.
+
+Validation: `make codegen` and `make verify` passed (500 tests, 18 opt-in
+renderers skipped; analyzer clean). A separate dark-statistics render passed
+and was inspected locally. Tests cover v1 data preservation, favourite-register
+merge laws and automatic sync, codec compatibility, bounded credit loading,
+offline cache/disposal, distinct-work analytics, tied-rank correlation, day
+headings, history visibility, large text and Stats card navigation/back.
+The release-signed universal `0.8.5+19` APK built successfully (63.1 MB), its
+package/version and release certificate were verified, and it was installed
+over `0.8.4+18` on a physical Android device without clearing app data. Launch
+was checked. Physical-device performance timing remains unmeasured.
+
+## Hybrid recommendation follow-up
+
+Scope agreed on 2026-11-06, retaining the current Discover design.
+
+- [x] Local all-time taste profile, positive and negative evidence, typed
+  identities and one contribution per series with hierarchical part fallback.
+- [x] Bounded, streamed TMDB candidate retrieval from rated seeds, favourite
+  people across every profession, learned people and genre/general discovery.
+- [x] For you with 1:1 familiar/exploration slots, a separate ranked watchlist,
+  favourite-people work and exploration rows with factual explanations.
+- [x] Per-device Not interested, persistent hiding, Undo and restore-all;
+  ratings, watchlist and synced data stay independent of that preference.
+- [x] Regression tests, light/dark visual review and full verification.
+
+The algorithm, defaults, request budgets and limits are in
+[recommendations.md](recommendations.md). The user also requested a physical
+phone preview, retaining version `0.8.5+19`.
+
+Validation: `make codegen` and `make verify TEST_ARGS='--reporter expanded'`
+passed (522 tests, 20 opt-in renderers skipped; analyzer clean). Both optional
+recommendation renderers passed; the new rows were inspected in light and
+dark themes. Tests cover filtering without refetching, hidden preferences
+across restarts, hiding/Undo/restore without changing user rows, and returning
+from nested cards while recommendation data changes. The credit-index initial
+stream event cannot silently schedule a second network batch.
+
+The release-signed universal recommendations preview built successfully
+(63.3 MB) as `0.8.5+19`, retaining the requested local version. Its package,
+version and release certificate were verified. It was installed over the
+previous phone preview without clearing data, and launch was checked.
+Matching ABI symbols are preserved separately from the earlier preview in
+the ignored local symbols directory. The user confirmed the phone preview
+works.
+
 ---
 
 ## Stage 0 — Preparation, API checks, CI skeleton

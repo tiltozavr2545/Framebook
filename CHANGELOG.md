@@ -313,3 +313,24 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
   sync compatibility and signing certificate remain unchanged.
 - Document the completed optimization work and its measured limits in
   [docs/optimization.md](docs/optimization.md).
+
+## 0.8.5 — Library insights, favourite people and recommendations (build 19)
+
+- Show recent-title history only from empty Discover search, keeping active
+  queries and results unobstructed when the search field is focused again.
+- Group the default ratings list by the local day of the latest score change.
+- Explore all-time statistics through score, genre, decade and people lists,
+  personal discoveries and disappointments, source preference agreement,
+  author reliability, creative pairs and breadth of taste.
+- Favourite people across all their roles, sync them through Drive and include
+  them in backups; browse favourites, frequent contributors and popular people.
+- Load people statistics gradually from an evictable cache while the screen
+  remains usable. The local schema is version 2 and the sync format is version 5;
+  older devices must update before syncing the new format.
+- Personal recommendations now combine the full rating library, favourite
+  people across all their roles and TMDB discovery, with equal familiar and
+  exploration slots and short explanations.
+- Choose from a separately ranked watchlist and browse favourite-people work
+  or something different in the existing poster-shelf design.
+- Hide Discover suggestions with Not interested, undo the action or restore
+  hidden suggestions on the device; ratings and watchlist entries are preserved.

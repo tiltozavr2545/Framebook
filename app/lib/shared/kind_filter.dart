@@ -10,17 +10,19 @@ class KindFilter extends StatelessWidget {
     super.key,
     required this.selected,
     required this.onSelected,
+    this.includeAll = true,
   });
 
   /// `null` — all kinds.
   final WorkKind? selected;
   final ValueChanged<WorkKind?> onSelected;
+  final bool includeAll;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final options = <(WorkKind?, String)>[
-      (null, l10n.kindAll),
+      if (includeAll) (null, l10n.kindAll),
       (WorkKind.movie, l10n.kindMovies),
       (WorkKind.tv, l10n.kindSeries),
       (WorkKind.season, l10n.kindSeasons),

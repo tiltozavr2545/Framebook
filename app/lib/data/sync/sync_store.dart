@@ -75,6 +75,9 @@ final class SyncStore {
     };
     final works = await _db.select(_db.works).get();
     return SyncState(
+      favoritePeople: await (_db.select(
+        _db.favoritePeople,
+      )..orderBy([(p) => OrderingTerm.asc(p.personId)])).get(),
       works: [
         for (final w in works)
           if (referenced.contains(w.workKey)) w,
@@ -149,6 +152,16 @@ final class SyncStore {
     }
     final merged = mergeStates(local, remote);
     var changed = 0;
+    final localPeople = {for (final p in local.favoritePeople) p.personId: p};
+    for (final person in merged.favoritePeople) {
+      final old = localPeople[person.personId];
+      if (old == null || compareFavoritePeople(person, old) > 0) {
+        await _db
+            .into(_db.favoritePeople)
+            .insertOnConflictUpdate(person.toCompanion(false));
+        changed++;
+      }
+    }
     for (final work in _parentsFirst(merged.works)) {
       final old = await _work(work.workKey);
       if (old == null || compareWorks(work, old) > 0) {
@@ -327,6 +340,7 @@ final class SyncStore {
       ),
     );
     file = SyncState(
+      favoritePeople: file.favoritePeople,
       works: file.works,
       ratings: [
         for (final row in file.ratings)
@@ -346,6 +360,37 @@ final class SyncStore {
     );
     await _saveDeletions(mergeStates(localState, file));
     var changed = 0;
+    final wantedPeople = {for (final p in file.favoritePeople) p.personId: p};
+    final existingPeople = {
+      for (final p in localState.favoritePeople) p.personId: p,
+    };
+    for (final id in {...wantedPeople.keys, ...existingPeople.keys}) {
+      final old = existingPeople[id];
+      final wanted = wantedPeople[id];
+      final value = wanted ?? old!;
+      final deleted = wanted == null || wanted.deletedAt != null;
+      if (old != null &&
+          old.name == value.name &&
+          old.profilePath == value.profilePath &&
+          (old.deletedAt != null) == deleted) {
+        continue;
+      }
+      await _db
+          .into(_db.favoritePeople)
+          .insertOnConflictUpdate(
+            value
+                .copyWith(
+                  updatedAt: _next(
+                    now,
+                    max(old?.updatedAt ?? -1, value.updatedAt),
+                  ),
+                  updatedBy: deviceId,
+                  deletedAt: Value(deleted ? now : null),
+                )
+                .toCompanion(false),
+          );
+      changed++;
+    }
     if (file.purgedBefore > await _purgedBefore()) {
       await _setPurgedBefore(file.purgedBefore);
     }

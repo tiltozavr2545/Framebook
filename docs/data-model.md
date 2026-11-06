@@ -16,7 +16,7 @@ the database itself — covered by `test/data/database_test.dart`.
 How this data moves between devices is in [sync.md](sync.md); where the
 external data comes from is in [external-sources.md](external-sources.md).
 
-Tables: `works`, `ratings`, `watchlist` are synced; `external_ratings`,
+Tables: `works`, `ratings`, `watchlist`, `favorite_people` are synced; `external_ratings`,
 `api_budget`, `sync_state` are local only.
 
 ---
@@ -25,7 +25,7 @@ Tables: `works`, `ratings`, `watchlist` are synced; `external_ratings`,
 
 | Layer | What | Where it lives | Synced | Can be lost |
 |---|---|---|---|---|
-| User data | ratings, notes, watchlist | `ratings`, `watchlist` | yes | **no** |
+| User data | ratings, notes, watchlist, favourite people | `ratings`, `watchlist`, `favorite_people` | yes | **no** |
 | Mini snapshot | title, year, poster, genres, external ids | `works` | yes, along with the rows referencing it | yes — reloaded from the API |
 | Cache | external ratings, HTTP responses, images | `external_ratings`, disk cache | no | yes — by TTL and when space runs low |
 
@@ -298,8 +298,25 @@ files. Details are in [sync.md](sync.md).
 - **Settings** (theme, language, the default source for the divergence sort,
   `divergence_source`) — `shared_preferences`. Optional encrypted key sync
   includes only `divergence_source`; theme and language remain per-device.
+- **Hidden Discover suggestions** — typed natural keys in the per-device
+  `shared_preferences.recommendation_hidden` list. They are not ratings,
+  watchlist deletions or negative taste evidence; no sync/export change.
 - **The HTTP cache of API responses, and images** — on disk, evictable; see
   [client-architecture.md](client-architecture.md).
+- **People analytics** — compact credits in the same evictable disk cache,
+  keyed by content language, natural work key and its stored TMDB identity.
+  Not in `works`, the database, exports or sync. Missing or displaced credits
+  are excluded from people aggregates until loaded.
+
+### `favorite_people` — schema version 2
+
+One row per TMDB `person_id` (positive integer primary key), with `name`,
+nullable relative `profile_path`, `updated_at`, `updated_by` and nullable
+`deleted_at`. A favourite refers to the whole person across all professions,
+not to one role. The name/photo are a mini snapshot for the offline favourites
+list. Adding/removing advances the user version monotonically; background
+analytics never edits it. Full favourite tombstones are retained permanently.
+The v1 → v2 Drift migration adds only this table and preserves existing data.
 
 ---
 

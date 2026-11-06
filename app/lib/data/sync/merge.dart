@@ -87,6 +87,16 @@ int compareWatchlist(WatchlistEntry a, WatchlistEntry b) => _version(
   b.deletedAt != null,
   () => _hash(SyncFile.watchlistToJson(b)),
 );
+int compareFavoritePeople(FavoritePerson a, FavoritePerson b) => _version(
+  a.updatedAt,
+  a.updatedBy,
+  a.deletedAt != null,
+  () => _hash(SyncFile.personToJson(a)),
+  b.updatedAt,
+  b.updatedBy,
+  b.deletedAt != null,
+  () => _hash(SyncFile.personToJson(b)),
+);
 int compareWorks(Work a, Work b) {
   final time = a.snapshotUpdatedAt.compareTo(b.snapshotUpdatedAt);
   if (time != 0) return time;
@@ -235,6 +245,12 @@ SyncState mergeStates(SyncState a, SyncState b) {
   final rm = {for (final d in rd) d.workKey: d};
   final wm = {for (final d in wd) d.workKey: d};
   return SyncState(
+    favoritePeople: _merge(
+      a.favoritePeople,
+      b.favoritePeople,
+      (p) => '${p.personId}',
+      compareFavoritePeople,
+    ),
     works: _mergeWorks(a.works, b.works),
     ratings: [
       for (final r in _merge(
@@ -286,6 +302,12 @@ bool remoteBehind(SyncState local, SyncState remote) {
   }
 
   return merged.purgedBefore != remote.purgedBefore ||
+      !same(
+        merged.favoritePeople,
+        remote.favoritePeople,
+        (p) => '${p.personId}',
+        compareFavoritePeople,
+      ) ||
       !same(merged.works, remote.works, (w) => w.workKey, compareWorks) ||
       !same(merged.ratings, remote.ratings, (r) => r.workKey, compareRatings) ||
       !same(

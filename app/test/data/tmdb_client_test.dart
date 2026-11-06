@@ -38,6 +38,60 @@ void main() {
     serve(apiFixtures);
   });
 
+  test('popular people use their own cached endpoint', () async {
+    final people = await client().popularPeople();
+    expect(people.single.id, 6384);
+    expect(http.requests.last.uri.path, '/3/person/popular');
+    await client().popularPeople();
+    expect(http.requests.length, 1);
+  });
+
+  test(
+    'personal discovery uses typed genre pools and release filters without personal scores',
+    () async {
+      await client().discoverRecommendations(WorkKind.movie, genre: 28);
+      var q = http.requests.last.uri.queryParameters;
+      expect(http.requests.last.uri.path, '/3/discover/movie');
+      expect(q['with_genres'], '28');
+      expect(q['sort_by'], 'popularity.desc');
+      expect(q['vote_count.gte'], '50');
+      expect(q['primary_release_date.lte'], '2026-10-24');
+      expect(q.keys, isNot(contains('score_half')));
+      await client().discoverRecommendations(WorkKind.tv);
+      q = http.requests.last.uri.queryParameters;
+      expect(http.requests.last.uri.path, '/3/discover/tv');
+      expect(q['with_genres'], isNull);
+      expect(q['vote_count.gte'], '25');
+      expect(q['first_air_date.lte'], '2026-10-24');
+      await expectLater(
+        client().discoverRecommendations(WorkKind.episode),
+        throwsArgumentError,
+      );
+    },
+  );
+
+  test(
+    'analytics credits keep all professions and reject displaced identities',
+    () async {
+      final people = await client().peopleCredits(
+        const WorkKey.movie(603),
+        603,
+      );
+      expect(people.any((p) => p.role == FilmographyRole.acting), isTrue);
+      expect(people.any((p) => p.role == FilmographyRole.directing), isTrue);
+      expect(people.any((p) => p.role == FilmographyRole.production), isTrue);
+      expect(people.any((p) => p.role == FilmographyRole.camera), isTrue);
+      await expectLater(
+        client().peopleCredits(const WorkKey.movie(603), 999),
+        throwsA(isA<SourceException>()),
+      );
+      await expectLater(
+        client().peopleCredits(const WorkKey.season(1399, 1), 999),
+        throwsA(isA<SourceException>()),
+      );
+    },
+  );
+
   test('person photos come from the profile images endpoint', () async {
     final images = await client().personImages(6384);
     expect(http.requests.last.uri.path, '/3/person/6384/images');

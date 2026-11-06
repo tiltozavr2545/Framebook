@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../app/ratings_preferences.dart';
 export '../../app/ratings_preferences.dart';
@@ -8,6 +9,7 @@ import '../../app/router.dart';
 import '../../data/api_source.dart';
 import '../../data/library/divergence.dart';
 import '../../data/library/library.dart';
+import '../../data/library/rating_days.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/coverage_line.dart';
 import '../../shared/format.dart';
@@ -36,6 +38,11 @@ class RatingsScreen extends ConsumerWidget {
             order: view.order,
           );
     final byDivergence = view.sort == RatingsSort.divergence;
+    final items = shown == null
+        ? <RatingListItem>[]
+        : view.sort == RatingsSort.scoredAt
+        ? ratingDayItems(shown)
+        : [for (final title in shown) RatingItem(title)];
 
     return Scaffold(
       appBar: AppBar(
@@ -78,11 +85,14 @@ class RatingsScreen extends ConsumerWidget {
                       text: l10n.ratingsEmptyKind,
                     )
                   : ListView.builder(
-                      itemCount: shown.length,
-                      itemBuilder: (context, index) => _RatedRow(
-                        title: shown[index],
-                        compareWith: byDivergence ? view.compareWith : null,
-                      ),
+                      itemCount: items.length,
+                      itemBuilder: (context, index) => switch (items[index]) {
+                        RatingDay(:final date) => _DayHeading(date: date),
+                        RatingItem(:final title) => _RatedRow(
+                          title: title,
+                          compareWith: byDivergence ? view.compareWith : null,
+                        ),
+                      },
                     ),
             ),
           ],
@@ -99,6 +109,30 @@ class RatingsScreen extends ConsumerWidget {
         RatingsSort.title => l10n.ratingsSortTitle,
         RatingsSort.divergence => l10n.ratingsSortDivergence,
       };
+}
+
+class _DayHeading extends StatelessWidget {
+  const _DayHeading({required this.date});
+  final DateTime date;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = DateTime(now.year, now.month, now.day - 1);
+    final text = date == today
+        ? l10n.ratingDayToday
+        : date == yesterday
+        ? l10n.ratingDayYesterday
+        : DateFormat.yMMMMd(
+            Localizations.localeOf(context).toLanguageTag(),
+          ).format(date);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 6),
+      child: Text(text, style: Theme.of(context).textTheme.titleSmall),
+    );
+  }
 }
 
 /// Which source to compare with and in which direction, and how much of it

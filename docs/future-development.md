@@ -8,6 +8,21 @@ the feature history is in [../CHANGELOG.md](../CHANGELOG.md), the MVP scope in
 
 ---
 
+## Share title links with an optional score
+
+Postponed on 2026-11-06 while HTTPS App Links hosting is unresolved.
+Share films, series, seasons and episodes as links opening the corresponding
+Framebook card. The sender can include their own score or send the title only;
+unrated titles are shared without a score. The recipient sees the included
+score separately from their own rating, with wording such as "Your friend
+rated this 8.5". Without Framebook, offer installation from GitHub Releases.
+
+Verified Android App Links require an association file at the domain root,
+not under the current project site's `/Framebook/` path. Choose hosting and
+the link address before implementation. Sender identity, score lifetime,
+retaining received scores and default inclusion remain undecided. Do not
+replace this request with sharing an image.
+
 ## iOS
 
 Postponed by a decision at the start: for now friends get Android only. The

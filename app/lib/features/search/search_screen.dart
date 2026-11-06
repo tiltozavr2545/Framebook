@@ -9,11 +9,13 @@ import '../../data/work_key.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/failure_view.dart';
 import '../../shared/poster.dart';
+import '../../shared/favorite_person_button.dart';
 import '../title/title_layout.dart';
 import '../title/title_routes.dart';
 import 'search_controller.dart';
 import 'search_history.dart';
 import 'shelves.dart';
+import 'people_shelves.dart';
 
 /// The Discover tab (Stage 6): a search field on top and, while it is empty,
 /// shelves to browse; typing turns the shelves into search results.
@@ -33,12 +35,23 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   final _historyOverlay = OverlayPortalController();
   final _fieldLink = LayerLink();
 
+  void _showHistoryOnDiscover() {
+    final search = ref.read(searchProvider);
+    if (_controller.text.trim().isEmpty &&
+        search.query.isEmpty &&
+        search.kind == SearchKind.titles) {
+      _historyOverlay.show();
+    } else {
+      _historyOverlay.hide();
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _focus.addListener(() {
       if (_focus.hasFocus) {
-        _historyOverlay.show();
+        _showHistoryOnDiscover();
       } else {
         _historyOverlay.hide();
       }
@@ -118,7 +131,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   ),
                   child: TextField(
                     focusNode: _focus,
-                    onTap: () => _historyOverlay.show(),
+                    onTap: _showHistoryOnDiscover,
                     onTapOutside: (_) {
                       _focus.unfocus();
                       _historyOverlay.hide();
@@ -140,7 +153,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                                 onPressed: () {
                                   _controller.clear();
                                   notifier.typed('');
-                                  _historyOverlay.show();
+                                  _showHistoryOnDiscover();
                                 },
                               ),
                       ),
@@ -182,10 +195,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             ),
             Expanded(
               child: switch (search) {
-                SearchState(query: '', kind: SearchKind.people) => _Message(
-                  icon: Icons.people_outline,
-                  text: l10n.searchPeopleHint,
-                ),
+                SearchState(query: '', kind: SearchKind.people) =>
+                  const PeopleShelves(),
                 SearchState(query: '') => const Shelves(),
                 SearchState(isEmpty: true, loading: true) => const Center(
                   child: CircularProgressIndicator(),
@@ -407,6 +418,7 @@ class _PersonTile extends StatelessWidget {
               ],
             ),
           ),
+          FavoritePersonButton(person: person),
         ],
       ),
     ),
@@ -419,9 +431,11 @@ class _SearchHistory extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final kind = ref.watch(searchProvider.select((s) => s.kind));
+    final search = ref.watch(searchProvider);
     final entries = ref.watch(searchHistoryProvider);
-    if (entries.isEmpty || kind != SearchKind.titles) {
+    if (entries.isEmpty ||
+        search.kind != SearchKind.titles ||
+        search.query.isNotEmpty) {
       return const SizedBox.shrink();
     }
     final notifier = ref.read(searchHistoryProvider.notifier);

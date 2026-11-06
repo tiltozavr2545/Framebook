@@ -48,6 +48,8 @@ Reply? apiFixtures(RequestOptions request) {
         ),
         '/3/genre/tv/list' => ok('tmdb/genre_tv_ru.json'),
         '/3/search/person' => ok('tmdb/search_person_ru.json'),
+        '/3/person/popular' => ok('tmdb/search_person_ru.json'),
+        '/3/movie/603/credits' => ok('tmdb/movie_603_credits_ru.json'),
         '/3/search/multi' => ok('tmdb/search_multi_matrix_ru.json'),
         '/3/movie/603' => ok('tmdb/movie_603_ru.json'),
         '/3/tv/1399' => ok('tmdb/tv_1399_ru.json'),

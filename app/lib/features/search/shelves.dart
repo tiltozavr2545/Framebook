@@ -4,9 +4,13 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/router.dart';
 import '../../app/theme.dart';
-import '../../data/library/library.dart';
+import '../../data/recommendations/catalog.dart';
+import '../../data/recommendations/hidden.dart';
+import '../../data/recommendations/providers.dart';
+import '../../data/recommendations/ranking.dart';
+
+export '../../data/recommendations/catalog.dart';
 import '../../data/source_failure.dart';
-import '../../data/sources/providers.dart';
 import '../../data/sources/tmdb/tmdb_models.dart';
 import '../../data/work_key.dart';
 import '../../l10n/app_localizations.dart';
@@ -19,93 +23,6 @@ import '../title/title_routes.dart';
 // search for yet. All of them come from TMDB through the HTTP cache — a day
 // for what changes daily, a week for the rest.
 
-/// How many of your 8+ ratings seed "like your favourites".
-const _seeds = 3;
-
-/// "Like your favourites": TMDB's recommendations for your latest films and
-/// series rated 8 or higher, interleaved, without what you have rated.
-/// Empty until there is such a rating.
-final recommendationsShelfProvider =
-    FutureProvider.autoDispose<List<TitleSummary>>((ref) async {
-      final tmdb = ref.watch(tmdbProvider);
-      // Rebuilt when the seeds change, not on every new external rating.
-      final seeds = await ref.watch(
-        ratedTitlesProvider.selectAsync((titles) {
-          final favourites = [
-            for (final t in titles)
-              if ((t.key.kind == WorkKind.movie || t.key.kind == WorkKind.tv) &&
-                  t.rating.scoreHalf >= 16)
-                t,
-          ]..sort((a, b) => b.rating.scoredAt.compareTo(a.rating.scoredAt));
-          return [
-            for (final t in favourites.take(_seeds)) t.key.toString(),
-          ].join(',');
-        }),
-      );
-      if (seeds.isEmpty) return const [];
-      final lists = await Future.wait([
-        for (final key in seeds.split(','))
-          // One seed failing doesn't empty the shelf.
-          tmdb
-              .recommendations(WorkKey.parse(key))
-              .catchError((Object _) => const <TitleSummary>[]),
-      ]);
-      return _interleave(lists);
-    });
-
-/// Filtering is reactive without refetching recommendations for unchanged seeds.
-final forYouShelfProvider = FutureProvider.autoDispose<List<TitleSummary>>((
-  ref,
-) async {
-  final candidates = ref.watch(recommendationsShelfProvider.future);
-  final rated = ref.watch(
-    ratedTitlesProvider.selectAsync(
-      (titles) =>
-          (titles.map((t) => t.key.toString()).toList()..sort()).join(','),
-    ),
-  );
-  final excluded = (await rated).split(',').toSet();
-  return [
-    for (final title in await candidates)
-      if (!excluded.contains(title.key.toString())) title,
-  ];
-});
-
-final trendingShelfProvider = FutureProvider.autoDispose<List<TitleSummary>>(
-  (ref) => ref.watch(tmdbProvider).trending(),
-);
-
-final nowPlayingShelfProvider = FutureProvider.autoDispose<List<TitleSummary>>(
-  (ref) => ref.watch(tmdbProvider).nowPlaying(),
-);
-
-/// Films and series together, alternating.
-final bestShelfProvider = FutureProvider.autoDispose<List<TitleSummary>>((
-  ref,
-) async {
-  final tmdb = ref.watch(tmdbProvider);
-  final lists = await Future.wait([
-    tmdb.best(WorkKind.movie),
-    tmdb.best(WorkKind.tv),
-  ]);
-  return _interleave(lists);
-});
-
-/// a1, b1, c1, a2, b2… without repeats.
-List<TitleSummary> _interleave(List<List<TitleSummary>> lists) {
-  final seen = <String>{};
-  final out = <TitleSummary>[];
-  final longest = lists.fold(0, (n, l) => l.length > n ? l.length : n);
-  for (var i = 0; i < longest; i++) {
-    for (final list in lists) {
-      if (i < list.length && seen.add(list[i].key.toString())) {
-        out.add(list[i]);
-      }
-    }
-  }
-  return out;
-}
-
 /// The shelves, top to bottom. Offline with nothing cached, one message
 /// instead of four empty rows.
 class Shelves extends ConsumerWidget {
@@ -114,22 +31,35 @@ class Shelves extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final feed = ref.watch(recommendationFeedProvider);
+    final pool = ref.watch(recommendationPoolProvider);
+    final hidden = ref.watch(hiddenRecommendationsProvider);
     final shelves = [
-      (l10n.shelfForYou, forYouShelfProvider),
       (l10n.shelfTrending, trendingShelfProvider),
       (l10n.shelfNowPlaying, nowPlayingShelfProvider),
       (l10n.shelfBest, bestShelfProvider),
     ];
-    final values = [for (final (_, p) in shelves) ref.watch(p)];
-    final allFailed = values.skip(1).every((v) => v.hasError);
-    if (allFailed) {
-      final error = values[1].error;
+    final values = [
+      for (final (_, p) in shelves)
+        ref
+            .watch(p)
+            .whenData(
+              (titles) => [
+                for (final title in titles)
+                  if (!hidden.contains(title.key)) title,
+              ],
+            ),
+    ];
+    final allFailed = values.every((v) => v.hasError);
+    if (allFailed && feed.isEmpty && hidden.isEmpty) {
+      final error = values[0].error;
       return _Offline(
         failure: error is SourceException ? error.failure : null,
         onRetry: () {
           for (final (_, p) in shelves) {
             ref.invalidate(p);
           }
+          ref.invalidate(recommendationPoolProvider);
         },
       );
     }
@@ -137,6 +67,42 @@ class Shelves extends ConsumerWidget {
       padding: const EdgeInsets.only(bottom: 24),
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       children: [
+        _Shelf(
+          label: l10n.shelfForYou,
+          value:
+              feed.forYou.isEmpty &&
+                  (pool.isLoading || (pool.value?.running ?? false))
+              ? const AsyncLoading()
+              : AsyncData([for (final p in feed.forYou) p.title]),
+          reasons: {for (final p in feed.forYou) p.title.key: p},
+          action: hidden.isEmpty
+              ? null
+              : IconButton(
+                  icon: const Icon(Icons.visibility_off_outlined),
+                  tooltip: l10n.recommendationsHidden,
+                  onPressed: () => _restoreHidden(context, ref),
+                ),
+          showEmpty: hidden.isNotEmpty,
+        ),
+        for (final (label, items) in [
+          (l10n.recommendationsWatchlist, feed.watchlist),
+          (l10n.recommendationsPeople, feed.people),
+          (l10n.recommendationsExplore, feed.explore),
+        ])
+          _Shelf(
+            label: label,
+            value: AsyncData([for (final p in items) p.title]),
+            reasons: {for (final p in items) p.title.key: p},
+          ),
+        if (pool.hasError || (pool.value?.failed ?? 0) > 0 && feed.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: TextButton.icon(
+              icon: const Icon(Icons.refresh),
+              label: Text(l10n.recommendationsRetry),
+              onPressed: () => ref.invalidate(recommendationPoolProvider),
+            ),
+          ),
         for (final (i, (label, _)) in shelves.indexed)
           _Shelf(label: label, value: values[i]),
       ],
@@ -145,10 +111,19 @@ class Shelves extends ConsumerWidget {
 }
 
 class _Shelf extends StatelessWidget {
-  const _Shelf({required this.label, required this.value});
+  const _Shelf({
+    required this.label,
+    required this.value,
+    this.reasons = const {},
+    this.action,
+    this.showEmpty = false,
+  });
 
   final String label;
   final AsyncValue<List<TitleSummary>> value;
+  final Map<WorkKey, RecommendationPick> reasons;
+  final Widget? action;
+  final bool showEmpty;
 
   static const _width = 112.0;
 
@@ -156,7 +131,7 @@ class _Shelf extends StatelessWidget {
   Widget build(BuildContext context) {
     final titles = value.value;
     // A shelf that failed or has nothing is left out, not shown empty.
-    if (value.hasError || (titles != null && titles.isEmpty)) {
+    if (value.hasError || (titles != null && titles.isEmpty && !showEmpty)) {
       return const SizedBox.shrink();
     }
     return Column(
@@ -164,35 +139,54 @@ class _Shelf extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-          child: Text(label, style: Theme.of(context).textTheme.headlineSmall),
-        ),
-        SizedBox(
-          height:
-              _width * 3 / 2 + 76 * MediaQuery.textScalerOf(context).scale(1),
-          child: titles == null
-              ? const _Skeleton(width: _width)
-              : ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  itemCount: titles.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 12),
-                  itemBuilder: (context, index) =>
-                      _ShelfItem(title: titles[index], width: _width),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: Theme.of(context).textTheme.headlineSmall,
                 ),
+              ),
+              if (action != null) action!,
+            ],
+          ),
         ),
+        if (titles != null && titles.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Text(AppLocalizations.of(context).recommendationsEmpty),
+          )
+        else
+          SizedBox(
+            height: _shelfHeight(context, reasons.isNotEmpty),
+            child: titles == null
+                ? const _Skeleton(width: _width)
+                : ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    itemCount: titles.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 12),
+                    itemBuilder: (context, index) => _ShelfItem(
+                      title: titles[index],
+                      width: _width,
+                      reason: reasons[titles[index].key],
+                    ),
+                  ),
+          ),
       ],
     );
   }
 }
 
-class _ShelfItem extends StatelessWidget {
-  const _ShelfItem({required this.title, required this.width});
+class _ShelfItem extends ConsumerWidget {
+  const _ShelfItem({required this.title, required this.width, this.reason});
 
   final TitleSummary title;
   final double width;
+  final RecommendationPick? reason;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     return SizedBox(
       width: width,
@@ -219,6 +213,38 @@ class _ShelfItem extends StatelessWidget {
                   bottom: 6,
                   child: MyScoreBadge(title.key, onPoster: true),
                 ),
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: PopupMenuButton<String>(
+                    tooltip: AppLocalizations.of(
+                      context,
+                    ).recommendationsActions,
+                    icon: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface.withValues(alpha: .88),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Padding(
+                        padding: EdgeInsets.all(3),
+                        child: Icon(Icons.more_vert, size: 18),
+                      ),
+                    ),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 160),
+                    onSelected: (_) => _hideTitle(context, ref, title),
+                    itemBuilder: (_) => [
+                      PopupMenuItem(
+                        value: 'hide',
+                        child: Text(
+                          AppLocalizations.of(
+                            context,
+                          ).recommendationsNotInterested,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 6),
@@ -235,10 +261,131 @@ class _ShelfItem extends StatelessWidget {
                   color: Reel.of(context).edge,
                 ),
               ),
+            if (reason != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  _reasonText(AppLocalizations.of(context), reason!),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
     );
+  }
+}
+
+String _reasonText(AppLocalizations l10n, RecommendationPick pick) =>
+    switch (pick.reason) {
+      RecommendationReason.similar => l10n.recommendationsBecauseTitle(
+        pick.detail ?? '',
+      ),
+      RecommendationReason.person => l10n.recommendationsBecausePerson(
+        pick.detail ?? '',
+      ),
+      RecommendationReason.author => l10n.recommendationsBecauseAuthor(
+        pick.detail ?? '',
+      ),
+      RecommendationReason.genre => l10n.recommendationsBecauseTaste,
+      RecommendationReason.discovery => l10n.recommendationsBecauseExplore,
+      RecommendationReason.watchlist => l10n.recommendationsBecauseWatchlist,
+    };
+
+double _shelfHeight(BuildContext context, bool reason) {
+  final theme = Theme.of(context);
+  double height(TextStyle? style, int lines, {String sample = 'Ag'}) {
+    final p = TextPainter(
+      text: TextSpan(text: List.filled(lines, sample).join('\n'), style: style),
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout(maxWidth: 112);
+    final h = p.height;
+    p.dispose();
+    return h;
+  }
+
+  return 168 +
+      6 +
+      height(theme.textTheme.titleSmall, 2) +
+      height(theme.textTheme.labelMedium, 1, sample: '2000') +
+      (reason ? 4 + height(theme.textTheme.labelSmall, 2) : 0) +
+      8;
+}
+
+Future<void> _hideTitle(
+  BuildContext context,
+  WidgetRef ref,
+  TitleSummary title,
+) async {
+  final l10n = AppLocalizations.of(context);
+  final messenger = ScaffoldMessenger.of(context);
+  final hidden = ref.read(hiddenRecommendationsProvider.notifier);
+  try {
+    await hidden.hide(title.key);
+    if (!messenger.mounted) return;
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(l10n.recommendationsHiddenTitle(title.title)),
+        action: SnackBarAction(
+          label: l10n.undo,
+          onPressed: () async {
+            try {
+              await hidden.restore(title.key);
+            } on Object {
+              if (messenger.mounted) {
+                messenger.showSnackBar(
+                  SnackBar(content: Text(l10n.recommendationsSaveFailed)),
+                );
+              }
+            }
+          },
+        ),
+      ),
+    );
+  } on Object {
+    if (messenger.mounted) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.recommendationsSaveFailed)),
+      );
+    }
+  }
+}
+
+Future<void> _restoreHidden(BuildContext context, WidgetRef ref) async {
+  final l10n = AppLocalizations.of(context);
+  final hidden = ref.read(hiddenRecommendationsProvider.notifier);
+  final messenger = ScaffoldMessenger.of(context);
+  final restore = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(l10n.recommendationsHidden),
+      content: Text(l10n.recommendationsRestoreHint),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: Text(l10n.recommendationsRestore),
+        ),
+      ],
+    ),
+  );
+  if (restore != true) return;
+  try {
+    await hidden.clear();
+  } on Object {
+    if (messenger.mounted) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.recommendationsSaveFailed)),
+      );
+    }
   }
 }
 

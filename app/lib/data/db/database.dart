@@ -11,7 +11,15 @@ part 'database.g.dart';
 const _deviceIdKey = 'device_id';
 
 @DriftDatabase(
-  tables: [Works, Ratings, Watchlist, ExternalRatings, ApiBudget, SyncState],
+  tables: [
+    Works,
+    Ratings,
+    Watchlist,
+    FavoritePeople,
+    ExternalRatings,
+    ApiBudget,
+    SyncState,
+  ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
@@ -23,11 +31,14 @@ class AppDatabase extends _$AppDatabase {
   /// Any schema change means a new version, a step in [migration] and a `dart
   /// run drift_dev make-migrations` snapshot (AGENTS.md, conventions).
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      if (from < 2 && to >= 2) await m.createTable(favoritePeople);
+    },
     beforeOpen: (details) async {
       // SQLite turns foreign keys off by default, per connection.
       await customStatement('PRAGMA foreign_keys = ON');

@@ -1792,6 +1792,413 @@ class WatchlistCompanion extends UpdateCompanion<WatchlistEntry> {
   }
 }
 
+class $FavoritePeopleTable extends FavoritePeople
+    with TableInfo<$FavoritePeopleTable, FavoritePerson> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $FavoritePeopleTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _personIdMeta = const VerificationMeta(
+    'personId',
+  );
+  @override
+  late final GeneratedColumn<int> personId = GeneratedColumn<int>(
+    'person_id',
+    aliasedName,
+    false,
+    check: () => ComparableExpr(personId).isBiggerThanValue(0),
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _profilePathMeta = const VerificationMeta(
+    'profilePath',
+  );
+  @override
+  late final GeneratedColumn<String> profilePath = GeneratedColumn<String>(
+    'profile_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByMeta = const VerificationMeta(
+    'updatedBy',
+  );
+  @override
+  late final GeneratedColumn<String> updatedBy = GeneratedColumn<String>(
+    'updated_by',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<int> deletedAt = GeneratedColumn<int>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    personId,
+    name,
+    profilePath,
+    updatedAt,
+    updatedBy,
+    deletedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'favorite_people';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<FavoritePerson> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('person_id')) {
+      context.handle(
+        _personIdMeta,
+        personId.isAcceptableOrUnknown(data['person_id']!, _personIdMeta),
+      );
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('profile_path')) {
+      context.handle(
+        _profilePathMeta,
+        profilePath.isAcceptableOrUnknown(
+          data['profile_path']!,
+          _profilePathMeta,
+        ),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by')) {
+      context.handle(
+        _updatedByMeta,
+        updatedBy.isAcceptableOrUnknown(data['updated_by']!, _updatedByMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {personId};
+  @override
+  FavoritePerson map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return FavoritePerson(
+      personId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}person_id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      profilePath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}profile_path'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by'],
+      )!,
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}deleted_at'],
+      ),
+    );
+  }
+
+  @override
+  $FavoritePeopleTable createAlias(String alias) {
+    return $FavoritePeopleTable(attachedDatabase, alias);
+  }
+}
+
+class FavoritePerson extends DataClass implements Insertable<FavoritePerson> {
+  final int personId;
+  final String name;
+  final String? profilePath;
+  final int updatedAt;
+  final String updatedBy;
+  final int? deletedAt;
+  const FavoritePerson({
+    required this.personId,
+    required this.name,
+    this.profilePath,
+    required this.updatedAt,
+    required this.updatedBy,
+    this.deletedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['person_id'] = Variable<int>(personId);
+    map['name'] = Variable<String>(name);
+    if (!nullToAbsent || profilePath != null) {
+      map['profile_path'] = Variable<String>(profilePath);
+    }
+    map['updated_at'] = Variable<int>(updatedAt);
+    map['updated_by'] = Variable<String>(updatedBy);
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<int>(deletedAt);
+    }
+    return map;
+  }
+
+  FavoritePeopleCompanion toCompanion(bool nullToAbsent) {
+    return FavoritePeopleCompanion(
+      personId: Value(personId),
+      name: Value(name),
+      profilePath: profilePath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(profilePath),
+      updatedAt: Value(updatedAt),
+      updatedBy: Value(updatedBy),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+    );
+  }
+
+  factory FavoritePerson.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return FavoritePerson(
+      personId: serializer.fromJson<int>(json['personId']),
+      name: serializer.fromJson<String>(json['name']),
+      profilePath: serializer.fromJson<String?>(json['profilePath']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+      updatedBy: serializer.fromJson<String>(json['updatedBy']),
+      deletedAt: serializer.fromJson<int?>(json['deletedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'personId': serializer.toJson<int>(personId),
+      'name': serializer.toJson<String>(name),
+      'profilePath': serializer.toJson<String?>(profilePath),
+      'updatedAt': serializer.toJson<int>(updatedAt),
+      'updatedBy': serializer.toJson<String>(updatedBy),
+      'deletedAt': serializer.toJson<int?>(deletedAt),
+    };
+  }
+
+  FavoritePerson copyWith({
+    int? personId,
+    String? name,
+    Value<String?> profilePath = const Value.absent(),
+    int? updatedAt,
+    String? updatedBy,
+    Value<int?> deletedAt = const Value.absent(),
+  }) => FavoritePerson(
+    personId: personId ?? this.personId,
+    name: name ?? this.name,
+    profilePath: profilePath.present ? profilePath.value : this.profilePath,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedBy: updatedBy ?? this.updatedBy,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+  );
+  FavoritePerson copyWithCompanion(FavoritePeopleCompanion data) {
+    return FavoritePerson(
+      personId: data.personId.present ? data.personId.value : this.personId,
+      name: data.name.present ? data.name.value : this.name,
+      profilePath: data.profilePath.present
+          ? data.profilePath.value
+          : this.profilePath,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedBy: data.updatedBy.present ? data.updatedBy.value : this.updatedBy,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FavoritePerson(')
+          ..write('personId: $personId, ')
+          ..write('name: $name, ')
+          ..write('profilePath: $profilePath, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedBy: $updatedBy, ')
+          ..write('deletedAt: $deletedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(personId, name, profilePath, updatedAt, updatedBy, deletedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FavoritePerson &&
+          other.personId == this.personId &&
+          other.name == this.name &&
+          other.profilePath == this.profilePath &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedBy == this.updatedBy &&
+          other.deletedAt == this.deletedAt);
+}
+
+class FavoritePeopleCompanion extends UpdateCompanion<FavoritePerson> {
+  final Value<int> personId;
+  final Value<String> name;
+  final Value<String?> profilePath;
+  final Value<int> updatedAt;
+  final Value<String> updatedBy;
+  final Value<int?> deletedAt;
+  const FavoritePeopleCompanion({
+    this.personId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.profilePath = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedBy = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+  });
+  FavoritePeopleCompanion.insert({
+    this.personId = const Value.absent(),
+    required String name,
+    this.profilePath = const Value.absent(),
+    required int updatedAt,
+    required String updatedBy,
+    this.deletedAt = const Value.absent(),
+  }) : name = Value(name),
+       updatedAt = Value(updatedAt),
+       updatedBy = Value(updatedBy);
+  static Insertable<FavoritePerson> custom({
+    Expression<int>? personId,
+    Expression<String>? name,
+    Expression<String>? profilePath,
+    Expression<int>? updatedAt,
+    Expression<String>? updatedBy,
+    Expression<int>? deletedAt,
+  }) {
+    return RawValuesInsertable({
+      if (personId != null) 'person_id': personId,
+      if (name != null) 'name': name,
+      if (profilePath != null) 'profile_path': profilePath,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedBy != null) 'updated_by': updatedBy,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+    });
+  }
+
+  FavoritePeopleCompanion copyWith({
+    Value<int>? personId,
+    Value<String>? name,
+    Value<String?>? profilePath,
+    Value<int>? updatedAt,
+    Value<String>? updatedBy,
+    Value<int?>? deletedAt,
+  }) {
+    return FavoritePeopleCompanion(
+      personId: personId ?? this.personId,
+      name: name ?? this.name,
+      profilePath: profilePath ?? this.profilePath,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedBy: updatedBy ?? this.updatedBy,
+      deletedAt: deletedAt ?? this.deletedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (personId.present) {
+      map['person_id'] = Variable<int>(personId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (profilePath.present) {
+      map['profile_path'] = Variable<String>(profilePath.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (updatedBy.present) {
+      map['updated_by'] = Variable<String>(updatedBy.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<int>(deletedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FavoritePeopleCompanion(')
+          ..write('personId: $personId, ')
+          ..write('name: $name, ')
+          ..write('profilePath: $profilePath, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedBy: $updatedBy, ')
+          ..write('deletedAt: $deletedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $ExternalRatingsTable extends ExternalRatings
     with TableInfo<$ExternalRatingsTable, ExternalRating> {
   @override
@@ -2799,6 +3206,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $WorksTable works = $WorksTable(this);
   late final $RatingsTable ratings = $RatingsTable(this);
   late final $WatchlistTable watchlist = $WatchlistTable(this);
+  late final $FavoritePeopleTable favoritePeople = $FavoritePeopleTable(this);
   late final $ExternalRatingsTable externalRatings = $ExternalRatingsTable(
     this,
   );
@@ -2832,6 +3240,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     works,
     ratings,
     watchlist,
+    favoritePeople,
     externalRatings,
     apiBudget,
     syncState,
@@ -4123,6 +4532,223 @@ typedef $$WatchlistTableProcessedTableManager =
       WatchlistEntry,
       PrefetchHooks Function({bool workKey})
     >;
+typedef $$FavoritePeopleTableCreateCompanionBuilder =
+    FavoritePeopleCompanion Function({
+      Value<int> personId,
+      required String name,
+      Value<String?> profilePath,
+      required int updatedAt,
+      required String updatedBy,
+      Value<int?> deletedAt,
+    });
+typedef $$FavoritePeopleTableUpdateCompanionBuilder =
+    FavoritePeopleCompanion Function({
+      Value<int> personId,
+      Value<String> name,
+      Value<String?> profilePath,
+      Value<int> updatedAt,
+      Value<String> updatedBy,
+      Value<int?> deletedAt,
+    });
+
+class $$FavoritePeopleTableFilterComposer
+    extends Composer<_$AppDatabase, $FavoritePeopleTable> {
+  $$FavoritePeopleTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get personId => $composableBuilder(
+    column: $table.personId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get profilePath => $composableBuilder(
+    column: $table.profilePath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedBy => $composableBuilder(
+    column: $table.updatedBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$FavoritePeopleTableOrderingComposer
+    extends Composer<_$AppDatabase, $FavoritePeopleTable> {
+  $$FavoritePeopleTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get personId => $composableBuilder(
+    column: $table.personId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get profilePath => $composableBuilder(
+    column: $table.profilePath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedBy => $composableBuilder(
+    column: $table.updatedBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$FavoritePeopleTableAnnotationComposer
+    extends Composer<_$AppDatabase, $FavoritePeopleTable> {
+  $$FavoritePeopleTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get personId =>
+      $composableBuilder(column: $table.personId, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get profilePath => $composableBuilder(
+    column: $table.profilePath,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedBy =>
+      $composableBuilder(column: $table.updatedBy, builder: (column) => column);
+
+  GeneratedColumn<int> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+}
+
+class $$FavoritePeopleTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $FavoritePeopleTable,
+          FavoritePerson,
+          $$FavoritePeopleTableFilterComposer,
+          $$FavoritePeopleTableOrderingComposer,
+          $$FavoritePeopleTableAnnotationComposer,
+          $$FavoritePeopleTableCreateCompanionBuilder,
+          $$FavoritePeopleTableUpdateCompanionBuilder,
+          (
+            FavoritePerson,
+            BaseReferences<_$AppDatabase, $FavoritePeopleTable, FavoritePerson>,
+          ),
+          FavoritePerson,
+          PrefetchHooks Function()
+        > {
+  $$FavoritePeopleTableTableManager(
+    _$AppDatabase db,
+    $FavoritePeopleTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$FavoritePeopleTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$FavoritePeopleTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$FavoritePeopleTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> personId = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String?> profilePath = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+                Value<String> updatedBy = const Value.absent(),
+                Value<int?> deletedAt = const Value.absent(),
+              }) => FavoritePeopleCompanion(
+                personId: personId,
+                name: name,
+                profilePath: profilePath,
+                updatedAt: updatedAt,
+                updatedBy: updatedBy,
+                deletedAt: deletedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> personId = const Value.absent(),
+                required String name,
+                Value<String?> profilePath = const Value.absent(),
+                required int updatedAt,
+                required String updatedBy,
+                Value<int?> deletedAt = const Value.absent(),
+              }) => FavoritePeopleCompanion.insert(
+                personId: personId,
+                name: name,
+                profilePath: profilePath,
+                updatedAt: updatedAt,
+                updatedBy: updatedBy,
+                deletedAt: deletedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$FavoritePeopleTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $FavoritePeopleTable,
+      FavoritePerson,
+      $$FavoritePeopleTableFilterComposer,
+      $$FavoritePeopleTableOrderingComposer,
+      $$FavoritePeopleTableAnnotationComposer,
+      $$FavoritePeopleTableCreateCompanionBuilder,
+      $$FavoritePeopleTableUpdateCompanionBuilder,
+      (
+        FavoritePerson,
+        BaseReferences<_$AppDatabase, $FavoritePeopleTable, FavoritePerson>,
+      ),
+      FavoritePerson,
+      PrefetchHooks Function()
+    >;
 typedef $$ExternalRatingsTableCreateCompanionBuilder =
     ExternalRatingsCompanion Function({
       required String workKey,
@@ -4701,6 +5327,8 @@ class $AppDatabaseManager {
       $$RatingsTableTableManager(_db, _db.ratings);
   $$WatchlistTableTableManager get watchlist =>
       $$WatchlistTableTableManager(_db, _db.watchlist);
+  $$FavoritePeopleTableTableManager get favoritePeople =>
+      $$FavoritePeopleTableTableManager(_db, _db.favoritePeople);
   $$ExternalRatingsTableTableManager get externalRatings =>
       $$ExternalRatingsTableTableManager(_db, _db.externalRatings);
   $$ApiBudgetTableTableManager get apiBudget =>

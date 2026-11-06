@@ -304,6 +304,13 @@ All writes of the user's own data go through `Library`
   instant with "Undo" in a snackbar; rating a title removes it by itself.
 - Both read the database through `watch()` streams, so they work offline and
   update by themselves. A row opens the card inside its own tab.
+- The default date sort in My ratings inserts local-calendar day headings
+  from `scored_at`: Today, Yesterday, then the full localized date. Changing
+  the score moves the title to that day; changing only a note does not.
+  Other sorts remain flat. These headings do not imply a viewing history.
+- Recent-title history opens only from the focused, empty title-search field
+  on Discover. Typing, showing search results or switching to People hides it;
+  refocusing a nonempty query never reopens the history overlay.
 
 ## Comparison and statistics (Stage 4)
 
@@ -335,9 +342,42 @@ All writes of the user's own data go through `Library`
   half points (an fl_chart bar chart), the deviation from Kinopoisk and IMDb
   (signed and absolute, over the titles that have the value), the average
   by genre (a season and an episode count under the series' genres) and by
-  decade. A kind filter on top, as in My ratings. Genre names come from
+  decade. Statistics uses separate Film, Series, Season and Episode modes,
+  starting with films; it never mixes parts into the overall film figures.
+  All analysis is all-time: import dates are not treated as viewing activity.
+  Genre names come from
   TMDB's genre lists through the HTTP cache; without them (offline, nothing
   cached) the genre section says so and the rest still works.
+
+`insights.dart` adds pure aggregates with contributing title lists: median,
+high/middle/low score shares (8–10, 4.5–7.5, 1–4), people and genre reliability,
+population standard deviation, mixed-feeling authors (at least one 8+ and one
+score ≤4), director/actor pairs and effective category diversity
+(`exp(Shannon entropy)`). Person/genre average and reliability rankings need
+three distinct works; frequency lists have no minimum. A multi-role person
+counts once per title globally and once per applicable role. Creative pairs
+need three shared works and exclude self-pairs. People analyses include only
+titles with loaded, identity-matching credits; empty successful credits count
+as covered. Source preference agreement uses Spearman correlation with average
+ranks for ties, requiring three shared values and variance on both sides.
+Discoveries/disappointments have personal-minus-source gaps ≥1 / ≤−1.
+Interactive bars, score groups, genres, decades, people and pairs open their
+contributing rated works, then cards inside the Stats tab with working back.
+
+`PeopleIndex` loads compact cached credits before starting up to four parallel
+TMDB requests, at most 80 titles and 45 seconds of scheduling per pass (up to
+10 additional seconds for an in-flight request). It stops scheduling on a
+network/auth/limit failure. The screen remains usable and shows coverage plus
+a continuation action. Cache keys contain locale and the stored work identity;
+numbered parts are checked against TMDB before attribution. No cast is added
+to the permanent database or sync. The existing cache-pruning policy applies.
+
+The empty People search displays favourites, frequently rated people, rows
+by filmography role and TMDB popular people. Favourite actions live on people
+pages and search results; the default filmography combines all roles with
+one row per title. Unrated works of favourite people appear in Discover's
+recommendation rows; retrieval, ranking and hiding rules are in
+[recommendations.md](recommendations.md).
 
 ## Update checks
 
@@ -440,12 +480,15 @@ ink, film stock, and the editor's grease pencil.
 ## Discover, cast and people (Stage 6)
 
 - **Discover** (the first tab): a search field on top; while it is empty,
-  shelves — like your favourites (TMDB recommendations for your latest
-  films and series rated 8+, without what you rated), trending this week,
+  shelves — hybrid personal recommendations, a ranked watchlist, work by
+  favourite people and exploration, then trending this week,
   in cinemas now, best of all time (discover by rating with a votes
   threshold; `/top_rated` is crowded with new titles that have a handful of
   votes). A shelf that fails or is empty is left out; all failing offline is
-  one message with a retry. Shelves come through the HTTP cache: a day for
+  one message with a retry when no local/personal row can be shown. The hybrid
+  uses local all-time taste, 1:1 familiar/exploration slots, streamed candidates
+  and per-device Not interested/Undo; see [recommendations.md](recommendations.md).
+  Shelves come through the HTTP cache: a day for
   what changes daily, a week for the rest.
 - **Cast and crew** on every card (`credits`; not `aggregate_credits`,
   which is 350 KB for Game of Thrones): a strip of actors with their roles,

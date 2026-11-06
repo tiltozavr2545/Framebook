@@ -1257,7 +1257,7 @@ abstract class AppLocalizations {
   /// No description provided for @syncIntro.
   ///
   /// In en, this message translates to:
-  /// **'Your ratings, notes and watchlist are kept in a hidden folder of your own Google Drive and merged between your devices. The app sees only that folder.'**
+  /// **'Your ratings, notes, watchlist and favourite people are kept in a hidden folder of your own Google Drive and merged between your devices. The app sees only that folder.'**
   String get syncIntro;
 
   /// No description provided for @syncNotConfigured.
@@ -1389,7 +1389,7 @@ abstract class AppLocalizations {
   /// No description provided for @syncBackupsHint.
   ///
   /// In en, this message translates to:
-  /// **'Keeps up to seven copies from days when synced data changed. Restoring replaces your retained ratings and watchlist across devices.'**
+  /// **'Keeps up to seven copies from days when synced data changed. Restoring replaces your retained ratings, watchlist and favourite people across devices.'**
   String get syncBackupsHint;
 
   /// No description provided for @syncBackupsEmpty.
@@ -1419,7 +1419,7 @@ abstract class AppLocalizations {
   /// No description provided for @syncRestoreBody.
   ///
   /// In en, this message translates to:
-  /// **'Ratings and watchlist changes after this copy will be rolled back across your devices. Entries permanently removed by cleanup cannot be recovered from an older copy.'**
+  /// **'Ratings, watchlist and favourite-people changes after this copy will be rolled back across your devices. Entries permanently removed by cleanup cannot be recovered from an older copy.'**
   String get syncRestoreBody;
 
   /// No description provided for @syncRestored.
@@ -1503,7 +1503,7 @@ abstract class AppLocalizations {
   /// No description provided for @exportFileHint.
   ///
   /// In en, this message translates to:
-  /// **'Everything you rated, in one file. Works without Google.'**
+  /// **'Your ratings, notes, watchlist and favourite people in one file. Works without Google.'**
   String get exportFileHint;
 
   /// No description provided for @exportDone.
@@ -1551,7 +1551,7 @@ abstract class AppLocalizations {
   /// No description provided for @importReplaceBody.
   ///
   /// In en, this message translates to:
-  /// **'Ratings that aren\'t in the file will be deleted on all your devices.'**
+  /// **'Ratings, watchlist entries and favourite people absent from the file will be removed on all your devices.'**
   String get importReplaceBody;
 
   /// No description provided for @importBroken.
@@ -1617,7 +1617,7 @@ abstract class AppLocalizations {
   /// No description provided for @shelfForYou.
   ///
   /// In en, this message translates to:
-  /// **'Like your favourites'**
+  /// **'For you'**
   String get shelfForYou;
 
   /// No description provided for @shelfTrending.
@@ -1835,6 +1835,378 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The password is incorrect or the encrypted file is damaged.'**
   String get secretsWrongPassword;
+
+  /// No description provided for @ratingDayToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get ratingDayToday;
+
+  /// No description provided for @ratingDayYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get ratingDayYesterday;
+
+  /// No description provided for @peopleFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Favourite people'**
+  String get peopleFavorites;
+
+  /// No description provided for @peopleFrequent.
+  ///
+  /// In en, this message translates to:
+  /// **'Often in your ratings'**
+  String get peopleFrequent;
+
+  /// No description provided for @peoplePopular.
+  ///
+  /// In en, this message translates to:
+  /// **'Popular people'**
+  String get peoplePopular;
+
+  /// No description provided for @peopleAddFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to favourites'**
+  String get peopleAddFavorite;
+
+  /// No description provided for @peopleRemoveFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from favourites'**
+  String get peopleRemoveFavorite;
+
+  /// No description provided for @peopleFavoriteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update favourites. Try again.'**
+  String get peopleFavoriteFailed;
+
+  /// No description provided for @peopleFavoritesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Save people from their pages to find them here.'**
+  String get peopleFavoritesEmpty;
+
+  /// No description provided for @peopleLoadContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue loading'**
+  String get peopleLoadContinue;
+
+  /// No description provided for @peopleLoadHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Credits load in short batches. You can use the screen while loading. Missing credits are excluded from people statistics.'**
+  String get peopleLoadHint;
+
+  /// No description provided for @peopleNoCredits.
+  ///
+  /// In en, this message translates to:
+  /// **'People will appear as credits are loaded.'**
+  String get peopleNoCredits;
+
+  /// No description provided for @filmographyAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All work'**
+  String get filmographyAll;
+
+  /// No description provided for @statsAllTime.
+  ///
+  /// In en, this message translates to:
+  /// **'All time · rated titles'**
+  String get statsAllTime;
+
+  /// No description provided for @statsBest.
+  ///
+  /// In en, this message translates to:
+  /// **'Your highest scores'**
+  String get statsBest;
+
+  /// No description provided for @statsWorst.
+  ///
+  /// In en, this message translates to:
+  /// **'Your lowest scores'**
+  String get statsWorst;
+
+  /// No description provided for @statsFinds.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal discoveries'**
+  String get statsFinds;
+
+  /// No description provided for @statsDisappointments.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal disappointments'**
+  String get statsDisappointments;
+
+  /// No description provided for @statsFindsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Scores at least 1 point above or below the source. Tap to explore.'**
+  String get statsFindsHint;
+
+  /// No description provided for @statsTasteAgreement.
+  ///
+  /// In en, this message translates to:
+  /// **'Preference agreement'**
+  String get statsTasteAgreement;
+
+  /// No description provided for @statsAgreementMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs at least 3 shared ratings and scores that vary.'**
+  String get statsAgreementMissing;
+
+  /// No description provided for @statsCorrelationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Rank agreement: +1 means the same order of preferences, 0 no rank relationship, −1 the reverse. This is not a percentage of matching scores.'**
+  String get statsCorrelationHint;
+
+  /// No description provided for @statsReliableGenres.
+  ///
+  /// In en, this message translates to:
+  /// **'Reliable genres'**
+  String get statsReliableGenres;
+
+  /// No description provided for @statsPeople.
+  ///
+  /// In en, this message translates to:
+  /// **'People in your library'**
+  String get statsPeople;
+
+  /// No description provided for @statsPeopleFrequent.
+  ///
+  /// In en, this message translates to:
+  /// **'Most often rated'**
+  String get statsPeopleFrequent;
+
+  /// No description provided for @statsPeopleHighest.
+  ///
+  /// In en, this message translates to:
+  /// **'Highest average'**
+  String get statsPeopleHighest;
+
+  /// No description provided for @statsPeopleReliable.
+  ///
+  /// In en, this message translates to:
+  /// **'Most often 8+'**
+  String get statsPeopleReliable;
+
+  /// No description provided for @statsPeoplePolarizing.
+  ///
+  /// In en, this message translates to:
+  /// **'Mixed feelings'**
+  String get statsPeoplePolarizing;
+
+  /// No description provided for @statsDuos.
+  ///
+  /// In en, this message translates to:
+  /// **'Favourite creative pairs'**
+  String get statsDuos;
+
+  /// No description provided for @statsBreadth.
+  ///
+  /// In en, this message translates to:
+  /// **'Breadth of taste'**
+  String get statsBreadth;
+
+  /// No description provided for @statsBreadthHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Effective diversity grows when ratings are spread evenly between categories. Genres overlap; a title can belong to several.'**
+  String get statsBreadthHint;
+
+  /// No description provided for @statsMinimumWorks.
+  ///
+  /// In en, this message translates to:
+  /// **'Average and reliability rankings need 3 works. Mixed feelings means at least one 8+ and one 4 or below. Spread is the standard deviation.'**
+  String get statsMinimumWorks;
+
+  /// No description provided for @statsNoQualifying.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough qualifying works yet.'**
+  String get statsNoQualifying;
+
+  /// No description provided for @statsShowAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Show all'**
+  String get statsShowAll;
+
+  /// No description provided for @statsScoreHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'Scores 8–10'**
+  String get statsScoreHigh;
+
+  /// No description provided for @statsScoreLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Scores 1–4'**
+  String get statsScoreLow;
+
+  /// No description provided for @statsScoreMiddle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scores 4.5–7.5'**
+  String get statsScoreMiddle;
+
+  /// No description provided for @statsMedian.
+  ///
+  /// In en, this message translates to:
+  /// **'Median'**
+  String get statsMedian;
+
+  /// No description provided for @statsSourceWorks.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared ratings'**
+  String get statsSourceWorks;
+
+  /// No description provided for @peopleLoadProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'People: {loaded} of {total} works'**
+  String peopleLoadProgress(int loaded, int total);
+
+  /// No description provided for @statsProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} works · avg {average} · 8+: {percent}% · spread {spread}'**
+  String statsProfile(int count, String average, int percent, String spread);
+
+  /// No description provided for @statsAgreementValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} · {count} shared ratings'**
+  String statsAgreementValue(String value, int count);
+
+  /// No description provided for @statsBreadthSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{genres} genres · {decades} decades · {people} people'**
+  String statsBreadthSummary(int genres, int decades, int people);
+
+  /// No description provided for @statsEffectiveDiversity.
+  ///
+  /// In en, this message translates to:
+  /// **'Effective diversity: {genres} genres · {decades} decades'**
+  String statsEffectiveDiversity(String genres, String decades);
+
+  /// No description provided for @recommendationsWatchlist.
+  ///
+  /// In en, this message translates to:
+  /// **'What to choose from my watchlist'**
+  String get recommendationsWatchlist;
+
+  /// No description provided for @recommendationsPeople.
+  ///
+  /// In en, this message translates to:
+  /// **'Work by favourite people'**
+  String get recommendationsPeople;
+
+  /// No description provided for @recommendationsExplore.
+  ///
+  /// In en, this message translates to:
+  /// **'Something different'**
+  String get recommendationsExplore;
+
+  /// No description provided for @recommendationsNotInterested.
+  ///
+  /// In en, this message translates to:
+  /// **'Not interested'**
+  String get recommendationsNotInterested;
+
+  /// No description provided for @recommendationsActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommendation actions'**
+  String get recommendationsActions;
+
+  /// No description provided for @recommendationsHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden recommendations'**
+  String get recommendationsHidden;
+
+  /// No description provided for @recommendationsRestoreHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Show all recommendations hidden on this device again? Your ratings and watchlist will stay as they are.'**
+  String get recommendationsRestoreHint;
+
+  /// No description provided for @recommendationsRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Show again'**
+  String get recommendationsRestore;
+
+  /// No description provided for @recommendationsSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save this preference. Try again.'**
+  String get recommendationsSaveFailed;
+
+  /// No description provided for @recommendationsRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry recommendations'**
+  String get recommendationsRetry;
+
+  /// No description provided for @recommendationsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No suggestions right now. You can show hidden recommendations again.'**
+  String get recommendationsEmpty;
+
+  /// No description provided for @recommendationsBecauseTaste.
+  ///
+  /// In en, this message translates to:
+  /// **'Matches your favourite genres'**
+  String get recommendationsBecauseTaste;
+
+  /// No description provided for @recommendationsBecauseExplore.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore something different'**
+  String get recommendationsBecauseExplore;
+
+  /// No description provided for @recommendationsBecauseWatchlist.
+  ///
+  /// In en, this message translates to:
+  /// **'From your watchlist'**
+  String get recommendationsBecauseWatchlist;
+
+  /// No description provided for @recommendationsBecauseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Because you liked {title}'**
+  String recommendationsBecauseTitle(String title);
+
+  /// No description provided for @recommendationsBecausePerson.
+  ///
+  /// In en, this message translates to:
+  /// **'A favourite: {name}'**
+  String recommendationsBecausePerson(String name);
+
+  /// No description provided for @recommendationsBecauseAuthor.
+  ///
+  /// In en, this message translates to:
+  /// **'You rate their work highly: {name}'**
+  String recommendationsBecauseAuthor(String name);
+
+  /// No description provided for @recommendationsHiddenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'“{title}” hidden from recommendations'**
+  String recommendationsHiddenTitle(String title);
 }
 
 class _AppLocalizationsDelegate

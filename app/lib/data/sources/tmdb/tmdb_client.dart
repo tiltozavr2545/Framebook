@@ -48,6 +48,17 @@ abstract interface class TmdbApi {
 
   /// A person with their filmography.
   Future<Person> person(int id);
+
+  Future<List<PersonSummary>> popularPeople();
+
+  /// Verify numbered parts against the rated identity before attributing work.
+  Future<List<PeopleCredit>> peopleCredits(WorkKey key, int expectedId);
+
+  /// A small discovery pool for local ranking, separate from the all-time best.
+  Future<List<TitleSummary>> discoverRecommendations(
+    WorkKind kind, {
+    int? genre,
+  });
 }
 
 /// Lifetimes of responses in the HTTP cache (docs/external-sources.md, "Cache
@@ -267,6 +278,34 @@ final class TmdbClient implements TmdbApi {
   }
 
   @override
+  Future<List<TitleSummary>> discoverRecommendations(
+    WorkKind kind, {
+    int? genre,
+  }) async {
+    if (kind != WorkKind.movie && kind != WorkKind.tv) {
+      throw ArgumentError.value(kind, 'kind');
+    }
+    final movie = kind == WorkKind.movie;
+    final now = _clock();
+    final today =
+        '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    return _titles(
+      await _get(movie ? '/discover/movie' : '/discover/tv', {
+        'sort_by': 'popularity.desc',
+        'include_adult': 'false',
+        'vote_count.gte': movie ? '50' : '25',
+        'vote_average.gte': '6',
+        if (genre != null) 'with_genres': '$genre',
+        if (movie)
+          'primary_release_date.lte': today
+        else
+          'first_air_date.lte': today,
+      }, TmdbTtl.shelf),
+      kind: kind,
+    );
+  }
+
+  @override
   Future<List<TitleSummary>> recommendations(WorkKey key) async => _titles(
     await _get(
       key.kind == WorkKind.movie
@@ -325,6 +364,40 @@ final class TmdbClient implements TmdbApi {
       'append_to_response': 'combined_credits',
     }, TmdbTtl.details),
   );
+
+  @override
+  Future<List<PersonSummary>> popularPeople() async {
+    final json = await _get('/person/popular', const {}, TmdbTtl.shelf);
+    return [
+      for (final row in json.objects('results'))
+        if (PersonSummary.fromJson(row) case final person?) person,
+    ];
+  }
+
+  @override
+  Future<List<PeopleCredit>> peopleCredits(WorkKey key, int expectedId) async {
+    final path = switch (key.kind) {
+      WorkKind.movie => '/movie/${key.tmdbId}/credits',
+      WorkKind.tv => '/tv/${key.tmdbId}',
+      WorkKind.season => '/tv/${key.tmdbId}/season/${key.season}',
+      WorkKind.episode =>
+        '/tv/${key.tmdbId}/season/${key.season}/episode/${key.episode}',
+    };
+    final json = await _get(
+      path,
+      key.kind == WorkKind.movie
+          ? const {}
+          : const {'append_to_response': 'credits'},
+      TmdbTtl.details,
+    );
+    if (json.integer('id') != expectedId) {
+      throw const SourceException(
+        SourceFailure.notFound,
+        'changed title identity',
+      );
+    }
+    return PeopleCredit.parse(json);
+  }
 
   /// A list of titles: of one [kind], or mixed with `media_type`.
   static List<TitleSummary> _titles(Json json, {WorkKind? kind}) => [

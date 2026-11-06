@@ -9,6 +9,7 @@ import '../../data/work_key.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/format.dart';
 import '../../shared/poster.dart';
+import '../../shared/favorite_person_button.dart';
 import '../title/my_rating.dart';
 import '../title/cover_viewer.dart';
 import '../title/title_layout.dart';
@@ -43,7 +44,23 @@ class _PersonScreenState extends ConsumerState<PersonScreen> {
         final role = groups.containsKey(_role)
             ? _role
             : groups.keys.firstOrNull;
-        final credits = groups[role] ?? const <PersonCredit>[];
+        final combined = <String, PersonCredit>{};
+        for (final credit in [...person.acting, ...person.crew]) {
+          final old = combined[credit.title.key.toString()];
+          combined[credit.title.key.toString()] = PersonCredit(
+            title: credit.title,
+            roles: {...?old?.roles, ...credit.roles}.toList(),
+          );
+        }
+        final allCredits = combined.values.toList()
+          ..sort(
+            (a, b) => (b.title.releaseDate ?? '9999').compareTo(
+              a.title.releaseDate ?? '9999',
+            ),
+          );
+        final credits = _role == null
+            ? allCredits
+            : groups[role] ?? const <PersonCredit>[];
         return [
           _Header(person: person),
           if (person.biography case final bio? when bio.trim().isNotEmpty)
@@ -56,12 +73,19 @@ class _PersonScreenState extends ConsumerState<PersonScreen> {
                 spacing: 8,
                 runSpacing: 4,
                 children: [
+                  ChoiceChip(
+                    label: Text(
+                      '${l10n.filmographyAll} · ${allCredits.length}',
+                    ),
+                    selected: _role == null,
+                    onSelected: (_) => setState(() => _role = null),
+                  ),
                   for (final entry in groups.entries)
                     ChoiceChip(
                       label: Text(
                         '${filmographyLabel(l10n, entry.key)} · ${entry.value.length}',
                       ),
-                      selected: role == entry.key,
+                      selected: _role == entry.key,
                       onSelected: (_) => setState(() => _role = entry.key),
                     ),
                 ],
@@ -123,6 +147,13 @@ class _Header extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(person.name, style: theme.textTheme.headlineMedium),
+              FavoritePersonButton(
+                person: PersonSummary(
+                  id: person.id,
+                  name: person.name,
+                  profilePath: person.profilePath,
+                ),
+              ),
               const SizedBox(height: 8),
               if (born != null)
                 Text(

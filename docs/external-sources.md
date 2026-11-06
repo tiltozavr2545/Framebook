@@ -48,6 +48,9 @@ Base: `https://api.themoviedb.org/3`. The response language is the
 | season | `GET /tv/{id}/season/{n}?append_to_response=credits` — includes every episode with its `vote_average` |
 | an episode's ids in other databases | `GET /tv/{id}/season/{n}/episode/{m}/external_ids` |
 | genres | `GET /genre/movie/list`, `GET /genre/tv/list` — names for the statistics by genre; the lists share most ids |
+| popular people | `GET /person/popular` — first page for People discovery |
+| analytics credits | `GET /movie/{id}/credits`; series, season and episode details with appended credits — verified against the rated snapshot's TMDB identity, cached locally only |
+| personal discovery | `GET /discover/movie`, `/discover/tv` — genre/general candidate pools; local ranking and budgets are in [recommendations.md](recommendations.md) |
 | cover variants | `GET /movie/{id}/images`, `/tv/{id}/images`, `/tv/{id}/season/{n}/images`, `/tv/{id}/season/{n}/episode/{m}/images` — posters, or episode stills |
 | person photos | `GET /person/{id}/images` — profile photos for the full-screen viewer |
 | image configuration | `GET /configuration` — base URL and poster sizes |

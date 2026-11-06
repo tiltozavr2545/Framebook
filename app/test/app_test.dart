@@ -9,6 +9,7 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:framebook/app/app.dart';
 import 'package:framebook/app/preferences.dart';
 import 'package:framebook/app/router.dart';
@@ -19,6 +20,11 @@ import 'package:framebook/data/db/database.dart';
 import 'package:framebook/data/db/database_provider.dart';
 import 'package:framebook/data/http.dart';
 import 'package:framebook/data/library/library.dart';
+import 'package:framebook/data/library/favorite_people.dart';
+import 'package:framebook/data/recommendations/providers.dart';
+import 'package:framebook/data/recommendations/hidden.dart';
+import 'package:framebook/data/recommendations/ranking.dart';
+import 'package:framebook/app/ratings_preferences.dart';
 import 'package:framebook/data/library/work_snapshot.dart';
 import 'package:framebook/data/response_cache.dart';
 import 'package:framebook/data/sync/google_account.dart';
@@ -1339,12 +1345,10 @@ void main() {
     expect(find.text('Export to a file'), findsOneWidget);
   });
 
-  cardTest('Discover: the shelves, with one like your favourites', (
-    tester,
-  ) async {
+  cardTest('Discover: personalised rows use rated favourites', (tester) async {
     await pumpApp(tester, keys: tmdbOnly);
-    // Nothing rated 8+ yet: no "like your favourites".
-    expect(find.text('Like your favourites'), findsNothing);
+    // An empty library has the editorial shelves, without personal rows.
+    expect(find.text('For you'), findsNothing);
     expect(find.text('Trending this week'), findsOneWidget);
     expect(find.text('In cinemas now'), findsOneWidget);
     // Start over with a film rated 9.
@@ -1356,8 +1360,16 @@ void main() {
       keys: tmdbOnly,
       seed: (library) => matrixRated(library, 18),
     );
-    expect(find.text('Like your favourites'), findsOneWidget);
-    expect(find.text('Матрица: Революция'), findsOneWidget);
+    expect(find.text('For you'), findsOneWidget);
+    final recommendations = ProviderScope.containerOf(
+      tester.element(find.byType(FramebookApp)),
+    ).read(recommendationFeedProvider).forYou;
+    expect(recommendations, isNotEmpty);
+    expect(
+      recommendations.any((p) => p.reason == RecommendationReason.similar),
+      isTrue,
+    );
+    expect(find.text(recommendations.first.title.title), findsWidgets);
     await tester.scrollUntilVisible(
       find.text('Best of all time'),
       300,
@@ -1497,4 +1509,176 @@ void main() {
     expect(find.textContaining('saved card'), findsNothing);
     expect(find.text('Try again'), findsOneWidget);
   });
+  cardTest(
+    'history appears on empty Discover but stays hidden while searching',
+    (tester) async {
+      await pumpApp(tester, keys: tmdbOnly);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(FramebookApp)),
+      );
+      await container
+          .read(searchHistoryProvider.notifier)
+          .remember(
+            const SearchHistoryEntry(
+              key: WorkKey.movie(603),
+              title: 'History-only title',
+            ),
+          );
+      await tester.tap(find.byType(TextField));
+      await tester.pumpAndSettle();
+      expect(find.text('Recently opened'), findsOneWidget);
+      await tester.enterText(find.byType(TextField), 'Matrix');
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await settle(tester);
+      expect(find.text('Recently opened'), findsNothing);
+      await tester.tap(find.byType(TextField));
+      await tester.pumpAndSettle();
+      expect(find.text('History-only title'), findsNothing);
+      expect(find.text('Recently opened'), findsNothing);
+      await tester.tap(find.byTooltip('Clear'));
+      await tester.pumpAndSettle();
+      expect(find.text('Recently opened'), findsOneWidget);
+    },
+  );
+
+  cardTest('ratings show day sections only in date order', (tester) async {
+    await pumpApp(
+      tester,
+      keys: tmdbOnly,
+      seed: (library) => matrixRated(library, 17),
+    );
+    await tester.tap(
+      find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.text('Ratings'),
+      ),
+    );
+    await settle(tester);
+    expect(find.text('Today'), findsOneWidget);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(FramebookApp)),
+    );
+    container.read(ratingsViewProvider.notifier).sortBy(RatingsSort.score);
+    await tester.pumpAndSettle();
+    expect(find.text('Today'), findsNothing);
+    container.read(ratingsViewProvider.notifier).sortBy(RatingsSort.scoredAt);
+    await tester.pumpAndSettle();
+    expect(find.text('Today'), findsOneWidget);
+  });
+
+  cardTest(
+    'people favourites populate Discover and all-role filmographies stay available',
+    (tester) async {
+      await pumpApp(tester, keys: tmdbOnly);
+      go(tester, '/search/person/6384');
+      await settle(tester);
+      await tester.tap(find.byTooltip('Add to favourites'));
+      await settle(tester);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(FramebookApp)),
+      );
+      expect(
+        container.read(favoritePeopleProvider).value!.single.personId,
+        6384,
+      );
+      go(tester, Routes.search);
+      await tester.pumpAndSettle();
+      tester.platformDispatcher.textScaleFactorTestValue = 1.8;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await tester.tap(find.widgetWithText(ChoiceChip, 'People'));
+      await settle(tester);
+      expect(find.text('Favourite people'), findsOneWidget);
+      expect(find.text('Киану Ривз'), findsWidgets);
+      expect(tester.takeException(), isNull);
+      await tester.tap(find.byTooltip('Remove from favourites').first);
+      await settle(tester);
+      expect(container.read(favoritePeopleProvider).value, isEmpty);
+      expect(
+        find.text('Save people from their pages to find them here.'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  cardTest(
+    'statistics score groups open contributing works and cards in the Stats tab',
+    (tester) async {
+      await pumpApp(
+        tester,
+        keys: tmdbOnly,
+        seed: (library) => matrixRated(library, 17),
+      );
+      await tester.tap(tab('Stats'));
+      await settle(tester);
+      await tester.tap(find.text('Scores 8–10 · 100%'));
+      await tester.pumpAndSettle();
+      expect(find.text('Scores 8–10 · 1'), findsOneWidget);
+      await tester.tap(find.text('Матрица'));
+      await settle(tester);
+      expect(find.byType(MovieScreen), findsOneWidget);
+      expect(
+        GoRouterState.of(tester.element(find.byType(MovieScreen))).uri.path,
+        '/stats/movie/603',
+      );
+      await tester.tap(find.byTooltip('Back'));
+      await settle(tester);
+      expect(find.text('All time · rated titles'), findsOneWidget);
+    },
+  );
+
+  cardTest(
+    'Not interested hides suggestions, supports Undo and restores without changing ratings',
+    (tester) async {
+      await pumpApp(
+        tester,
+        keys: tmdbOnly,
+        seed: (library) => matrixRated(library, 18),
+      );
+      await settle(tester);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(FramebookApp)),
+      );
+      final pick = container.read(recommendationFeedProvider).forYou.first;
+      final before = await tester.runAsync(
+        () => SyncStore(container.read(databaseProvider)).read(),
+      );
+      await tester.tap(find.byTooltip('Recommendation actions').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Not interested'));
+      await settle(tester);
+      expect(
+        container.read(hiddenRecommendationsProvider),
+        contains(pick.title.key),
+      );
+      expect(
+        container
+            .read(recommendationFeedProvider)
+            .forYou
+            .any((p) => p.title.key == pick.title.key),
+        isFalse,
+      );
+      expect(
+        find.text('“${pick.title.title}” hidden from recommendations'),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Undo'));
+      await settle(tester);
+      expect(container.read(hiddenRecommendationsProvider), isEmpty);
+      await tester.tap(find.byTooltip('Recommendation actions').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Not interested'));
+      await settle(tester);
+      await tester.tap(find.byTooltip('Hidden recommendations'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Show again'));
+      await settle(tester);
+      expect(container.read(hiddenRecommendationsProvider), isEmpty);
+      final after = await tester.runAsync(
+        () => SyncStore(container.read(databaseProvider)).read(),
+      );
+      expect(after!.ratings, before!.ratings);
+      expect(after.watchlist, before.watchlist);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

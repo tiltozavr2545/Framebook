@@ -114,11 +114,13 @@ final class PersonSummary {
     required this.name,
     this.profilePath,
     this.knownFor = const [],
+    this.department,
   });
   final int id;
   final String name;
   final String? profilePath;
   final List<String> knownFor;
+  final String? department;
 
   static PersonSummary? fromJson(Json json) {
     final id = json.integer('id');
@@ -130,11 +132,79 @@ final class PersonSummary {
       id: id,
       name: name,
       profilePath: json.string('profile_path'),
+      department: json.string('known_for_department'),
       knownFor: [
         for (final item in json.objects('known_for'))
           if (TitleSummary.fromSearchJson(item) case final title?) title.title,
       ],
     );
+  }
+}
+
+/// Derived credits for analytics. Stored only in the evictable response cache.
+final class PeopleCredit {
+  const PeopleCredit({
+    required this.id,
+    required this.name,
+    required this.role,
+    this.profilePath,
+  });
+  final int id;
+  final String name;
+  final String? profilePath;
+  final FilmographyRole role;
+
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'name': name,
+    'profile_path': profilePath,
+    'role': role.name,
+  };
+
+  factory PeopleCredit.fromCache(Map<String, Object?> row) {
+    final json = Json(row);
+    final id = json.integer('id');
+    final name = json.string('name');
+    final role = json.string('role');
+    if (id == null || id <= 0 || name == null || role == null) {
+      throw const FormatException('invalid cached credit');
+    }
+    return PeopleCredit(
+      id: id,
+      name: name,
+      role: FilmographyRole.values.byName(role),
+      profilePath: json.string('profile_path'),
+    );
+  }
+
+  static List<PeopleCredit> parse(Json json) {
+    final people = <(int, FilmographyRole), PeopleCredit>{};
+    void add(Json row, FilmographyRole role) {
+      final id = row.integer('id');
+      final name = row.string('name');
+      if (id == null || id <= 0 || name == null || name.trim().isEmpty) return;
+      people[(id, role)] = PeopleCredit(
+        id: id,
+        name: name,
+        role: role,
+        profilePath: row.string('profile_path'),
+      );
+    }
+
+    final credits = json.object('credits') ?? json;
+    for (final person in [
+      ...credits.objects('cast'),
+      ...json.objects('guest_stars'),
+    ]) {
+      add(person, FilmographyRole.acting);
+    }
+    for (final person in credits.objects('crew')) {
+      add(person, filmographyRole(person.string('job') ?? ''));
+    }
+    for (final person in json.objects('created_by')) {
+      add(person, FilmographyRole.writing);
+    }
+    return people.values.toList();
   }
 }
 

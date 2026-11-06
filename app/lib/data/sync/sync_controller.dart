@@ -121,7 +121,11 @@ class SyncController extends Notifier<SyncStatus> {
 
     final changes = _db
         .tableUpdates(
-          TableUpdateQuery.onAllTables([_db.ratings, _db.watchlist]),
+          TableUpdateQuery.onAllTables([
+            _db.ratings,
+            _db.watchlist,
+            _db.favoritePeople,
+          ]),
         )
         .listen((_) => _changed());
     final lifecycle = AppLifecycleListener(
@@ -205,7 +209,8 @@ class SyncController extends Notifier<SyncStatus> {
     final device = await _store.read();
     final hasLocalData =
         device.liveRatings != 0 ||
-        device.watchlist.any((entry) => entry.deletedAt == null);
+        device.watchlist.any((entry) => entry.deletedAt == null) ||
+        device.favoritePeople.any((person) => person.deletedAt == null);
     _firstSyncPending = drive != null && hasLocalData;
     if (!_firstSyncPending) {
       await ref.read(sharedPreferencesProvider).setString(_accountKey, email);

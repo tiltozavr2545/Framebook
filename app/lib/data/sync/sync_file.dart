@@ -97,6 +97,7 @@ final class SyncState {
     this.ratingDeletions = const [],
     this.watchlistDeletions = const [],
     this.watchlistFences = const [],
+    this.favoritePeople = const [],
   });
 
   final List<Work> works;
@@ -105,6 +106,7 @@ final class SyncState {
   final List<DeletionRecord> ratingDeletions;
   final List<DeletionRecord> watchlistDeletions;
   final List<WatchlistFence> watchlistFences;
+  final List<FavoritePerson> favoritePeople;
 
   /// Cleanup cutoff in UTC milliseconds. Absence does not imply deletion.
   final int purgedBefore;
@@ -117,6 +119,7 @@ final class SyncState {
     ratingDeletions: ratingDeletions,
     watchlistDeletions: watchlistDeletions,
     watchlistFences: watchlistFences,
+    favoritePeople: favoritePeople,
   );
 
   bool get isEmpty =>
@@ -125,7 +128,8 @@ final class SyncState {
       watchlist.isEmpty &&
       ratingDeletions.isEmpty &&
       watchlistDeletions.isEmpty &&
-      watchlistFences.isEmpty;
+      watchlistFences.isEmpty &&
+      favoritePeople.isEmpty;
 
   /// Live ratings: what the first sign-in dialog counts.
   int get liveRatings => ratings.where((r) => r.deletedAt == null).length;
@@ -169,7 +173,7 @@ final class SyncFileTooNew extends SyncFileException {
 /// earlier version working, for old exports: version 1 had no
 /// `purged_before` and reads as 0.
 abstract final class SyncFile {
-  static const formatVersion = 4;
+  static const formatVersion = 5;
   // Supports a 10,000-title library even with 10,000-byte notes; protects
   // against accidental huge imports and excessive decompression expansion.
   static const maxCompressedBytes = 32 * 1024 * 1024;
@@ -216,6 +220,9 @@ abstract final class SyncFile {
         'works': [for (final w in state.works) workToJson(w)],
         'ratings': [for (final r in state.ratings) ratingToJson(r)],
         'watchlist': [for (final w in state.watchlist) watchlistToJson(w)],
+        'favorite_people': [
+          for (final p in state.favoritePeople) personToJson(p),
+        ],
       }),
     ),
   );
@@ -270,6 +277,15 @@ abstract final class SyncFile {
       }
       if (version >= 3 && json['watchlist_fences'] is! List) {
         throw const _BadRow('missing watchlist fences');
+      }
+      if (version >= 5 && json['favorite_people'] is! List) {
+        throw const _BadRow('missing favorite people');
+      }
+      final people = version >= 5
+          ? [for (final p in _list(json, 'favorite_people')) personFromJson(p)]
+          : <FavoritePerson>[];
+      if (people.map((p) => p.personId).toSet().length != people.length) {
+        throw const _BadRow('duplicate favorite person');
       }
       final works = [for (final w in _list(json, 'works')) workFromJson(w)];
       // Legacy clients could attach an ID from a displaced numbered part.
@@ -326,6 +342,7 @@ abstract final class SyncFile {
         }
       }
       return SyncState(
+        favoritePeople: people,
         works: works,
         ratings: ratings,
         watchlist: watchlist,
@@ -343,6 +360,41 @@ abstract final class SyncFile {
     } on _BadRow catch (e) {
       throw SyncFileBroken(e.reason);
     }
+  }
+
+  static Map<String, Object?> personToJson(FavoritePerson p) => {
+    'person_id': p.personId,
+    'name': p.name,
+    'profile_path': p.profilePath,
+    'updated_at': p.updatedAt,
+    'updated_by': p.updatedBy,
+    'deleted_at': p.deletedAt,
+  };
+
+  static FavoritePerson personFromJson(Object? raw) {
+    final row = _Row(raw, 'favorite_people');
+    final id = row.integer('person_id');
+    final name = row.string('name');
+    final at = row.integer('updated_at');
+    final by = row.string('updated_by');
+    final deleted = row.integerOrNull('deleted_at');
+    final path = row.stringOrNull('profile_path');
+    if (id <= 0 ||
+        name.trim().isEmpty ||
+        at < 0 ||
+        by.isEmpty ||
+        (deleted != null && deleted < 0) ||
+        (path != null && !path.startsWith('/'))) {
+      throw const _BadRow('invalid favorite person');
+    }
+    return FavoritePerson(
+      personId: id,
+      name: name,
+      profilePath: path,
+      updatedAt: at,
+      updatedBy: by,
+      deletedAt: deleted,
+    );
   }
 
   static Map<String, Object?> workToJson(Work w) => {

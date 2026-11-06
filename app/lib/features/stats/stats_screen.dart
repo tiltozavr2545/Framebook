@@ -8,6 +8,8 @@ import '../../data/api_source.dart';
 import '../../data/library/divergence.dart';
 import '../../data/library/library.dart';
 import '../../data/library/stats.dart';
+import '../../data/library/insights.dart';
+import '../../data/library/people_index.dart';
 import '../../data/source_failure.dart';
 import '../../data/sources/providers.dart';
 import '../../data/work_key.dart';
@@ -17,12 +19,15 @@ import '../../shared/format.dart';
 import '../../shared/score_color.dart';
 import '../../shared/kind_filter.dart';
 import '../../shared/title_row.dart';
+import '../search/people_shelves.dart';
+import 'insight_sections.dart';
+import 'stats_works.dart';
 
 /// The kind the statistics are filtered by; `null` — all. Kept while the app
 /// is open.
 class StatsKindNotifier extends Notifier<WorkKind?> {
   @override
-  WorkKind? build() => null;
+  WorkKind? build() => WorkKind.movie;
 
   void select(WorkKind? kind) => state = kind;
 }
@@ -90,6 +95,7 @@ class StatsScreen extends ConsumerWidget {
           children: [
             KindFilter(
               selected: kind,
+              includeAll: false,
               onSelected: ref.read(statsKindProvider.notifier).select,
             ),
             Expanded(
@@ -98,7 +104,7 @@ class StatsScreen extends ConsumerWidget {
                       icon: Icons.filter_alt_off_outlined,
                       text: l10n.ratingsEmptyKind,
                     )
-                  : _StatsBody(titles: titles),
+                  : _StatsBody(key: ValueKey(kind), titles: titles),
             ),
           ],
         ),
@@ -107,19 +113,28 @@ class StatsScreen extends ConsumerWidget {
   }
 }
 
-class _StatsBody extends StatelessWidget {
-  const _StatsBody({required this.titles});
+class _StatsBody extends ConsumerWidget {
+  const _StatsBody({super.key, required this.titles});
 
   final List<RatedTitle> titles;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final stats = computeStats(titles);
+    final index = ref.watch(peopleIndexProvider);
+    final insights = analyzeLibrary(titles, index.entries);
+    final profile = ScoreProfile(titles);
+    final sortedScores = titles.map((t) => t.rating.scoreHalf).toList()..sort();
+    final middle = sortedScores.length ~/ 2;
+    final median = sortedScores.length.isOdd
+        ? sortedScores[middle] / 2
+        : (sortedScores[middle - 1] + sortedScores[middle]) / 4;
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       children: [
+        Text(l10n.statsAllTime, style: theme.textTheme.bodySmall),
         // The personal average uses the same score colours as title cards.
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -142,8 +157,49 @@ class _StatsBody extends StatelessWidget {
             ),
           ],
         ),
+        Text('${l10n.statsMedian}: ${formatScore(median)}'),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: [
+            for (final (label, subset) in [
+              (
+                l10n.statsScoreHigh,
+                titles.where((t) => t.rating.scoreHalf >= 16).toList(),
+              ),
+              (
+                l10n.statsScoreMiddle,
+                titles
+                    .where(
+                      (t) => t.rating.scoreHalf > 8 && t.rating.scoreHalf < 16,
+                    )
+                    .toList(),
+              ),
+              (
+                l10n.statsScoreLow,
+                titles.where((t) => t.rating.scoreHalf <= 8).toList(),
+              ),
+            ])
+              ActionChip(
+                label: Text(
+                  '$label · ${(subset.length / profile.count * 100).round()}%',
+                ),
+                onPressed: subset.isEmpty
+                    ? null
+                    : () => showRatedWorks(context, label, subset),
+              ),
+          ],
+        ),
         _Heading(l10n.statsDistribution),
-        _Distribution(counts: stats.distribution),
+        _Distribution(
+          counts: stats.distribution,
+          onSelected: (half) => showRatedWorks(
+            context,
+            formatMyScore(half),
+            titles.where((t) => t.rating.scoreHalf == half).toList(),
+          ),
+        ),
         _Heading(l10n.statsCompared),
         Text(
           l10n.statsComparedHint,
@@ -151,6 +207,10 @@ class _StatsBody extends StatelessWidget {
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
+        const SizedBox(height: 6),
+        Text(l10n.statsCorrelationHint, style: theme.textTheme.bodySmall),
+        const SizedBox(height: 6),
+        Text(l10n.statsFindsHint, style: theme.textTheme.bodySmall),
         const SizedBox(height: 8),
         for (final source in compareSources)
           _DeviationTile(
@@ -160,13 +220,27 @@ class _StatsBody extends StatelessWidget {
           ),
         if (stats.genres.isNotEmpty) ...[
           _Heading(l10n.statsGenres),
-          _Genres(groups: stats.genres),
+          _Genres(groups: stats.genres, titles: titles),
         ],
         if (stats.decades.isNotEmpty) ...[
           _Heading(l10n.statsDecades),
           for (final group in stats.decades)
-            _GroupRow(label: l10n.statsDecade('${group.key}'), group: group),
+            _GroupRow(
+              label: l10n.statsDecade('${group.key}'),
+              group: group,
+              onTap: () => showRatedWorks(
+                context,
+                l10n.statsDecade('${group.key}'),
+                insights.decades[group.key]!.titles,
+              ),
+            ),
         ],
+        InsightSections(
+          titles: titles,
+          insights: insights,
+          genreNames: ref.watch(genreNamesProvider).value ?? {},
+        ),
+        PeopleLoadStatus(index: index),
       ],
     );
   }
@@ -186,9 +260,10 @@ class _Heading extends StatelessWidget {
 
 /// How many times each score from 1 to 10 was given, in half-point bars.
 class _Distribution extends StatelessWidget {
-  const _Distribution({required this.counts});
+  const _Distribution({required this.counts, required this.onSelected});
 
   final List<int> counts;
+  final ValueChanged<int> onSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -205,6 +280,12 @@ class _Distribution extends StatelessWidget {
           gridData: const FlGridData(show: false),
           borderData: FlBorderData(show: false),
           barTouchData: BarTouchData(
+            touchCallback: (event, response) {
+              final spot = response?.spot;
+              if (event is FlTapUpEvent && spot != null) {
+                onSelected(spot.touchedBarGroup.x + 2);
+              }
+            },
             touchTooltipData: BarTouchTooltipData(
               getTooltipColor: (_) => scheme.inverseSurface,
               getTooltipItem: (group, _, rod, _) => BarTooltipItem(
@@ -316,6 +397,8 @@ class _DeviationTile extends StatelessWidget {
           ] else
             Text(l10n.statsDeviationNone(name), style: muted),
           CoverageLine(source: source, titles: titles),
+          const SizedBox(height: 8),
+          SourceInsights(source: source, titles: titles),
         ],
       ),
     );
@@ -323,9 +406,10 @@ class _DeviationTile extends StatelessWidget {
 }
 
 class _Genres extends ConsumerWidget {
-  const _Genres({required this.groups});
+  const _Genres({required this.groups, required this.titles});
 
   final List<GroupAverage> groups;
+  final List<RatedTitle> titles;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -336,7 +420,15 @@ class _Genres extends ConsumerWidget {
         children: [
           for (final group in groups)
             if (names[group.key] case final name?)
-              _GroupRow(label: _capitalized(name), group: group),
+              _GroupRow(
+                label: _capitalized(name),
+                group: group,
+                onTap: () => showRatedWorks(
+                  context,
+                  _capitalized(name),
+                  titles.where((t) => t.genreIds.contains(group.key)).toList(),
+                ),
+              ),
         ],
       ),
       AsyncData() => Text(
@@ -357,58 +449,62 @@ class _Genres extends ConsumerWidget {
 
 /// A genre or a decade: its name, how many ratings, the average with a bar.
 class _GroupRow extends StatelessWidget {
-  const _GroupRow({required this.label, required this.group});
+  const _GroupRow({required this.label, required this.group, this.onTap});
 
   final String label;
   final GroupAverage group;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Expanded(
-                child: Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(text: label),
-                      TextSpan(
-                        text: ' · ${l10n.statsRatingCount(group.count)}',
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurfaceVariant,
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Expanded(
+                  child: Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(text: label),
+                        TextSpan(
+                          text: ' · ${l10n.statsRatingCount(group.count)}',
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                    style: theme.textTheme.bodyLarge,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  style: theme.textTheme.bodyLarge,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              Text(
-                formatScore(group.average),
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: scoreColor(context, group.average),
-                  fontWeight: FontWeight.w600,
+                Text(
+                  formatScore(group.average),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: scoreColor(context, group.average),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          LinearProgressIndicator(
-            value: group.average / 10,
-            minHeight: 4,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ],
+              ],
+            ),
+            const SizedBox(height: 4),
+            LinearProgressIndicator(
+              value: group.average / 10,
+              minHeight: 4,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ],
+        ),
       ),
     );
   }

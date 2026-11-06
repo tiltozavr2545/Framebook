@@ -32,11 +32,12 @@ JSON, gzipped. Rows are the same columns as in the database, in
 
 ```json
 {
-  "format_version": 4,
+  "format_version": 5,
   "purged_before": 0,
   "rating_deletions": [],
   "watchlist_deletions": [],
   "watchlist_fences": [],
+  "favorite_people": [],
   "written_at": 1760870400000,
   "written_by": "6f1c…-device-uuid",
   "app_version": "0.7.0+9",
@@ -59,6 +60,17 @@ JSON, gzipped. Rows are the same columns as in the database, in
 (`title` is in the locale the snapshot was taken in — here, Russian.)
 
 Format rules:
+
+- Version 5 adds required `favorite_people`, including permanent removal
+  tombstones. Versions 1–4 read with no favourite people. Older clients refuse
+  format 5 instead of silently dropping favourites. Each person is an
+  independent last-write-wins register, ordered by timestamp, device id,
+  deletion status and canonical-payload hash on an exact tie. User edits
+  advance timestamps monotonically even if the clock moves backwards.
+  Favourites trigger automatic sync and are included in exports and backups.
+  Explicit replacement restores the imported favourites and tombstones local
+  ones absent from that file; ordinary merging preserves absent local ones.
+  Derived credits and statistics are never synced.
 
 - `format_version` goes up on **any** change of the set of fields, even when
   an optional one is added. An old client doesn't know the new field, and
