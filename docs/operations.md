@@ -154,13 +154,14 @@ workflow use `--split-debug-info` without obfuscation. The APK remains universal
 and uses the existing signing key. A raw `flutter build apk --release` omits
 this setting; use the Makefile targets for comparable builds.
 
-Each release permanently retains `framebook-<version>-symbols.zip` alongside
-its APK. The archive contains the ARM32, ARM64 and x86-64 `.symbols` files and
-a README with the full version/build and commit. Publication fails if any ABI's
-symbols are missing. Keep this archive with any redistributed APK; symbols
-from a different build cannot reliably decode its stack traces. Symbols are
-public debugging data and contain no API keys, credentials or signing key.
-The installable asset is `framebook-<version>.apk`.
+Release assets contain only the installable APK. Matching ARM32, ARM64 and
+x86-64 symbols and a README identifying the source commit are retained as
+`framebook-<version>-symbols` in the release workflow's Actions artifacts for
+90 days. Download them before expiry and keep a durable local backup; they
+are required to decode crashes from that exact build. Publication fails if
+any ABI's symbols are missing or artifact upload fails. Existing release
+symbols are backed up locally under the ignored `.release-symbols/` directory.
+Do not run `git clean -x` over that directory without copying the backup.
 
 To decode a saved Dart crash stack from the matching ARM64 release:
 
@@ -171,8 +172,7 @@ flutter symbolize -i crash.txt -d framebook-0.8.4-symbols/app.android-arm64.symb
 
 Use `app.android-arm.symbols` for ARM32 and `app.android-x64.symbols` for x86-64.
 Local symbol files are under the ignored `app/build/` tree and can disappear on
-`flutter clean`; preserve them before distributing a local APK. CI artifacts
-alone expire, so the release workflow uploads the archive as a release asset.
+`flutter clean`; preserve them before distributing a local APK. Actions artifacts expire after 90 days; preserve a local backup before expiry.
 
 ---
 
@@ -184,7 +184,7 @@ alone expire, so the release workflow uploads the archive as a release asset.
   checks that the tag matches the version in `pubspec.yaml`, runs analyze and
   the tests, builds the signed APK `framebook-0.2.0.apk`, verifies its
   signature and that the certificate is the release one (the SHA-1 above),
-  and creates a GitHub Release with it and its matching symbols archive.
+  and creates a GitHub Release with the APK alone. Symbols stay in Actions artifacts.
 - A release is done when the workflow is green and the APK is in the
   release's assets. The published APK isn't downloaded back to check it:
   the workflow has already verified it.
@@ -296,7 +296,7 @@ gh workflow run release-apk.yml --ref main -f release_tag=v0.8.4
 ```
 
 The job checks out the requested tag, checks its pubspec version, reruns tests,
-builds with JDK 21, checks the certificate and publishes matching symbols.
+builds with JDK 21, checks the certificate and retains matching symbols in Actions artifacts.
 The symbols README records the checked-out commit, not the dispatch commit.
 Use this recovery path only when the release has not already been published;
 the workflow deliberately does not overwrite existing release assets.

@@ -574,5 +574,5 @@ tracks actual requests separately from source completion.
 Full-screen images retain fourfold zoom with an aspect-preserving decode
 budget capped at 4,096 × 4,096 pixels. Poster colours use a bounded 128-entry
 successful-result LRU without retaining images. Release builds move debug
-information into matching permanent release assets. Exact behavior,
+information into matching Actions artifacts, backed up locally before expiry. Exact behavior,
 measurements and limits are in [optimization.md](optimization.md).

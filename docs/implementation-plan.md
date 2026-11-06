@@ -519,8 +519,8 @@ Version: `0.8.4+18`.
 - [x] Remove paused periodic wakeups, post-disposal timers, extra source calls
   after cancellation and pacing waits without a request.
 - [x] Bound full-screen decoding and cache successful poster colours.
-- [x] Enable split debug information for universal builds and permanently
-  retain every release's matching symbols for crash decoding.
+- [x] Enable split debug information for universal builds and retain matching
+  symbols in Actions artifacts, with local backups for long-term crash decoding.
 - [x] Remove unused direct dependencies without upgrading the pinned SDK or
   the remaining resolved dependency versions.
 - [x] Add regression coverage for lifecycle cancellation, title invalidation,

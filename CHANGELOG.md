@@ -308,7 +308,7 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
 - Bound decoded full-screen image memory while retaining paging and zoom;
   reuse successful poster colours when cards reopen.
 - Reduce the universal APK by separating debug information, preserving all
-  supported architectures and permanently retaining matching release symbols.
+  supported architectures and retaining matching symbols separately for crash decoding.
 - Remove unused icon and JSON generator dependencies. SDK, database schema,
   sync compatibility and signing certificate remain unchanged.
 - Document the completed optimization work and its measured limits in

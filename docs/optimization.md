@@ -49,8 +49,9 @@ and the limits of those measurements. No schema or sync-format change is needed.
 - **Smaller universal APK.** Release and compile-check targets use
   `--split-debug-info=build/symbols/<version+build>` without obfuscation.
   ARM32, ARM64 and x86-64 remain included. The release workflow requires all
-  three symbol files and publishes them in `framebook-<version>-symbols.zip`
-  beside the APK, so crash decoding does not depend on expiring CI artifacts.
+  three symbol files and uploads them as `framebook-<version>-symbols`
+  Actions artifacts for 90 days. Release assets contain only the APK; download
+  symbols before artifact expiry and retain a local backup for crash decoding.
   See [operations.md](operations.md#android-symbols) for symbolization.
 - **Unused dependencies.** Removed the direct `cupertino_icons`,
   `json_serializable` and `json_annotation` declarations and the unused

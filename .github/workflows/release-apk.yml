@@ -123,6 +123,25 @@ jobs:
             exit 1
           fi
 
+      - name: Prepare debug symbols
+        run: |
+          set -eu
+          version=$(awk '/^version:/ { print $2; exit }' pubspec.yaml)
+          symbols="build/symbols/$version"
+          for abi in android-arm android-arm64 android-x64; do
+            test -s "$symbols/app.$abi.symbols"
+          done
+          printf 'Framebook %s\nCommit: %s\nUse flutter symbolize with the matching ABI file.\n' \
+            "$version" "$(git rev-parse HEAD)" > "$symbols/README.txt"
+
+      - name: Retain debug symbols in Actions
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: framebook-${{ steps.version.outputs.name }}-symbols
+          path: app/build/symbols/*/
+          if-no-files-found: error
+          retention-days: 90
+
       - name: Create GitHub release with the APK
         env:
           GH_TOKEN: ${{ github.token }}
@@ -132,17 +151,7 @@ jobs:
           set -eu
           out="build/app/outputs/flutter-apk/framebook-$NAME.apk"
           mv build/app/outputs/flutter-apk/app-release.apk "$out"
-          version=$(awk '/^version:/ { print $2; exit }' pubspec.yaml)
-          symbols="build/symbols/$version"
-          # Symbols must survive workflow-artifact expiry for every release.
-          for abi in android-arm android-arm64 android-x64; do
-            test -s "$symbols/app.$abi.symbols"
-          done
-          printf 'Framebook %s\nCommit: %s\nUse flutter symbolize with the matching ABI file.\n' \
-            "$version" "$(git rev-parse HEAD)" > "$symbols/README.txt"
-          archive="$PWD/build/app/outputs/flutter-apk/framebook-$NAME-symbols.zip"
-          (cd "$symbols" && zip "$archive" README.txt app.*.symbols)
-          gh release create "$TAG" "$out" "$archive" --title "Framebook $NAME" --generate-notes
+          gh release create "$TAG" "$out" --title "Framebook $NAME" --generate-notes
 
       - name: Remove signing files
         if: always()

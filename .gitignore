@@ -11,3 +11,6 @@
 
 # Claude Code's own local dev-server launch config, per-machine
 .claude/launch.json
+
+# Local backups of matching release debug symbols
+.release-symbols/
