@@ -95,12 +95,24 @@ final class DriveRemote implements SyncRemote {
   static drive.Media _media(List<int> bytes) =>
       drive.Media(Stream.value(bytes), bytes.length, contentType: _type);
 
-  static RemoteFile _file(drive.File f) => RemoteFile(
-    id: f.id!,
-    name: f.name ?? '',
-    modifiedTime: f.modifiedTime?.toUtc().toIso8601String() ?? '',
-    createdTime: f.createdTime?.toUtc().toIso8601String() ?? '',
-  );
+  static RemoteFile _file(drive.File f) {
+    final id = f.id, name = f.name;
+    final modified = f.modifiedTime, created = f.createdTime;
+    if (id == null ||
+        id.isEmpty ||
+        name == null ||
+        name.isEmpty ||
+        modified == null ||
+        created == null) {
+      throw const SyncException(SyncFailure.failed, 'Incomplete file metadata');
+    }
+    return RemoteFile(
+      id: id,
+      name: name,
+      modifiedTime: modified.toUtc().toIso8601String(),
+      createdTime: created.toUtc().toIso8601String(),
+    );
+  }
 
   /// Drive's errors as [SyncException]s (docs/sync.md, "Errors").
   Future<T> _call<T>(Future<T> Function() request) async {
@@ -126,6 +138,8 @@ final class DriveRemote implements SyncRemote {
       throw SyncException(SyncFailure.offline, e.message);
     } on TimeoutException {
       throw const SyncException(SyncFailure.offline, 'timeout');
+    } on FormatException {
+      throw const SyncException(SyncFailure.failed, 'Invalid Drive response');
     }
   }
 }

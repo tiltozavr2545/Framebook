@@ -125,7 +125,14 @@ class _MyRatingSectionState extends ConsumerState<MyRatingSection> {
   Future<void> _edit(Rating? current) async {
     final library = ref.read(libraryProvider);
     final lineage = widget.lineage;
-    final showComparison = await library.hasCalibration(lineage.last.key);
+    var showComparison = false;
+    try {
+      showComparison = await library.hasCalibration(lineage.last.key);
+    } on Exception {
+      // The optional comparison must not prevent opening a rating draft.
+    } on StateError {
+      // Persistence errors are reported by the editor's save operation.
+    }
     if (!mounted) return;
     await showModalBottomSheet<RatingDraft>(
       context: context,
@@ -384,6 +391,7 @@ class _RatingEditorState extends State<RatingEditor> {
   static const _maxNote = maxNoteCodePoints;
   bool _saving = false;
   bool _saveFailed = false;
+  int _comparisonRevision = 0;
 
   Future<void> _save() async {
     final score = _scoreHalf;
@@ -416,13 +424,23 @@ class _RatingEditorState extends State<RatingEditor> {
   }
 
   Future<void> _compare(int half) async {
-    final calibration = await widget.compare(half);
-    // Only the answer for the score still in the gate counts.
-    if (!mounted || _scoreHalf != half) return;
-    setState(() => _shown = (scoreHalf: half, calibration: calibration));
+    final revision = ++_comparisonRevision;
+    try {
+      final calibration = await widget.compare(half);
+      // Only the answer for the score still in the gate counts.
+      if (!mounted || _scoreHalf != half || revision != _comparisonRevision) {
+        return;
+      }
+      setState(() => _shown = (scoreHalf: half, calibration: calibration));
+    } on Exception {
+      // Comparison is optional; keep the draft and any previous result.
+    } on StateError {
+      // Database failures must not escape an unawaited comparison callback.
+    }
   }
 
   void _changed(int? half) {
+    if (half == null) _comparisonRevision++;
     setState(() => _scoreHalf = half);
     if (widget.showComparison && half != null) _compare(half);
   }

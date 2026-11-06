@@ -57,6 +57,35 @@ void main() {
     expect(await remote.list(), isEmpty);
   });
 
+  for (final field in ['id', 'name', 'modifiedTime', 'createdTime']) {
+    test(
+      'missing $field rejects incomplete file metadata as a typed failure',
+      () async {
+        final incomplete = file('selected')..remove(field);
+        final remote = DriveRemote(
+          MockClient(
+            (request) async => jsonResponse(
+              request.url.path.endsWith('/selected')
+                  ? incomplete
+                  : {
+                      'files': [incomplete],
+                    },
+            ),
+          ),
+        );
+        final failure = throwsA(
+          isA<SyncException>().having(
+            (error) => error.failure,
+            'failure',
+            SyncFailure.failed,
+          ),
+        );
+        await expectLater(remote.metadata('selected'), failure);
+        await expectLater(remote.list(), failure);
+      },
+    );
+  }
+
   test('metadata and delete address the requested file', () async {
     final methods = <String>[];
     final remote = DriveRemote(
@@ -71,6 +100,21 @@ void main() {
     expect((await remote.metadata('selected')).id, 'selected');
     await remote.delete('selected');
     expect(methods, ['GET', 'DELETE']);
+  });
+
+  test('invalid metadata timestamps become a typed sync failure', () async {
+    final invalid = file('selected')..['modifiedTime'] = 'not a date';
+    final remote = DriveRemote(MockClient((_) async => jsonResponse(invalid)));
+    await expectLater(
+      remote.metadata('selected'),
+      throwsA(
+        isA<SyncException>().having(
+          (error) => error.failure,
+          'failure',
+          SyncFailure.failed,
+        ),
+      ),
+    );
   });
 
   test('download returns binary media without JSON conversion', () async {

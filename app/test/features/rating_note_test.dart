@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:framebook/data/library/library.dart';
 import 'package:framebook/app/theme.dart';
@@ -10,7 +11,71 @@ import 'package:framebook/features/title/score_reel.dart';
 import 'package:framebook/l10n/app_localizations.dart';
 import 'package:framebook/shared/note_length_formatter.dart';
 
+import '../data/insights_test.dart' show rated;
+
 void main() {
+  testWidgets(
+    'an older comparison cannot replace a newer request for the same score',
+    (tester) async {
+      final requests = <Completer<Calibration>>[];
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            theme: FramebookTheme.light,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: RatingEditor(
+                compare: (_) {
+                  final request = Completer<Calibration>();
+                  requests.add(request);
+                  return request.future;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      tester.widget<ScoreReel>(find.byType(ScoreReel)).onChanged(12);
+      tester.widget<ScoreReel>(find.byType(ScoreReel)).onChanged(10);
+      requests.last.complete(
+        Calibration(same: [rated(2, 10)], above: [], below: []),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Title 2'), findsOneWidget);
+      requests.first.complete(
+        Calibration(same: [rated(1, 10)], above: [], below: []),
+      );
+      requests[1].complete(const Calibration(same: [], above: [], below: []));
+      await tester.pumpAndSettle();
+      expect(find.text('Title 2'), findsOneWidget);
+      expect(find.text('Title 1'), findsNothing);
+    },
+  );
+  testWidgets('a failed calibration lookup leaves the editor usable', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: FramebookTheme.light,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: RatingEditor(
+            compare: (_) async => throw StateError('database unavailable'),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    await tester.enterText(find.byType(TextField), 'Draft survives');
+    expect(find.text('Draft survives'), findsOneWidget);
+    expect(
+      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+      isNotNull,
+    );
+  });
   test('note input uses code points and keeps compound characters intact', () {
     const formatter = NoteLengthFormatter();
     for (final cluster in ['e\u0301', '👨‍👩‍👧‍👦']) {

@@ -59,7 +59,20 @@ final recommendationPoolProvider =
       final api = ref.watch(tmdbProvider);
       final cache = ref.watch(_sourceCacheProvider);
       if (!plan.enabled) return Stream.value(const RecommendationPool());
-      if (!ref.watch(foregroundProvider)) return const Stream.empty();
+      var finished = false;
+      ref.listen(foregroundProvider, (previous, next) {
+        if (!next || previous != false) return;
+        if (recommendationDay(ref.read(recommendationClockProvider)()) !=
+            plan.today) {
+          ref.invalidate(recommendationPlanProvider);
+        } else if (!finished) {
+          ref.invalidateSelf();
+        }
+      });
+      final previous = cache.poolFor(plan.signature);
+      if (!ref.read(foregroundProvider)) {
+        return Stream.value(previous ?? const RecommendationPool());
+      }
       final trend = ref.watch(trendingShelfProvider.future);
       // Attach the error handler immediately, even if preceding jobs fail first.
       final safeTrend = trend.then(
@@ -76,14 +89,22 @@ final recommendationPoolProvider =
         loadRecommendationCandidates(
           api,
           plan,
-          active: () => active,
+          active: () => active && ref.read(foregroundProvider),
           publish: (value) {
-            if (active) controller.add(value);
+            if (active) {
+              cache.rememberPool(plan.signature, value);
+              controller.add(value);
+            }
           },
           trending: () => safeTrend,
           cache: cache,
+          initialCandidates: previous?.candidates ?? const [],
         ).then(
           (_) async {
+            finished =
+                active &&
+                ref.read(foregroundProvider) &&
+                (cache.poolFor(plan.signature)?.failed ?? 0) == 0;
             if (active) await controller.close();
           },
           onError: (Object error, StackTrace stack) async {

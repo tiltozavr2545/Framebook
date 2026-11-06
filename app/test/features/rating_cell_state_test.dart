@@ -61,6 +61,13 @@ void main() {
     );
   });
 
+  test('future-dated cached values stay visible but are marked stale', () {
+    expect(
+      state(cached: row(RatingStatus.ok, ageDays: -1)),
+      isA<RatingShown>().having((s) => s.stale, 'stale', isTrue),
+    );
+  });
+
   test('"not found" is no data', () {
     expect(state(cached: row(RatingStatus.notFound)), isA<RatingNoData>());
   });

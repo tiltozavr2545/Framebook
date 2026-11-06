@@ -104,6 +104,25 @@ void main() {
     },
   );
 
+  test('resume does not restart a fully loaded credit index', () async {
+    setup([rated(1, 16)]);
+    final states = <PeopleIndexState>[];
+    container.listen(peopleIndexProvider, (_, next) => states.add(next));
+    await waitFor(
+      () =>
+          container.read(peopleIndexProvider).entries.length == 1 &&
+          !container.read(peopleIndexProvider).running,
+    );
+    states.clear();
+    final foreground =
+        container.read(foregroundProvider.notifier) as _Foreground;
+    foreground.set(false);
+    foreground.set(true);
+    await pumpEventQueue();
+    expect(states.where((state) => state.running), isEmpty);
+    expect(api.calls, [1]);
+  });
+
   test(
     'four parallel requests, bounded batches, cache-first resume without duplicate fetches',
     () async {

@@ -488,6 +488,9 @@ ink, film stock, and the editor's grease pencil.
   one message with a retry when no local/personal row can be shown. The hybrid
   uses local all-time taste, 1:1 familiar/exploration slots, streamed candidates
   and per-device Not interested/Undo; see [recommendations.md](recommendations.md).
+  Completed recommendations survive foreground changes. Interrupted passes
+  retain the same plan's session candidates while resuming, so returning to
+  Discover does not temporarily replace populated shelves with empty results.
   Shelves come through the HTTP cache: a day for
   what changes daily, a week for the rest.
 - **Cast and crew** on every card: a strip of the first 20 actors with their

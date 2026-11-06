@@ -143,7 +143,7 @@ RatingCellState ratingCellState({
     final age = nowMillis - row.fetchedAt;
     return RatingShown(
       row,
-      stale: age >= RatingTtl.interactive.inMilliseconds,
+      stale: age < 0 || age >= RatingTtl.interactive.inMilliseconds,
       refreshing: refreshing,
     );
   }

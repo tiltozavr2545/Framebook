@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 
 import '../data/api_source.dart';
+import '../data/sources/tmdb/tmdb_models.dart' show validCalendarDate;
 import '../l10n/app_localizations.dart';
 
 /// Formatting for display — only here, at the moment of display.
@@ -11,12 +12,11 @@ extension Formatting on BuildContext {
   /// `YYYY-MM-DD` from an API → "May 1, 2011". A date without a time: built
   /// from its numbers, with no time zone (AGENTS.md, pitfalls).
   String? formatDate(String? ymd) {
-    if (ymd == null) return null;
-    final parts = ymd.split('-').map(int.tryParse).toList();
-    if (parts.length != 3 || parts.contains(null)) return ymd;
+    if (ymd == null || !validCalendarDate(ymd)) return null;
+    final parts = ymd.split('-').map(int.parse).toList();
     return DateFormat.yMMMd(
       _locale,
-    ).format(DateTime(parts[0]!, parts[1]!, parts[2]!));
+    ).format(DateTime(parts[0], parts[1], parts[2]));
   }
 
   /// UTC ms → a short date in local time.

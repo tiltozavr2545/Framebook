@@ -25,6 +25,32 @@ class FakeSource implements UpdateSource {
 }
 
 void main() {
+  test(
+    'manual checking bypasses a concurrent throttled automatic check',
+    () async {
+      SharedPreferences.setMockInitialValues({
+        'update_last_check': DateTime.now().toUtc().millisecondsSinceEpoch,
+      });
+      final source = FakeSource();
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(
+            await SharedPreferences.getInstance(),
+          ),
+          appVersionProvider.overrideWithValue('0.7.0+9'),
+          updateChecksEnabledProvider.overrideWithValue(false),
+          updateSourceProvider.overrideWithValue(source),
+        ],
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(updateControllerProvider.notifier);
+      final automatic = controller.check();
+      final manual = controller.check(manual: true);
+      expect(await automatic, UpdateResult.current);
+      expect(await manual, UpdateResult.available);
+      expect(source.calls, 1);
+    },
+  );
   test('GitHub response accepts only stable release pages', () async {
     final good = GithubUpdateSource(
       MockClient(

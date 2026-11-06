@@ -18,7 +18,8 @@ enum DivergenceOrder {
 }
 
 /// Filters "My ratings" by kind (`null` — all) and sorts it. Ties are broken
-/// by the most recent score, so the order is stable. Sorting by divergence
+/// by the most recent score and then the natural key, so the order is stable
+/// even when an import gave many titles the same timestamp. Sorting by divergence
 /// compares with [compareWith]; titles without its value go to the end rather
 /// than dropping out (docs/data-model.md, "Key queries").
 List<RatedTitle> arrangeRatings(
@@ -28,8 +29,10 @@ List<RatedTitle> arrangeRatings(
   RatingSource compareWith = RatingSource.kp,
   DivergenceOrder order = DivergenceOrder.furthest,
 }) {
-  int byRecent(RatedTitle a, RatedTitle b) =>
-      b.rating.scoredAt.compareTo(a.rating.scoredAt);
+  int byRecent(RatedTitle a, RatedTitle b) => _then(
+    b.rating.scoredAt.compareTo(a.rating.scoredAt),
+    () => a.work.workKey.compareTo(b.work.workKey),
+  );
   int byDivergence(RatedTitle a, RatedTitle b) {
     final da = a.divergenceFrom(compareWith);
     final db = b.divergenceFrom(compareWith);

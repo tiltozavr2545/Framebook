@@ -28,6 +28,16 @@ void main() {
 
   tearDown(() => db.close());
 
+  for (final source in ApiSource.values) {
+    test(
+      'generic JSON cannot validate a ${source.name} key without its probe payload',
+      () async {
+        serve((_) => (status: 200, body: '{"Response":"True"}'));
+        expect(await validator.check(source, 'test-key'), KeyCheck.failed);
+      },
+    );
+  }
+
   group('TMDB', () {
     test('a read access token goes in the Authorization header', () async {
       serve((_) => (status: 200, body: fixture('tmdb/configuration.json')));

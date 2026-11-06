@@ -58,7 +58,12 @@ Retry can try again. Editing favourites reuses unchanged seed, discovery and
 person jobs. Candidate and credit updates are published in 100 ms batches,
 with an immediate first useful candidate result and an unconditional final
 snapshot. Foreground state gates new recommendation and credit requests;
-resume can continue incomplete enrichment. Already-started HTTP requests may
+resume can continue incomplete enrichment. Completed recommendation loads and
+fully populated credit indexes remain intact across foreground changes.
+Interrupted candidate loads retain their current sections and resume from the
+same plan's session snapshot, avoiding an empty intermediate shelf batch.
+This snapshot is scoped to the catalog client and is never synced or persisted.
+Already-started HTTP requests may
 finish, but obsolete recommendation passes cannot publish their results.
 
 ## Ranking and explanations

@@ -106,12 +106,7 @@ class UpdateController extends Notifier<UpdateRelease?> {
   }
 
   Future<UpdateResult> check({bool manual = false}) {
-    return _running ??= _check(manual).whenComplete(() {
-      _running = null;
-    });
-  }
-
-  Future<UpdateResult> _check(bool manual) async {
+    if (_running case final running?) return running;
     final prefs = ref.read(sharedPreferencesProvider);
     final now = DateTime.now().toUtc().millisecondsSinceEpoch;
     final last = prefs.getInt(_checked);
@@ -119,8 +114,19 @@ class UpdateController extends Notifier<UpdateRelease?> {
         last != null &&
         now >= last &&
         now - last < const Duration(hours: 24).inMilliseconds) {
-      return state == null ? UpdateResult.current : UpdateResult.available;
+      return Future.value(
+        state == null ? UpdateResult.current : UpdateResult.available,
+      );
     }
+    // Only an actual network check is shared with a concurrent manual request.
+    return _running = _check().whenComplete(() {
+      _running = null;
+    });
+  }
+
+  Future<UpdateResult> _check() async {
+    final prefs = ref.read(sharedPreferencesProvider);
+    final now = DateTime.now().toUtc().millisecondsSinceEpoch;
     final source = ref.read(updateSourceProvider);
     final installed = UpdateVersion.parse(ref.read(appVersionProvider));
     try {

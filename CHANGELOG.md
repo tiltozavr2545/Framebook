@@ -373,3 +373,30 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
   with large text in both English and Russian.
 - Freeze the rating reel while saving, including an active fling, so the
   visible score and retry draft keep the value being persisted.
+
+## 0.9.1 — Reliability and smoother resume (build 21)
+
+- Keep the rating editor usable if loading optional calibration comparisons
+  fails, preserving the note draft and any previous comparison result.
+- Preserve Discover recommendation sections when returning from the
+  background. Keep completed loads and resume interrupted passes using their
+  existing candidates instead of briefly publishing empty shelves. Refresh the
+  daily plan when returning on a different day.
+- Avoid restarting fully loaded people analytics on every resume.
+- Mark future-dated cached source ratings as stale consistently with refresh.
+- Ignore superseded calibration replies even when the selected score returns
+  to the same value while an older lookup is still pending.
+- Make manual update checks bypass a concurrent automatic check that was
+  skipped by the daily throttle, while still sharing real in-flight requests.
+- Reject incomplete or malformed Drive file metadata as a recoverable sync
+  failure instead of accepting empty concurrency markers or throwing raw errors.
+- Keep fully tied ratings in deterministic order, including libraries imported
+  with identical score-change timestamps.
+- Allow opening and saving a rating when only the optional calibration
+  threshold query fails; retain normal reporting of persistence errors.
+- Require the expected probe response before marking an API key verified;
+  arbitrary JSON with HTTP 200 is not sufficient.
+- Keep navigation, language and theme choices usable on narrow screens with
+  large text by placing their wrapping dropdowns beneath the labels.
+- Omit impossible calendar dates instead of silently displaying another date
+  produced by date normalization.

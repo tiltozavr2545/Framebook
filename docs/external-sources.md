@@ -305,6 +305,12 @@ checked". Trial requests receive plain text and parse JSON explicitly. A
 malformed or proxy HTML response is a source failure and does not save the key
 as if the phone were merely offline.
 
+HTTP 200 must also carry the expected probe: TMDB's image configuration with
+a secure image base and poster sizes, PoiskKino's requested title ID, or OMDb's
+successful response with the requested IMDb ID. An unrelated JSON object is
+not evidence that the key works. Invalid calendar dates are omitted from
+localized display rather than normalized into a different day.
+
 ## Additional card facts
 
 Movie details include production countries, budget and worldwide revenue

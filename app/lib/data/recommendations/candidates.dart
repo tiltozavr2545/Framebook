@@ -74,6 +74,15 @@ final class RecommendationPool {
 /// Session reuse belongs to one catalog client/language. Completed jobs and
 /// in-flight work are shared across favourite/seed changes, with a bounded LRU.
 final class RecommendationSourceCache {
+  String? _poolSignature;
+  RecommendationPool? _pool;
+  RecommendationPool? poolFor(String signature) =>
+      signature == _poolSignature ? _pool : null;
+  void rememberPool(String signature, RecommendationPool pool) {
+    _poolSignature = signature;
+    _pool = pool;
+  }
+
   final _jobs = <String, Future<List<RecommendationCandidate>>>{};
 
   Future<List<RecommendationCandidate>> get(
@@ -107,6 +116,7 @@ Future<void> loadRecommendationCandidates(
   Duration timeout = const Duration(seconds: 8),
   Duration budget = const Duration(seconds: 45),
   RecommendationSourceCache? cache,
+  List<RecommendationCandidate> initialCandidates = const [],
 }) async {
   if (!plan.enabled) {
     publish(const RecommendationPool());
@@ -177,7 +187,7 @@ Future<void> loadRecommendationCandidates(
         RecommendationCandidate(title, discovered: true),
     ],
   );
-  final candidates = <RecommendationCandidate>[];
+  final candidates = <RecommendationCandidate>[...initialCandidates];
   var cursor = 0, failures = 0;
   var stop = false;
   final elapsed = Stopwatch()..start();

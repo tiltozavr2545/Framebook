@@ -57,7 +57,8 @@ class PeopleIndex extends Notifier<PeopleIndexState> {
           if (generation != _generation) return;
           if (state.running) {
             _pending = true;
-          } else {
+          } else if (state.entries.length < state.total ||
+              _inputIdentity.isEmpty) {
             unawaited(load());
           }
         });

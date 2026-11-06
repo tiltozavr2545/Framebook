@@ -71,6 +71,36 @@ RatedTitle _rated(
 );
 
 void main() {
+  test(
+    'fully tied ratings have deterministic order independent of input rows',
+    () {
+      final entries =
+          [
+                for (final id in [3, 1, 2])
+                  _rated('tmdb:movie:$id', 16, kp: 8, year: 1999),
+              ]
+              .map(
+                (entry) => RatedTitle(
+                  rating: entry.rating,
+                  work: entry.work.copyWith(title: 'Same title'),
+                  external: entry.external,
+                ),
+              )
+              .toList();
+      for (final sort in RatingsSort.values) {
+        final first = arrangeRatings(
+          entries,
+          sort: sort,
+        ).map((t) => t.work.workKey).toList();
+        final second = arrangeRatings(
+          entries.reversed,
+          sort: sort,
+        ).map((t) => t.work.workKey).toList();
+        expect(first, second, reason: sort.name);
+        expect(first, ['tmdb:movie:1', 'tmdb:movie:2', 'tmdb:movie:3']);
+      }
+    },
+  );
   test('title sorting keeps five-digit episode numbers in numeric order', () {
     final series = _work('tmdb:tv:9');
     final keys = [

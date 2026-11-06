@@ -35,7 +35,9 @@ class SettingsScreen extends ConsumerWidget {
           ListTile(
             leading: const Icon(Icons.view_day_outlined),
             title: Text(l10n.settingsNavigationStyle),
-            trailing: DropdownButton<bool>(
+            subtitle: DropdownButton<bool>(
+              isExpanded: true,
+              itemHeight: null,
               value: ref.watch(floatingNavigationProvider),
               underline: const SizedBox.shrink(),
               onChanged: (floating) {
@@ -58,7 +60,9 @@ class SettingsScreen extends ConsumerWidget {
           ListTile(
             leading: const Icon(Icons.language),
             title: Text(l10n.settingsLanguage),
-            trailing: DropdownButton<String>(
+            subtitle: DropdownButton<String>(
+              isExpanded: true,
+              itemHeight: null,
               value: locale?.languageCode ?? '',
               underline: const SizedBox.shrink(),
               onChanged: (code) => ref
@@ -80,7 +84,9 @@ class SettingsScreen extends ConsumerWidget {
           ListTile(
             leading: const Icon(Icons.brightness_6_outlined),
             title: Text(l10n.settingsTheme),
-            trailing: DropdownButton<ThemeMode>(
+            subtitle: DropdownButton<ThemeMode>(
+              isExpanded: true,
+              itemHeight: null,
               value: themeMode,
               underline: const SizedBox.shrink(),
               onChanged: (mode) {

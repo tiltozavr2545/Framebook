@@ -64,8 +64,17 @@ final class KeyValidator {
       queryParameters: auth.query,
       options: Options(headers: auth.headers, responseType: ResponseType.plain),
     );
+    final images = tryJson(response.data)?.object('images');
+    final base = Uri.tryParse(images?.string('secure_base_url') ?? '');
+    final sizes = images?.raw['poster_sizes'];
+    final validConfiguration =
+        base?.scheme == 'https' &&
+        (base?.host.isNotEmpty ?? false) &&
+        sizes is List<Object?> &&
+        sizes.isNotEmpty &&
+        sizes.every((size) => size is String);
     return switch (response.statusCode) {
-      200 when tryJson(response.data) != null => KeyCheck.valid,
+      200 when validConfiguration => KeyCheck.valid,
       401 => KeyCheck.invalid,
       _ => KeyCheck.failed,
     };
@@ -86,7 +95,8 @@ final class KeyValidator {
       ),
     );
     return switch (response.statusCode) {
-      200 when tryJson(response.data) != null => KeyCheck.valid,
+      200 when tryJson(response.data)?.integer('id') == _probeKpId =>
+        KeyCheck.valid,
       401 => KeyCheck.invalid,
       403 => KeyCheck.limitReached,
       _ => KeyCheck.failed,
@@ -105,7 +115,9 @@ final class KeyValidator {
     // OMDb errors differ only by their text (docs/external-sources.md).
     if (error == 'Invalid API key!') return KeyCheck.invalid;
     if (error == 'Request limit reached!') return KeyCheck.limitReached;
-    if (response.statusCode == 200 && body?.string('Response') == 'True') {
+    if (response.statusCode == 200 &&
+        body?.string('Response') == 'True' &&
+        body?.string('imdbID') == _probeImdbId) {
       return KeyCheck.valid;
     }
     return KeyCheck.failed;

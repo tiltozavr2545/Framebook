@@ -21,6 +21,21 @@ are settled before anything is built on top of them.
 - [x] Stage 6.5 — Required items from the postponed list (0.7.0; item 5 postponed)
 - [ ] Stage 7 — Code review, optimization, a second review
 
+## 0.9.1 — Reliability and smoother resume
+
+Version: `0.9.1+21`, following the published 0.9.0 release. Review was closed
+at the user's request to finish the existing scope and publish this release.
+
+Discover preserves completed and interrupted recommendation pools on same-day
+resume and refreshes its plan on a new day. Rating edits tolerate optional
+calibration failures and ignore superseded replies. Other repairs cover stable
+sorting, source probes, future-dated rating display, Drive metadata, manual
+update checks, invalid dates and narrow settings with large text.
+Validation passed 574 tests (20 opt-in renderers skipped), formatting, analysis
+and version checks. The final daily-resume regression also passed both scenarios.
+Physical-phone scrolling measurements remain pending.
+Details: [reviews/0.9.1/README.md](reviews/0.9.1/README.md).
+
 ## 0.9.0 — Navigation and people browsing
 
 Version: `0.9.0+20`. Follow-up scope agreed on 2026-11-06.
