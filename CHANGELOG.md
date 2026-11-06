@@ -358,3 +358,18 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
 - Give person profiles a fixed violet header frame and a centered favourite
   button. Double-tap shelf portraits to add or remove favourites, with a brief
   heart animation, confirmation message and translucent saved-heart badge.
+- Use the same complete series/season credits in people statistics and
+  recommendations as on title cards. Preserve every aggregate crew profession
+  and refresh the previous incomplete derived-credit cache.
+- Retry external-rating refresh after a device clock correction instead of
+  treating future-dated cached ratings and failures as fresh indefinitely.
+  Resume automatic Drive sync when its last-sync timestamp is in the future.
+- Inspect cache-file ages asynchronously during startup cleanup, keeping
+  filesystem metadata reads off the UI isolate's synchronous execution path.
+- Apply Drive changes using the transaction's existing row snapshot instead
+  of rereading every work, rating and watchlist entry. Avoid hashing identical
+  row payloads and load only keys when pruning unreferenced snapshots.
+- Wrap API-source headings and required/optional labels on narrow screens
+  with large text in both English and Russian.
+- Freeze the rating reel while saving, including an active fling, so the
+  visible score and retry draft keep the value being persisted.

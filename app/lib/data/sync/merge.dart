@@ -67,37 +67,46 @@ int _version(
   return deletion != 0 ? deletion : hash().compareTo(bh());
 }
 
-int compareRatings(Rating a, Rating b) => _version(
-  a.updatedAt,
-  a.updatedBy,
-  a.deletedAt != null,
-  () => _hash(SyncFile.ratingToJson(a)),
-  b.updatedAt,
-  b.updatedBy,
-  b.deletedAt != null,
-  () => _hash(SyncFile.ratingToJson(b)),
-);
-int compareWatchlist(WatchlistEntry a, WatchlistEntry b) => _version(
-  a.updatedAt,
-  a.updatedBy,
-  a.deletedAt != null,
-  () => _hash(SyncFile.watchlistToJson(a)),
-  b.updatedAt,
-  b.updatedBy,
-  b.deletedAt != null,
-  () => _hash(SyncFile.watchlistToJson(b)),
-);
-int compareFavoritePeople(FavoritePerson a, FavoritePerson b) => _version(
-  a.updatedAt,
-  a.updatedBy,
-  a.deletedAt != null,
-  () => _hash(SyncFile.personToJson(a)),
-  b.updatedAt,
-  b.updatedBy,
-  b.deletedAt != null,
-  () => _hash(SyncFile.personToJson(b)),
-);
+// Most rows in a routine sync are identical. Drift's full value equality
+// avoids serializing and hashing those payloads solely to discover a tie.
+int compareRatings(Rating a, Rating b) => a == b
+    ? 0
+    : _version(
+        a.updatedAt,
+        a.updatedBy,
+        a.deletedAt != null,
+        () => _hash(SyncFile.ratingToJson(a)),
+        b.updatedAt,
+        b.updatedBy,
+        b.deletedAt != null,
+        () => _hash(SyncFile.ratingToJson(b)),
+      );
+int compareWatchlist(WatchlistEntry a, WatchlistEntry b) => a == b
+    ? 0
+    : _version(
+        a.updatedAt,
+        a.updatedBy,
+        a.deletedAt != null,
+        () => _hash(SyncFile.watchlistToJson(a)),
+        b.updatedAt,
+        b.updatedBy,
+        b.deletedAt != null,
+        () => _hash(SyncFile.watchlistToJson(b)),
+      );
+int compareFavoritePeople(FavoritePerson a, FavoritePerson b) => a == b
+    ? 0
+    : _version(
+        a.updatedAt,
+        a.updatedBy,
+        a.deletedAt != null,
+        () => _hash(SyncFile.personToJson(a)),
+        b.updatedAt,
+        b.updatedBy,
+        b.deletedAt != null,
+        () => _hash(SyncFile.personToJson(b)),
+      );
 int compareWorks(Work a, Work b) {
+  if (a == b) return 0;
   final time = a.snapshotUpdatedAt.compareTo(b.snapshotUpdatedAt);
   if (time != 0) return time;
   final snapshot = _canonical(
@@ -123,6 +132,7 @@ int _compareNullable<T extends Comparable<T>>(T? a, T? b) {
 }
 
 int _compareWorkSnapshot(Work a, Work b) {
+  if (a == b) return 0;
   final time = a.snapshotUpdatedAt.compareTo(b.snapshotUpdatedAt);
   return time != 0
       ? time
@@ -173,6 +183,7 @@ List<Work> _mergeWorks(List<Work> a, List<Work> b) {
       rows[row.workKey] = row;
       continue;
     }
+    if (row == current) continue;
     if (row.kind == WorkKind.season || row.kind == WorkKind.episode) {
       // Numbered parts can change identity. Keep their external IDs in the
       // same LWW value as the snapshot, never combine IDs across identities.

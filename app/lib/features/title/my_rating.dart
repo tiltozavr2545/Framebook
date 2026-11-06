@@ -467,6 +467,7 @@ class _RatingEditorState extends State<RatingEditor> {
               ),
             ScoreReel(
               initialScoreHalf: widget.initialScoreHalf,
+              enabled: !_saving,
               onChanged: _changed,
             ),
             Padding(

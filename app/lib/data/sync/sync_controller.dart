@@ -184,7 +184,11 @@ class SyncController extends Notifier<SyncStatus> {
     }
     final last = state.lastSyncAt;
     final now = DateTime.now().toUtc().millisecondsSinceEpoch;
-    if (last != null && now - last < resumeAfter.inMilliseconds) return;
+    if (last != null &&
+        now >= last &&
+        now - last < resumeAfter.inMilliseconds) {
+      return;
+    }
     await sync();
   }
 

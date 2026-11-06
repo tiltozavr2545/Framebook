@@ -510,7 +510,11 @@ ink, film stock, and the editor's grease pencil.
   is on screen.
 
 People browsing and statistics share derived insights through
-`data/library/insights_provider.dart`, separated by title kind. Favourite
+`data/library/insights_provider.dart`, separated by title kind. People
+analytics use aggregate credits for series and seasons, including each crew
+job; movie and episode analytics use ordinary credits and episode guest stars.
+The derived-credit cache uses a new namespace in 0.9.0 so incomplete entries
+from earlier parsing are refreshed. Favourite
 changes and progress-only index updates do not rebuild the aggregates. More
 than 80 ratings are analyzed in an isolate, with serialized latest-input
 workers. Statistics uses slivers so expanding all people builds only visible
@@ -560,6 +564,10 @@ be few such places — but not zero.
   settings and still needs validation on physical devices.
 - Rating file parsing/encoding runs in an isolate with bounded compressed and
   expanded bytes; imports read streams, not the entire selected file eagerly.
+- Sync application reuses works, ratings and watchlist rows from its transaction
+  snapshot, including metadata of unreferenced works. It does not select each
+  merged row again. Exact payload equality avoids needless hash tie-breaking;
+  pruning orphan snapshots selects keys without decoding notes or full snapshots.
 
 ## People search and filmography
 

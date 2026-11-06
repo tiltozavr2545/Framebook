@@ -383,13 +383,12 @@ final class TmdbClient implements TmdbApi {
       WorkKind.episode =>
         '/tv/${key.tmdbId}/season/${key.season}/episode/${key.episode}',
     };
-    final json = await _get(
-      path,
-      key.kind == WorkKind.movie
-          ? const {}
-          : const {'append_to_response': 'credits'},
-      TmdbTtl.details,
-    );
+    final json = await _get(path, switch (key.kind) {
+      WorkKind.movie => const {},
+      WorkKind.tv ||
+      WorkKind.season => const {'append_to_response': 'aggregate_credits'},
+      WorkKind.episode => const {'append_to_response': 'credits'},
+    }, TmdbTtl.details);
     if (json.integer('id') != expectedId) {
       throw const SourceException(
         SourceFailure.notFound,

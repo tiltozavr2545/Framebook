@@ -92,7 +92,9 @@ final class FileResponseCache implements ResponseCache {
     final cutoff = (now ?? DateTime.now()).subtract(maxAge);
     try {
       await for (final entry in directory.list()) {
-        if (entry is File && entry.lastModifiedSync().isBefore(cutoff)) {
+        // Yield between metadata reads: pruning shares the UI isolate.
+        // ignore: avoid_slow_async_io
+        if (entry is File && (await entry.lastModified()).isBefore(cutoff)) {
           await entry.delete();
         }
       }

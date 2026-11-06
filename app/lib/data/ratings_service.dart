@@ -174,6 +174,7 @@ final class RatingsService {
       // remember it.
       final recent = _failures[(key, api)];
       if (recent != null &&
+          now >= recent.$2 &&
           now - recent.$2 < RatingTtl.failure.inMilliseconds) {
         outcomes[api] = recent.$1;
         continue;
@@ -213,7 +214,9 @@ final class RatingsService {
     int? due;
     for (final api in const [ApiSource.poiskkino, ApiSource.omdb]) {
       final recent = _failures[(key.toString(), api)];
-      if (recent != null && at - recent.$2 < RatingTtl.failure.inMilliseconds) {
+      if (recent != null &&
+          at >= recent.$2 &&
+          at - recent.$2 < RatingTtl.failure.inMilliseconds) {
         continue;
       }
       for (final source in shownFor(key.kind)) {
@@ -240,7 +243,8 @@ final class RatingsService {
       // the table: right after a key change, otherwise in an hour.
       RatingStatus.error => Duration.zero,
     };
-    return age >= ttl.inMilliseconds;
+    // A corrected device clock must not freeze a future-dated cache entry.
+    return age < 0 || age >= ttl.inMilliseconds;
   }
 
   Future<SourceFailure?> _fetch(

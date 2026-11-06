@@ -167,10 +167,12 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Text(name, style: theme.textTheme.titleMedium),
-                const SizedBox(width: 8),
                 Text(
                   required ? l10n.sourceRequired : l10n.sourceOptional,
                   style: theme.textTheme.labelMedium?.copyWith(

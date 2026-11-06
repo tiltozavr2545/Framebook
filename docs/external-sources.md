@@ -49,7 +49,7 @@ Base: `https://api.themoviedb.org/3`. The response language is the
 | an episode's ids in other databases | `GET /tv/{id}/season/{n}/episode/{m}/external_ids` |
 | genres | `GET /genre/movie/list`, `GET /genre/tv/list` — names for the statistics by genre; the lists share most ids |
 | popular people | `GET /person/popular` — first page for People discovery |
-| analytics credits | `GET /movie/{id}/credits`; series, season and episode details with appended credits — verified against the rated snapshot's TMDB identity, cached locally only |
+| analytics credits | `GET /movie/{id}/credits`; series and season details with appended `aggregate_credits`; episode details with appended `credits` and guest stars — verified against the rated snapshot's TMDB identity, cached locally only |
 | personal discovery | `GET /discover/movie`, `/discover/tv` — genre/general candidate pools; local ranking and budgets are in [recommendations.md](recommendations.md) |
 | cover variants | `GET /movie/{id}/images`, `/tv/{id}/images`, `/tv/{id}/season/{n}/images`, `/tv/{id}/season/{n}/episode/{m}/images` — posters, or episode stills |
 | person photos | `GET /person/{id}/images` — profile photos for the full-screen viewer |
@@ -205,11 +205,16 @@ Manual linking ("this is the wrong film on Kinopoisk") is in
 | external rating, `ok` | `external_ratings` | 14 days for background refresh; an open card asks again if it is older than 7 days and the budget allows |
 | external rating, `not_found` | `external_ratings` | 30 days |
 | external rating, `error` | `external_ratings` + the service's memory | 1 hour (see below) |
-| mini snapshot | `works` | refreshed every 30 days and when the card is opened |
+| mini snapshot | `works` | refreshed when a card is opened or a user saves that title; saved translated titles are refreshed separately with 24-hour reuse per language/key generation |
 
 A stale value is **shown**, not hidden: the card shows a rating's age when it
 is past its TTL. A film's rating barely changes in two weeks, while an empty
 space in its place changes everything.
+
+An external rating fetched after the current device time is stale too: a
+clock correction must not postpone refresh until that future date. Failure
+throttling likewise applies only when its recorded time is not in the future.
+HTTP cache pruning reads file modification times asynchronously.
 
 How failures are handled (as implemented in Stage 2,
 `lib/data/ratings_service.dart`):

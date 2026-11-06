@@ -135,7 +135,7 @@ void main() {
       final titles = [for (var id = 1; id <= 20; id++) rated(id, 16)];
       setup(titles);
       api.offline = true;
-      cache.entries['people-index:v1:en-US:${peopleIdentity(titles.first)}'] =
+      cache.entries['people-index:v2:en-US:${peopleIdentity(titles.first)}'] =
           CachedResponse(
             jsonEncode([
               const PeopleCredit(
@@ -147,7 +147,7 @@ void main() {
             0,
           );
       // A damaged cache must be retried through the API rather than counted.
-      cache.entries['people-index:v1:en-US:${peopleIdentity(titles[1])}'] =
+      cache.entries['people-index:v2:en-US:${peopleIdentity(titles[1])}'] =
           const CachedResponse('broken', 0);
       container.listen(peopleIndexProvider, (_, _) {});
       await waitFor(
@@ -159,6 +159,39 @@ void main() {
       expect(api.calls.length, inInclusiveRange(1, 4));
       expect(api.calls, isNot(contains(1)));
       expect(container.read(peopleIndexProvider).failed, greaterThan(0));
+    },
+  );
+  test(
+    'legacy derived credits are refreshed after aggregate parsing changes',
+    () async {
+      final title = rated(1, 16);
+      setup([title]);
+      cache.entries['people-index:v1:en-US:${peopleIdentity(title)}'] =
+          CachedResponse(
+            jsonEncode([
+              const PeopleCredit(
+                id: 99,
+                name: 'Legacy',
+                role: FilmographyRole.other,
+              ).toJson(),
+            ]),
+            0,
+          );
+      container.listen(peopleIndexProvider, (_, _) {});
+      await waitFor(
+        () =>
+            container.read(peopleIndexProvider).total == 1 &&
+            !container.read(peopleIndexProvider).running,
+      );
+      expect(api.calls, [1]);
+      expect(
+        container.read(peopleIndexProvider).entries.values.single.single.id,
+        1,
+      );
+      expect(
+        cache.entries,
+        contains('people-index:v2:en-US:${peopleIdentity(title)}'),
+      );
     },
   );
   test(

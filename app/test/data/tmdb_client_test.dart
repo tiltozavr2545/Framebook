@@ -99,6 +99,74 @@ void main() {
   });
 
   test(
+    'analytics uses aggregate TV credits and preserves every crew role',
+    () async {
+      serve(
+        (request) => (
+          status: 200,
+          body: '''{
+        "id":1399,
+        "aggregate_credits":{
+          "cast":[{"id":1,"name":"Earlier actor"}],
+          "crew":[{"id":2,"name":"Director and writer","jobs":[
+            {"job":"Director"},{"job":"Writer"},{"job":"Director"}
+          ]}]
+        },
+        "credits":{"cast":[{"id":3,"name":"Latest only"}]},
+        "created_by":[{"id":4,"name":"Creator"}]
+      }''',
+        ),
+      );
+      for (final key in [
+        const WorkKey.tv(1399),
+        const WorkKey.season(1399, 1),
+      ]) {
+        final people = await client().peopleCredits(key, 1399);
+        expect(
+          http.requests.last.uri.queryParameters['append_to_response'],
+          'aggregate_credits',
+        );
+        expect(people.map((p) => (p.id, p.role)), [
+          (1, FilmographyRole.acting),
+          (2, FilmographyRole.directing),
+          (2, FilmographyRole.writing),
+          (4, FilmographyRole.writing),
+        ]);
+      }
+    },
+  );
+
+  test('episode analytics keeps ordinary credits and guest stars', () async {
+    serve(
+      (request) => (
+        status: 200,
+        body: '''{
+        "id":99,
+        "credits":{
+          "cast":[{"id":1,"name":"Regular"}],
+          "guest_stars":[{"id":2,"name":"Guest"}],
+          "crew":[{"id":3,"name":"Writer","job":"Writer"}]
+        },
+        "guest_stars":[{"id":2,"name":"Guest"}]
+      }''',
+      ),
+    );
+    final people = await client().peopleCredits(
+      const WorkKey.episode(1399, 1, 1),
+      99,
+    );
+    expect(
+      http.requests.last.uri.queryParameters['append_to_response'],
+      'credits',
+    );
+    expect(people.map((p) => (p.id, p.role)), [
+      (1, FilmographyRole.acting),
+      (2, FilmographyRole.acting),
+      (3, FilmographyRole.writing),
+    ]);
+  });
+
+  test(
     'image endpoints use posters for seasons and stills for episodes',
     () async {
       serve((request) {

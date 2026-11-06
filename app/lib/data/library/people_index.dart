@@ -132,7 +132,7 @@ class PeopleIndex extends Notifier<PeopleIndexState> {
       }
 
       String cacheKey(RatedTitle t) =>
-          'people-index:v1:$language:${peopleIdentity(t)}';
+          'people-index:v2:$language:${peopleIdentity(t)}';
       var cursor = 0;
       Future<void> diskWorker() async {
         while (current() && cursor < titles.length) {

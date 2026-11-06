@@ -204,15 +204,25 @@ final class PeopleCredit {
       );
     }
 
-    final credits = json.object('credits') ?? json;
+    final credits =
+        json.object('aggregate_credits') ?? json.object('credits') ?? json;
     for (final person in [
       ...credits.objects('cast'),
+      ...credits.objects('guest_stars'),
       ...json.objects('guest_stars'),
     ]) {
       add(person, FilmographyRole.acting);
     }
     for (final person in credits.objects('crew')) {
-      add(person, filmographyRole(person.string('job') ?? ''));
+      final jobs = [
+        if (person.string('job') case final job?) job,
+        for (final row in person.objects('jobs'))
+          if (row.string('job') case final job?) job,
+      ];
+      if (jobs.isEmpty) add(person, FilmographyRole.other);
+      for (final job in jobs) {
+        add(person, filmographyRole(job));
+      }
     }
     for (final person in json.objects('created_by')) {
       add(person, FilmographyRole.writing);

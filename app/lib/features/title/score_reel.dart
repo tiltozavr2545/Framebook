@@ -12,10 +12,16 @@ import '../../shared/score_color.dart';
 ///
 /// An unrated title starts at 5; a rated title starts at its saved score.
 class ScoreReel extends StatefulWidget {
-  const ScoreReel({super.key, this.initialScoreHalf, required this.onChanged});
+  const ScoreReel({
+    super.key,
+    this.initialScoreHalf,
+    this.enabled = true,
+    required this.onChanged,
+  });
 
   /// 2…20; `null` starts on 5.
   final int? initialScoreHalf;
+  final bool enabled;
 
   /// The score now in the gate.
   final ValueChanged<int?> onChanged;
@@ -41,12 +47,22 @@ class _ScoreReelState extends State<ScoreReel> {
   static int _halfAt(int index) => index + 2;
 
   @override
+  void didUpdateWidget(ScoreReel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.enabled && !widget.enabled && _controller.hasClients) {
+      // Stop an in-progress fling at the score captured by the save operation.
+      _controller.jumpTo(_index * ScoreReel.extent);
+    }
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
 
   void _moved() {
+    if (!widget.enabled) return;
     final index = (_controller.offset / ScoreReel.extent).round().clamp(
       0,
       _count - 1,
@@ -69,12 +85,15 @@ class _ScoreReelState extends State<ScoreReel> {
     final half = _halfAt(_index);
     return Semantics(
       slider: true,
+      enabled: widget.enabled,
       label: l10n.ratingEditorTitle,
       value: formatMyScore(half),
       increasedValue: _index < _count - 1 ? formatMyScore(half + 1) : null,
       decreasedValue: _index > 0 ? formatMyScore(half - 1) : null,
-      onIncrease: _index < _count - 1 ? () => _goTo(_index + 1) : null,
-      onDecrease: _index > 0 ? () => _goTo(_index - 1) : null,
+      onIncrease: widget.enabled && _index < _count - 1
+          ? () => _goTo(_index + 1)
+          : null,
+      onDecrease: widget.enabled && _index > 0 ? () => _goTo(_index - 1) : null,
       child: SizedBox(
         height: ScoreReel.height,
         child: LayoutBuilder(
@@ -97,12 +116,14 @@ class _ScoreReelState extends State<ScoreReel> {
                   child: ListView.builder(
                     controller: _controller,
                     scrollDirection: Axis.horizontal,
-                    physics: const _FramePhysics(),
+                    physics: widget.enabled
+                        ? const _FramePhysics()
+                        : const NeverScrollableScrollPhysics(),
                     itemExtent: ScoreReel.extent,
                     padding: EdgeInsets.symmetric(horizontal: side),
                     itemCount: _count,
                     itemBuilder: (context, index) => GestureDetector(
-                      onTap: () => _goTo(index),
+                      onTap: widget.enabled ? () => _goTo(index) : null,
                       child: _Frame(
                         half: _halfAt(index),
                         inGate: index == _index,

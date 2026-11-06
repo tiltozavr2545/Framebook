@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:framebook/data/library/library.dart';
 import 'package:framebook/app/theme.dart';
 import 'package:framebook/data/library/rating_note.dart';
 import 'package:framebook/features/title/my_rating.dart';
+import 'package:framebook/features/title/score_reel.dart';
 import 'package:framebook/l10n/app_localizations.dart';
 import 'package:framebook/shared/note_length_formatter.dart';
 
@@ -52,4 +55,62 @@ void main() {
     await tester.pumpAndSettle();
     expect(attempts, 2);
   });
+
+  for (final moving in [false, true]) {
+    testWidgets(
+      'a pending save keeps the reel and retry draft at the saved score: moving=$moving',
+      (tester) async {
+        final release = Completer<void>();
+        final drafts = <RatingDraft>[];
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: FramebookTheme.light,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: RatingEditor(
+                initialScoreHalf: 10,
+                showComparison: false,
+                compare: (_) async =>
+                    const Calibration(same: [], above: [], below: []),
+                onSave: (draft) async {
+                  drafts.add(draft);
+                  if (drafts.length == 1) await release.future;
+                  throw StateError('disk unavailable');
+                },
+              ),
+            ),
+          ),
+        );
+        await tester.enterText(
+          find.byType(TextField),
+          'Keep this score and note',
+        );
+        if (moving) {
+          await tester.fling(
+            find.byType(ScoreReel),
+            const Offset(-128, 0),
+            1200,
+          );
+          await tester.pump(const Duration(milliseconds: 16));
+        }
+        await tester.tap(find.text('Save'));
+        await tester.pump();
+        await tester.drag(find.byType(ScoreReel), const Offset(-128, 0));
+        await tester.pumpAndSettle();
+        release.complete();
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Save'));
+        await tester.pumpAndSettle();
+        expect(drafts, hasLength(2));
+        expect(drafts.last, drafts.first);
+        if (!moving) {
+          expect(drafts.first, (
+            scoreHalf: 10,
+            note: 'Keep this score and note',
+          ));
+        }
+      },
+    );
+  }
 }

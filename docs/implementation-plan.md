@@ -48,6 +48,15 @@ Version: `0.9.0+20`. Follow-up scope agreed on 2026-11-06.
   selector geometry, dragging with a shared query, retained shelf scroll
   positions, full-cast navigation and last-row clearance above the bottom bar.
 
+### Final review of 0.9.0
+
+The user requested repeated review and repairs on 2026-11-06, then asked to
+finish and publish the prepared `0.9.0+20` release. Findings, regression evidence and verification status
+are tracked in [reviews/0.9.0/README.md](reviews/0.9.0/README.md).
+
+Final automated validation passed 551 tests (20 opt-in renderers skipped),
+with clean formatting and analysis and passing version-script fixtures.
+
 ## 0.8.5 — Library insights, favourite people and recommendations
 
 Version: `0.8.5+19`. Scope agreed on 2026-11-06.

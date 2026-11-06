@@ -63,7 +63,9 @@ final class SyncStore {
   /// Everything that goes into the file: every rating and watchlist row,
   /// tombstones included, the snapshots they refer to with their ancestors,
   /// and this device's purge watermark.
-  Future<SyncState> read() => _db.transaction(() async {
+  Future<SyncState> read() => _db.transaction(() => _read());
+
+  Future<SyncState> _read({Map<String, Work>? workIndex}) async {
     final ratings = await _db.select(_db.ratings).get();
     final watchlist = await _db.select(_db.watchlist).get();
     final referenced = <String>{
@@ -74,6 +76,7 @@ final class SyncStore {
         for (final k in WorkKey.parse(key).lineage) k.toString(),
     };
     final works = await _db.select(_db.works).get();
+    workIndex?.addEntries(works.map((work) => MapEntry(work.workKey, work)));
     return SyncState(
       favoritePeople: await (_db.select(
         _db.favoritePeople,
@@ -89,7 +92,7 @@ final class SyncStore {
       watchlistDeletions: await _deletions(watchlistDeletionsKey),
       watchlistFences: await effectiveFences(watchlist),
     );
-  });
+  }
 
   /// Persisted selection fences plus those implied by older live rows.
   /// Shared by sync and watchlist reads, without loading the rating library.
@@ -125,7 +128,10 @@ final class SyncStore {
     int? now,
     bool guard = false,
   }) => _db.transaction(() async {
-    var local = await read();
+    // Reuse this transaction's snapshot rather than selecting every row again.
+    // Include unreferenced works too: their newer metadata must still win.
+    final localWorks = <String, Work>{};
+    var local = await _read(workIndex: localWorks);
     if (guard) {
       final drops = unsyncedDrops(local, remote, lastSyncAt: lastSyncAt);
       final count = drops.ratings.length + drops.watchlist.length;
@@ -150,6 +156,8 @@ final class SyncStore {
         }
       }
     }
+    final localRatings = {for (final r in local.ratings) r.workKey: r};
+    final localWatchlist = {for (final w in local.watchlist) w.workKey: w};
     final merged = mergeStates(local, remote);
     var changed = 0;
     final localPeople = {for (final p in local.favoritePeople) p.personId: p};
@@ -163,7 +171,7 @@ final class SyncStore {
       }
     }
     for (final work in _parentsFirst(merged.works)) {
-      final old = await _work(work.workKey);
+      final old = localWorks[work.workKey];
       if (old == null || compareWorks(work, old) > 0) {
         if (old != null && old.tmdbId != work.tmdbId) {
           await (_db.delete(
@@ -183,7 +191,7 @@ final class SyncStore {
       }
     }
     for (final row in merged.ratings) {
-      final old = await _rating(row.workKey);
+      final old = localRatings[row.workKey];
       if (old == null || compareRatings(row, old) > 0) {
         await _db.into(_db.ratings).insertOnConflictUpdate(_full(row));
         changed++;
@@ -198,7 +206,7 @@ final class SyncStore {
       }
     }
     for (final row in merged.watchlist) {
-      final old = await _listed(row.workKey);
+      final old = localWatchlist[row.workKey];
       if (old == null || compareWatchlist(row, old) > 0) {
         await _db.into(_db.watchlist).insertOnConflictUpdate(_full(row));
         changed++;
@@ -510,16 +518,25 @@ final class SyncStore {
   /// Deletes the snapshots outside the lineage of every rating and
   /// watchlist row left, tombstones included (docs/data-model.md, `works`).
   Future<void> _pruneWorks() async {
+    final rows = await _db
+        .customSelect(
+          'SELECT work_key FROM ratings UNION SELECT work_key FROM watchlist',
+          readsFrom: {_db.ratings, _db.watchlist},
+        )
+        .get();
     final referenced = <String>{
-      for (final key in [
-        for (final r in await _db.select(_db.ratings).get()) r.workKey,
-        for (final w in await _db.select(_db.watchlist).get()) w.workKey,
-      ])
-        for (final k in WorkKey.parse(key).lineage) k.toString(),
+      for (final row in rows)
+        for (final k in WorkKey.parse(row.read<String>('work_key')).lineage)
+          k.toString(),
     };
+    final workKeys = await (_db.selectOnly(
+      _db.works,
+    )..addColumns([_db.works.workKey])).get();
     final orphans = [
-      for (final w in await _db.select(_db.works).get())
-        if (!referenced.contains(w.workKey)) w.workKey,
+      for (final row in workKeys)
+        if (row.read(_db.works.workKey) case final key?
+            when !referenced.contains(key))
+          key,
     ];
     for (final chunk in _chunks(orphans)) {
       await (_db.delete(_db.works)..where((w) => w.workKey.isIn(chunk))).go();

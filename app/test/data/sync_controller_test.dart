@@ -150,12 +150,16 @@ void main() {
     GoogleAccount google, {
     Duration debounce = SyncController.debounce,
     String? storedAccount,
+    int? lastSyncAt,
   }) async {
     SharedPreferences.setMockInitialValues({
       if (storedAccount != null) 'sync_account': storedAccount,
     });
     final db = AppDatabase(NativeDatabase.memory());
     databases.add(db);
+    if (lastSyncAt != null) {
+      await SyncStore(db).setStateValue(SyncStore.lastSyncKey, '$lastSyncAt');
+    }
     final container = ProviderContainer(
       overrides: [
         databaseProvider.overrideWithValue(db),
@@ -193,6 +197,35 @@ void main() {
     await pumpEventQueue();
     expect(google.restores, 1);
   });
+
+  test(
+    'future last-sync time does not suppress startup and resume sync',
+    () async {
+      final google = FakeGoogleAccount(MemoryRemote())..signedIn = true;
+      final future = DateTime.now()
+          .toUtc()
+          .add(const Duration(days: 365))
+          .millisecondsSinceEpoch;
+      final (container, _) = await device(
+        'a',
+        google,
+        storedAccount: google.email,
+        lastSyncAt: future,
+      );
+      await pumpEventQueue();
+      expect(google.closedAccesses, 1);
+      expect(
+        container.read(syncControllerProvider).lastSyncAt,
+        lessThan(future),
+      );
+      // An ordinary quick resume still observes the five-minute throttle.
+      final binding = WidgetsBinding.instance;
+      binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await pumpEventQueue();
+      expect(google.closedAccesses, 1);
+    },
+  );
 
   test('confirmed backup repair replaces only a broken main file', () async {
     final remote = MemoryRemote();

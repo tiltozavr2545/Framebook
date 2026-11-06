@@ -32,6 +32,12 @@ transfer, latest-result publication and immediate exclusions;
 disposal and failure recovery. `features/stats_layout_test.dart` checks lazy
 expansion across 1,000 people and drill-down before insights finish.
 
+`test/benchmarks/sync_apply_benchmark.dart` measures unchanged sync application
+with 3,000 snapshots, 1,500 ratings and 1,500 watchlist entries and counts SQL
+reads through the real executor. `data/sync_store_reads_test.dart` gates bounded
+reads for both initial and unchanged application, row preservation and newer
+unreferenced metadata. See [the 0.9.0 review](reviews/0.9.0/README.md) for measurements.
+
 Run `make test-coverage` to write `app/coverage/lcov.info`, or
 `make verify TEST_ARGS=--coverage` to collect it during the full verification. The report is local
 and ignored by Git. Coverage measures executed Dart lines, not requirements or
@@ -52,6 +58,7 @@ by that percentage.
 | Calibration thresholds, neighbours and score reel | `data/library_test.dart`, `features/calibration_visibility_test.dart`, `app_test.dart` |
 | Sorting, source coverage, statistical aggregates | `data/comparison_test.dart`, `data/library_test.dart`, `app_test.dart` |
 | Theme/language persistence, system-language changes, list preferences | `features/preferences_test.dart` |
+| API-key layout on narrow phones with large text in both locales | `features/api_keys_layout_test.dart` |
 | Offline cards, covers, delayed images and large text | `app_test.dart`, `features/cover_viewer_test.dart`, `features/cast_layout_test.dart` |
 | Startup failure/retry and update checks | `features/startup_test.dart`, `features/update_check_test.dart`, `data/update*_test.dart` |
 | Background-refresh queue, budgets, cancellation and lifecycle | `data/background_refresh_test.dart`, `features/background_lifecycle_test.dart` |

@@ -98,6 +98,26 @@ void main() {
       expect(http.requests, hasLength(4));
     });
 
+    test(
+      'clock rollback expires future-dated cached ratings for every refresh path',
+      () async {
+        final s = service();
+        await s.refresh(matrix);
+        now = now.subtract(const Duration(days: 365));
+        final previous = await db.externalRatingsFor(matrix.key.toString());
+        expect(s.backgroundDue(matrix.key, previous), isNotNull);
+        await s.refresh(matrix, background: true);
+        expect(http.requests, hasLength(4));
+        expect(
+          (await rows(matrix))[RatingSource.imdb]!.fetchedAt,
+          now.millisecondsSinceEpoch,
+        );
+        now = now.subtract(const Duration(days: 1));
+        await s.refresh(matrix);
+        expect(http.requests, hasLength(6));
+      },
+    );
+
     test('the same film opened twice at once is asked once', () async {
       final s = service();
       await Future.wait([s.refresh(matrix), s.refresh(matrix)]);
@@ -334,6 +354,21 @@ void main() {
       serve(apiFixtures);
       await s.refresh(matrix);
       expect((await rows(matrix))[RatingSource.kp]!.value, 8.501);
+    });
+
+    test('clock rollback does not prolong the failure retry delay', () async {
+      serve((_) => (status: 500, body: 'oops'));
+      final s = service();
+      await s.refresh(matrix);
+      now = now.subtract(const Duration(days: 1));
+      final previous = await db.externalRatingsFor(matrix.key.toString());
+      expect(s.backgroundDue(matrix.key, previous), isNotNull);
+      serve(apiFixtures);
+      expect(await s.refresh(matrix), {
+        ApiSource.poiskkino: null,
+        ApiSource.omdb: null,
+      });
+      expect(hosts(), ['api.poiskkino.dev', 'www.omdbapi.com']);
     });
   });
 }
