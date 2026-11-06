@@ -13,6 +13,16 @@ final favoritePeopleProvider = StreamProvider<List<FavoritePerson>>((ref) {
       .watch();
 });
 
+final _favoriteIdsProvider = Provider.autoDispose<Set<int>?>((ref) {
+  final people = ref.watch(favoritePeopleProvider).value;
+  return people == null ? null : {for (final p in people) p.personId};
+});
+
+final isFavoritePersonProvider = Provider.autoDispose.family<bool?, int>(
+  (ref, id) =>
+      ref.watch(_favoriteIdsProvider.select((ids) => ids?.contains(id))),
+);
+
 final peopleLibraryProvider = Provider<PeopleLibrary>(
   (ref) => PeopleLibrary(ref.watch(databaseProvider)),
 );

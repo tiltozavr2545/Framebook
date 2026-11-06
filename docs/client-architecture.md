@@ -504,6 +504,15 @@ ink, film stock, and the editor's grease pencil.
   The filmography is one list item per title, so the list builds only what
   is on screen.
 
+People browsing and statistics share derived insights through
+`data/library/insights_provider.dart`, separated by title kind. Favourite
+changes and progress-only index updates do not rebuild the aggregates. More
+than 80 ratings are analyzed in an isolate, with serialized latest-input
+workers. Statistics uses slivers so expanding all people builds only visible
+rows. Decade drill-down uses the current local ratings even while background
+insights are pending. Favourite buttons select membership for their person
+from a shared ID set, rather than rebuilding for every unrelated favourite.
+
 ---
 
 ## Offline

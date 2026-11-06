@@ -23,6 +23,15 @@ stream alongside 3,000 ratings with 1,024-character notes and 50 watchlisted
 films. Its joined-query comparison is valid for that movie-only fixture;
 it is an optimization candidate, not a replacement for season/fence logic.
 
+`test/benchmarks/recommendations_benchmark.dart` ranks 1,000 candidates and
+1,000 watchlist entries against 500 taste signals. It prints five measured
+samples after two warmups and a digest of all output rows for before/after
+comparison. `data/recommendation_performance_test.dart` exercises real isolate
+transfer, latest-result publication and immediate exclusions;
+`data/latest_worker_test.dart` checks serialization, superseded inputs,
+disposal and failure recovery. `features/stats_layout_test.dart` checks lazy
+expansion across 1,000 people and drill-down before insights finish.
+
 Run `make test-coverage` to write `app/coverage/lcov.info`, or
 `make verify TEST_ARGS=--coverage` to collect it during the full verification. The report is local
 and ignored by Git. Coverage measures executed Dart lines, not requirements or
@@ -89,7 +98,7 @@ subsequent sync in different orders remain an outstanding manual check; see
 [implementation-plan.md](implementation-plan.md). Never start an emulator on the
 Intel development Mac.
 
-`test/screenshots/screens_test.dart` contains 18 opt-in render scenarios. They
+`test/screenshots/screens_test.dart` contains 20 opt-in render scenarios. They
 are skipped without `SCREENSHOTS=<directory>` and produce PNGs for inspection;
 they have no visual baseline assertions and are not functional regression tests.
 

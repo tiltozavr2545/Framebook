@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/preferences.dart';
+import '../../app/foreground.dart';
 import '../response_cache.dart';
 import '../source_failure.dart';
 import '../sources/providers.dart';
@@ -50,6 +51,18 @@ class PeopleIndex extends Notifier<PeopleIndexState> {
     ref.watch(tmdbProvider);
     ref.watch(contentLanguageProvider);
     ref.onDispose(() => _generation++);
+    ref.listen(foregroundProvider, (previous, next) {
+      if (next && previous == false) {
+        scheduleMicrotask(() {
+          if (generation != _generation) return;
+          if (state.running) {
+            _pending = true;
+          } else {
+            unawaited(load());
+          }
+        });
+      }
+    });
     ref.listen(ratedTitlesProvider, (previous, next) {
       if (next.value != null &&
           _identities(previous?.value ?? []) != _identities(next.value!)) {
@@ -72,7 +85,7 @@ class PeopleIndex extends Notifier<PeopleIndexState> {
   }
 
   Future<void> load() async {
-    if (state.running) return;
+    if (state.running || !ref.read(foregroundProvider)) return;
     final generation = _generation;
     final tmdb = ref.read(tmdbProvider);
     final cache = ref.read(responseCacheProvider);
@@ -80,7 +93,7 @@ class PeopleIndex extends Notifier<PeopleIndexState> {
     final titlesFuture = ref.read(ratedTitlesProvider.future);
     var entries = {...state.entries};
     state = PeopleIndexState(
-      entries: entries,
+      entries: state.entries,
       running: true,
       total: state.total,
     );
@@ -91,12 +104,26 @@ class PeopleIndex extends Notifier<PeopleIndexState> {
       _inputIdentity = _identities(titles);
       _pending = false;
       final identities = titles.map(peopleIdentity).toSet();
+      var dirty = entries.keys.any((key) => !identities.contains(key));
       entries.removeWhere((key, _) => !identities.contains(key));
       var failures = 0;
+      final publishClock = Stopwatch()..start();
+      var lastPublished = const Duration(milliseconds: -100);
+      Map<String, List<PeopleCredit>> snapshot = state.entries;
       void publish({bool running = true}) {
         if (current()) {
+          if (running &&
+              publishClock.elapsed - lastPublished <
+                  const Duration(milliseconds: 100)) {
+            return;
+          }
+          lastPublished = publishClock.elapsed;
+          if (dirty) {
+            snapshot = Map.unmodifiable(entries);
+            dirty = false;
+          }
           state = PeopleIndexState(
-            entries: Map.unmodifiable(entries),
+            entries: snapshot,
             running: running,
             total: titles.length,
             failed: failures,
@@ -120,6 +147,7 @@ class PeopleIndex extends Notifier<PeopleIndexState> {
               for (final item in raw)
                 PeopleCredit.fromCache(item as Map<String, Object?>),
             ];
+            dirty = true;
           } on Object {
             // A damaged cache is a miss, not a failed statistics screen.
           }
@@ -137,6 +165,7 @@ class PeopleIndex extends Notifier<PeopleIndexState> {
       final elapsed = Stopwatch()..start();
       Future<void> networkWorker() async {
         while (current() &&
+            ref.read(foregroundProvider) &&
             !stopNetwork &&
             cursor < missing.length &&
             cursor < 80 &&
@@ -146,8 +175,9 @@ class PeopleIndex extends Notifier<PeopleIndexState> {
             final people = await tmdb
                 .peopleCredits(title.key, title.work.tmdbId)
                 .timeout(const Duration(seconds: 10));
-            if (!current()) return;
+            if (!current() || !ref.read(foregroundProvider)) return;
             entries[peopleIdentity(title)] = people;
+            dirty = true;
             await cache.write(
               cacheKey(title),
               CachedResponse(
@@ -174,7 +204,7 @@ class PeopleIndex extends Notifier<PeopleIndexState> {
     } on Object {
       if (current()) {
         state = PeopleIndexState(
-          entries: entries,
+          entries: Map.unmodifiable(entries),
           total: state.total,
           failed: 1,
         );

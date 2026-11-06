@@ -334,3 +334,12 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
   or something different in the existing poster-shelf design.
 - Hide Discover suggestions with Not interested, undo the action or restore
   hidden suggestions on the device; ratings and watchlist entries are preserved.
+- Keep large recommendation and people-statistics calculations off the
+  interface thread; reuse unchanged sources and combine rapid loading updates.
+- Avoid recalculating the whole people library when adding a favourite;
+  update favourite buttons only when their own person changes.
+- Build expanded people statistics as they scroll into view and keep decade
+  lists usable while detailed statistics are still being calculated.
+- Pause new optional catalog enrichment while the app is backgrounded.
+- Restore the last saved hidden-title selection if overlapping preference
+  writes fail.

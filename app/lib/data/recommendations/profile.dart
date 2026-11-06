@@ -218,7 +218,13 @@ final class TasteProfile {
 
 double genreSimilarity(Set<int> a, Set<int> b) {
   if (a.isEmpty || b.isEmpty) return 0;
-  return a.intersection(b).length / a.union(b).length;
+  var common = 0;
+  final smaller = a.length <= b.length ? a : b;
+  final larger = identical(smaller, a) ? b : a;
+  for (final id in smaller) {
+    if (larger.contains(id)) common++;
+  }
+  return common / (a.length + b.length - common);
 }
 
 TitleSummary watchlistSummary(WatchlistTitle item) {

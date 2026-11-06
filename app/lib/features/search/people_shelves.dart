@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/router.dart';
 import '../../data/library/favorite_people.dart';
 import '../../data/library/insights.dart';
+import '../../data/library/insights_provider.dart';
 import '../../data/library/library.dart';
 import '../../data/library/people_index.dart';
 import '../../data/sources/providers.dart';
@@ -27,7 +28,8 @@ class PeopleShelves extends ConsumerWidget {
     final favorites = ref.watch(favoritePeopleProvider).value ?? [];
     final titles = ref.watch(ratedTitlesProvider).value ?? [];
     final index = ref.watch(peopleIndexProvider);
-    final insights = analyzeLibrary(titles, index.entries);
+    final insights =
+        ref.watch(libraryInsightsProvider(null)).value ?? emptyLibraryInsights;
     final popular = ref.watch(popularPeopleProvider);
     PersonSummary person(PersonInsight p) => PersonSummary(
       id: p.person.id,

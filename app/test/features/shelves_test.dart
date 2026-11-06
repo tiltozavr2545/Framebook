@@ -74,6 +74,7 @@ class _Index extends PeopleIndex {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   for (final scale in [1.0, 1.8, 2.0, 3.0]) {
     for (final withReason in [false, true]) {
       testWidgets(

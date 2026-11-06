@@ -155,6 +155,22 @@ RecommendationFeed rankRecommendations({
       .2 * profile.fit(c.title) +
       .1 * people(c);
 
+  // These values do not change while selecting a row. Compute them once per
+  // candidate, rather than again for every slot and every diversity comparison.
+  final familiarScores = <WorkKey, double>{};
+  final explorationScores = <WorkKey, double>{};
+  final genreSets = <WorkKey, Set<int>>{};
+  void prepare(RecommendationCandidate c) {
+    final key = c.title.key;
+    familiarScores[key] = fit(c);
+    explorationScores[key] = exploratoryScore(c);
+    genreSets[key] = c.title.genreIds.toSet();
+  }
+
+  for (final c in merged) {
+    prepare(c);
+  }
+
   RecommendationPick pick(
     RecommendationCandidate c, {
     bool exploring = false,
@@ -225,23 +241,23 @@ RecommendationFeed rankRecommendations({
   }) {
     RecommendationCandidate? best;
     var bestScore = double.negativeInfinity;
+    final recentGenres = [
+      for (final p in chosen.reversed.take(6)) genreSets[p.title.key]!,
+    ];
+    final recentPeople = {
+      for (final p in chosen) ...?byKey[p.title.key]?.people.keys,
+    };
     for (final c in pool) {
       if (used.contains(c.title.key)) continue;
       var repeat = 0.0;
-      for (final p in chosen.reversed.take(6)) {
-        repeat = max(
-          repeat,
-          genreSimilarity(c.title.genreIds.toSet(), p.title.genreIds.toSet()),
-        );
+      for (final genres in recentGenres) {
+        repeat = max(repeat, genreSimilarity(genreSets[c.title.key]!, genres));
       }
-      final recentPeople = chosen
-          .map((p) => byKey[p.title.key])
-          .whereType<RecommendationCandidate>()
-          .expand((c) => c.people.keys)
-          .toSet();
       final duplicatePerson = c.people.keys.any(recentPeople.contains);
       final score =
-          (explore ? exploratoryScore(c) : fit(c)) -
+          (explore
+              ? explorationScores[c.title.key]!
+              : familiarScores[c.title.key]!) -
           .12 * repeat -
           (duplicatePerson ? .12 : 0);
       if (score > bestScore ||
@@ -303,13 +319,14 @@ RecommendationFeed rankRecommendations({
     final title = watchlistSummary(item);
     if (!releasedForRecommendations(title, today)) continue;
     final evidence = byKey[item.key] ?? byKey[recommendationRoot(item.key)];
-    listPool.add(
-      RecommendationCandidate(
-        title,
-        seeds: evidence?.seeds,
-        people: evidence?.people,
-      ),
+    final candidate = RecommendationCandidate(
+      title,
+      seeds: evidence?.seeds,
+      people: evidence?.people,
     );
+    // A listed season uses its own snapshot and the series' evidence.
+    prepare(candidate);
+    listPool.add(candidate);
   }
   final list = <RecommendationPick>[];
   for (var i = 0; i < limit; i++) {

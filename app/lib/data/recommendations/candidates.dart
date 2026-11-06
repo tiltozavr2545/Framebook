@@ -71,6 +71,31 @@ final class RecommendationPool {
   final int failed;
 }
 
+/// Session reuse belongs to one catalog client/language. Completed jobs and
+/// in-flight work are shared across favourite/seed changes, with a bounded LRU.
+final class RecommendationSourceCache {
+  final _jobs = <String, Future<List<RecommendationCandidate>>>{};
+
+  Future<List<RecommendationCandidate>> get(
+    String key,
+    Future<List<RecommendationCandidate>> Function() load,
+  ) {
+    final existing = _jobs.remove(key);
+    if (existing != null) {
+      _jobs[key] = existing;
+      return existing;
+    }
+    late final Future<List<RecommendationCandidate>> job;
+    job = Future.sync(load).catchError((Object error, StackTrace stack) {
+      if (identical(_jobs[key], job)) _jobs.remove(key);
+      Error.throwWithStackTrace(error, stack);
+    });
+    _jobs[key] = job;
+    if (_jobs.length > 64) _jobs.remove(_jobs.keys.first);
+    return job;
+  }
+}
+
 /// Catalog-only requests: no scores/notes are sent. A bounded worker pool
 /// publishes partial successes; one failing source cannot empty other rows.
 Future<void> loadRecommendationCandidates(
@@ -81,22 +106,32 @@ Future<void> loadRecommendationCandidates(
   Future<List<TitleSummary>> Function()? trending,
   Duration timeout = const Duration(seconds: 8),
   Duration budget = const Duration(seconds: 45),
+  RecommendationSourceCache? cache,
 }) async {
   if (!plan.enabled) {
     publish(const RecommendationPool());
     return;
   }
   final jobs = <Future<List<RecommendationCandidate>> Function()>[];
+  void add(String key, Future<List<RecommendationCandidate>> Function() load) {
+    jobs.add(() => cache?.get('${plan.today}:$key', load) ?? load());
+  }
+
   for (final seed in plan.seeds) {
-    jobs.add(
+    add(
+      'seed:${seed.key}',
       () async => [
         for (final title in await api.recommendations(seed.key))
           RecommendationCandidate(title, seeds: {seed.key}),
       ],
     );
   }
+  final watchlistIdentity =
+      (plan.watchlist.toList()
+            ..sort((a, b) => a.toString().compareTo(b.toString())))
+          .join(',');
   for (final id in plan.people) {
-    jobs.add(() async {
+    add('person:$id:$watchlistIdentity', () async {
       final person = await api.person(id);
       final titles = <WorkKey, TitleSummary>{
         for (final credit in [...person.acting, ...person.crew])
@@ -123,7 +158,8 @@ Future<void> loadRecommendationCandidates(
   }
   for (final kind in [WorkKind.movie, WorkKind.tv]) {
     for (final genre in <int?>[...?plan.genres[kind], null]) {
-      jobs.add(
+      add(
+        'discover:${kind.name}:$genre',
         () async => [
           for (final title in await api.discoverRecommendations(
             kind,
@@ -134,7 +170,8 @@ Future<void> loadRecommendationCandidates(
       );
     }
   }
-  jobs.add(
+  add(
+    'trending',
     () async => [
       for (final title in await (trending?.call() ?? api.trending()))
         RecommendationCandidate(title, discovered: true),
@@ -144,11 +181,24 @@ Future<void> loadRecommendationCandidates(
   var cursor = 0, failures = 0;
   var stop = false;
   final elapsed = Stopwatch()..start();
+  var lastPublished = const Duration(milliseconds: -100);
+  var publishedCount = -1;
+  var snapshot = const <RecommendationCandidate>[];
   void update(bool running) {
     if (active()) {
+      if (running &&
+          (snapshot.isNotEmpty || candidates.isEmpty) &&
+          elapsed.elapsed - lastPublished < const Duration(milliseconds: 100)) {
+        return;
+      }
+      lastPublished = elapsed.elapsed;
+      if (publishedCount != candidates.length) {
+        snapshot = mergeCandidates(candidates);
+        publishedCount = candidates.length;
+      }
       publish(
         RecommendationPool(
-          candidates: mergeCandidates(candidates),
+          candidates: snapshot,
           running: running,
           failed: failures,
         ),

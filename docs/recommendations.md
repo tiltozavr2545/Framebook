@@ -51,6 +51,16 @@ still use stale HTTP responses after an offline error. The separate credits
 index retains its own four-worker/80-title budget. Requests send catalog IDs
 and filters; scores, notes and the private library are never uploaded.
 
+Completed retrieval jobs and in-flight requests are reused in a 64-entry
+session LRU scoped to the catalog client, language and day. Person selections
+also include watchlist membership in their identity. Failures are evicted so
+Retry can try again. Editing favourites reuses unchanged seed, discovery and
+person jobs. Candidate and credit updates are published in 100 ms batches,
+with an immediate first useful candidate result and an unconditional final
+snapshot. Foreground state gates new recommendation and credit requests;
+resume can continue incomplete enrichment. Already-started HTTP requests may
+finish, but obsolete recommendation passes cannot publish their results.
+
 ## Ranking and explanations
 
 `ranking.dart` merges candidates by typed natural key and combines their
@@ -84,6 +94,16 @@ Reasons describe actual evidence: a named liked title, a favourite person,
 a positively rated contributor, preferred genres, exploration or membership
 in the watchlist. No predicted personal score or probability is displayed.
 
+Ranking precomputes candidate scores and genre sets and computes row-level
+diversity context once per slot. Pools exceeding 100 candidate/watchlist
+entries or 80 taste signals run in an isolate after an 80 ms coalescing delay.
+One ranking worker runs at a time, skipping superseded queued inputs. The
+previous result can remain visible while the current one is calculated;
+hidden/rated titles and watchlist removals are filtered immediately. Small
+pools use the same pure ranking function synchronously. Progress-only updates
+do not rerank an unchanged candidate list. These are scheduling boundaries,
+not a measured guarantee about phone frame times.
+
 ## Not interested
 
 The poster's menu hides the title across Discover shelves. A snackbar offers
@@ -94,7 +114,8 @@ ratings and the watchlist remain accessible and unchanged.
 Hidden natural keys are a per-device preference in
 `shared_preferences.recommendation_hidden`, like recent search history.
 Writes are serialized; failures are reported and the latest optimistic change
-is rolled back. Hiding is not a low rating and never trains the taste profile.
+is rolled back to the last successful stored set, including overlapping failed
+writes. Hiding is not a low rating and never trains the taste profile.
 It does not change the database schema or sync format, and is not carried by
 Drive/export. Favourite people still use the existing synced register.
 

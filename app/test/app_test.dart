@@ -1226,7 +1226,7 @@ void main() {
     await settle(tester);
     // The list, not the chip row that also scrolls.
     final statsList = find.descendant(
-      of: find.byType(ListView),
+      of: find.byType(CustomScrollView),
       matching: find.byType(Scrollable),
     );
 

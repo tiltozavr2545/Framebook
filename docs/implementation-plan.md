@@ -54,6 +54,33 @@ package/version and release certificate were verified, and it was installed
 over `0.8.4+18` on a physical Android device without clearing app data. Launch
 was checked. Physical-device performance timing remains unmeasured.
 
+## Responsiveness review — 2026-11-06
+
+Follow-up to input lag reported after the favourite-people and recommendation
+preview. At the user's request, all repairs belong to `0.8.5+19`; no release
+is implied.
+
+- [x] Reproduce ranking cost on a fixed synthetic workload and reduce repeated work.
+- [x] Run large recommendation/insight calculations outside the UI isolate,
+  serialize workers and skip superseded inputs.
+- [x] Batch enrichment notifications, reuse unchanged retrieval jobs and stop
+  new optional catalog requests while backgrounded.
+- [x] Share people analytics independently of favourites and select each
+  favourite button's own membership.
+- [x] Build expanded statistics rows lazily and keep pending-insight
+  drill-downs usable.
+- [x] Repair overlapping failed hidden-preference writes.
+- [x] Finish full verification and Android build; record results in
+  [reviews/2026-11-06/README.md](reviews/2026-11-06/README.md).
+- [ ] Measure the reported input lag on a connected physical phone.
+
+Validation: 532 tests passed and 20 opt-in renderers skipped, formatting and
+analysis clean. The release-signed universal APK (63.4 MB) was installed over
+the existing `0.8.5+19` preview without clearing data; launch was checked.
+The user subsequently confirmed improved responsiveness on the phone and
+authorized committing the repairs. Formal phone latency/frame-time measurements
+remain outstanding. Details and host measurements are in the linked review report.
+
 ## Hybrid recommendation follow-up
 
 Scope agreed on 2026-11-06, retaining the current Discover design.

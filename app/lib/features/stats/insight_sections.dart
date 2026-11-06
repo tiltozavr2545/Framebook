@@ -97,8 +97,7 @@ class _InsightSectionsState extends State<InsightSections> {
       _Order.reliable => l10n.statsPeopleReliable,
       _Order.polarizing => l10n.statsPeoplePolarizing,
     };
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return SliverList.list(
       children: [
         const SizedBox(height: 12),
         _WorksTile(title: l10n.statsBest, titles: titles),

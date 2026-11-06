@@ -9,6 +9,7 @@ import '../../data/library/divergence.dart';
 import '../../data/library/library.dart';
 import '../../data/library/stats.dart';
 import '../../data/library/insights.dart';
+import '../../data/library/insights_provider.dart';
 import '../../data/library/people_index.dart';
 import '../../data/source_failure.dart';
 import '../../data/sources/providers.dart';
@@ -124,123 +125,147 @@ class _StatsBody extends ConsumerWidget {
     final theme = Theme.of(context);
     final stats = computeStats(titles);
     final index = ref.watch(peopleIndexProvider);
-    final insights = analyzeLibrary(titles, index.entries);
+    final insights =
+        ref
+            .watch(libraryInsightsProvider(ref.watch(statsKindProvider)))
+            .value ??
+        emptyLibraryInsights;
     final profile = ScoreProfile(titles);
     final sortedScores = titles.map((t) => t.rating.scoreHalf).toList()..sort();
     final middle = sortedScores.length ~/ 2;
     final median = sortedScores.length.isOdd
         ? sortedScores[middle] / 2
         : (sortedScores[middle - 1] + sortedScores[middle]) / 4;
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-      children: [
-        Text(l10n.statsAllTime, style: theme.textTheme.bodySmall),
-        // The personal average uses the same score colours as title cards.
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              formatScore(stats.average!),
-              style: theme.textTheme.displayLarge?.copyWith(
-                color: scoreColor(context, stats.average!),
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          sliver: SliverList.list(
+            children: [
+              Text(l10n.statsAllTime, style: theme.textTheme.bodySmall),
+              // The personal average uses the same score colours as title cards.
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    formatScore(stats.average!),
+                    style: theme.textTheme.displayLarge?.copyWith(
+                      color: scoreColor(context, stats.average!),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Text(
+                        l10n.statsAverageOver(stats.count),
+                        style: theme.textTheme.titleMedium,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Text(
-                  l10n.statsAverageOver(stats.count),
-                  style: theme.textTheme.titleMedium,
+              Text('${l10n.statsMedian}: ${formatScore(median)}'),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  for (final (label, subset) in [
+                    (
+                      l10n.statsScoreHigh,
+                      titles.where((t) => t.rating.scoreHalf >= 16).toList(),
+                    ),
+                    (
+                      l10n.statsScoreMiddle,
+                      titles
+                          .where(
+                            (t) =>
+                                t.rating.scoreHalf > 8 &&
+                                t.rating.scoreHalf < 16,
+                          )
+                          .toList(),
+                    ),
+                    (
+                      l10n.statsScoreLow,
+                      titles.where((t) => t.rating.scoreHalf <= 8).toList(),
+                    ),
+                  ])
+                    ActionChip(
+                      label: Text(
+                        '$label · ${(subset.length / profile.count * 100).round()}%',
+                      ),
+                      onPressed: subset.isEmpty
+                          ? null
+                          : () => showRatedWorks(context, label, subset),
+                    ),
+                ],
+              ),
+              _Heading(l10n.statsDistribution),
+              _Distribution(
+                counts: stats.distribution,
+                onSelected: (half) => showRatedWorks(
+                  context,
+                  formatMyScore(half),
+                  titles.where((t) => t.rating.scoreHalf == half).toList(),
                 ),
               ),
-            ),
-          ],
-        ),
-        Text('${l10n.statsMedian}: ${formatScore(median)}'),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 4,
-          children: [
-            for (final (label, subset) in [
-              (
-                l10n.statsScoreHigh,
-                titles.where((t) => t.rating.scoreHalf >= 16).toList(),
-              ),
-              (
-                l10n.statsScoreMiddle,
-                titles
-                    .where(
-                      (t) => t.rating.scoreHalf > 8 && t.rating.scoreHalf < 16,
-                    )
-                    .toList(),
-              ),
-              (
-                l10n.statsScoreLow,
-                titles.where((t) => t.rating.scoreHalf <= 8).toList(),
-              ),
-            ])
-              ActionChip(
-                label: Text(
-                  '$label · ${(subset.length / profile.count * 100).round()}%',
+              _Heading(l10n.statsCompared),
+              Text(
+                l10n.statsComparedHint,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
-                onPressed: subset.isEmpty
-                    ? null
-                    : () => showRatedWorks(context, label, subset),
               ),
-          ],
-        ),
-        _Heading(l10n.statsDistribution),
-        _Distribution(
-          counts: stats.distribution,
-          onSelected: (half) => showRatedWorks(
-            context,
-            formatMyScore(half),
-            titles.where((t) => t.rating.scoreHalf == half).toList(),
+              const SizedBox(height: 6),
+              Text(l10n.statsCorrelationHint, style: theme.textTheme.bodySmall),
+              const SizedBox(height: 6),
+              Text(l10n.statsFindsHint, style: theme.textTheme.bodySmall),
+              const SizedBox(height: 8),
+              for (final source in compareSources)
+                _DeviationTile(
+                  source: source,
+                  deviation: stats.deviation[source],
+                  titles: titles,
+                ),
+              if (stats.genres.isNotEmpty) ...[
+                _Heading(l10n.statsGenres),
+                _Genres(groups: stats.genres, titles: titles),
+              ],
+              if (stats.decades.isNotEmpty) ...[
+                _Heading(l10n.statsDecades),
+                for (final group in stats.decades)
+                  _GroupRow(
+                    label: l10n.statsDecade('${group.key}'),
+                    group: group,
+                    onTap: () => showRatedWorks(
+                      context,
+                      l10n.statsDecade('${group.key}'),
+                      titles
+                          .where(
+                            (t) =>
+                                t.work.year != null &&
+                                t.work.year! - t.work.year! % 10 == group.key,
+                          )
+                          .toList(),
+                    ),
+                  ),
+              ],
+            ],
           ),
         ),
-        _Heading(l10n.statsCompared),
-        Text(
-          l10n.statsComparedHint,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(l10n.statsCorrelationHint, style: theme.textTheme.bodySmall),
-        const SizedBox(height: 6),
-        Text(l10n.statsFindsHint, style: theme.textTheme.bodySmall),
-        const SizedBox(height: 8),
-        for (final source in compareSources)
-          _DeviationTile(
-            source: source,
-            deviation: stats.deviation[source],
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          sliver: InsightSections(
             titles: titles,
+            insights: insights,
+            genreNames: ref.watch(genreNamesProvider).value ?? {},
           ),
-        if (stats.genres.isNotEmpty) ...[
-          _Heading(l10n.statsGenres),
-          _Genres(groups: stats.genres, titles: titles),
-        ],
-        if (stats.decades.isNotEmpty) ...[
-          _Heading(l10n.statsDecades),
-          for (final group in stats.decades)
-            _GroupRow(
-              label: l10n.statsDecade('${group.key}'),
-              group: group,
-              onTap: () => showRatedWorks(
-                context,
-                l10n.statsDecade('${group.key}'),
-                insights.decades[group.key]!.titles,
-              ),
-            ),
-        ],
-        InsightSections(
-          titles: titles,
-          insights: insights,
-          genreNames: ref.watch(genreNamesProvider).value ?? {},
         ),
-        PeopleLoadStatus(index: index),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          sliver: SliverToBoxAdapter(child: PeopleLoadStatus(index: index)),
+        ),
       ],
     );
   }

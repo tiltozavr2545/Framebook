@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:framebook/app/preferences.dart';
+import 'package:framebook/app/foreground.dart';
 import 'package:framebook/data/library/library.dart';
 import 'package:framebook/data/library/people_index.dart';
 import 'package:framebook/data/response_cache.dart';
@@ -15,6 +16,12 @@ import 'package:framebook/data/work_key.dart';
 
 import '../support/api_fixtures.dart';
 import 'insights_test.dart' show rated;
+
+class _Foreground extends Foreground {
+  @override
+  bool build() => true;
+  void set(bool value) => state = value;
+}
 
 class _Api implements TmdbApi {
   final calls = <int>[];
@@ -46,6 +53,7 @@ class _Api implements TmdbApi {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late _Api api;
   late MemoryResponseCache cache;
   late ProviderContainer container;
@@ -63,6 +71,7 @@ void main() {
     container = ProviderContainer(
       overrides: [
         contentLanguageProvider.overrideWithValue('en-US'),
+        foregroundProvider.overrideWith(_Foreground.new),
         tmdbProvider.overrideWithValue(api),
         responseCacheProvider.overrideWithValue(cache),
         ratedTitlesProvider.overrideWith((ref) => Stream.value(titles)),
@@ -70,6 +79,30 @@ void main() {
     );
     addTearDown(container.dispose);
   }
+
+  test(
+    'backgrounding stops enrichment and resume recovers incomplete titles',
+    () async {
+      setup([for (var id = 1; id <= 20; id++) rated(id, 16)]);
+      api.barrier = Completer<void>();
+      container.listen(peopleIndexProvider, (_, _) {});
+      await waitFor(() => api.calls.length == 4);
+      final foreground =
+          container.read(foregroundProvider.notifier) as _Foreground;
+      foreground.set(false);
+      api.barrier!.complete();
+      await waitFor(() => !container.read(peopleIndexProvider).running);
+      expect(api.calls, hasLength(4));
+      expect(container.read(peopleIndexProvider).entries, isEmpty);
+      foreground.set(true);
+      await waitFor(
+        () =>
+            container.read(peopleIndexProvider).entries.length == 20 &&
+            !container.read(peopleIndexProvider).running,
+      );
+      expect(api.calls.length, 24);
+    },
+  );
 
   test(
     'four parallel requests, bounded batches, cache-first resume without duplicate fetches',
@@ -87,8 +120,13 @@ void main() {
       await container.read(peopleIndexProvider.notifier).load();
       expect(api.calls.length, 85);
       expect(container.read(peopleIndexProvider).entries.length, 85);
+      final complete = container.read(peopleIndexProvider).entries;
       await container.read(peopleIndexProvider.notifier).load();
       expect(api.calls.length, 85);
+      expect(
+        identical(container.read(peopleIndexProvider).entries, complete),
+        isTrue,
+      );
     },
   );
   test(

@@ -18,14 +18,13 @@ class _FavoritePersonButtonState extends ConsumerState<FavoritePersonButton> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final people = ref.watch(favoritePeopleProvider);
-    final favorite =
-        people.value?.any((p) => p.personId == widget.person.id) ?? false;
+    final saved = ref.watch(isFavoritePersonProvider(widget.person.id));
+    final favorite = saved ?? false;
     return IconButton(
       tooltip: favorite ? l10n.peopleRemoveFavorite : l10n.peopleAddFavorite,
       icon: Icon(favorite ? Icons.favorite : Icons.favorite_border),
       color: favorite ? Theme.of(context).colorScheme.primary : null,
-      onPressed: _saving || people.value == null
+      onPressed: _saving || saved == null
           ? null
           : () async {
               final library = ref.read(peopleLibraryProvider);

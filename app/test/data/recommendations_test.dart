@@ -141,6 +141,53 @@ class _Api implements TmdbApi {
 void main() {
   const today = '2026-11-06';
   test(
+    'changing favourites reuses unchanged source jobs and retries failures',
+    () async {
+      final api = _Api()..brokenNeighbors = true;
+      final cache = RecommendationSourceCache();
+      Future<void> load(Set<int> favorites) => loadRecommendationCandidates(
+        api,
+        RecommendationPlan(
+          profile: profile([rated(1, 18)]),
+          favorites: favorites,
+          watchlist: {},
+          now: DateTime(2026, 11, 6),
+        ),
+        active: () => true,
+        publish: (_) {},
+        cache: cache,
+      );
+      await load({138});
+      final calls = api.calls;
+      api.brokenNeighbors = false;
+      await load({138, 139});
+      expect(api.calls, calls + 1); // Only the failed seed is retried.
+      expect(api.personIds, [138, 139]);
+      await load({139});
+      expect(api.calls, calls + 1);
+      expect(api.personIds, [138, 139]);
+    },
+  );
+
+  test('cached bursts publish a bounded number of snapshots', () async {
+    final updates = <RecommendationPool>[];
+    await loadRecommendationCandidates(
+      _Api(),
+      RecommendationPlan(
+        profile: profile([rated(1, 18)]),
+        favorites: {for (var i = 1; i <= 8; i++) i},
+        watchlist: {},
+        now: DateTime(2026, 11, 6),
+      ),
+      active: () => true,
+      publish: updates.add,
+    );
+    expect(updates.last.candidates, isNotEmpty);
+    expect(updates.last.running, isFalse);
+    expect(updates.length, lessThanOrEqualTo(4));
+    expect(updates.any((p) => p.running && p.candidates.isNotEmpty), isTrue);
+  });
+  test(
     'a whole-series rating overrides parts and episode counts never multiply its weight',
     () {
       final episodes = [for (var e = 1; e <= 100; e++) part(1, e, 4)];
