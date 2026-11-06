@@ -343,3 +343,18 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
 - Pause new optional catalog enrichment while the app is backgrounded.
 - Restore the last saved hidden-title selection if overlapping preference
   writes fail.
+
+## 0.9.0 — Floating navigation and people browsing (build 20)
+
+- Switch tabs with a floating glass selection that follows horizontal drags
+  together with the screens. Keep the classic bar through Settings and leave
+  enough space for the final list items above either navigation style.
+- Close recent-title history when clearing the search query.
+- Switch between Films and People with a glass slider the size of the search
+  field, translating the content as it moves and retaining the query.
+- Show the first 20 actors on title cards and open the complete cast from
+  the cast heading. Include series actors from earlier seasons and guest
+  appearances through TMDB aggregate credits.
+- Give person profiles a fixed violet header frame and a centered favourite
+  button. Double-tap shelf portraits to add or remove favourites, with a brief
+  heart animation, confirmation message and translucent saved-heart badge.

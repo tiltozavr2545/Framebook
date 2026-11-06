@@ -2,18 +2,49 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../data/sources/tmdb/tmdb_models.dart';
+import '../../data/work_key.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/poster.dart';
-import 'title_layout.dart';
 import 'title_routes.dart';
 
 /// A card's cast strip and its key crew; nothing when TMDB has neither.
-List<Widget> castSection(BuildContext context, Credits credits) {
+List<Widget> castSection(
+  BuildContext context,
+  Credits credits, {
+  required WorkKey workKey,
+}) {
   if (credits.isEmpty) return const [];
   final l10n = AppLocalizations.of(context);
   return [
     if (credits.cast.isNotEmpty) ...[
-      SectionTitle(l10n.castTitle),
+      Padding(
+        padding: const EdgeInsets.only(top: 28, bottom: 10),
+        child: InkWell(
+          key: const ValueKey('full-cast-link'),
+          onTap: () => context.push(
+            '${TitleRoutes.branchOf(context)}/${TitleRoutes.path(workKey)}/cast',
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.castTitle,
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                ),
+                Text(
+                  '${credits.cast.length}',
+                  style: Theme.of(context).textTheme.labelLarge,
+                ),
+                const SizedBox(width: 4),
+                const Icon(Icons.chevron_right),
+              ],
+            ),
+          ),
+        ),
+      ),
       _CastStrip(cast: credits.cast),
     ],
     if (credits.crew.isNotEmpty) ...[
@@ -34,15 +65,12 @@ class _CastStrip extends StatelessWidget {
 
   final List<CastMember> cast;
 
-  /// The billing that matters; guest stars beyond it are on the person's
-  /// page anyway.
-  static const _shown = 20;
   static const _width = 84.0;
+  static const _shown = 20;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final shown = cast.take(_shown).toList();
     final nameStyle = theme.textTheme.titleSmall?.copyWith(height: 1.2);
     final roleStyle = theme.textTheme.bodySmall?.copyWith(
       color: theme.colorScheme.onSurfaceVariant,
@@ -71,10 +99,10 @@ class _CastStrip extends StatelessWidget {
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: shown.length,
+          itemCount: cast.length.clamp(0, _shown),
           separatorBuilder: (_, _) => const SizedBox(width: 10),
           itemBuilder: (context, index) {
-            final person = shown[index];
+            final person = cast[index];
             return SizedBox(
               width: _width,
               child: InkWell(

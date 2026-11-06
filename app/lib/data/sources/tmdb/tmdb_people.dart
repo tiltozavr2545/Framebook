@@ -34,13 +34,12 @@ final class CrewMember {
   final CrewRole role;
 }
 
-/// A card's cast and its key crew: `credits` of a film, a series or a
-/// season (not `aggregate_credits` — 350 KB for Game of Thrones), an
-/// episode's own credits with its guest stars.
+/// A card's cast and key crew: aggregate credits for series and seasons,
+/// ordinary film credits, or episode credits including guest stars.
 final class Credits {
   const Credits({this.cast = const [], this.crew = const []});
 
-  /// [json] is the `credits` object; [createdBy] is a series' `created_by`.
+  /// [json] is `credits` or `aggregate_credits`; [createdBy] is `created_by`.
   /// An episode's [guestStars] go after its regular cast.
   factory Credits.fromJson(
     Json? json, {
@@ -61,7 +60,15 @@ final class Credits {
         CastMember(
           personId: id,
           name: name,
-          character: person.string('character'),
+          character:
+              person.string('character') ??
+              person
+                  .objects('roles')
+                  .map((r) => r.string('character'))
+                  .whereType<String>()
+                  .where((r) => r.isNotEmpty)
+                  .toSet()
+                  .join(' / '),
           profilePath: person.string('profile_path'),
         ),
       );
@@ -79,7 +86,13 @@ final class Credits {
       add(person, CrewRole.creator);
     }
     for (final person in json?.objects('crew') ?? const <Json>[]) {
-      if (_roleOf(person.string('job')) case final role?) add(person, role);
+      for (final job in [
+        if (person.string('job') case final job?) job,
+        for (final job in person.objects('jobs'))
+          if (job.string('job') case final name?) name,
+      ]) {
+        if (_roleOf(job) case final role?) add(person, role);
+      }
     }
     crew.sort((a, b) => a.role.index.compareTo(b.role.index));
     return Credits(cast: cast, crew: crew);

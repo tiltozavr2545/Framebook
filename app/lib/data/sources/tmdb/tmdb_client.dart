@@ -168,7 +168,7 @@ final class TmdbClient implements TmdbApi {
   @override
   Future<TvDetails> tv(int id) async => TvDetails.fromJson(
     await _get('/tv/$id', {
-      'append_to_response': 'external_ids,credits',
+      'append_to_response': 'external_ids,aggregate_credits',
     }, TmdbTtl.details),
   );
 
@@ -177,7 +177,7 @@ final class TmdbClient implements TmdbApi {
       SeasonDetails.fromJson(
         tvId,
         await _get('/tv/$tvId/season/$season', const {
-          'append_to_response': 'credits',
+          'append_to_response': 'aggregate_credits',
         }, TmdbTtl.details),
       );
 

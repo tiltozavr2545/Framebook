@@ -58,7 +58,7 @@ class MovieScreen extends ConsumerWidget {
           ),
         ),
         ...overviewSection(context, movie.overview),
-        ...castSection(context, movie.credits),
+        ...castSection(context, movie.credits, workKey: movie.key),
         RelatedTitles(current: movie.key, collection: movie.collection),
       ],
     );

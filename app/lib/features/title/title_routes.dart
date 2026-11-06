@@ -6,6 +6,7 @@ import '../../data/work_key.dart';
 import '../../shared/failure_view.dart';
 import '../person/person_screen.dart';
 import 'episode_screen.dart';
+import 'cast_screen.dart';
 import 'movie_screen.dart';
 import 'season_screen.dart';
 import 'tv_screen.dart';
@@ -53,6 +54,7 @@ abstract final class TitleRoutes {
         final key? => MovieScreen(id: key.tmdbId),
         null => const _BadLink(),
       },
+      routes: [_castRoute('movie')],
     ),
     GoRoute(
       path: 'tv/:id',
@@ -61,6 +63,7 @@ abstract final class TitleRoutes {
         null => const _BadLink(),
       },
       routes: [
+        _castRoute('tv'),
         GoRoute(
           path: 's/:season',
           builder: (context, state) => switch (_key(state, 'tv')) {
@@ -71,18 +74,28 @@ abstract final class TitleRoutes {
             null => const _BadLink(),
           },
           routes: [
+            _castRoute('tv'),
             GoRoute(
               path: 'e/:episode',
               builder: (context, state) => switch (_key(state, 'tv')) {
                 final key? => EpisodeScreen(episodeKey: key),
                 null => const _BadLink(),
               },
+              routes: [_castRoute('tv')],
             ),
           ],
         ),
       ],
     ),
   ];
+
+  static GoRoute _castRoute(String type) => GoRoute(
+    path: 'cast',
+    builder: (context, state) => switch (_key(state, type)) {
+      final key? => CastScreen(workKey: key),
+      null => const _BadLink(),
+    },
+  );
 
   /// The key from the path parameters, via [WorkKey.tryParse] so the rules
   /// (no leading zeros, season ≥ 0, episode ≥ 1) are the same as everywhere.

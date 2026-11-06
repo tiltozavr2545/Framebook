@@ -44,8 +44,8 @@ Base: `https://api.themoviedb.org/3`. The response language is the
 | film | `GET /movie/{id}?append_to_response=external_ids,credits,release_dates` |
 | movie collection | `GET /collection/{id}` — parts of the collection identified by `belongs_to_collection` |
 | similar titles | `GET /movie/{id}/similar`, `/tv/{id}/similar` — first page, based on genres and keywords |
-| series | `GET /tv/{id}?append_to_response=external_ids,credits` — includes the season list |
-| season | `GET /tv/{id}/season/{n}?append_to_response=credits` — includes every episode with its `vote_average` |
+| series | `GET /tv/{id}?append_to_response=external_ids,aggregate_credits` — includes the season list and cast across all seasons |
+| season | `GET /tv/{id}/season/{n}?append_to_response=aggregate_credits` — includes every episode with its `vote_average` and the season's aggregate cast |
 | an episode's ids in other databases | `GET /tv/{id}/season/{n}/episode/{m}/external_ids` |
 | genres | `GET /genre/movie/list`, `GET /genre/tv/list` — names for the statistics by genre; the lists share most ids |
 | popular people | `GET /person/popular` — first page for People discovery |

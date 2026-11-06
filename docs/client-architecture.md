@@ -490,9 +490,14 @@ ink, film stock, and the editor's grease pencil.
   and per-device Not interested/Undo; see [recommendations.md](recommendations.md).
   Shelves come through the HTTP cache: a day for
   what changes daily, a week for the rest.
-- **Cast and crew** on every card (`credits`; not `aggregate_credits`,
-  which is 350 KB for Game of Thrones): a strip of actors with their roles,
-  and lines for creators, directors, writers, music and cinematography.
+- **Cast and crew** on every card: a strip of the first 20 actors with their
+  roles, and lines for creators, directors, writers, music and cinematography.
+  Tapping the cast heading opens a separate, lazily built full-cast list in
+  the current tab; actor profiles push above it and Back returns to the list.
+  Series and seasons append `aggregate_credits`, since TV `credits` contains
+  only the latest season. Aggregate roles and jobs are deduplicated per person;
+  movies and episodes keep ordinary credits, including episode guest stars.
+  Larger aggregate responses remain in the evictable HTTP cache only.
 - **A person** (`features/person/`): dates, a folded biography, the
   filmography filtered by acting, directing, production, writing, music, camera
   and other work, with a unique-title count for each role. A title can appear
@@ -558,7 +563,16 @@ be few such places — but not zero.
 
 ## People search and filmography
 
-Discover offers Films and series / People chips using the existing theme.
+Discover offers a Films / People glass slider directly below the search field,
+with the same width, minimum height and corner radius as the field. It uses
+the navigation bar's surface and shared glass tint. Its frame remains in the
+header; dragging translates only the content below it, and release snaps to
+the selected mode. Taps animate the same transition without a Material press
+overlay. Both modes share the query, retain shelf scroll positions and close
+title history when switched. The history dropdown anchors below the selector
+so both modes remain accessible while history is open. Inactive search snapshots
+cannot paginate the active mode. The Films mode still searches both films and series. Large text
+can increase the selector's height, and reduced motion disables settling.
 People search uses TMDB `/search/person` with the same debounce, pagination,
 HTTP cache and stale-response protection as title search. Results show a
 portrait, name and known-for titles; opening a profile preserves search on back.
@@ -577,8 +591,34 @@ Opening a result moves its key to the top and refreshes its mini snapshot.
 Typing or submitting a query, pagination, and people search do not add entries.
 The dropdown shows posters and title/year/type, opens cards directly, supports
 individual removal and clearing, and closes on typing, selection or loss of
-focus. It overlays existing content without moving Discover shelves or results.
+focus. Clearing the query explicitly closes the dropdown; a subsequent tap
+on the empty field can reopen it. It overlays existing content without moving Discover shelves or results.
 Malformed stored entries are skipped so Discover can still open.
+
+## Floating navigation and favourite portraits (0.9.0)
+
+The default bottom bar floats within horizontal and bottom safe-area margins,
+using the existing navigation surface colour. A bounded glass selection moves
+with the branch pages during a horizontal drag; release snaps to a tab. Taps
+animate the same transition and tapping the active tab returns to its root.
+Each branch retains its own back stack and scroll state. Branch navigators
+are available in advance, but their screens mount only on first display;
+hidden branches stop tickers and cannot receive focus or pointer input.
+The body extends behind the capsule, exposing page content through its side
+and bottom margins without a full-width footer surface. Scrollable content
+includes the measured bar inset in its bottom padding, so final list items can
+scroll fully above the capsule. Floating destinations disable Material press
+overlays and icon transitions; only the glass selection and pages animate.
+Settings offers Floating / Classic in a dropdown like the theme selector;
+the device-local choice persists in SharedPreferences and is not synchronized.
+Reduced-motion settings disable animated settling.
+
+People shelves use a double tap on the portrait to toggle favourites. A brief
+heart animation and localized snackbar confirm the change; a translucent
+bottom-right heart remains only on saved shelf portraits. A single tap opens
+the profile. An equivalent custom accessibility action is available. Profiles
+have a static theme-primary header border and gradient, and a centered filled
+favourite button below the header; they never show the shelf heart overlay.
 
 ## Rich title cards and keyboard restoration
 

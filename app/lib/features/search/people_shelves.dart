@@ -11,8 +11,7 @@ import '../../data/library/people_index.dart';
 import '../../data/sources/providers.dart';
 import '../../data/sources/tmdb/tmdb_models.dart';
 import '../../l10n/app_localizations.dart';
-import '../../shared/favorite_person_button.dart';
-import '../../shared/poster.dart';
+import '../../shared/favorite_person_portrait.dart';
 import '../person/person_screen.dart';
 
 final popularPeopleProvider = FutureProvider.autoDispose<List<PersonSummary>>(
@@ -38,7 +37,9 @@ class PeopleShelves extends ConsumerWidget {
       knownFor: [l10n.statsRatingCount(p.profile.count)],
     );
     return ListView(
-      padding: const EdgeInsets.only(bottom: 24),
+      padding: EdgeInsets.only(
+        bottom: 24 + MediaQuery.paddingOf(context).bottom,
+      ),
       children: [
         _PeopleShelf(
           title: l10n.peopleFavorites,
@@ -145,7 +146,8 @@ class PeopleLoadStatus extends ConsumerWidget {
 }
 
 class _PeopleShelf extends StatelessWidget {
-  const _PeopleShelf({required this.title, required this.people});
+  _PeopleShelf({required this.title, required this.people})
+    : super(key: ValueKey(title));
   final String title;
   final List<PersonSummary> people;
 
@@ -168,39 +170,40 @@ class _PeopleShelf extends StatelessWidget {
             itemBuilder: (context, index) {
               final person = people[index];
               return SizedBox(
+                key: ValueKey(person.id),
                 width: 96,
                 child: Column(
                   children: [
-                    InkWell(
-                      onTap: () =>
-                          context.push('${Routes.search}/person/${person.id}'),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Poster(
-                            person.profilePath,
-                            size: ImageSize.w185,
-                            width: 96,
-                            icon: Icons.person_outline,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        FavoritePersonPortrait(
+                          person: person,
+                          onTap: () => context.push(
+                            '${Routes.search}/person/${person.id}',
                           ),
-                          const SizedBox(height: 6),
-                          Text(
+                        ),
+                        const SizedBox(height: 6),
+                        InkWell(
+                          onTap: () => context.push(
+                            '${Routes.search}/person/${person.id}',
+                          ),
+                          child: Text(
                             person.name,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.titleSmall,
                           ),
-                          if (person.knownFor.isNotEmpty)
-                            Text(
-                              person.knownFor.first,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.labelSmall,
-                            ),
-                        ],
-                      ),
+                        ),
+                        if (person.knownFor.isNotEmpty)
+                          Text(
+                            person.knownFor.first,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.labelSmall,
+                          ),
+                      ],
                     ),
-                    FavoritePersonButton(person: person),
                   ],
                 ),
               );
@@ -227,6 +230,5 @@ double _peopleShelfHeight(BuildContext context) {
   return 144 +
       6 +
       textHeight(theme.textTheme.titleSmall, 2) +
-      textHeight(theme.textTheme.labelSmall, 1) +
-      56;
+      textHeight(theme.textTheme.labelSmall, 1);
 }

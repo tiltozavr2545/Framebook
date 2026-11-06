@@ -65,7 +65,7 @@ class TvScreen extends ConsumerWidget {
           ),
         ),
         ...overviewSection(context, tv.overview),
-        ...castSection(context, tv.credits),
+        ...castSection(context, tv.credits, workKey: tv.key),
         if (tv.seasons.isNotEmpty) ...[
           SectionTitle(l10n.titleSeasons),
           RenumberNotice.seasons(tv),

@@ -68,7 +68,12 @@ class _Saved extends StatelessWidget {
     final season = lineage.length > 2 ? lineage[1] : null;
     final lines = describeWork(l10n, work, series: series);
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        8,
+        16,
+        32 + MediaQuery.paddingOf(context).bottom,
+      ),
       children: [
         Row(
           children: [

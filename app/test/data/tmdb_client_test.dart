@@ -587,6 +587,47 @@ void main() {
   });
 
   group('cast and crew', () {
+    test(
+      'series and seasons request aggregate credits and parse all roles and jobs',
+      () async {
+        const aggregate = '''{
+        "cast":[
+          {"id":1,"name":"Earlier season actor","roles":[{"character":"First role"},{"character":"Second role"},{"character":"First role"}]},
+          {"id":2,"name":"Guest actor","roles":[{"character":"Guest"}]}
+        ],
+        "crew":[{"id":3,"name":"Director and writer","jobs":[{"job":"Director"},{"job":"Writer"},{"job":"Director"}]}]
+      }''';
+        serve(
+          (request) => (
+            status: 200,
+            body:
+                '{"id":393189,"name":"Series","season_number":1,"created_by":[{"id":4,"name":"Creator"}],"aggregate_credits":$aggregate,"credits":{"cast":[{"id":5,"name":"Latest only"}]}}',
+          ),
+        );
+        final tv = await client().tv(393189);
+        expect(
+          http.requests.last.uri.queryParameters['append_to_response'],
+          'external_ids,aggregate_credits',
+        );
+        expect(tv.credits.cast.map((p) => p.name), [
+          'Earlier season actor',
+          'Guest actor',
+        ]);
+        expect(tv.credits.cast.first.character, 'First role / Second role');
+        expect(tv.credits.crewByRole.keys, [
+          CrewRole.creator,
+          CrewRole.director,
+          CrewRole.writer,
+        ]);
+        final season = await client().season(393189, 1);
+        expect(
+          http.requests.last.uri.queryParameters['append_to_response'],
+          'aggregate_credits',
+        );
+        expect(season.credits.cast, hasLength(2));
+        expect(season.credits.crew, hasLength(2));
+      },
+    );
     test('a film: cast in billing order, the key crew by role', () async {
       final credits = (await client().movie(603)).credits;
       expect(credits.cast.first.name, 'Киану Ривз');

@@ -95,6 +95,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsTheme => 'Theme';
 
   @override
+  String get settingsNavigationStyle => 'Navigation bar';
+
+  @override
+  String get navigationFloating => 'Floating';
+
+  @override
+  String get navigationClassic => 'Classic';
+
+  @override
+  String get peopleInFavorites => 'In favourites';
+
+  @override
+  String peopleFavoriteAdded(String name) {
+    return '$name added to favourites';
+  }
+
+  @override
+  String peopleFavoriteRemoved(String name) {
+    return '$name removed from favourites';
+  }
+
+  @override
   String get languageSystem => 'System';
 
   @override
@@ -215,7 +237,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get retry => 'Try again';
 
   @override
-  String get searchTitles => 'Films and series';
+  String get searchTitles => 'Films';
 
   @override
   String get searchPeople => 'People';

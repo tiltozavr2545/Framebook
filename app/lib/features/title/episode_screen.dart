@@ -131,6 +131,7 @@ class EpisodeScreen extends ConsumerWidget {
             context,
             ref.watch(episodeCreditsProvider(episodeKey)).value ??
                 const Credits(),
+            workKey: episodeKey,
           ),
         ];
       },

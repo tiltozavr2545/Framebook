@@ -12,6 +12,7 @@ import '../features/settings/settings_screen.dart';
 import '../features/settings/sources_screen.dart';
 import '../features/settings/sync_screen.dart';
 import '../features/shell/shell_screen.dart';
+import '../features/shell/navigation_motion.dart';
 import '../features/stats/stats_screen.dart';
 import '../features/title/title_routes.dart';
 import '../features/watchlist/watchlist_screen.dart';
@@ -63,11 +64,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: Routes.restoreDrive,
         builder: (context, state) => const SyncScreen(restoreOnly: true),
       ),
-      StatefulShellRoute.indexedStack(
+      StatefulShellRoute(
+        navigatorContainerBuilder: (context, shell, children) =>
+            NavigationPages(shell: shell, children: children),
         builder: (context, state, shell) => ShellScreen(shell: shell),
         branches: [
           for (final tab in AppTab.values)
             StatefulShellBranch(
+              preload: true,
               routes: [
                 GoRoute(
                   path: tab.path,

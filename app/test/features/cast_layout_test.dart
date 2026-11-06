@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:framebook/app/theme.dart';
 import 'package:framebook/data/sources/tmdb/tmdb_models.dart';
+import 'package:framebook/data/work_key.dart';
 import 'package:framebook/features/title/cast_section.dart';
 import 'package:framebook/l10n/app_localizations.dart';
 
@@ -30,6 +31,7 @@ void main() {
                 builder: (context) => ListView(
                   children: castSection(
                     context,
+                    workKey: const WorkKey.movie(603),
                     const Credits(
                       cast: [
                         CastMember(

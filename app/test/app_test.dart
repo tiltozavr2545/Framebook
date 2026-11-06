@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:framebook/features/title/cover_viewer.dart';
@@ -33,10 +34,14 @@ import 'package:framebook/data/sync/sync_store.dart';
 import 'package:framebook/data/work_key.dart';
 import 'package:framebook/features/person/person_screen.dart';
 import 'package:framebook/features/search/search_controller.dart';
+import 'package:framebook/features/search/search_mode_switcher.dart';
 import 'package:framebook/features/search/search_history.dart';
 import 'package:framebook/features/title/movie_screen.dart';
 import 'package:framebook/features/title/score_reel.dart';
 import 'package:framebook/shared/poster.dart';
+import 'package:framebook/shared/favorite_person_portrait.dart';
+import 'package:framebook/features/shell/navigation_motion.dart';
+import 'package:framebook/features/title/cast_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'support/api_fixtures.dart';
@@ -108,6 +113,13 @@ void main() {
 
   FilledButton continueButton(WidgetTester tester) => tester
       .widget<FilledButton>(find.widgetWithText(FilledButton, 'Continue'));
+
+  /// Fail quickly if an unfinished request leaves an endless spinner.
+  Future<void> settle(WidgetTester tester) => tester.pumpAndSettle(
+    const Duration(milliseconds: 100),
+    EnginePhase.sendSemanticsUpdate,
+    const Duration(seconds: 10),
+  );
 
   /// Every scenario: the tree is unmounted inside the test. When closing a
   /// `watch()` stream drift schedules a Timer, and the pending timers check
@@ -358,6 +370,112 @@ void main() {
     );
   });
 
+  cardTest(
+    'search mode field matches search width and drags results with a shared query',
+    (tester) async {
+      await pumpApp(tester, keys: allKeys);
+      final mode = find.byKey(const ValueKey('search-mode-slider'));
+      final fieldBounds = tester.getRect(find.byType(TextField));
+      final modeBounds = tester.getRect(mode);
+      expect(modeBounds.left, fieldBounds.left);
+      expect(modeBounds.width, fieldBounds.width);
+      expect(modeBounds.height, closeTo(fieldBounds.height, 4));
+      expect(modeBounds.top, greaterThan(fieldBounds.bottom));
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(FramebookApp)),
+      );
+      await tester.enterText(find.byType(TextField), 'Matrix');
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await settle(tester);
+      final pages = tester.widget<SearchModePages>(
+        find.byType(SearchModePages),
+      );
+      final gesture = await tester.startGesture(
+        modeBounds.center - const Offset(80, 0),
+      );
+      await gesture.moveBy(const Offset(25, 0));
+      await tester.pump();
+      await gesture.moveBy(const Offset(105, 0));
+      await tester.pump();
+      expect(pages.position.value, inExclusiveRange(0.5, 1));
+      final page = find.descendant(
+        of: find.byType(SearchModePages),
+        matching: find.byType(FractionalTranslation),
+      );
+      expect(page, findsNWidgets(2));
+      expect(
+        tester.widget<FractionalTranslation>(page.first).translation.dx,
+        lessThan(0),
+      );
+      await gesture.up();
+      await settle(tester);
+      expect(container.read(searchProvider).kind, SearchKind.people);
+      expect(container.read(searchProvider).people, isNotEmpty);
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        'Matrix',
+      );
+      await tester.tap(find.byKey(const ValueKey('search-mode-0')));
+      await settle(tester);
+      expect(container.read(searchProvider).kind, SearchKind.titles);
+      expect(container.read(searchProvider).results, isNotEmpty);
+      expect(container.read(searchProvider).query, 'Matrix');
+      expect(pages.position.value, 0);
+      container.read(searchProvider.notifier).selectKind(SearchKind.people);
+      await settle(tester);
+      expect(pages.position.value, 1);
+      tester.platformDispatcher.textScaleFactorTestValue = 1.8;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await settle(tester);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  cardTest(
+    'search modes retain shelf scroll position and dismiss title history',
+    (tester) async {
+      await pumpApp(tester, keys: allKeys);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(FramebookApp)),
+      );
+      await container
+          .read(searchHistoryProvider.notifier)
+          .remember(
+            const SearchHistoryEntry(
+              key: WorkKey.movie(603),
+              title: 'Saved history',
+            ),
+          );
+      await tester.tap(find.byType(TextField));
+      await settle(tester);
+      expect(find.text('Recently opened'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('search-mode-1')));
+      await settle(tester);
+      expect(find.text('Recently opened'), findsNothing);
+      expect(container.read(searchProvider).kind, SearchKind.people);
+      expect(container.read(searchHistoryProvider), hasLength(1));
+      await tester.tap(find.byKey(const ValueKey('search-mode-0')));
+      await settle(tester);
+      final scrollable = find
+          .descendant(
+            of: find.byType(SearchModePages),
+            matching: find.byType(Scrollable),
+          )
+          .first;
+      await tester.drag(scrollable, const Offset(0, -300));
+      await settle(tester);
+      final position = tester.state<ScrollableState>(scrollable).position;
+      final offset = position.pixels;
+      expect(offset, greaterThan(0));
+      await tester.tap(find.byKey(const ValueKey('search-mode-1')));
+      await settle(tester);
+      await tester.tap(find.byKey(const ValueKey('search-mode-0')));
+      await settle(tester);
+      expect(position.pixels, offset);
+      expect(find.text('Recently opened'), findsNothing);
+    },
+  );
+
   cardTest('removing the TMDB key in settings returns to onboarding', (
     tester,
   ) async {
@@ -378,15 +496,6 @@ void main() {
 
     expect(find.text('Welcome to Framebook'), findsOneWidget);
   });
-
-  /// pumpAndSettle with a short limit: an endless animation (a spinner that
-  /// never got its answer) fails with a clear reason instead of hanging for
-  /// ten minutes.
-  Future<void> settle(WidgetTester tester) => tester.pumpAndSettle(
-    const Duration(milliseconds: 100),
-    EnginePhase.sendSemanticsUpdate,
-    const Duration(seconds: 10),
-  );
 
   Finder inList(String text) =>
       find.descendant(of: find.byType(ListView), matching: find.text(text));
@@ -464,6 +573,8 @@ void main() {
     expect(find.text('add a key'), findsNWidgets(4)); // Kinopoisk, IMDb, RT, MC
     expect(find.text('8.3'), findsOneWidget); // TMDB is always there
 
+    await tester.ensureVisible(find.text('add a key').first);
+    await settle(tester);
     await tester.tap(find.text('add a key').first);
     await settle(tester);
     expect(find.text('Sources and API keys'), findsOneWidget);
@@ -493,6 +604,11 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
+    await Scrollable.ensureVisible(
+      tester.element(find.text('Сезон 1')),
+      alignment: 0.5,
+    );
+    await settle(tester);
     await tester.tap(find.text('Сезон 1'));
     await settle(tester);
 
@@ -1451,6 +1567,16 @@ void main() {
     );
     expect(find.text('Directors'), findsOneWidget);
 
+    await tester.scrollUntilVisible(
+      find.text('Киану Ривз'),
+      -150,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await Scrollable.ensureVisible(
+      tester.element(find.text('Киану Ривз')),
+      alignment: 0.5,
+    );
+    await settle(tester);
     await tester.tap(find.text('Киану Ривз'));
     await settle(tester);
     expect(find.text('Filmography'), findsOneWidget);
@@ -1480,6 +1606,89 @@ void main() {
     expect(find.byType(PersonScreen), findsNothing);
     expect(find.byType(MovieScreen), findsOneWidget);
   });
+
+  cardTest(
+    'cast preview keeps 20 entries and full cast opens later actors and preserves back',
+    (tester) async {
+      await pumpApp(
+        tester,
+        keys: tmdbOnly,
+        http: (request) {
+          if (request.uri.path == '/3/movie/603') {
+            final movie =
+                jsonDecode(fixture('tmdb/movie_603_ru.json'))
+                    as Map<String, dynamic>;
+            movie['credits'] = {
+              'cast': List.generate(
+                26,
+                (i) => {
+                  'id': 6384 + i,
+                  'name': 'Actor $i',
+                  'character': 'Role $i',
+                },
+              ),
+            };
+            return (status: 200, body: jsonEncode(movie));
+          }
+          return apiFixtures(request);
+        },
+      );
+      go(tester, '/search/movie/603');
+      await settle(tester);
+      final link = find.byKey(const ValueKey('full-cast-link'));
+      await tester.scrollUntilVisible(
+        link,
+        250,
+        scrollable: find.byType(Scrollable).first,
+      );
+      final strip = find
+          .byWidgetPredicate(
+            (w) => w is ListView && w.scrollDirection == Axis.horizontal,
+          )
+          .last;
+      expect(
+        tester.widget<ListView>(strip).childrenDelegate.estimatedChildCount,
+        39,
+      );
+      await Scrollable.ensureVisible(tester.element(link), alignment: 0.5);
+      await settle(tester);
+      await tester.tap(link);
+      await settle(tester);
+      expect(find.byType(CastScreen), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Actor 25'),
+        350,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('Role 25'), findsOneWidget);
+      final castList = tester.state<ScrollableState>(
+        find.byType(Scrollable).first,
+      );
+      castList.position.jumpTo(castList.position.maxScrollExtent);
+      await settle(tester);
+      expect(
+        tester.getRect(find.text('Role 25')).bottom,
+        lessThan(tester.getRect(find.byType(NavigationBar)).top),
+      );
+      await tester.scrollUntilVisible(
+        find.text('Actor 0'),
+        -400,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Actor 0'));
+      await settle(tester);
+      expect(find.byType(PersonScreen), findsOneWidget);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(FramebookApp)),
+      );
+      container.read(routerProvider).pop();
+      await settle(tester);
+      expect(find.byType(CastScreen), findsOneWidget);
+      container.read(routerProvider).pop();
+      await settle(tester);
+      expect(find.byType(MovieScreen), findsOneWidget);
+    },
+  );
 
   cardTest('offline, a rated title opens from its saved snapshot', (
     tester,
@@ -1537,6 +1746,10 @@ void main() {
       expect(find.text('Recently opened'), findsNothing);
       await tester.tap(find.byTooltip('Clear'));
       await tester.pumpAndSettle();
+      expect(find.text('Recently opened'), findsNothing);
+      expect(find.text('History-only title'), findsNothing);
+      await tester.tap(find.byType(TextField));
+      await tester.pumpAndSettle();
       expect(find.text('Recently opened'), findsOneWidget);
     },
   );
@@ -1585,16 +1798,151 @@ void main() {
       await tester.pumpAndSettle();
       tester.platformDispatcher.textScaleFactorTestValue = 1.8;
       addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-      await tester.tap(find.widgetWithText(ChoiceChip, 'People'));
+      await tester.tap(find.byKey(const ValueKey('search-mode-1')));
       await settle(tester);
       expect(find.text('Favourite people'), findsOneWidget);
       expect(find.text('Киану Ривз'), findsWidgets);
       expect(tester.takeException(), isNull);
-      await tester.tap(find.byTooltip('Remove from favourites').first);
+      final portrait = find.byType(FavoritePersonPortrait).first;
+      await tester.tap(portrait);
+      await tester.pump(const Duration(milliseconds: 60));
+      await tester.tap(portrait);
       await settle(tester);
       expect(container.read(favoritePeopleProvider).value, isEmpty);
       expect(
         find.text('Save people from their pages to find them here.'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  cardTest(
+    'floating navigation follows a drag, preserves cards and supports classic mode',
+    (tester) async {
+      await pumpApp(tester, keys: tmdbOnly);
+      go(tester, '/search/person/6384');
+      await settle(tester);
+      final bar = find.byKey(const ValueKey('glass-navigation'));
+      final navRect = tester.getRect(find.byType(NavigationBar));
+      expect(navRect.left, greaterThan(0));
+      expect(navRect.right, lessThan(360));
+      final scope = tester.widget<NavigationMotion>(
+        find.byType(NavigationMotion),
+      );
+      final gesture = await tester.startGesture(
+        tester.getCenter(bar) - const Offset(115, 0),
+      );
+      await gesture.moveBy(const Offset(45, 0));
+      await tester.pump();
+      await gesture.moveBy(const Offset(60, 0));
+      await tester.pump();
+      expect(scope.position.value, greaterThan(0));
+      expect(scope.position.value % 1, isNonZero);
+      expect(find.byType(FractionalTranslation), findsWidgets);
+      await gesture.up();
+      await settle(tester);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(FramebookApp)),
+      );
+      expect(
+        container.read(routerProvider).routeInformationProvider.value.uri.path,
+        Routes.ratings,
+      );
+      expect(
+        tester.getRect(find.byType(NavigationPages)).bottom,
+        greaterThan(navRect.top),
+      );
+      await tester.tap(
+        find.descendant(
+          of: find.byType(NavigationBar),
+          matching: find.text('Discover'),
+        ),
+      );
+      await settle(tester);
+      expect(find.byType(PersonScreen), findsOneWidget);
+      unawaited(container.read(routerProvider).push<void>(Routes.settings));
+      await settle(tester);
+      await tester.tap(
+        find.byWidgetPredicate((widget) => widget is DropdownButton<bool>),
+      );
+      await settle(tester);
+      await tester.tap(find.text('Classic').last);
+      await settle(tester);
+      expect(container.read(floatingNavigationProvider), isFalse);
+      container.read(routerProvider).pop();
+      await settle(tester);
+      expect(bar, findsNothing);
+      expect(tester.getRect(find.byType(NavigationBar)).left, 0);
+      await tester.tap(
+        find.descendant(
+          of: find.byType(NavigationBar),
+          matching: find.text('Stats'),
+        ),
+      );
+      await settle(tester);
+      expect(
+        find.text('Statistics will be here once you have ratings.'),
+        findsOneWidget,
+      );
+      await container.read(floatingNavigationProvider.notifier).set(true);
+      await settle(tester);
+      expect(bar, findsOneWidget);
+      expect(scope.position.value, 3);
+    },
+  );
+
+  cardTest(
+    'shelf portrait double tap toggles favourites and single tap opens profile',
+    (tester) async {
+      await pumpApp(tester, keys: tmdbOnly);
+      await tester.tap(find.byKey(const ValueKey('search-mode-1')));
+      await settle(tester);
+      final portrait = find.byType(FavoritePersonPortrait).last;
+      ScaffoldMessenger.of(tester.element(portrait)).clearSnackBars();
+      await Scrollable.ensureVisible(tester.element(portrait), alignment: 0.5);
+      await settle(tester);
+      await tester.tap(portrait);
+      await tester.pump(const Duration(milliseconds: 60));
+      await tester.tap(portrait);
+      await settle(tester);
+      expect(find.byType(PersonScreen), findsNothing);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(FramebookApp)),
+      );
+      expect(
+        container.read(favoritePeopleProvider).value!.single.personId,
+        6384,
+      );
+      expect(
+        find.byKey(const ValueKey('favorite-portrait-badge')),
+        findsWidgets,
+      );
+      expect(find.text('Киану Ривз added to favourites'), findsOneWidget);
+      ScaffoldMessenger.of(tester.element(portrait)).clearSnackBars();
+      await Scrollable.ensureVisible(tester.element(portrait), alignment: 0.5);
+      await settle(tester);
+      await tester.tap(portrait);
+      await tester.pump(const Duration(milliseconds: 60));
+      await tester.tap(portrait);
+      await settle(tester);
+      expect(container.read(favoritePeopleProvider).value, isEmpty);
+      expect(
+        find.byKey(const ValueKey('favorite-portrait-badge')),
+        findsNothing,
+      );
+      await tester.tap(portrait);
+      await tester.pump(const Duration(milliseconds: 350));
+      await settle(tester);
+      expect(find.byType(PersonScreen), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('favorite-portrait-badge')),
+        findsNothing,
+      );
+      expect(
+        find.ancestor(
+          of: find.text('Add to favourites'),
+          matching: find.byWidgetPredicate((widget) => widget is FilledButton),
+        ),
         findsOneWidget,
       );
     },

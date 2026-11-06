@@ -35,6 +35,14 @@
   "settingsSources": "Источники и ключи API",
   "settingsLanguage": "Язык",
   "settingsTheme": "Тема",
+  "settingsNavigationStyle": "Нижняя панель",
+  "navigationFloating": "Плавающая",
+  "navigationClassic": "Классическая",
+  "peopleInFavorites": "В избранном",
+  "peopleFavoriteAdded": "В избранное: {name}",
+  "@peopleFavoriteAdded": {"placeholders": {"name": {"type": "String"}}},
+  "peopleFavoriteRemoved": "Больше не в избранном: {name}",
+  "@peopleFavoriteRemoved": {"placeholders": {"name": {"type": "String"}}},
   "languageSystem": "Как в системе",
   "languageEnglish": "English",
   "languageRussian": "Русский",
@@ -77,7 +85,7 @@
 
   "retry": "Повторить",
 
-  "searchTitles": "Фильмы и сериалы",
+  "searchTitles": "Фильмы",
   "searchPeople": "Люди",
   "searchPeopleHint": "Актёр, режиссёр, автор",
   "filmographyActing": "В кадре",

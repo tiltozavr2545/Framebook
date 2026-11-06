@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -14,6 +16,7 @@ import '../title/title_layout.dart';
 import '../title/title_routes.dart';
 import 'search_controller.dart';
 import 'search_history.dart';
+import 'search_mode_switcher.dart';
 import 'shelves.dart';
 import 'people_shelves.dart';
 
@@ -26,7 +29,8 @@ class SearchScreen extends ConsumerStatefulWidget {
   ConsumerState<SearchScreen> createState() => _SearchScreenState();
 }
 
-class _SearchScreenState extends ConsumerState<SearchScreen> {
+class _SearchScreenState extends ConsumerState<SearchScreen>
+    with SingleTickerProviderStateMixin {
   late final _controller = TextEditingController(
     text: ref.read(searchProvider).query,
   );
@@ -34,6 +38,49 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   final _focus = FocusNode();
   final _historyOverlay = OverlayPortalController();
   final _fieldLink = LayerLink();
+  late final _modePosition = AnimationController.unbounded(
+    vsync: this,
+    value: ref.read(searchProvider).kind.index.toDouble(),
+  );
+  final _snapshots = <SearchKind, SearchState>{};
+  bool _draggingMode = false;
+  late int _modeIndex;
+  SearchKind _dragOrigin = SearchKind.titles;
+
+  void _animateMode(int index) {
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _modePosition.value = index.toDouble();
+    } else {
+      unawaited(
+        _modePosition.animateTo(
+          index.toDouble(),
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+        ),
+      );
+    }
+  }
+
+  void _selectMode(int index) {
+    _focus.unfocus();
+    _historyOverlay.hide();
+    _draggingMode = false;
+    _modeIndex = index;
+    ref.read(searchProvider.notifier).selectKind(SearchKind.values[index]);
+    _animateMode(index);
+  }
+
+  SearchState _snapshot(SearchKind kind, SearchState current) {
+    if (kind == current.kind) return current;
+    final saved = _snapshots[kind];
+    return saved != null && saved.query == current.query
+        ? saved
+        : SearchState(
+            kind: kind,
+            query: current.query,
+            loading: current.query.isNotEmpty,
+          );
+  }
 
   void _showHistoryOnDiscover() {
     final search = ref.read(searchProvider);
@@ -49,6 +96,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   @override
   void initState() {
     super.initState();
+    _modeIndex = ref.read(searchProvider).kind.index;
     _focus.addListener(() {
       if (_focus.hasFocus) {
         _showHistoryOnDiscover();
@@ -60,6 +108,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   @override
   void dispose() {
+    _modePosition.dispose();
     _focus.dispose();
     _controller.dispose();
     super.dispose();
@@ -71,6 +120,18 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final theme = Theme.of(context);
     final search = ref.watch(searchProvider);
     final notifier = ref.read(searchProvider.notifier);
+    ref.listen(searchProvider, (previous, next) {
+      if (previous?.query != next.query) _snapshots.clear();
+      if (previous != null && previous.query == next.query) {
+        _snapshots[previous.kind] = previous;
+      }
+      _snapshots[next.kind] = next;
+      if (!_draggingMode && _modeIndex != next.kind.index) {
+        _modeIndex = next.kind.index;
+        _animateMode(_modeIndex);
+      }
+    });
+    _snapshots[search.kind] = search;
 
     return Scaffold(
       body: SafeArea(
@@ -98,125 +159,147 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-              child: CompositedTransformTarget(
-                link: _fieldLink,
-                child: OverlayPortal(
-                  controller: _historyOverlay,
-                  overlayChildBuilder: (context) => Positioned(
-                    left: 0,
-                    top: 0,
-                    child: CompositedTransformFollower(
-                      link: _fieldLink,
-                      showWhenUnlinked: false,
-                      targetAnchor: Alignment.bottomLeft,
-                      offset: const Offset(0, 4),
-                      child: TextFieldTapRegion(
-                        child: SizedBox(
-                          width: MediaQuery.sizeOf(context).width - 32,
-                          child: _SearchHistory(
-                            onSelected: (entry) {
-                              _focus.unfocus();
-                              _historyOverlay.hide();
-                              ref
-                                  .read(searchHistoryProvider.notifier)
-                                  .remember(entry);
-                              context.go(
-                                '${Routes.search}/${TitleRoutes.path(entry.key)}',
-                              );
-                            },
-                          ),
+              child: OverlayPortal(
+                controller: _historyOverlay,
+                overlayChildBuilder: (context) => Positioned(
+                  left: 0,
+                  top: 0,
+                  child: CompositedTransformFollower(
+                    link: _fieldLink,
+                    showWhenUnlinked: false,
+                    targetAnchor: Alignment.bottomLeft,
+                    offset: const Offset(0, 4),
+                    child: TextFieldTapRegion(
+                      child: SizedBox(
+                        width: MediaQuery.sizeOf(context).width - 32,
+                        child: _SearchHistory(
+                          onSelected: (entry) {
+                            _focus.unfocus();
+                            _historyOverlay.hide();
+                            ref
+                                .read(searchHistoryProvider.notifier)
+                                .remember(entry);
+                            context.go(
+                              '${Routes.search}/${TitleRoutes.path(entry.key)}',
+                            );
+                          },
                         ),
                       ),
                     ),
                   ),
-                  child: TextField(
-                    focusNode: _focus,
-                    onTap: _showHistoryOnDiscover,
-                    onTapOutside: (_) {
-                      _focus.unfocus();
-                      _historyOverlay.hide();
-                    },
-                    controller: _controller,
-                    textInputAction: TextInputAction.search,
-                    decoration: InputDecoration(
-                      hintText: search.kind == SearchKind.people
-                          ? l10n.searchPeopleHint
-                          : l10n.searchHint,
-                      prefixIcon: const Icon(Icons.search),
-                      suffixIcon: ListenableBuilder(
-                        listenable: _controller,
-                        builder: (context, _) => _controller.text.isEmpty
-                            ? const SizedBox.shrink()
-                            : IconButton(
-                                icon: const Icon(Icons.close),
-                                tooltip: l10n.searchClear,
-                                onPressed: () {
-                                  _controller.clear();
-                                  notifier.typed('');
-                                  _showHistoryOnDiscover();
-                                },
-                              ),
-                      ),
+                ),
+                child: TextField(
+                  focusNode: _focus,
+                  onTap: _showHistoryOnDiscover,
+                  onTapOutside: (_) {
+                    _focus.unfocus();
+                    _historyOverlay.hide();
+                  },
+                  controller: _controller,
+                  textInputAction: TextInputAction.search,
+                  decoration: InputDecoration(
+                    hintText: search.kind == SearchKind.people
+                        ? l10n.searchPeopleHint
+                        : l10n.searchHint,
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: ListenableBuilder(
+                      listenable: _controller,
+                      builder: (context, _) => _controller.text.isEmpty
+                          ? const SizedBox.shrink()
+                          : IconButton(
+                              icon: const Icon(Icons.close),
+                              tooltip: l10n.searchClear,
+                              onPressed: () {
+                                _controller.clear();
+                                notifier.typed('');
+                                _historyOverlay.hide();
+                              },
+                            ),
                     ),
-                    onChanged: (text) {
-                      _historyOverlay.hide();
-                      notifier.typed(text);
-                    },
-                    onSubmitted: (query) {
-                      _historyOverlay.hide();
-                      notifier.submit(query);
-                    },
                   ),
+                  onChanged: (text) {
+                    _historyOverlay.hide();
+                    notifier.typed(text);
+                  },
+                  onSubmitted: (query) {
+                    _historyOverlay.hide();
+                    notifier.submit(query);
+                  },
                 ),
               ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 4,
-                children: [
-                  for (final kind in SearchKind.values)
-                    ChoiceChip(
-                      label: Text(
-                        kind == SearchKind.titles
-                            ? l10n.searchTitles
-                            : l10n.searchPeople,
-                      ),
-                      selected: search.kind == kind,
-                      onSelected: (_) {
-                        _focus.unfocus();
-                        _historyOverlay.hide();
-                        notifier.selectKind(kind);
-                      },
-                    ),
-                ],
+              child: CompositedTransformTarget(
+                link: _fieldLink,
+                child: SearchModeSwitcher(
+                  position: _modePosition,
+                  selectedIndex: search.kind.index,
+                  labels: [l10n.searchTitles, l10n.searchPeople],
+                  onSelected: _selectMode,
+                  onDragStart: () {
+                    _focus.unfocus();
+                    _historyOverlay.hide();
+                    _dragOrigin = ref.read(searchProvider).kind;
+                    _draggingMode = true;
+                    _modePosition.stop();
+                  },
+                  onDragUpdate: (delta) {
+                    _modePosition.value = (_modePosition.value + delta).clamp(
+                      0.0,
+                      1.0,
+                    );
+                    _modeIndex = _modePosition.value.round();
+                    notifier.selectKind(SearchKind.values[_modeIndex]);
+                  },
+                  onDragEnd: (velocity) => _selectMode(
+                    (_modePosition.value +
+                            (velocity.abs() > 2 ? velocity.sign * 0.35 : 0))
+                        .round()
+                        .clamp(0, 1),
+                  ),
+                  onDragCancel: () {
+                    if (_draggingMode) _selectMode(_dragOrigin.index);
+                  },
+                ),
               ),
             ),
             Expanded(
-              child: switch (search) {
-                SearchState(query: '', kind: SearchKind.people) =>
-                  const PeopleShelves(),
-                SearchState(query: '') => const Shelves(),
-                SearchState(isEmpty: true, loading: true) => const Center(
-                  child: CircularProgressIndicator(),
-                ),
-                SearchState(isEmpty: true, :final failure?) => FailureView(
-                  error: SourceException(failure),
-                  onRetry: notifier.retry,
-                ),
-                SearchState(isEmpty: true, hasMore: false) => _Message(
-                  icon: Icons.search_off,
-                  text: l10n.searchNothing(search.query),
-                ),
-                _ => _Results(search: search),
-              },
+              child: SearchModePages(
+                position: _modePosition,
+                selectedIndex: search.kind.index,
+                children: [
+                  for (final kind in SearchKind.values)
+                    _content(_snapshot(kind, search), l10n, notifier),
+                ],
+              ),
             ),
           ],
         ),
       ),
     );
   }
+
+  Widget _content(
+    SearchState search,
+    AppLocalizations l10n,
+    SearchNotifier notifier,
+  ) => switch (search) {
+    SearchState(query: '', kind: SearchKind.people) => const PeopleShelves(),
+    SearchState(query: '') => const Shelves(),
+    SearchState(isEmpty: true, loading: true) => const Center(
+      child: CircularProgressIndicator(),
+    ),
+    SearchState(isEmpty: true, :final failure?) => FailureView(
+      error: SourceException(failure),
+      onRetry: notifier.retry,
+    ),
+    SearchState(isEmpty: true, hasMore: false) => _Message(
+      icon: Icons.search_off,
+      text: l10n.searchNothing(search.query),
+    ),
+    _ => _Results(search: search),
+  };
 }
 
 class _Results extends ConsumerWidget {
@@ -280,7 +363,13 @@ class _Tail extends ConsumerWidget {
     }
     // The end is reached, so load the next page — after the frame, since state
     // can't change during build.
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifier.loadMore());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!context.mounted) return;
+      final active = ref.read(searchProvider);
+      if (active.kind == search.kind && active.query == search.query) {
+        notifier.loadMore();
+      }
+    });
     return const Padding(
       padding: EdgeInsets.all(16),
       child: Center(child: CircularProgressIndicator()),

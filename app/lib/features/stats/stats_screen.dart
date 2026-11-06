@@ -263,7 +263,12 @@ class _StatsBody extends ConsumerWidget {
           ),
         ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            0,
+            16,
+            24 + MediaQuery.paddingOf(context).bottom,
+          ),
           sliver: SliverToBoxAdapter(child: PeopleLoadStatus(index: index)),
         ),
       ],

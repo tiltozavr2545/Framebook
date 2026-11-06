@@ -95,6 +95,28 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsTheme => 'Тема';
 
   @override
+  String get settingsNavigationStyle => 'Нижняя панель';
+
+  @override
+  String get navigationFloating => 'Плавающая';
+
+  @override
+  String get navigationClassic => 'Классическая';
+
+  @override
+  String get peopleInFavorites => 'В избранном';
+
+  @override
+  String peopleFavoriteAdded(String name) {
+    return 'В избранное: $name';
+  }
+
+  @override
+  String peopleFavoriteRemoved(String name) {
+    return 'Больше не в избранном: $name';
+  }
+
+  @override
   String get languageSystem => 'Как в системе';
 
   @override
@@ -215,7 +237,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get retry => 'Повторить';
 
   @override
-  String get searchTitles => 'Фильмы и сериалы';
+  String get searchTitles => 'Фильмы';
 
   @override
   String get searchPeople => 'Люди';

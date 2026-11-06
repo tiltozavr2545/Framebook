@@ -8,7 +8,7 @@ A project for myself and a couple of friends. The original idea and the decision
 
 ## Status
 
-In development, version 0.8.5 — the MVP is complete. Working: Discover
+In development, version 0.9.0 — the MVP is complete. Working: Discover
 with title and people search and shelves, film and series cards down to single episodes with
 cast and crew and ratings from Kinopoisk, IMDb, Rotten Tomatoes, Metacritic
 and TMDB, people with filmographies filtered by their jobs; your own ratings with notes on a

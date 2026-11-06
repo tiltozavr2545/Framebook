@@ -63,6 +63,19 @@ class _PersonScreenState extends ConsumerState<PersonScreen> {
             : groups[role] ?? const <PersonCredit>[];
         return [
           _Header(person: person),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Center(
+              child: FavoritePersonButton(
+                prominent: true,
+                person: PersonSummary(
+                  id: person.id,
+                  name: person.name,
+                  profilePath: person.profilePath,
+                ),
+              ),
+            ),
+          ),
           if (person.biography case final bio? when bio.trim().isNotEmpty)
             _Biography(text: bio.trim()),
           SectionTitle(l10n.personFilmography),
@@ -114,59 +127,75 @@ class _Header extends StatelessWidget {
     );
     final born = context.formatDate(person.birthday);
     final died = context.formatDate(person.deathday);
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Semantics(
-          button: person.profilePath != null,
-          label: person.profilePath != null ? l10n.photoOpen : null,
-          child: InkWell(
-            key: const ValueKey('person-photo'),
-            onTap: person.profilePath == null
-                ? null
-                : () => Navigator.of(context).push(
-                    coverViewerRoute(
-                      (_) => CoverViewer(
-                        currentPath: person.profilePath!,
-                        personId: person.id,
-                        previewSize: ImageSize.w185,
-                      ),
-                    ),
-                  ),
-            child: Poster(
-              person.profilePath,
-              size: ImageSize.w185,
-              width: 120,
-              icon: Icons.person_outline,
+    final scheme = theme.colorScheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: scheme.primary.withValues(alpha: 0.65)),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.alphaBlend(
+              scheme.primary.withValues(
+                alpha: theme.brightness == Brightness.dark ? 0.38 : 0.24,
+              ),
+              scheme.surface,
             ),
-          ),
+            scheme.surface,
+          ],
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(person.name, style: theme.textTheme.headlineMedium),
-              FavoritePersonButton(
-                person: PersonSummary(
-                  id: person.id,
-                  name: person.name,
-                  profilePath: person.profilePath,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Semantics(
+              button: person.profilePath != null,
+              label: person.profilePath != null ? l10n.photoOpen : null,
+              child: InkWell(
+                key: const ValueKey('person-photo'),
+                onTap: person.profilePath == null
+                    ? null
+                    : () => Navigator.of(context).push(
+                        coverViewerRoute(
+                          (_) => CoverViewer(
+                            currentPath: person.profilePath!,
+                            personId: person.id,
+                            previewSize: ImageSize.w185,
+                          ),
+                        ),
+                      ),
+                child: Poster(
+                  person.profilePath,
+                  size: ImageSize.w185,
+                  width: 120,
+                  icon: Icons.person_outline,
                 ),
               ),
-              const SizedBox(height: 8),
-              if (born != null)
-                Text(
-                  person.placeOfBirth == null
-                      ? l10n.personBorn(born)
-                      : l10n.personBornIn(born, person.placeOfBirth!),
-                  style: muted,
-                ),
-              if (died != null) Text(l10n.personDied(died), style: muted),
-            ],
-          ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(person.name, style: theme.textTheme.headlineMedium),
+                  const SizedBox(height: 8),
+                  if (born != null)
+                    Text(
+                      person.placeOfBirth == null
+                          ? l10n.personBorn(born)
+                          : l10n.personBornIn(born, person.placeOfBirth!),
+                      style: muted,
+                    ),
+                  if (died != null) Text(l10n.personDied(died), style: muted),
+                ],
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

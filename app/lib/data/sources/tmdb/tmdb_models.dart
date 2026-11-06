@@ -236,7 +236,7 @@ final class TvDetails {
       imdbId: _imdb(json.object('external_ids')?.string('imdb_id')),
       vote: TmdbVote.fromJson(json),
       credits: Credits.fromJson(
-        json.object('credits'),
+        json.object('aggregate_credits') ?? json.object('credits'),
         createdBy: json.objects('created_by'),
       ),
     );
@@ -360,7 +360,9 @@ final class SeasonDetails {
             parsed,
       ],
       vote: TmdbVote.fromJson(json),
-      credits: Credits.fromJson(json.object('credits')),
+      credits: Credits.fromJson(
+        json.object('aggregate_credits') ?? json.object('credits'),
+      ),
     );
   }
 

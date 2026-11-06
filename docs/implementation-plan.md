@@ -21,6 +21,33 @@ are settled before anything is built on top of them.
 - [x] Stage 6.5 — Required items from the postponed list (0.7.0; item 5 postponed)
 - [ ] Stage 7 — Code review, optimization, a second review
 
+## 0.9.0 — Navigation and people browsing
+
+Version: `0.9.0+20`. Follow-up scope agreed on 2026-11-06.
+
+- [x] Clear search without opening the recent-title dropdown.
+- [x] Aggregate series/season credits; keep a 20-person card preview and open
+  a separate complete cast list from its heading.
+- [x] Static violet person header and centered favourite button; shelf-only
+  double-tap favourites, transient heart feedback and translucent saved badge.
+- [x] Floating navigation in the existing colour, draggable glass selection
+  and synchronized page movement; extend the page behind its transparent
+  margins and pad list endings above the capsule. Remove Material press effects.
+- [x] Persist the classic-navigation option in Settings.
+- [x] Add an inset Films / People slider matching the search field's width
+  and minimum height, sharing the navigation glass and moving content on drag.
+  Preserve the query and shelf scroll positions across mode switches.
+- [x] Build and install the release-signed update over `0.8.5+19`, preserving
+  application data. Android reports `0.9.0+20`; the certificate matches the
+  existing release key. Manual acceptance testing remains with the author,
+  as requested after installation.
+- [x] Complete automated validation: code generation, formatting, analysis and
+  version checks pass. The full suite passed 539 tests (20 opt-in renderers
+  skipped). Two focused search-mode scenarios also passed after finalizing
+  the history anchor and programmatic mode synchronization. Coverage includes
+  selector geometry, dragging with a shared query, retained shelf scroll
+  positions, full-cast navigation and last-row clearance above the bottom bar.
+
 ## 0.8.5 — Library insights, favourite people and recommendations
 
 Version: `0.8.5+19`. Scope agreed on 2026-11-06.

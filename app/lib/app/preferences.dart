@@ -13,6 +13,26 @@ final sharedPreferencesProvider = Provider<SharedPreferences>(
 const _themeModeKey = 'theme_mode';
 const _localeKey = 'locale';
 
+/// Device-local presentation preference, excluded from account synchronization.
+class FloatingNavigationNotifier extends Notifier<bool> {
+  @override
+  bool build() =>
+      ref.watch(sharedPreferencesProvider).getBool('floating_navigation') ??
+      true;
+
+  Future<void> set(bool enabled) async {
+    state = enabled;
+    await ref
+        .read(sharedPreferencesProvider)
+        .setBool('floating_navigation', enabled);
+  }
+}
+
+final floatingNavigationProvider =
+    NotifierProvider<FloatingNavigationNotifier, bool>(
+      FloatingNavigationNotifier.new,
+    );
+
 class ThemeModeNotifier extends Notifier<ThemeMode> {
   @override
   ThemeMode build() {

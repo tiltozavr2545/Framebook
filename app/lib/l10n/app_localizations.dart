@@ -260,6 +260,42 @@ abstract class AppLocalizations {
   /// **'Theme'**
   String get settingsTheme;
 
+  /// No description provided for @settingsNavigationStyle.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigation bar'**
+  String get settingsNavigationStyle;
+
+  /// No description provided for @navigationFloating.
+  ///
+  /// In en, this message translates to:
+  /// **'Floating'**
+  String get navigationFloating;
+
+  /// No description provided for @navigationClassic.
+  ///
+  /// In en, this message translates to:
+  /// **'Classic'**
+  String get navigationClassic;
+
+  /// No description provided for @peopleInFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'In favourites'**
+  String get peopleInFavorites;
+
+  /// No description provided for @peopleFavoriteAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} added to favourites'**
+  String peopleFavoriteAdded(String name);
+
+  /// No description provided for @peopleFavoriteRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} removed from favourites'**
+  String peopleFavoriteRemoved(String name);
+
   /// No description provided for @languageSystem.
   ///
   /// In en, this message translates to:
@@ -485,7 +521,7 @@ abstract class AppLocalizations {
   /// No description provided for @searchTitles.
   ///
   /// In en, this message translates to:
-  /// **'Films and series'**
+  /// **'Films'**
   String get searchTitles;
 
   /// No description provided for @searchPeople.

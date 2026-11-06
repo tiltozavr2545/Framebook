@@ -33,6 +33,29 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const Divider(),
           ListTile(
+            leading: const Icon(Icons.view_day_outlined),
+            title: Text(l10n.settingsNavigationStyle),
+            trailing: DropdownButton<bool>(
+              value: ref.watch(floatingNavigationProvider),
+              underline: const SizedBox.shrink(),
+              onChanged: (floating) {
+                if (floating != null) {
+                  ref.read(floatingNavigationProvider.notifier).set(floating);
+                }
+              },
+              items: [
+                DropdownMenuItem(
+                  value: true,
+                  child: Text(l10n.navigationFloating),
+                ),
+                DropdownMenuItem(
+                  value: false,
+                  child: Text(l10n.navigationClassic),
+                ),
+              ],
+            ),
+          ),
+          ListTile(
             leading: const Icon(Icons.language),
             title: Text(l10n.settingsLanguage),
             trailing: DropdownButton<String>(

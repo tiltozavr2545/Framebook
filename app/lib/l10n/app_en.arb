@@ -36,6 +36,14 @@
   "settingsSources": "Sources and API keys",
   "settingsLanguage": "Language",
   "settingsTheme": "Theme",
+  "settingsNavigationStyle": "Navigation bar",
+  "navigationFloating": "Floating",
+  "navigationClassic": "Classic",
+  "peopleInFavorites": "In favourites",
+  "peopleFavoriteAdded": "{name} added to favourites",
+  "@peopleFavoriteAdded": {"placeholders": {"name": {"type": "String"}}},
+  "peopleFavoriteRemoved": "{name} removed from favourites",
+  "@peopleFavoriteRemoved": {"placeholders": {"name": {"type": "String"}}},
   "languageSystem": "System",
   "languageEnglish": "English",
   "languageRussian": "Русский",
@@ -78,7 +86,7 @@
 
   "retry": "Try again",
 
-  "searchTitles": "Films and series",
+  "searchTitles": "Films",
   "searchPeople": "People",
   "searchPeopleHint": "Actor, director, filmmaker",
   "filmographyActing": "Acting",

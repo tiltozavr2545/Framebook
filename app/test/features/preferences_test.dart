@@ -9,6 +9,23 @@ import 'package:framebook/data/work_key.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  test(
+    'floating navigation defaults on and classic choice survives restart',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final preferences = await SharedPreferences.getInstance();
+      ProviderContainer create() => ProviderContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(preferences)],
+      );
+      final first = create();
+      expect(first.read(floatingNavigationProvider), isTrue);
+      await first.read(floatingNavigationProvider.notifier).set(false);
+      first.dispose();
+      final restarted = create();
+      addTearDown(restarted.dispose);
+      expect(restarted.read(floatingNavigationProvider), isFalse);
+    },
+  );
   TestWidgetsFlutterBinding.ensureInitialized();
 
   Future<SharedPreferences> prefs(Map<String, Object> values) async {
