@@ -166,6 +166,46 @@ void main() {
 
   group('a pass', () {
     test(
+      'missing lookup IDs neither consume budget nor add pacing waits',
+      () async {
+        await library.rate(
+          [
+            const WorkSnapshot(
+              key: WorkKey.movie(7),
+              tmdbId: 7,
+              title: 'No ID',
+            ),
+          ],
+          scoreHalf: 14,
+          note: null,
+        );
+        expect(await run(service(poiskkino: false)), 0);
+        expect(http.requests, isEmpty);
+        expect(await db.budgetUsed(ApiSource.omdb, day), 0);
+        expect(
+          (await db.externalRatingsFor('tmdb:movie:7')).map((r) => r.status),
+          everyElement(RatingStatus.notFound),
+        );
+      },
+    );
+
+    test(
+      'cancellation during a source prevents the next source request',
+      () async {
+        await library.rate([matrix], scoreHalf: 16, note: null);
+        var cancelled = false;
+        serve((request) {
+          cancelled = true;
+          return apiFixtures(request);
+        });
+        expect(await run(service(), cancelled: () => cancelled), 0);
+        expect(http.requests, hasLength(1));
+        expect(http.requests.single.uri.host, 'api.poiskkino.dev');
+        expect(await db.budgetUsed(ApiSource.omdb, day), 0);
+      },
+    );
+
+    test(
       'fills the ratings, leaves TMDB alone, pauses after requests',
       () async {
         await library.rate([matrix], scoreHalf: 17, note: null);

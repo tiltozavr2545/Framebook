@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:drift/native.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,7 +17,89 @@ import 'package:framebook/data/work_key.dart';
 import '../support/api_fixtures.dart';
 import '../support/fake_http.dart';
 
+class _PendingOmdb implements OmdbApi {
+  final requested = Completer<void>();
+  final result = Completer<OmdbRatings?>();
+
+  @override
+  Future<OmdbRatings?> byImdbId(String id) {
+    requested.complete();
+    return result.future;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 void main() {
+  for (final rebuild in [false, true]) {
+    testWidgets(
+      rebuild
+          ? 'a replaced service leaves no timer after its active pass completes'
+          : 'disposal during an active pass leaves no timer',
+      (tester) async {
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+        final db = AppDatabase(NativeDatabase.memory());
+        final api = _PendingOmdb();
+        await tester.runAsync(
+          () => Library(db, deviceId: 'test').rate(
+            [
+              const WorkSnapshot(
+                key: WorkKey.movie(1),
+                tmdbId: 1,
+                title: 'Film',
+                imdbId: 'tt1',
+              ),
+            ],
+            scoreHalf: 16,
+            note: null,
+          ),
+        );
+        final service = RatingsService(db, omdb: api);
+        final container = ProviderContainer(
+          overrides: [
+            databaseProvider.overrideWithValue(db),
+            ratingsServiceProvider.overrideWithValue(service),
+          ],
+        );
+        container.listen(backgroundRefreshProvider, (_, _) {});
+        await tester.pump(BackgroundRefreshNotifier.startDelay);
+        for (var i = 0; i < 100 && !api.requested.isCompleted; i++) {
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 10)),
+          );
+          await tester.pump();
+        }
+        expect(api.requested.isCompleted, isTrue);
+        if (rebuild) {
+          container.updateOverrides([
+            databaseProvider.overrideWithValue(db),
+            ratingsServiceProvider.overrideWithValue(RatingsService(db)),
+          ]);
+          await tester.pump();
+        } else {
+          container.dispose();
+        }
+        api.result.complete(null);
+        // Let fake-zone continuations and real SQLite IO both finish.
+        for (var i = 0; i < 20; i++) {
+          await tester.pump();
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 10)),
+          );
+        }
+        await tester.pump();
+        if (rebuild) container.dispose();
+        await tester.pump();
+        // Do not advance half an hour: the test must detect a retained timer.
+        expect(tester.binding.transientCallbackCount, 0);
+        await tester.runAsync(db.close);
+      },
+    );
+  }
+
   for (final resume in [true, false]) {
     testWidgets(
       resume

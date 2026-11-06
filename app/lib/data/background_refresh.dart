@@ -38,6 +38,7 @@ final class BackgroundRefresh {
               innerJoin(
                 _db.ratings,
                 _db.ratings.workKey.equalsExp(_db.works.workKey),
+                useColumns: false,
               ),
             ])..where(_db.ratings.deletedAt.isNull()))
             .map((row) => row.readTable(_db.works))
@@ -45,18 +46,28 @@ final class BackgroundRefresh {
     if (rated.isEmpty) return const [];
 
     // A season or an episode is looked up by its series' imdb id.
-    final series = {
-      for (final work in await (_db.select(
-        _db.works,
-      )..where((w) => w.kind.equalsValue(WorkKind.tv))).get())
-        work.workKey: work,
-    };
+    final seriesKeys = {
+      for (final work in rated)
+        if (work.kind == WorkKind.season || work.kind == WorkKind.episode)
+          WorkKey.tv(WorkKey.parse(work.workKey).tmdbId).toString(),
+    }.toList();
+    final series = <String, Work>{};
+    for (var offset = 0; offset < seriesKeys.length; offset += 400) {
+      for (final work
+          in await (_db.select(_db.works)..where(
+                (w) => w.workKey.isIn(seriesKeys.skip(offset).take(400)),
+              ))
+              .get()) {
+        series[work.workKey] = work;
+      }
+    }
     final rows = <String, List<ExternalRating>>{};
     for (final row
         in await (_db.select(_db.externalRatings).join([
               innerJoin(
                 _db.ratings,
                 _db.ratings.workKey.equalsExp(_db.externalRatings.workKey),
+                useColumns: false,
               ),
             ])..where(_db.ratings.deletedAt.isNull()))
             .map((row) => row.readTable(_db.externalRatings))
@@ -104,9 +115,8 @@ final class BackgroundRefresh {
       final outcomes = await _service.refresh(
         target,
         background: true,
-        onDone: (api, failure) {
-          if (failure != SourceFailure.limitReached) requested = true;
-        },
+        cancelled: cancelled,
+        onRequest: (_) => requested = true,
       );
       if (outcomes.values.contains(SourceFailure.offline)) return;
       for (final MapEntry(key: api, value: failure) in outcomes.entries) {
@@ -132,16 +142,15 @@ class BackgroundRefreshNotifier extends Notifier<bool> {
   @override
   bool build() {
     if (!ref.watch(backgroundRefreshEnabledProvider)) return false;
-    final refresh = BackgroundRefresh(
-      ref.watch(databaseProvider),
-      ref.watch(ratingsServiceProvider),
-    );
+    final service = ref.watch(ratingsServiceProvider);
+    if (service.budgetedSources.isEmpty) return false;
+    final refresh = BackgroundRefresh(ref.watch(databaseProvider), service);
     final sleeper = _Sleeper();
     var foreground = _isForeground(WidgetsBinding.instance.lifecycleState);
     final lifecycle = AppLifecycleListener(
       onStateChange: (state) {
         foreground = _isForeground(state);
-        if (foreground) sleeper.wake();
+        sleeper.wake();
       },
     );
     var cancelled = false;
@@ -160,11 +169,11 @@ class BackgroundRefreshNotifier extends Notifier<bool> {
     bool Function() cancelled,
     bool Function() foreground,
   ) async {
-    await sleeper.sleep(startDelay);
+    await sleeper.sleep(foreground() ? startDelay : null);
     while (!cancelled()) {
       if (!foreground()) {
         // Woken by the app coming back.
-        await sleeper.sleep(interval);
+        await sleeper.sleep();
         continue;
       }
       state = true;
@@ -176,7 +185,8 @@ class BackgroundRefreshNotifier extends Notifier<bool> {
       } finally {
         if (!cancelled()) state = false;
       }
-      await sleeper.sleep(interval);
+      if (cancelled()) return;
+      if (foreground()) await sleeper.sleep(interval);
     }
   }
 
@@ -195,10 +205,10 @@ final class _Sleeper {
   Completer<void>? _waiting;
   Timer? _timer;
 
-  Future<void> sleep(Duration duration) {
+  Future<void> sleep([Duration? duration]) {
     wake();
     final waiting = _waiting = Completer<void>();
-    _timer = Timer(duration, wake);
+    if (duration != null) _timer = Timer(duration, wake);
     return waiting.future;
   }
 

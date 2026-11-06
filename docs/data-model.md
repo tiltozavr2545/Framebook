@@ -147,7 +147,11 @@ Invariants:
   Otherwise the offline list can't show "Game of Thrones · S1E3".
 - The snapshot is refreshed when the card is opened. Saved titles are also
   refreshed in the selected content language at startup, on language changes,
-  after sync and on resume, using the evictable TMDB response cache. Offline
+  after sync and on resume, using the evictable TMDB response cache. Since
+  0.8.4, unchanged successful titles reuse their result for up to 24 hours
+  within the current language/key generation; changed snapshots and failures
+  are reconsidered on the next trigger. Work requires a TMDB key and a resumed
+  app, and only live keys and their ancestor snapshots are read. Offline
   snapshots remain available until a refresh succeeds. A translated season or
   episode is not adopted when its TMDB id indicates a pending renumbering.
   A content-language refresh changes only the device's local `title`; it does

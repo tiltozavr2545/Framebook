@@ -84,26 +84,32 @@ final class SyncStore {
       purgedBefore: await _purgedBefore(),
       ratingDeletions: await _deletions(ratingDeletionsKey),
       watchlistDeletions: await _deletions(watchlistDeletionsKey),
-      watchlistFences: mergeStates(
-        SyncState(watchlistFences: await fences()),
-        SyncState(
-          watchlistFences: [
-            for (final row in watchlist)
-              if (row.deletedAt == null)
-                if (WorkKey.tryParse(row.workKey) case final key?
-                    when key.kind == WorkKind.tv || key.kind == WorkKind.season)
-                  WatchlistFence(
-                    seriesKey: (key.kind == WorkKind.tv ? key : key.parent!)
-                        .toString(),
-                    season: key.kind == WorkKind.season,
-                    updatedAt: row.updatedAt,
-                    updatedBy: row.updatedBy,
-                  ),
-          ],
-        ),
-      ).watchlistFences,
+      watchlistFences: await effectiveFences(watchlist),
     );
   });
+
+  /// Persisted selection fences plus those implied by older live rows.
+  /// Shared by sync and watchlist reads, without loading the rating library.
+  Future<List<WatchlistFence>> effectiveFences(
+    List<WatchlistEntry> watchlist,
+  ) async => mergeStates(
+    SyncState(watchlistFences: await fences()),
+    SyncState(
+      watchlistFences: [
+        for (final row in watchlist)
+          if (row.deletedAt == null)
+            if (WorkKey.tryParse(row.workKey) case final key?
+                when key.kind == WorkKind.tv || key.kind == WorkKind.season)
+              WatchlistFence(
+                seriesKey: (key.kind == WorkKind.tv ? key : key.parent!)
+                    .toString(),
+                season: key.kind == WorkKind.season,
+                updatedAt: row.updatedAt,
+                updatedBy: row.updatedBy,
+              ),
+      ],
+    ),
+  ).watchlistFences;
 
   /// Applies the per-key register merge in a transaction. When [guard] is
   /// set, the reviewed fingerprint is checked in that same transaction.

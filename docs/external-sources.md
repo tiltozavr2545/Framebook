@@ -271,6 +271,13 @@ is in the foreground; three seconds between titles that cost a request. The
 TTL is the background one (14 days for a value), and TMDB is left as is —
 without a card there is no TMDB vote to record. A pass ends when the network
 is gone, or once every source with a key has spent its background share.
+Since 0.8.4, a paused app waits for a lifecycle signal without a periodic
+timer, and disposal during a request cannot schedule another pass. No timer
+is created without budgeted source keys. Cancellation is checked between
+sources; a lookup already in flight can finish, including shared card work.
+Pacing records actual lookups after acquiring budget, so local missing-ID
+results and joins to an existing request add no extra delay. The queue does
+not select rating notes or unrelated series snapshots.
 
 A "limit reached" answer from the service itself caps the rest of the day at
 once, whatever the counter says.

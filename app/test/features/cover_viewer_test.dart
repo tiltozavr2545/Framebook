@@ -39,6 +39,53 @@ Future<ui.Image> _raster(int width, int height) async {
 }
 
 void main() {
+  testWidgets(
+    'large covers decode within zoom and memory bounds without stretching',
+    (tester) async {
+      final resized =
+          boundedCoverImage(
+                MemoryImage(transparentPng),
+                const Size(1440, 3200),
+                3,
+              )
+              as ResizeImage;
+      expect(resized.width, 4096);
+      expect(resized.height, 4096);
+      expect(resized.allowUpscaling, isFalse);
+      final image = (await tester.runAsync(() => _raster(1000, 2000)))!;
+      final bytes = (await tester.runAsync(
+        () => image.toByteData(format: ui.ImageByteFormat.png),
+      ))!;
+      image.dispose();
+      final provider = boundedCoverImage(
+        MemoryImage(bytes.buffer.asUint8List()),
+        const Size(100, 100),
+        1,
+      );
+      final completer = Completer<ImageInfo>();
+      final stream = provider.resolve(ImageConfiguration.empty);
+      final listener = ImageStreamListener(
+        (info, _) => completer.complete(info),
+        onError: completer.completeError,
+      );
+      stream.addListener(listener);
+      for (var i = 0; i < 100 && !completer.isCompleted; i++) {
+        await tester.pump();
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 10)),
+        );
+      }
+      expect(completer.isCompleted, isTrue);
+      final info = await completer.future;
+      expect(info.image.width, 200);
+      expect(info.image.height, 400);
+      info.dispose();
+      stream.removeListener(listener);
+      PaintingBinding.instance.imageCache.clear();
+      PaintingBinding.instance.imageCache.clearLiveImages();
+    },
+  );
+
   testWidgets('full-screen route fades without scaling the image', (
     tester,
   ) async {
@@ -150,7 +197,10 @@ void main() {
         large.frame.complete(ImageInfo(image: largeRaster));
         await tester.pumpAndSettle();
         final bigImage = find.byWidgetPredicate(
-          (widget) => widget is Image && identical(widget.image, large),
+          (widget) =>
+              widget is Image &&
+              widget.image is ResizeImage &&
+              identical((widget.image as ResizeImage).imageProvider, large),
         );
         expect(tester.getSize(bigImage), viewport);
         expect(

@@ -1,18 +1,72 @@
-# Framebook 0.8.3 optimization investigation
+# Framebook 0.8.4 optimization
 
-Target: **0.8.3+17**. This document separates measured results from candidates.
-The completed correctness review is in
-[reviews/2026-11-05/README.md](reviews/2026-11-05/README.md).
+Target: **0.8.4+18**. This records the implemented follow-up to the
+[0.8.3 correctness review](reviews/2026-11-05/README.md), the measurements,
+and the limits of those measurements. No schema or sync-format change is needed.
 
-## Baselines
+## Completed work
 
-The baseline universal release APK contains the November 5 review repairs and
-still carries the preceding `0.8.2+16` metadata. It is 66,875,214 bytes
-(66.9 MB). Measurements below are local Intel-host results, not device energy
-or frame-time measurements. No diagnostic build was installed or published.
-The normal universal build was then repeated with `0.8.3+17`; its APK has
-the same byte size. Android manifest inspection confirms versionName 0.8.3
-and versionCode 17.
+- **Selective watchlist reads.** The stream joins live watchlist rows with
+  their snapshots. It reads only the keys of relevant live season ratings,
+  the required series snapshots and selection fences. It never loads rating
+  notes, unrelated snapshots or deletion registers. Reads remain transactional;
+  batches stay below SQLite parameter limits. Persisted and legacy derived
+  fences use the same helper as sync. Fences are grouped by series before
+  filtering. Regression coverage compares the old full-state result against
+  the selective reader across 450 series, 900 seasons, live/deleted ratings,
+  tombstones and conflicting offline selections.
+- **Localized-title reuse.** Successful results are remembered for up to
+  24 hours in the current language/key generation. Resume and sync still check
+  saved snapshot identities, but unchanged titles do not reread and parse
+  cached TMDB cards. Changed/imported snapshots and newly saved titles refresh;
+  failures retry on resume. Key or language changes invalidate the generation.
+  Only live keys and required snapshots are loaded, without rating notes or
+  sync registers. Groups are built in one pass. Work requires a TMDB key and
+  stops between requests while the app is not resumed; an in-flight result
+  cannot update titles while backgrounded or after disposal. Renumbered-part
+  identity checks and rating timestamps are preserved.
+- **Foreground scheduling.** Background ratings refresh waits for a lifecycle
+  signal while paused instead of creating half-hour wakeup timers. Disposal
+  and key changes prevent an old in-flight pass from scheduling its next timer.
+  Losing foreground status interrupts pacing waits. Cancellation is checked
+  between sources as well as between titles. Pacing now uses an actual-lookup
+  callback: a missing IMDb ID, an exhausted local budget or a shared in-flight
+  request does not create an extra three-second delay. Queue joins avoid
+  selecting rating notes, only required series ancestors are read, and no
+  refresh timer is created without source keys. Source quotas, the foreground
+  interval and the initial foreground delay remain in place.
+- **Image memory.** Full-screen photos and stills decode to the physical
+  viewport at up to fourfold zoom, capped at 4,096 pixels on each side
+  (at most 64 MiB of RGBA per decoded image). Aspect ratio is retained and small
+  images are not upscaled. Offline viewing and paging/zoom gestures remain
+  available. Original downloads remain in the normal disk cache; the cap
+  controls decoded memory, not transfer size. This is a per-image bound,
+  not a cap on the entire Flutter image cache or process.
+- **Poster colours.** A container-scoped LRU retains up to 128 successful
+  colours, keyed by the resolved image URL. Reopening a card avoids another
+  RGBA readback. Neither decoded images nor failures are retained by this
+  cache; failed/offline loads remain retryable.
+- **Smaller universal APK.** Release and compile-check targets use
+  `--split-debug-info=build/symbols/<version+build>` without obfuscation.
+  ARM32, ARM64 and x86-64 remain included. The release workflow requires all
+  three symbol files and publishes them in `framebook-<version>-symbols.zip`
+  beside the APK, so crash decoding does not depend on expiring CI artifacts.
+  See [operations.md](operations.md#android-symbols) for symbolization.
+- **Unused dependencies.** Removed the direct `cupertino_icons`,
+  `json_serializable` and `json_annotation` declarations and the unused
+  generator's `source_helper`. Other resolved versions stay unchanged;
+  `json_annotation` remains a required transitive development dependency.
+- **Sync hashing (shipped in 0.8.3).** Compare timestamps, writers and deletion
+  status before hashing payloads. Merge ordering and format 4 are unchanged.
+
+## Measurements
+
+Measurements are synthetic Intel-host results, not physical-device battery
+or frame-time measurements. They demonstrate avoided work, not a tenfold
+speedup of the whole application or a measured battery-life improvement.
+
+The 0.8.3 universal release APK is **66,875,214 bytes**. Native libraries
+account for 96.7% of the archive:
 
 | APK contents | Stored bytes, all included architectures |
 |---|---:|
@@ -23,132 +77,72 @@ and versionCode 17.
 | Seven application fonts | 424,033 |
 | TMDB logo | 133,797 |
 
-Native libraries account for 96.7% of this universal archive. This includes
-framework/runtime code, not just Framebook source. The optional ARM64
-size-analysis build is 27.2 MB; dependency libraries for other ABIs can still
-be present in this diagnostic APK. It is not the universal distribution.
+The preliminary same-source split-debug-info build was **62,664,526 bytes**,
+a reduction of 4,210,688 bytes (6.3%). The final **0.8.4+18** universal
+compile-check APK is **62,663,440 bytes** (62.7 MB), saving
+4,211,774 bytes (6.3%) against 0.8.3. All three ABIs and matching symbol
+files were verified. The manifest reports versionName 0.8.4 and versionCode 18.
 
-Flutter's ARM64 AOT summary attributes about 3 MB to Flutter, 823 KB to
-Framebook, 223 KB to framework localizations, 207 KB to Drift, 119 KB to
-fl_chart, 62 KB to googleapis and 60 KB to cryptography. These are attributed
-snapshot sizes, not predictions of APK savings from removing a dependency.
-The raw analysis is a local DevTools artifact, outside the repository.
+On the optional merge benchmark, median `mergeStates` plus `remoteBehind`
+fell from 612,628 to 321,345 microseconds, about 48%. The fixture contains
+6,000 snapshots, 3,000 ratings with 512-character notes and 3,000 watchlist
+entries. Existing merge algebra/convergence tests pass.
 
-## Measured work and prioritized candidates
+The initial watchlist investigation measured 99,464 microseconds for the
+full-state reader and 10,290 microseconds for a movie-only joined-query
+prototype. The committed benchmark now compares the actual selective reader
+with the former full-state approach over 3,000 ratings with long notes and
+50 watchlisted films. Its measured median was **10,278 microseconds** for
+the selective reader versus **69,238 microseconds** for the full-state
+baseline (about 85% less elapsed time in this fixture). Season semantics are
+separately covered by regressions.
 
-### Implemented: avoid unnecessary sync payload hashes
+Localized-title tests count API method calls: an unchanged resume adds no
+calls after success; an imported changed snapshot refreshes; a failed title
+retries; the 24-hour boundary refreshes again. A blocked-request lifecycle test
+checks that backgrounding neither applies its result nor starts the next title.
+Image decoding tests verify a 1,000 × 2,000 source becomes 200 × 400 within a
+400 × 400 decode budget. Poster-colour tests cover reuse and failed-load retry.
 
-`data/sync/merge.dart` now checks time, writer and deletion status before
-hashing a complete payload. Ordering, deletion digests and format 4 are
-unchanged. On the optional merge benchmark, median `mergeStates` plus
-`remoteBehind` fell from 612,628 to 321,345 µs, about 48% for this workload.
-The fixture contains 6,000 snapshots, 3,000 ratings with 512-character notes,
-and 3,000 watchlist entries. Existing merge algebra/convergence tests pass.
+## Evaluated options not selected
 
-### First runtime target: read only watchlist data
+These are deliberate decisions for this release, not unfinished repairs:
 
-`Library.watchWatchlist` calls `SyncStore.read` for each notification, loading
-every rating and its note, all snapshots, watchlist rows and sync registers.
-The view only needs watchlist snapshots, relevant live-rating keys and
-selection fences. Changes to works or sync-state metadata can trigger this
-read even when the visible list is unchanged.
-
-The optional watchlist benchmark uses 3,000 movie ratings with 1,024-character
-notes and 50 watchlisted films. Median stream-to-first-value time was
-99,464 µs. A joined-query comparison over the same movie-only data was
-10,290 µs. This is a potential reduction in unnecessary work, not an already
-implemented tenfold application speedup. A replacement must preserve season
-grouping, rated-season exclusion, legacy derived fences, offline conflict
-rules and transactional consistency.
-
-### Energy and resume target: localized-title refresh
-
-`data/library/localized_titles.dart` walks all live saved titles on startup,
-language changes, successful sync and every resume. An unchanged language and
-unchanged library can therefore reread and decode every cached TMDB card.
-The HTTP cache reduces network calls but does not eliminate disk reads,
-JSON parsing or snapshot checks.
-
-The walk also has no foreground check between requests: pausing the app does
-not deactivate it. A created non-auto-dispose provider can outlive the shell,
-so it should also require a usable TMDB key before catalog work starts.
-
-Track successful refreshes per language/title identity and invalidate them
-when relevant snapshots change, or coalesce short resume cycles. Preserve
-immediate language changes, new data arriving through sync, offline retry and
-renumbered-part identity protection. Suspend work when backgrounded and resume
-only the current generation. Measure cache reads/API calls and resume
-latency before selecting the policy; no battery saving is claimed yet.
-
-### Energy and lifetime target: background timers
-
-`BackgroundRefreshNotifier._loop` schedules its next interval after a pass
-even if that pass finished after disposal. Disposal during an in-flight
-request can retain an obsolete loop/service until that timer fires. A paused
-loop also wakes on its half-hour timer to discover that it is still paused.
-The pacing flag is set by source completion even when a lookup short-circuits
-because an IMDb ID is missing; this can add a three-second pause without an
-external request. An actual-request signal should be distinct from completion.
-
-Check cancellation before creating the next timer and use a resume signal
-without a timed wake while backgrounded. Add lifecycle tests for disposal
-during an active request and key changes during a pass. Preserve the initial
-delay, foreground refresh cadence, daily budgets and prompt resume behavior.
-
-### Memory and image work
-
-Full-screen person photos and episode stills can request original images.
-Several pages can be decoded near the current page; RGBA decode cost grows
-with pixel count even when the network response is small. Bound decoding to
-the viewport/zoom requirement while keeping the existing full-screen gestures.
-
-`posterTintProvider` samples at most 4,096 pixels, but first reads all RGBA
-pixels of the header image. Reopening a disposed card can repeat this work.
-A small bounded cache of successful colours could avoid repeated readbacks;
-failed loads must remain retryable. Profile image memory and frame time on a
-physical device before changing decode resolution or cache lifetimes.
-
-## APK-size options
-
-- Measure `--split-debug-info` without obfuscation on the same universal
-  build. Adoption requires keeping matching symbols for every distributed
-  build and documenting stack-trace symbolization. The measured archive is
-  62,664,526 bytes, down 4,210,688 bytes (6.3%) from the baseline. It retains
-  ARM32, ARM64 and x86-64 application libraries. The three corresponding
-  symbol files are retained locally; the release build defaults have not
-  changed. This saves download/archive size, not application execution time.
-- A separate ABI-specific download can save much more than removing small
-  assets, but changes the existing single-universal-APK distribution choice.
-  The current distribution remains universal.
-- `json_serializable`/`json_annotation` and `cupertino_icons` have no direct
-  application imports or annotations. They are cleanup candidates; the
-  Cupertino font is already reduced to 848 unpacked bytes (533 stored bytes),
-  so its removal alone cannot provide meaningful size savings. Removing an
-  unused generator can reduce build work, not necessarily application CPU use.
-- Native-library compression is a packaging tradeoff. AGP leaves libraries
-  uncompressed/page-aligned by default for this minSdk. Compressed libraries
-  require installation-time extraction and can increase installed disk use;
-  compare archive size and installed storage separately before changing it.
-  See [AGP packaging](https://developer.android.com/reference/tools/gradle-api/8.9/com/android/build/api/dsl/JniLibsPackaging)
+- **Separate ABI downloads:** larger download savings, but they change the
+  agreed single-universal-APK installation flow. All three ABIs stay supported.
+- **Native-library compression:** it can shrink the archive while increasing
+  installed storage through extraction. Retain AGP's existing packaging;
+  see [AGP packaging](https://developer.android.com/reference/tools/gradle-api/8.9/com/android/build/api/dsl/JniLibsPackaging)
   and [Android's extraction guidance](https://developer.android.com/guide/practices/page-sizes).
+- **Replacing small libraries or dropping translations:** ARM64 analysis
+  attributed roughly 3 MB to Flutter, 823 KB to Framebook, 223 KB to framework
+  localizations, 207 KB to Drift, 119 KB to fl_chart, 62 KB to googleapis and
+  60 KB to cryptography. Those snapshot attributions do not predict archive
+  savings and do not justify replacing working dependencies.
 
-The measurement workflow follows
-[Flutter's size-analysis guidance](https://docs.flutter.dev/perf/app-size).
-No Flutter upgrade, database/protocol change, ABI removal or altered release
-packaging has been applied by this investigation.
-
-## Reproduction and next validation
+## Reproduction and validation limits
 
 ```sh
 cd app
 flutter test test/benchmarks/merge_benchmark.dart
 flutter test test/benchmarks/watchlist_benchmark.dart
-flutter build apk --release --target-platform android-arm64 --analyze-size \
-  --code-size-directory=/private/tmp/framebook-code-size -PallowDebugSigning=true
+cd ..
+make verify
+make build-apk-check
 ```
 
-Host benchmarks use two warmups and five measured samples; they do not gate
-CI on timing. Device measurements should cover cold/warm start, a large
-library, repeated app switching, image browsing and foreground/background
-request/timer counts. Real energy measurements and the two-device sync check
-remain outstanding. The Intel Mac must not run an emulator.
+Host benchmarks use two warmups and five measured samples and do not gate CI
+on timing. Flutter's [size-analysis guidance](https://docs.flutter.dev/perf/app-size)
+explains the diagnostic AOT report. Physical-device cold/warm start, image
+memory, frame-time and energy measurements, and the two-device sync check
+remain manual validation work. The Intel Mac must not run an emulator.
+
+`make codegen` passed without generated-code or schema changes. Full
+`make verify TEST_ARGS='--coverage --reporter expanded'` passed: **474 tests**,
+18 opt-in renderers skipped, formatting and analysis clean. Non-generated
+line coverage is **6,990 / 7,687 (90.9%)**. The retained-timer regression was
+also checked against a temporary restoration of the original bug: it failed
+on the pending timer, then passed with the production fix restored.
+`make verify-version BASE_REF=HEAD` and `make build-apk-check` passed before
+commit. The physical-phone check found no connected device; no emulator was
+started and no real-account sync was performed.

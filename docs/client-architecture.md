@@ -71,7 +71,7 @@ and the Stage 1 skeleton.
 | flutter_riverpod | 3.3.2 | 3.4.1+ needs Dart 3.12 |
 | go_router | 17.0.0 | |
 | drift / drift_flutter / drift_dev | 2.29.0 / 0.2.7 / 2.29.0 | **ceiling**: drift 2.31 pulls sqlite3 and test, which need Dart 3.10+, while `test` is pinned through `flutter_test` from the SDK |
-| build_runner / json_serializable | 2.7.1 / 6.11.2 | analyzer 7.7.1 |
+| build_runner | 2.7.1 | analyzer 7.7.1; unused json_serializable removed in 0.8.4 |
 | dio | 5.11.1 | `dio_cache_interceptor` dropped in Stage 2 — see "HTTP" above |
 | crypto | 3.0.7 | HTTP cache file names and sync deletion digests |
 | cryptography | 2.9.0 | Argon2id and AES-256-GCM for optional encrypted key sync; requires Dart 3.3+ |
@@ -560,3 +560,19 @@ is visible. On return it requests that editor's keyboard after the frame,
 only if the editor is still mounted and owns the same primary focus. This
 covers search, notes and settings without persisting keyboard state across
 process restarts or reopening a keyboard the user had already dismissed.
+
+## Resource work in 0.8.4
+
+Watchlist streams select only live entries, required snapshots, relevant
+season-rating keys and effective selection fences in one transaction; they
+do not read the whole sync state. Localized-title refresh selects live keys
+and ancestor snapshots and reuses successful results for 24 hours per
+language/key generation, invalidating changed snapshots and retrying failures.
+Both refresh paths stop starting requests while backgrounded. Ratings pacing
+tracks actual requests separately from source completion.
+
+Full-screen images retain fourfold zoom with an aspect-preserving decode
+budget capped at 4,096 × 4,096 pixels. Poster colours use a bounded 128-entry
+successful-result LRU without retaining images. Release builds move debug
+information into matching permanent release assets. Exact behavior,
+measurements and limits are in [optimization.md](optimization.md).

@@ -8,7 +8,7 @@ A project for myself and a couple of friends. The original idea and the decision
 
 ## Status
 
-In development, version 0.8.3 — the MVP is complete. Working: Discover
+In development, version 0.8.4 — the MVP is complete. Working: Discover
 with title and people search and shelves, film and series cards down to single episodes with
 cast and crew and ratings from Kinopoisk, IMDb, Rotten Tomatoes, Metacritic
 and TMDB, people with filmographies filtered by their jobs; your own ratings with notes on a
@@ -18,9 +18,9 @@ ratings and statistics; sync and daily copies through your own Google
 Drive, export and import to a file; cards that open offline from what is
 saved. The latest [repository audit](docs/reviews/2026-11-05/README.md) repaired
 caching, API-key changes, import recovery and large-text layouts. The
-[0.8.3 optimization investigation](docs/optimization.md) records APK composition
-and measured performance candidates. Physical-device validation and further
-optimization remain in Stage 7.
+[0.8.4 optimization report](docs/optimization.md) records selective library reads,
+foreground scheduling, image-memory bounds and a smaller universal APK.
+Physical-device measurements and independent review remain in Stage 7.
 
 <p>
   <img src="docs/screenshots/search-light.png" width="200" alt="Discover: the search field over shelves">
@@ -99,7 +99,7 @@ Current:
 - [Client design](docs/client-architecture.md) — what the app is built with, and default decisions
 - [Getting the API keys](docs/api-keys.md) — TMDB, PoiskKino, OMDb step by step, what goes in each field ([in Russian](docs/api-keys.ru.md))
 - [Testing](docs/testing.md) — verification commands, automated scenarios and remaining device checks
-- [0.8.3 optimization](docs/optimization.md) — measured size/performance baselines and prioritized work
+- [0.8.4 optimization](docs/optimization.md) — implemented changes, measurements and validation limits
 - [Operations](docs/operations.md) — keys, Google Cloud OAuth, signing and distributing the APK
 - [Postponed features](docs/future-development.md) — iOS, importing from other services, open questions
 - [Implementation plan](docs/implementation-plan.md) — MVP stages and their progress

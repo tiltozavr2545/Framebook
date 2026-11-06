@@ -141,11 +141,16 @@ final class RatingsService {
   /// Refreshes what is stale, within the budget. Results go to
   /// `external_ratings`, and the screen sees them through `watch()`. Returns
   /// the outcome for every source considered: `null` means success.
+  /// [onRequest] fires after acquiring budget, only for an actual lookup;
+  /// [onStart] also includes local short circuits and shared in-flight work.
+  /// [cancelled] stops subsequent lookups without interrupting a shared request.
   Future<Map<ApiSource, SourceFailure?>> refresh(
     RatingTarget target, {
     bool background = false,
     void Function(ApiSource api)? onStart,
+    void Function(ApiSource api)? onRequest,
     void Function(ApiSource api, SourceFailure? failure)? onDone,
+    bool Function()? cancelled,
   }) async {
     final key = target.key.toString();
     final now = _clock().toUtc().millisecondsSinceEpoch;
@@ -160,6 +165,7 @@ final class RatingsService {
 
     final outcomes = <ApiSource, SourceFailure?>{};
     for (final api in const [ApiSource.poiskkino, ApiSource.omdb]) {
+      if (cancelled?.call() ?? false) break;
       final sources = shownFor(
         target.key.kind,
       ).where((s) => providerOf(s, target.key.kind) == api).toList();
@@ -184,6 +190,7 @@ final class RatingsService {
             sources,
             existing,
             background: background,
+            onRequest: onRequest,
           ).whenComplete(() {
             // Not `=>`: remove would return this very Future, and whenComplete
             // would wait for itself.
@@ -242,6 +249,7 @@ final class RatingsService {
     List<RatingSource> sources,
     Map<RatingSource, ExternalRating> existing, {
     required bool background,
+    void Function(ApiSource api)? onRequest,
   }) async {
     final key = target.key.toString();
     final nowTime = _clock().toUtc();
@@ -267,6 +275,7 @@ final class RatingsService {
       return SourceFailure.limitReached;
     }
     try {
+      onRequest?.call(api);
       await _db.putExternalRatings(await request(sources, now));
       _failures.remove((key, api));
       return null;

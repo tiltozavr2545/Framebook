@@ -7,6 +7,8 @@ FLUTTER ?= $(HOME)/development/flutter/bin/flutter
 DART ?= $(HOME)/development/flutter/bin/dart
 BASE_REF ?= origin/main
 TEST_ARGS ?=
+APP_VERSION := $(shell awk '/^version:/ {print $$2; exit}' $(APP_DIR)/pubspec.yaml)
+APK_SYMBOLS := build/symbols/$(APP_VERSION)
 
 .PHONY: help codegen deps format-check analyze test test-scripts test-coverage verify verify-version bump-build bump-patch bump-minor bump-major build-apk build-apk-check pre-commit pre-push install-hooks uninstall-hooks
 
@@ -72,13 +74,13 @@ bump-major:
 # One universal APK, no --split-per-abi: friends get a single file to install
 # (docs/operations.md). Fails without android/key.properties by design.
 build-apk:
-	cd $(APP_DIR) && $(FLUTTER) build apk --release
+	cd $(APP_DIR) && $(FLUTTER) build apk --release --split-debug-info=$(APK_SYMBOLS)
 
 # -PallowDebugSigning=true: a compile check, not a shippable build, so it opts
 # in to the debug-key fallback that a release build otherwise refuses (see
 # android/app/build.gradle.kts). Never use this output for distribution.
 build-apk-check:
-	cd $(APP_DIR) && $(FLUTTER) build apk --release -PallowDebugSigning=true
+	cd $(APP_DIR) && $(FLUTTER) build apk --release --split-debug-info=$(APK_SYMBOLS) -PallowDebugSigning=true
 
 # Deliberately excludes `test`: pre-commit runs on every commit and needs to
 # stay fast enough not to be worked around. The full suite gates every push.

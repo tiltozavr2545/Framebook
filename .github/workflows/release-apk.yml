@@ -83,7 +83,7 @@ jobs:
       # instead of producing an APK signed with the debug key
       # (android/app/build.gradle.kts).
       - name: Build signed universal APK
-        run: flutter build apk --release
+        run: make -C .. build-apk FLUTTER=flutter
 
       # A broken signature or a wrong key fails here, not on a friend's phone.
       # The certificate is public (it is in every release's notes); comparing
@@ -115,7 +115,17 @@ jobs:
           set -eu
           out="build/app/outputs/flutter-apk/framebook-$NAME.apk"
           mv build/app/outputs/flutter-apk/app-release.apk "$out"
-          gh release create "$TAG" "$out" --title "Framebook $NAME" --generate-notes
+          version=$(awk '/^version:/ { print $2; exit }' pubspec.yaml)
+          symbols="build/symbols/$version"
+          # Symbols must survive workflow-artifact expiry for every release.
+          for abi in android-arm android-arm64 android-x64; do
+            test -s "$symbols/app.$abi.symbols"
+          done
+          printf 'Framebook %s\nCommit: %s\nUse flutter symbolize with the matching ABI file.\n' \
+            "$version" "$GITHUB_SHA" > "$symbols/README.txt"
+          archive="$PWD/build/app/outputs/flutter-apk/framebook-$NAME-symbols.zip"
+          (cd "$symbols" && zip "$archive" README.txt app.*.symbols)
+          gh release create "$TAG" "$out" "$archive" --title "Framebook $NAME" --generate-notes
 
       - name: Remove signing files
         if: always()

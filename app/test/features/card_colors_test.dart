@@ -1,12 +1,82 @@
+import 'dart:async';
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:framebook/app/theme.dart';
 import 'package:framebook/shared/poster_tint.dart';
+import 'package:framebook/shared/poster.dart';
+import 'package:framebook/data/sources/tmdb/tmdb_models.dart';
 import 'package:framebook/shared/score_color.dart';
 
 void main() {
+  testWidgets(
+    'reopening a card reuses its tint and a failed image remains retryable',
+    (tester) async {
+      final recorder = ui.PictureRecorder();
+      Canvas(recorder).drawColor(Colors.blue, BlendMode.src);
+      final picture = recorder.endRecording();
+      final image = (await tester.runAsync(() => picture.toImage(2, 2)))!;
+      picture.dispose();
+      final bytes = (await tester.runAsync(
+        () => image.toByteData(format: ui.ImageByteFormat.png),
+      ))!;
+      image.dispose();
+      var loads = 0;
+      var failImage = false;
+      final container = ProviderContainer(
+        overrides: [
+          imageConfigProvider.overrideWith((ref) async => ImageConfig.fallback),
+          posterImageProvider.overrideWithValue((_, __) {
+            loads++;
+            return MemoryImage(
+              failImage ? Uint8List(0) : bytes.buffer.asUint8List(),
+            );
+          }),
+        ],
+      );
+      await tester.runAsync(() => container.read(imageConfigProvider.future));
+      Future<Color?> tint(String path) async {
+        final sub = container.listen(posterTintProvider(path), (_, _) {});
+        Color? value;
+        var done = false;
+        unawaited(
+          container.read(posterTintProvider(path).future).then((color) {
+            value = color;
+            done = true;
+          }),
+        );
+        for (var i = 0; i < 100 && !done; i++) {
+          await tester.pump();
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 10)),
+          );
+        }
+        expect(done, isTrue);
+        sub.close();
+        container.invalidate(posterTintProvider(path));
+        await tester.pump();
+        await tester.pump();
+        return value;
+      }
+
+      expect(await tint('/blue'), const Color(0xff2196f3));
+      final firstLoads = loads;
+      expect(await tint('/blue'), const Color(0xff2196f3));
+      expect(loads, firstLoads);
+      failImage = true;
+      expect(await tint('/retry'), isNull);
+      failImage = false;
+      expect(await tint('/retry'), const Color(0xff2196f3));
+      expect(loads, firstLoads + 2);
+      container.dispose();
+      PaintingBinding.instance.imageCache.clear();
+      PaintingBinding.instance.imageCache.clearLiveImages();
+    },
+  );
+
   test('score bands respect boundaries and have readable theme contrast', () {
     for (final theme in [FramebookTheme.light, FramebookTheme.dark]) {
       final brightness = theme.brightness;

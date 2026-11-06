@@ -1,11 +1,12 @@
 // Optional host microbenchmark: flutter test test/benchmarks/watchlist_benchmark.dart
-// The joined-query comparison covers a movie-only fixture, not season fences.
+// Compare the selective stream with the former full-state read on movie data.
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:framebook/data/db/database.dart';
 import 'package:framebook/data/library/library.dart';
 import 'package:framebook/data/work_key.dart';
+import 'package:framebook/data/sync/sync_store.dart';
 
 void main() {
   test(
@@ -59,29 +60,25 @@ void main() {
 
           watch.reset();
           watch.start();
-          final candidates =
-              await (db.select(db.watchlist).join([
-                      innerJoin(
-                        db.works,
-                        db.works.workKey.equalsExp(db.watchlist.workKey),
-                      ),
-                    ])
-                    ..where(db.watchlist.deletedAt.isNull())
-                    ..orderBy([OrderingTerm.desc(db.watchlist.addedAt)]))
-                  .get();
+          final state = await SyncStore(db).read();
+          final works = {for (final work in state.works) work.workKey: work};
+          final candidates = [...state.watchlist]
+            ..sort((a, b) => b.addedAt.compareTo(a.addedAt));
+          final baseline = [
+            for (final entry in candidates)
+              if (entry.deletedAt == null && works.containsKey(entry.workKey))
+                entry.workKey,
+          ];
           watch.stop();
-          expect(
-            candidates.map((row) => row.readTable(db.works).workKey),
-            rows.map((row) => row.work.workKey),
-          );
+          expect(baseline, rows.map((row) => row.work.workKey));
           if (run >= 2) joined.add(watch.elapsedMicroseconds);
         }
         full.sort();
         joined.sort();
         // ignore: avoid_print
         print(
-          'Host movie-only watchlist median: ${full[2]} us; joined-query '
-          'comparison: ${joined[2]} us; samples: $full / $joined',
+          'Host movie-only watchlist median: selective ${full[2]} us; full-state '
+          'baseline ${joined[2]} us; samples: $full / $joined',
         );
       } finally {
         await db.close();

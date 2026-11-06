@@ -7,6 +7,19 @@ import '../../data/sources/tmdb/tmdb_models.dart';
 import '../../data/work_key.dart';
 import '../../shared/poster.dart';
 
+/// Decode enough pixels for fourfold zoom, with a 64 MiB RGBA upper bound.
+/// Fit preserves the source aspect ratio and never enlarges a small image.
+ImageProvider boundedCoverImage(
+  ImageProvider source,
+  Size viewport,
+  double pixelRatio,
+) => ResizeImage(
+  source,
+  width: (viewport.width * pixelRatio * 4).ceil().clamp(1, 4096),
+  height: (viewport.height * pixelRatio * 4).ceil().clamp(1, 4096),
+  policy: ResizeImagePolicy.fit,
+);
+
 /// Current cover first, then UI-language, original-language and textless
 /// images, retaining TMDB's order within each group.
 List<String> orderedCovers(
@@ -153,6 +166,8 @@ class _CoverPageState extends ConsumerState<_CoverPage> {
   @override
   Widget build(BuildContext context) {
     final path = widget.path;
+    final viewport = MediaQuery.sizeOf(context);
+    final pixelRatio = MediaQuery.devicePixelRatioOf(context);
     Widget preview;
     if (widget.cachedOnly) {
       final file = ref
@@ -160,7 +175,10 @@ class _CoverPageState extends ConsumerState<_CoverPage> {
           .value;
       preview = file == null
           ? const SizedBox.shrink()
-          : Image.file(file, fit: BoxFit.contain);
+          : Image(
+              image: boundedCoverImage(FileImage(file), viewport, pixelRatio),
+              fit: BoxFit.contain,
+            );
     } else {
       final config =
           ref.watch(imageConfigProvider).value ?? ImageConfig.fallback;
@@ -181,7 +199,11 @@ class _CoverPageState extends ConsumerState<_CoverPage> {
             errorBuilder: (_, _, _) => const SizedBox.shrink(),
           ),
           Image(
-            image: provider(config.url(path, large), '${large.name}$path'),
+            image: boundedCoverImage(
+              provider(config.url(path, large), '${large.name}$path'),
+              viewport,
+              pixelRatio,
+            ),
             fit: BoxFit.contain,
             errorBuilder: (_, _, _) => const SizedBox.shrink(),
             frameBuilder: (_, child, frame, synchronous) =>

@@ -60,4 +60,4 @@ jobs:
       # No secrets needed: tests never call external APIs (fixtures only).
       - run: flutter test
       - name: Build release APK (compile check, debug-signed)
-        run: flutter build apk --release -PallowDebugSigning=true
+        run: make -C .. build-apk-check FLUTTER=flutter

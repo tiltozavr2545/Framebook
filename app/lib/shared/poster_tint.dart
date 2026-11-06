@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -43,14 +44,26 @@ Color? dominantPosterColor(Uint8List rgba) {
   );
 }
 
+// Keep only successful tiny results, scoped to the app's provider container.
+// Failed/offline images remain retryable and decoded images are not retained.
+final _tintCacheProvider = Provider((ref) => LinkedHashMap<String, Color>());
+
 final posterTintProvider = FutureProvider.autoDispose.family<Color?, String>((
   ref,
   path,
 ) async {
   final config = ref.watch(imageConfigProvider).value ?? ImageConfig.fallback;
+  final url = config.url(path, ImageSize.w342);
+  final cache = ref.watch(_tintCacheProvider);
+  final cacheKey = url.toString();
+  final cached = cache.remove(cacheKey);
+  if (cached != null) {
+    cache[cacheKey] = cached;
+    return cached;
+  }
   // The header already loads this size through the same image provider.
   final source = ref.watch(posterImageProvider)(
-    config.url(path, ImageSize.w342),
+    url,
     '${ImageSize.w342.name}$path',
   );
   final stream = source.resolve(ImageConfiguration.empty);
@@ -66,16 +79,19 @@ final posterTintProvider = FutureProvider.autoDispose.family<Color?, String>((
           format: ui.ImageByteFormat.rawRgba,
         );
         if (!result.isCompleted) {
-          result.complete(
-            bytes == null
-                ? null
-                : dominantPosterColor(
-                    bytes.buffer.asUint8List(
-                      bytes.offsetInBytes,
-                      bytes.lengthInBytes,
-                    ),
+          final color = bytes == null
+              ? null
+              : dominantPosterColor(
+                  bytes.buffer.asUint8List(
+                    bytes.offsetInBytes,
+                    bytes.lengthInBytes,
                   ),
-          );
+                );
+          if (!disposed && color != null) {
+            cache[cacheKey] = color;
+            if (cache.length > 128) cache.remove(cache.keys.first);
+          }
+          result.complete(color);
         }
       } catch (_) {
         if (!result.isCompleted) result.complete(null);

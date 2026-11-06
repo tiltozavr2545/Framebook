@@ -296,3 +296,20 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
 - Expand regression coverage and validate version tools in CI. Record the
   size/performance investigation and its remaining work in
   [docs/optimization.md](docs/optimization.md).
+
+## 0.8.4 — Smaller builds and less repeated work (build 18)
+
+- Load watchlist entries without reading unrelated ratings, notes or snapshots;
+  preserve grouped seasons and offline selection conflicts.
+- Reuse successfully localized saved titles for up to a day, refresh changed
+  snapshots and retry offline failures without repeatedly decoding every card.
+- Suspend catalog work while backgrounded; cancel obsolete refresh timers and
+  stop extra source lookups and pacing delays when no request is needed.
+- Bound decoded full-screen image memory while retaining paging and zoom;
+  reuse successful poster colours when cards reopen.
+- Reduce the universal APK by separating debug information, preserving all
+  supported architectures and permanently retaining matching release symbols.
+- Remove unused icon and JSON generator dependencies. SDK, database schema,
+  sync compatibility and signing certificate remain unchanged.
+- Document the completed optimization work and its measured limits in
+  [docs/optimization.md](docs/optimization.md).

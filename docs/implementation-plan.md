@@ -348,11 +348,13 @@ Each item that changes the sync format says so in [sync.md](sync.md) and
 A [repository-wide follow-up audit on 2026-11-02](reviews/2026-11-02/README.md)
 found additional correctness defects, including first-enable key loss and
 incorrect episode identity after renumbering. F01–F10 have been repaired with targeted regressions; physical-device checks
-remain pending. Passing CI is not a correctness sign-off. Measured performance
-work and the independent second review remain outstanding.
+remain pending. Passing CI is not a correctness sign-off. The 0.8.4 optimization pass is implemented and covered by automated
+regressions; physical-device measurements and the independent second review
+remain outstanding.
 
 **Status:** initial review and correctness follow-ups through 0.7.3 complete;
-optimization and the second independent review pending
+0.8.4 optimization implementation complete; device measurements and the
+second independent review pending
 
 The 0.7.1 follow-up refreshes saved titles after a language change, prevents
 rating films whose known release date is in the future, and opens person
@@ -494,7 +496,8 @@ are tracked separately below.
   exact version tie without changing merge semantics.
 - [x] Establish a universal-APK size baseline and a synthetic watchlist
   benchmark; prioritize work in [optimization.md](optimization.md).
-- [ ] Implement and validate the selected further optimizations, keeping
+- [x] Implement and automatically validate the selected further optimizations
+  in 0.8.4, keeping
   season/watchlist conflict rules, offline behavior and universal distribution.
 - [ ] Measure startup, frame time and energy use on a physical device.
 
@@ -504,3 +507,27 @@ renderers skipped), `make verify-version BASE_REF=HEAD` passed, and the normal
 universal Android APK built successfully. Its manifest confirms version
 `0.8.3+17`; its size is 66.9 MB. The detailed scope and limitations
 are in [reviews/2026-11-05/README.md](reviews/2026-11-05/README.md).
+
+## 0.8.4 — Complete the measured optimization follow-up
+
+Version: `0.8.4+18`.
+
+- [x] Replace full-state watchlist reads while preserving season grouping,
+  live-rating exclusions, stored/derived fences and transactional consistency.
+- [x] Reuse successful localized-title results, refresh changed snapshots and
+  retry failures; require a key and foreground state.
+- [x] Remove paused periodic wakeups, post-disposal timers, extra source calls
+  after cancellation and pacing waits without a request.
+- [x] Bound full-screen decoding and cache successful poster colours.
+- [x] Enable split debug information for universal builds and permanently
+  retain every release's matching symbols for crash decoding.
+- [x] Remove unused direct dependencies without upgrading the pinned SDK or
+  the remaining resolved dependency versions.
+- [x] Add regression coverage for lifecycle cancellation, title invalidation,
+  image bounds, colour reuse and selective watchlist equivalence.
+
+These implementation items complete the selected optimization work from
+0.8.3. Physical-device performance/energy measurements and the two-device
+sync check remain manual validation; an independent second review is still
+separate from this implementation and its author review. The automated
+verification and measured results are recorded in [optimization.md](optimization.md).
