@@ -41,12 +41,36 @@ void main() {
         final l10n = AppLocalizations.of(
           tester.element(find.byType(SettingsScreen)),
         );
+        final label = tester.getRect(find.text(l10n.settingsNavigationStyle));
+        expect(
+          label.left,
+          tester.getRect(find.text(l10n.settingsSources)).left,
+        );
+        final choice = tester.getRect(find.byType(DropdownButton<bool>));
+        if (scale == 1) {
+          expect(choice.left, greaterThan(label.right));
+          expect(choice.center.dy, closeTo(label.center.dy, 1));
+        } else {
+          expect(choice.top, greaterThanOrEqualTo(label.bottom));
+        }
         await tester.tap(find.byType(DropdownButton<bool>));
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
         await tester.tap(find.text(l10n.navigationClassic).last);
         await tester.pumpAndSettle();
         expect(prefs.getBool('floating_navigation'), isFalse);
+        await tester.ensureVisible(find.byType(DropdownButton<String>));
+        await tester.tap(find.byType(DropdownButton<String>));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(l10n.languageEnglish).last);
+        await tester.pumpAndSettle();
+        expect(prefs.getString('locale'), 'en');
+        await tester.ensureVisible(find.byType(DropdownButton<ThemeMode>));
+        await tester.tap(find.byType(DropdownButton<ThemeMode>));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(l10n.themeDark).last);
+        await tester.pumpAndSettle();
+        expect(prefs.getString('theme_mode'), 'dark');
         await tester.drag(find.byType(ListView), const Offset(0, -600));
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);

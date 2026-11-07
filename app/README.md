@@ -1,4 +1,4 @@
-# app
+# Framebook app
 
-The Framebook Flutter app. The description, how to run it and the
-documentation are in the [root README](../README.md).
+Flutter source for Framebook. See the [root README](../README.md) for the
+project overview and the [development guide](../docs/development.md) for setup.

@@ -675,6 +675,101 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get pairTitle => 'Pairwise calibration';
+
+  @override
+  String get pairHow => 'How pairs are selected';
+
+  @override
+  String get pairIntro =>
+      'Compare rated films to check your score scale. Close scores and similar genres come first; previous answers reveal preference chains worth checking. Scores appear after your choice.';
+
+  @override
+  String get pairStart => 'Compare films';
+
+  @override
+  String get pairNeedFilms => 'Rate at least two films to start.';
+
+  @override
+  String get pairDailyHint =>
+      'Up to 5 completed comparisons per day. Answers sync through Drive.';
+
+  @override
+  String pairProgress(int count) {
+    return '$count of 5 comparisons today';
+  }
+
+  @override
+  String get pairQuestion => 'Which film did you enjoy more?';
+
+  @override
+  String get pairFirst => 'First film';
+
+  @override
+  String get pairSecond => 'Second film';
+
+  @override
+  String get pairPreferFirst => 'The first film';
+
+  @override
+  String get pairPreferSecond => 'The second film';
+
+  @override
+  String get pairEqual => 'Enjoyed both equally';
+
+  @override
+  String get pairSkip => 'Skip / I do not remember';
+
+  @override
+  String get pairReasonBoundary =>
+      'Checking a score boundary using comparable films.';
+
+  @override
+  String get pairReasonChain =>
+      'Previous answers form a preference chain that your scores do not reflect. Let us check it directly.';
+
+  @override
+  String get pairAgrees => 'Your scores agree with this answer.';
+
+  @override
+  String get pairDisagrees =>
+      'Your answer differs from your scores. Choose a correction or keep the scores.';
+
+  @override
+  String pairCorrection(String title, String before, String after) {
+    return '$title: $before → $after';
+  }
+
+  @override
+  String get pairChangeAnswer => 'Change answer';
+
+  @override
+  String get pairKeep => 'Keep scores and save answer';
+
+  @override
+  String get pairNext => 'Save answer and continue';
+
+  @override
+  String get pairLimit =>
+      'Five comparisons completed today. Come back tomorrow.';
+
+  @override
+  String get pairFinished =>
+      'No suitable new pairs remain at these score versions. New ratings or score changes can open more comparisons.';
+
+  @override
+  String get pairChanged =>
+      'These ratings changed. The next pair uses the latest scores.';
+
+  @override
+  String get pairSaveFailed =>
+      'Could not save the comparison. Your choice is still here; try again.';
+
+  @override
+  String get pairLoadFailed =>
+      'Could not load rated films or comparison history.';
+
+  @override
   String get statsEmpty => 'Statistics will be here once you have ratings.';
 
   @override

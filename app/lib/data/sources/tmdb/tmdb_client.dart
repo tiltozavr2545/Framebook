@@ -58,6 +58,7 @@ abstract interface class TmdbApi {
   Future<List<TitleSummary>> discoverRecommendations(
     WorkKind kind, {
     int? genre,
+    int page = 1,
   });
 }
 
@@ -285,10 +286,12 @@ final class TmdbClient implements TmdbApi {
   Future<List<TitleSummary>> discoverRecommendations(
     WorkKind kind, {
     int? genre,
+    int page = 1,
   }) async {
     if (kind != WorkKind.movie && kind != WorkKind.tv) {
       throw ArgumentError.value(kind, 'kind');
     }
+    RangeError.checkValueInInterval(page, 1, 500, 'page');
     final movie = kind == WorkKind.movie;
     final now = _clock();
     final today =
@@ -297,6 +300,7 @@ final class TmdbClient implements TmdbApi {
       await _get(movie ? '/discover/movie' : '/discover/tv', {
         'sort_by': 'popularity.desc',
         'include_adult': 'false',
+        'page': '$page',
         'vote_count.gte': movie ? '50' : '25',
         'vote_average.gte': '6',
         if (genre != null) 'with_genres': '$genre',

@@ -117,13 +117,26 @@ final class TasteProfile {
         _decadeCounts[key] = (_decadeCounts[key] ?? 0) + 1;
       }
     }
-    _topPeople = List.unmodifiable(_computeTopPeople());
-    _seeds = List.unmodifiable(_computeSeeds());
-    _topGenres = {
+    _peoplePool = List.unmodifiable(_computePeople());
+    _topPeople = List.unmodifiable(_peoplePool.take(2));
+    _genrePools = {
       for (final kind in WorkKind.values)
-        kind: List.unmodifiable(_computeTopGenres(kind)),
+        kind: List.unmodifiable(_computeGenres(kind)),
     };
+    _topGenres = {
+      for (final entry in _genrePools.entries)
+        entry.key: List.unmodifiable(entry.value.take(2)),
+    };
+    _seedPools = {
+      for (final kind in [WorkKind.movie, WorkKind.tv])
+        for (final positive in [true, false])
+          (kind, positive): _computeSeedPool(kind, positive),
+    };
+    _seeds = List.unmodifiable(seedsForRotation(0));
   }
+  late final List<int> _peoplePool;
+  late final Map<WorkKind, List<int>> _genrePools;
+  late final Map<(WorkKind, bool), List<TasteSignal>> _seedPools;
   late final List<int> _topPeople;
   late final List<TasteSignal> _seeds;
   late final Map<WorkKind, List<int>> _topGenres;
@@ -145,7 +158,7 @@ final class TasteProfile {
       (_people[id] ?? 0) / ((_peopleCounts[id] ?? 0) + 3);
   List<int> get topPeople => _topPeople;
 
-  List<int> _computeTopPeople() {
+  List<int> _computePeople() {
     final ids =
         _people.keys
             .where(
@@ -156,8 +169,13 @@ final class TasteProfile {
             final score = personAffinity(b).compareTo(personAffinity(a));
             return score != 0 ? score : a.compareTo(b);
           });
-    return ids.take(2).toList();
+    return ids;
   }
+
+  List<int> peopleForRotation(int rotation) => [
+    for (var i = 0; i < min(2, _peoplePool.length); i++)
+      _peoplePool[(rotation + i) % _peoplePool.length],
+  ];
 
   double decadeAffinity(WorkKind kind, int? year) => year == null
       ? 0
@@ -174,7 +192,7 @@ final class TasteProfile {
 
   List<int> topGenres(WorkKind kind) => _topGenres[kind]!;
 
-  List<int> _computeTopGenres(WorkKind kind) {
+  List<int> _computeGenres(WorkKind kind) {
     final ids =
         _genreCounts.keys
             .where((k) => k.$1 == kind && genreAffinity(kind, k.$2) > 0)
@@ -187,45 +205,61 @@ final class TasteProfile {
             ).compareTo(genreAffinity(kind, a));
             return score != 0 ? score : a.compareTo(b);
           });
-    return ids.take(2).toList();
+    return ids;
+  }
+
+  /// Keep the strongest genre, rotating the second through positive evidence.
+  List<int> genresForRotation(WorkKind kind, int rotation) {
+    final pool = _genrePools[kind]!;
+    return [
+      if (pool.isNotEmpty) pool.first,
+      if (pool.length > 1) pool[1 + rotation % (pool.length - 1)],
+    ];
   }
 
   /// At most two varied positive seeds and one negative seed of each kind.
   /// Dates never weight preference: imported libraries often share one date.
   List<TasteSignal> get seeds => _seeds;
 
-  List<TasteSignal> _computeSeeds() {
+  List<TasteSignal> _computeSeedPool(WorkKind kind, bool positive) {
+    return signals
+        .where(
+          (s) => s.key.kind == kind && (positive ? s.score >= 7 : s.score <= 4),
+        )
+        .toList()
+      ..sort((a, b) {
+        final score = positive
+            ? b.score.compareTo(a.score)
+            : a.score.compareTo(b.score);
+        return score != 0
+            ? score
+            : a.key.toString().compareTo(b.key.toString());
+      });
+  }
+
+  /// Sorted pools are prepared with the profile, including in its worker.
+  /// Daily selection scans at most twelve neighbours per kind on the UI isolate.
+  List<TasteSignal> seedsForRotation(int rotation) {
     final out = <TasteSignal>[];
     for (final kind in [WorkKind.movie, WorkKind.tv]) {
-      final positive =
-          signals.where((s) => s.key.kind == kind && s.score >= 7).toList()
-            ..sort((a, b) {
-              final score = b.score.compareTo(a.score);
-              return score != 0
-                  ? score
-                  : a.key.toString().compareTo(b.key.toString());
-            });
+      final positive = _seedPools[(kind, true)]!;
       if (positive.isNotEmpty) {
-        final first = positive.removeAt(0);
+        final offset = rotation % positive.length;
+        final first = positive[offset];
         out.add(first);
-        positive.sort((a, b) {
-          double value(TasteSignal s) =>
-              s.score / 10 - .3 * genreSimilarity(first.genres, s.genres);
-          final score = value(b).compareTo(value(a));
-          return score != 0
-              ? score
-              : a.key.toString().compareTo(b.key.toString());
-        });
-        if (positive.isNotEmpty) out.add(positive.first);
+        TasteSignal? second;
+        double value(TasteSignal s) =>
+            s.score / 10 - .3 * genreSimilarity(first.genres, s.genres);
+        for (var i = 1; i < min(positive.length, 13); i++) {
+          final candidate = positive[(offset + i) % positive.length];
+          if (second == null || value(candidate) > value(second)) {
+            second = candidate;
+          }
+        }
+        if (second != null) out.add(second);
       }
-      final negative =
-          signals.where((s) => s.key.kind == kind && s.score <= 4).toList()
-            ..sort(
-              (a, b) => a.score != b.score
-                  ? a.score.compareTo(b.score)
-                  : a.key.toString().compareTo(b.key.toString()),
-            );
-      if (negative.isNotEmpty) out.add(negative.first);
+      final negative = _seedPools[(kind, false)]!;
+      if (negative.isNotEmpty) out.add(negative[rotation % negative.length]);
     }
     return out;
   }

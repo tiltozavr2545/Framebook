@@ -1,758 +1,178 @@
-# Client design
+# Client architecture
 
-What the app is built with and what lives where. There is no server, so this
-is the whole project's architecture, not "what the client does on top of the
-schema" as in Amicus. The data schema is in [data-model.md](data-model.md),
-the external APIs in [external-sources.md](external-sources.md), sync in
-[sync.md](sync.md).
+Runtime boundaries, ownership and scheduling in the Flutter app. Product
+rules are in [features](features.md), persistent contracts in the
+[data model](data-model.md), integrations in [external sources](external-sources.md),
+and transport/merge behavior in [sync](sync.md).
 
-**Status: Stage 6.** A design of its own and the polish (the editing-table
-theme, the score reel, Discover, cast and people, saved cards offline) sit
-on top of sync (Stage 5), comparison and statistics (Stage 4), your own
-ratings and lists (Stage 3), search, cards and external ratings (Stage 2)
-and the Stage 1 skeleton.
+## Components and layers
 
----
+| Component | Responsibility |
+| --- | --- |
+| Flutter and `app/` | Startup, routing, theme, localization and device preferences |
+| Riverpod | Reactive dependencies, scoped clients and prepared view state |
+| go_router | Stateful tab branches and nested title/person routes |
+| Drift / SQLite | Transactions and reactive library streams |
+| Dio and source clients | Typed catalog/source values; no source DTOs in screens |
+| `KeyStorage` | Secure key access, replaced with memory in tests |
+| SharedPreferences | Device preferences, selected account and bounded local history |
+| Google sign-in / Drive | Account authorization and transport behind testable interfaces |
+| `file_picker` / `url_launcher` | System file flows and external pages |
+| fl_chart | Statistics charts |
 
-## Default technical decisions
+SDK and dependency constraints are maintained in [development](development.md).
 
-- **Flutter:** 3.32.8, pinned (a machine constraint — see [../AGENTS.md](../AGENTS.md));
-  package versions are chosen for its Dart
-- **State management:** Riverpod
-- **Navigation:** go_router, bottom navigation through `StatefulShellRoute`
-  (tabs: Search, My ratings, Watchlist, Stats; settings from the app bar)
-- **Local database:** drift (SQLite) — typed queries, reactive `watch()`
-  streams for Riverpod, migrations tested on schema snapshots
-- **HTTP:** dio plus our own on-disk cache of TMDB responses
-  (`lib/data/response_cache.dart`), with a TTL per request type from
-  [external-sources.md](external-sources.md). Not `dio_cache_interceptor`:
-  it extends `maxStale` on every hit, so a card opened often would never
-  refresh. Our cache is one file per request in the OS cache directory; a
-  fresh entry is served without the network, a stale one when there is no
-  network or TMDB answered with an error. The API key never becomes part of
-  a cache key. PoiskKino and OMDb responses don't go to the HTTP cache: their
-  result is `external_ratings` rows
-- **Images:** cached_network_image with its own `CacheManager` (1,500
-  files, 90 days); the cache key is size plus `poster_path`, not the full URL
-  (a lesson from Amicus: a cache key must not depend on what gets reissued).
-  The CDN base address comes from `/configuration`, and until that loads,
-  from the well-known default
-- **Secrets:** flutter_secure_storage (API keys), behind the `KeyStorage`
-  interface — replaced with memory in tests
-- **External links:** url_launcher (the key guide opens in the browser, in
-  the UI's language)
-- **Settings:** shared_preferences
-- **Google:** google_sign_in + googleapis (Drive v3) +
-  extension_google_sign_in_as_googleapis_auth. google_sign_in resolved to
-  7.2.0 — already the new API (authorization separate from sign-in, through
-  `authorizationClient`); examples for 6.x don't apply to it
-- **Serialization:** external API responses are parsed by hand into domain
-  classes (`lib/data/sources/*`) through `Json`, a wrapper that reads a field
-  of the wrong type as missing. json_serializable would get in the way here:
-  a film and a series name the same field differently (`title`/`name`),
-  dates can be an empty string, and a zero rating means "no votes". Clients
-  take the body as a string and parse it themselves, including key checks: in
-  dio an unparsable
-  body is `DioExceptionType.unknown`, which reads as "no network".
-  The sync file (Stage 5) is read the same way, by hand, but strictly: a
-  missing or mistyped field makes the whole file broken rather than a
-  default (`lib/data/sync/sync_file.dart`).
-- **Statistics charts:** fl_chart
-- **Linting/formatting:** flutter_lints + `dart format`, in CI from the first
-  commit
-- **Repository layout:** `app/` — the Flutter project (org
-  `com.github.tiltozavr2545`, package `framebook`), `docs/` — documentation
-- **Repository:** [github.com/tiltozavr2545/Framebook](https://github.com/tiltozavr2545/Framebook)
-
-### Versions chosen for Flutter 3.32.8 (Stage 0)
-
-| Package | Version | Note |
-|---|---|---|
-| flutter_riverpod | 3.3.2 | 3.4.1+ needs Dart 3.12 |
-| go_router | 17.0.0 | |
-| drift / drift_flutter / drift_dev | 2.29.0 / 0.2.7 / 2.29.0 | **ceiling**: drift 2.31 pulls sqlite3 and test, which need Dart 3.10+, while `test` is pinned through `flutter_test` from the SDK |
-| build_runner | 2.7.1 | analyzer 7.7.1; unused json_serializable removed in 0.8.4 |
-| dio | 5.11.1 | `dio_cache_interceptor` dropped in Stage 2 — see "HTTP" above |
-| crypto | 3.0.7 | HTTP cache file names and sync deletion digests |
-| cryptography | 2.9.0 | Argon2id and AES-256-GCM for optional encrypted key sync; requires Dart 3.3+ |
-| cached_network_image / flutter_cache_manager | 3.4.1 / 3.4.5 | own `CacheManager` for posters |
-| flutter_secure_storage | 10.3.4 | |
-| shared_preferences | 2.5.3 | |
-| google_sign_in | 7.2.0 | the new authorization API |
-| googleapis / extension_google_sign_in_as_googleapis_auth | 15.0.0 / 3.0.0 | |
-| googleapis_auth / http | 2.0.0 / 1.6.0 | direct since Stage 5: Drive errors and the authenticated client |
-| file_picker | 11.0.3 | export ("Save to…") and import of the sync file |
-| package_info_plus | 9.0.1 | the app version written into the sync file |
-| fl_chart | 1.0.0 | **ceiling**: 1.1 needs vector_math 2.2 (`Matrix4.translateByDouble`), Flutter 3.32 pins 2.1.4 |
-| uuid / intl | 4.6.0 / 0.20.2 | |
-
-`flutter pub upgrade --major-versions` is not a tool here: "newer" almost
-always means "needs a fresher SDK", and the SDK is pinned. To upgrade one
-package, lift its constraint (`any`) and see what the solver picks, as was
-done for drift.
-
----
-
-## Layers
-
-```
-lib/
-  app/                  — entry point, router, theme, localization
+```text
+app/lib/
+  app/                 startup, routes, theme, localization, preferences
   data/
-    db/                 — drift: tables, queries, migrations
-    sources/
-      tmdb/             — catalog client and domain classes
-      poiskkino/        — PoiskKino client (Kinopoisk rating)
-      omdb/             — OMDb client (IMDb, RT, Metacritic)
-      providers.dart    — clients built from keys and language
-    ratings_service.dart — external ratings: cache → budget → source
-    budget.dart         — daily limits and ceilings (api_budget)
-    response_cache.dart — on-disk HTTP cache for TMDB
-    source_failure.dart — why a source failed; JSON reading
-    library/            — the user's ratings and watchlist; title snapshots
-    work_key.dart       — building and parsing work_key
-    sync/               — file format, merging (pure functions), Drive transport
-  features/
-    search/  title/  ratings/  watchlist/  stats/  settings/  onboarding/
-  shared/               — poster, error screen, formatting
+    db/                tables, migrations and queries
+    library/           mutations, views, analytics and snapshot identity
+    recommendations/   taste profile, retrieval and ranking
+    sources/           TMDB, PoiskKino and OMDb adapters
+    sync/              codecs, pure merge, persistence and Drive transport
+  features/            screens and feature controllers
+  shared/              reusable UI, images, formatting and worker helpers
 ```
 
-Rules:
-
-- **A source client knows only its own API** and returns domain values, not
-  its DTOs. The decision "where IMDb comes from — OMDb or PoiskKino" is made
-  by `ratings_service`, not by a screen.
-- **Sync merging is pure functions** over lists of rows, with no Drive and
-  no database. The transport (Drive) and applying (a drift transaction) are
-  separate. Only that way can the algorithm be tested on thousands of random
-  sequences.
-- **Screens read the database through `watch()` streams.** A sync that
-  applied remote changes updates the open lists without manual `invalidate`.
-
----
-
-## Startup and keys (Stage 1)
-
-`main()` immediately renders `StartupApp`. Its initializer opens the database (creating `device_id` if there
-is none), reads `SharedPreferences` and the keys, and passes all of it into
-`ProviderScope` through overrides. The single reason: the first frame needs
-the theme, the language and whether there is a TMDB key, otherwise the app
-flashes the main screen before onboarding. Successful initialization hands
-control to the app with the saved theme and locale. While initialization is
-pending, the minimal progress UI follows the system. An initialization error
-shows a localized retry screen without raw exception details or destructive
-reset; failed attempts close the database before retrying.
-
-The router keeps the user on onboarding while there is no TMDB key, and sends
-them back there if the key is removed. The Drive restore route is also
-available without a key. The user leaves onboarding themselves,
-with a button: after TMDB they may want to add the optional keys too.
-
-A key check is one request (`KeyValidator`, `lib/data/key_validator.dart`)
-with five outcomes: works / works but the limit is used up / rejected /
-not reached / invalid source response. A rejected key isn't saved; "not reached" is saved marked "not
-checked". The trial request to PoiskKino and OMDb is charged to the daily
-budget like any other.
-
-The shared HTTP client (`lib/data/http.dart`) doesn't throw on 4xx/5xx:
-`{"Error": "Invalid API key!"}` with a 401 is an answer for the source's
-client to read; only a network failure is an exception.
-
-## Search and title cards (Stage 2)
-
-Search is `search/multi`, sent as the user types (after a 400 ms pause) or
-by the keyboard's search button; the answer to an outdated query is
-dropped. TMDB pages load as the list is scrolled to its end. Results live
-as long as the app is open: coming back to the tab shows the same search.
-
-Cards nest inside the tab's branch (`/search/movie/603`,
-`/search/tv/1399/s/1/e/3`) instead of opening on top of the shell: the
-bottom navigation stays, and back leads to the season, the series, the
-search, in order. There is one set of routes (`TitleRoutes.routes()`);
-Stage 3 hangs the same set under "My ratings". The key is built from the
-path through `WorkKey.tryParse`, so the rules are the same as everywhere.
-
-There is no separate episode request: everything but the imdb id is in the
-season response. The episode's imdb id is its own request
-(`episode/{m}/external_ids`); if it fails, OMDb is asked by the series' imdb
-id and the numbers.
-
-Riverpod 3's automatic provider retry is off (`ProviderScope(retry: …)`): a
-card error is offline or a TMDB refusal, and retrying those on a timer is
-pointless. The error screen has a retry button.
-
-## Title card
-
-The loading order, so that the screen is useful right away:
-
-1. The TMDB card through the HTTP cache. If it can't load (offline,
-   nothing cached) and the title has a snapshot in `works` (rated or on the
-   watchlist), the **saved card** stands in: poster, title, year, your score
-   and note, the last known ratings, and a line saying so with a retry
-   (`features/title/saved_card.dart`, Stage 6). Without a snapshot, the
-   error screen.
-2. With the card: overview, cast and crew (`credits`), seasons, the TMDB
-   rating.
-3. External ratings from `external_ratings`: shown at once, even stale ones.
-   In parallel, if they are older than 7 days and the budget allows, they are
-   requested again.
-
-Each rating source is a separate cell with its own state: value / no data /
-no key / loading / error. One source failing doesn't break the card.
-
-What a cell shows is decided by a pure function, `ratingCellState`
-(`features/title/title_ratings.dart`), and every combination is covered by
-a test:
-
-- a value, once there is one, is always shown: while refreshing (with a
-  small indicator), after a failure, even after the key was removed; older
-  than 7 days, it is greyed out and dated ("as of Oct 12");
-- `notFound` is "no data";
-- no key is "add a key", and a tap opens Sources;
-- otherwise it is loading, or the failure's reason: no connection, daily
-  limit used up, key rejected, source error.
-
-Which cells each kind gets: a film — Kinopoisk, IMDb, TMDB, RT, Metacritic;
-a series — Kinopoisk, IMDb, TMDB; a season and an episode — IMDb and TMDB
-(a season's IMDb is the episode average, labelled as such).
-
-When TMDB has renumbered a rated season or episode (Stage 6.5, the rules
-are in [data-model.md](data-model.md), "When TMDB renumbers"), the card
-asks inline rather than in a dialog: "Your rating of S1 · E5 was for an
-episode that is now S1 · E3. Move it?" with Move and Keep, or, when a
-rating already sits on the target, "Which score to keep?" with both scores
-(`features/title/renumber_notice.dart`). It is built from the response the
-screen already has and the stored ratings, so it costs no request:
-
-- a series card asks about its seasons, above the season list;
-- a season card asks about episodes now in this season (from any season of
-  the series), above the episode list;
-- an episode card asks only about its own number — under the header, or
-  above "TMDB has no such title" when the number is gone.
-
-One question at a time; an answered one disappears by itself (the notice
-watches the ratings), and the next, if any, takes its place. An unanswered
-one stays until answered — there is no "later".
-
----
-
-Cast cards reserve space using the current text scale for two lines each of
-name and role. Both wrap and ellipsize deliberately, so larger display text
-does not clip the role or overflow the horizontal strip.
-
-A cover on a movie, series, season or episode card opens a full-screen
-viewer: the current image appears first, followed by UI-language,
-original-language and textless variants. The viewer supports swipe and
-pinch-to-zoom, using a cached small image while the larger size loads. A
-saved offline card opens only its cached cover, without a network request.
-Person pages open their profile photo in the same viewer and load available
-profile photos from TMDB, with the current photo first.
-TMDB's image configuration selects the large poster or still size. Both the
-preview and large image receive tight viewport constraints and use
-`BoxFit.contain`, so a low-resolution preview already occupies the final image
-area before the large image arrives. Cached-only images follow the same rule.
-The route fades without scaling; route geometry and image layout are separate
-requirements, both covered by regression tests.
-
-## Rating (Stage 3)
-
-All writes of the user's own data go through `Library`
-(`lib/data/library/library.dart`); the screens never touch the tables.
-
-- Every card has a "My rating" block between the header and the external
-  ratings. It is built from the card's **lineage** — `WorkSnapshot`s of the
-  title and all its ancestors, series first — because a rating is saved with
-  all of them.
-- Input is a bottom sheet with the **score reel** (Stage 6) and a note: a
-  strip of film pulled through a gate, frames 1…10 in steps of 0.5, a
-  haptic click per frame (`features/title/score_reel.dart`). In Stage 6
-  it started on a blank leader frame so as not to nudge the choice; from
-  Stage 6.5 it starts on 5, the middle of the scale, rather than on the
-  minimum.
-  Deletion is a separate action with a confirmation. Your own score is shown
-  as "8" or "8.5", without a trailing ".0".
-- Saving is one transaction: `works` (the snapshot with all its ancestors) +
-  `ratings` + a tombstone in `watchlist`. Saving the same score and note
-  again writes no new version — it would needlessly win a merge.
-- The **calibration** runs under the reel while it moves (Stage 6; in
-  Stage 3 it was a sheet after saving): all titles of the same kind
-  at the score in the gate, and all titles at each nearest score below and
-  above. Each group is an independent horizontal shelf inside a bordered
-  panel; the matching score is a full-width panel above two neighbouring
-  panels, lower on the left. The area stays a fixed height as the reel moves. The queries
-  are in [data-model.md](data-model.md). It is shown only once there are
-  enough ratings of the kind: more than 20 for films, more than 10 for
-  series, seasons and episodes each.
-- A series and a season show the average of their rated parts under the
-  score ("Your average over 4 episodes: 7.8"); seasons and episodes show
-  your score next to them in the lists.
-- Opening a card refreshes the snapshots that already exist (title in the
-  current language, poster) — never creating new ones and never touching a
-  rating's `updated_at`. A rated season's or episode's own TMDB id is the
-  exception: it is kept while TMDB has another title under its number, so
-  that the renumbering question isn't answered behind the user's back.
-
-## Lists (Stage 3)
-
-- **My ratings** — every live rating, joined with its snapshot and, for a
-  season or an episode, the series' and season's snapshots, so a row reads
-  "Game of Thrones · S1 · E3 · Lord Snow" with the season's poster. Filter by
-  kind, sort by date rated, score, year or title (`arrangeRatings`, a pure
-  function with tests; a season or an episode sorts under its series, in
-  number order). The chosen filter and order last while the app is open.
-- **Watchlist** — films, series and grouped seasons, most recently added first. Removing is
-  instant with "Undo" in a snackbar; rating a title removes it by itself.
-- Both read the database through `watch()` streams, so they work offline and
-  update by themselves. A row opens the card inside its own tab.
-- The default date sort in My ratings inserts local-calendar day headings
-  from `scored_at`: Today, Yesterday, then the full localized date. Changing
-  the score moves the title to that day; changing only a note does not.
-  Other sorts remain flat. These headings do not imply a viewing history.
-- Recent-title history opens only from the focused, empty title-search field
-  on Discover. Typing, showing search results or switching to People hides it;
-  refocusing a nonempty query never reopens the history overlay.
-
-## Comparison and statistics (Stage 4)
-
-- **"Mine − theirs"** is `divergence()` (`lib/data/library/divergence.dart`):
-  your score minus the source's value, for the 1–10 sources only —
-  Kinopoisk, IMDb, TMDB. Shown with its sign and one decimal ("+0.5",
-  "−1.2", "±0"), next to the value in the card's cell once the title is
-  rated.
-- **My ratings** joins the cached Kinopoisk and IMDb rows into every row
-  (`Library.watchRatings`), so the list re-sorts by itself when background
-  refresh brings a value. The divergence sort compares with Kinopoisk or
-  IMDb — the choice is remembered (`divergence_source` in
-  `shared_preferences`) — in three orders: furthest apart, "I rate higher",
-  "I rate lower". Rows without the value go last, most recent first, and
-  say "no data".
-- **Background refresh** (`lib/data/background_refresh.dart`) runs while the
-  tabs are on screen and the app is in the foreground: a first pass ten
-  seconds after start, then every half hour; a key change restarts it. A
-  pass goes through rated titles that need asking — no rating at all first,
-  then the oldest (`RatingsService.backgroundDue`) — one at a time, three
-  seconds apart, within the background share of the budget
-  ([external-sources.md](external-sources.md)). It stops when offline,
-  when every source's share is spent, or when the app goes to the
-  background. "Kinopoisk ratings loaded for N of M" counts the titles a
-  source covers with the current keys that have its answer — a value or a
-  definite "not there".
-- **Statistics** is `computeStats` (`lib/data/library/stats.dart`), a pure
-  function over the live ratings: count and average, the distribution by
-  half points (an fl_chart bar chart), the deviation from Kinopoisk and IMDb
-  (signed and absolute, over the titles that have the value), the average
-  by genre (a season and an episode count under the series' genres) and by
-  decade. Statistics uses separate Film, Series, Season and Episode modes,
-  starting with films; it never mixes parts into the overall film figures.
-  All analysis is all-time: import dates are not treated as viewing activity.
-  Genre names come from
-  TMDB's genre lists through the HTTP cache; without them (offline, nothing
-  cached) the genre section says so and the rest still works.
-
-`insights.dart` adds pure aggregates with contributing title lists: median,
-high/middle/low score shares (8–10, 4.5–7.5, 1–4), people and genre reliability,
-population standard deviation, mixed-feeling authors (at least one 8+ and one
-score ≤4), director/actor pairs and effective category diversity
-(`exp(Shannon entropy)`). Person/genre average and reliability rankings need
-three distinct works; frequency lists have no minimum. A multi-role person
-counts once per title globally and once per applicable role. Creative pairs
-need three shared works and exclude self-pairs. People analyses include only
-titles with loaded, identity-matching credits; empty successful credits count
-as covered. Source preference agreement uses Spearman correlation with average
-ranks for ties, requiring three shared values and variance on both sides.
-Discoveries/disappointments have personal-minus-source gaps ≥1 / ≤−1.
-Interactive bars, score groups, genres, decades, people and pairs open their
-contributing rated works, then cards inside the Stats tab with working back.
-
-`PeopleIndex` loads compact cached credits before starting up to four parallel
-TMDB requests, at most 80 titles and 45 seconds of scheduling per pass (up to
-10 additional seconds for an in-flight request). It stops scheduling on a
-network/auth/limit failure. The screen remains usable and shows coverage plus
-a continuation action. Cache keys contain locale and the stored work identity;
-numbered parts are checked against TMDB before attribution. No cast is added
-to the permanent database or sync. The existing cache-pruning policy applies.
-
-The empty People search displays favourites, frequently rated people, rows
-by filmography role and TMDB popular people. Favourite actions live on people
-pages and search results; the default filmography combines all roles with
-one row per title. Unrated works of favourite people appear in Discover's
-recommendation rows; retrieval, ranking and hiding rules are in
-[recommendations.md](recommendations.md).
-
-## Update checks
-
-The latest stable GitHub release is checked at launch at most once per 24
-hours; a manual check is available on About. Dismissal persists per version,
-and the banner opens the release page. Offline and API errors are quiet during
-automatic checks. Tests use a fake source, not the network.
-
-The watchlist groups season entries under a tappable series header; the
-header need not be a watchlist selection itself. Adding the whole series
-and adding a season displace the opposite selection. The local and sync
-rules, including concurrent offline selections, are in [sync.md](sync.md).
-The series and season cards ask Move / Keep when TMDB renumbers a listed
-season, using the ids already loaded on the card.
-
-The comparison panel in the rating editor appears only with more than 20
-other live film ratings or more than 10 other live ratings of the same TV,
-season or episode kind. The threshold is checked before opening the editor,
-so the reel stays in place while the score changes.
-
-## Sync and backup (Stage 5)
-
-The design is [sync.md](sync.md); here is what lives where in
-`lib/data/sync/`.
-
-- `sync_file.dart` — the file format: gzipped JSON with `format_version`,
-  strict reading; a broken file and one from a newer app are different
-  errors, and neither is ever overwritten.
-- `merge.dart` — last write wins row by row, including permanent compact
-  deletion registers. Deterministic tie breaking and equivalent full/compact
-  deletions keep the merge commutative, associative and idempotent. Property
-  tests check exactly that, and that three devices converge whatever the
-  order of edits and syncs.
-- `sync_store.dart` — the database side: reading the shared state, applying
-  someone else's in one transaction (a row is written only where it wins over
-  what is stored at that moment), and "replace everything". Rows are written
-  as full companions: drift leaves null columns out of an upsert of a data
-  class, which would keep a stale note or tombstone.
-- `sync_engine.dart` — one pass over a `SyncRemote`, with the daily copies;
-  `drive_remote.dart` is that remote on Drive's `appDataFolder`, with a
-  30-second timeout around each complete operation.
-- `google_account.dart` — google_sign_in 7: Credential Manager sign-in only
-  after an explicit user action, then authorization for `drive.appdata` only.
-  Startup restores the selected email from preferences. Drive requests use
-  google_sign_in_platform_interface (already used by the plugin) to pass that
-  email and forbid UI, without relying on a Credential Manager session or
-  the device's default account. An interface lets widget tests use a fake
-  account and an in-memory Drive.
-- `sync_controller.dart` — when to sync (launch and resume after 5 min, 30 s
-  after a change to ratings or the watchlist, the button), the last sync and
-  the last error for the screen, sign-out, deleting from Drive, the daily
-  copies, export and import. Offline isn't shown as an error; an expired
-  token is dropped and the call retried once.
-  Automatic cold-start sync uses the saved selection and requests Drive
-  authorization without UI. Missing consent appears as a settings error with
-  an explicit sign-in action; generic SDK failures do not imply revoked access.
-- Settings → Sync and backup is `features/settings/sync_screen.dart`; export
-  and import go through the system "Save to…" / file picker (file_picker).
-  A paused-sync warning asks before applying compact deletions over unsynced
-  live edits. Keep restores those entries with a newer version; Discard
-  applies the deletions. Cancel leaves sync paused. Imports expose the same
-  choice when necessary. Cleanup rules are in [sync.md](sync.md).
-- `secrets_vault.dart` — optional encrypted key sync in a separate file,
-  Argon2id in an isolate, AES-256-GCM and authenticated format parameters.
-  Per-key versions and deletion tombstones merge independent changes from
-  different devices. Pending snapshots and cached derived keys use OS secure
-  storage. No secret enters the rating file, exports or daily copies.
-- `secrets_controller.dart` — account-scoped opt-in state, unlocking, applying
-  restored keys and `divergence_source`, and uploading subsequent edits.
-  The onboarding restore route is available before the required TMDB key.
-
-Google initialization shares in-flight and successful attempts; a failed
-attempt can be retried. Initialization errors during explicit sign-in use the
-same typed failure boundary as authentication/authorization errors.
-
-## Design (Stage 6)
-
-The look is an editing table (`lib/app/theme.dart`): a cool lightbox,
-ink, film stock, and the editor's grease pencil.
-
-- **Scores follow their value.** Below 4 is red, 4–6.5 inclusive amber and above 6.5 green,
-  with separate readable light/dark palettes. The same scale applies to your
-  scores, source scores, list badges and statistics; 100-point sources are
-  normalized before choosing a colour. The lit reel frame and poster badges
-  use the light palette even in dark mode. Muted violet (`primary`, #75608F in the light theme) is the action
-  accent, separate from all three score colours. Edge-print amber (`tertiary`, `Reel.edge`) is for years and dates.
-- **Type:** Sofia Sans, bundled (OFL, `assets/fonts/`): Extra Condensed for
-  figures and titles — tall narrow numerals like edge print on film — and
-  the normal width for reading. Static weights cut from the variable fonts,
-  so `FontWeight` picks the right file.
-- **No plates.** Ratings on a card, the comparison blocks in Stats are
-  columns ruled on top, not grey rounded cards; a note sits in the margin
-  with a rule matching its score.
-- **One bold element:** the score reel. Everything around it stays quiet.
-- Light and dark follow the system; both are designed, not inverted.
-- `test/screenshots/` renders the main screens to PNG with the real fonts
-  (`SCREENSHOTS=<dir> flutter test test/screenshots`) — the way to look at
-  the design without a device; skipped in normal runs.
-
-## Discover, cast and people (Stage 6)
-
-- **Discover** (the first tab): a search field on top; while it is empty,
-  shelves — hybrid personal recommendations, a ranked watchlist, work by
-  favourite people and exploration, then trending this week,
-  in cinemas now, best of all time (discover by rating with a votes
-  threshold; `/top_rated` is crowded with new titles that have a handful of
-  votes). A shelf that fails or is empty is left out; all failing offline is
-  one message with a retry when no local/personal row can be shown. The hybrid
-  uses local all-time taste, 1:1 familiar/exploration slots, streamed candidates
-  and per-device Not interested/Undo; see [recommendations.md](recommendations.md).
-  Completed recommendations survive foreground changes. Interrupted passes
-  retain the same plan's session candidates while resuming, so returning to
-  Discover does not temporarily replace populated shelves with empty results.
-  Shelves come through the HTTP cache: a day for
-  what changes daily, a week for the rest.
-- **Cast and crew** on every card: a strip of the first 20 actors with their
-  roles, and lines for creators, directors, writers, music and cinematography.
-  Tapping the cast heading opens a separate, lazily built full-cast list in
-  the current tab; actor profiles push above it and Back returns to the list.
-  Series and seasons append `aggregate_credits`, since TV `credits` contains
-  only the latest season. Aggregate roles and jobs are deduplicated per person;
-  movies and episodes keep ordinary credits, including episode guest stars.
-  Larger aggregate responses remain in the evictable HTTP cache only.
-- **A person** (`features/person/`): dates, a folded biography, the
-  filmography filtered by acting, directing, production, writing, music, camera
-  and other work, with a unique-title count for each role. A title can appear
-  in several categories; each category shows only its relevant jobs. Empty
-  categories are hidden. This excludes talk shows
-  and news where they appear as themselves; your score next to what you
-  rated. The person route sits at the tab's level and is pushed, since
-  people and titles link to each other without end; back walks the pushes.
-  The filmography is one list item per title, so the list builds only what
-  is on screen.
-
-People browsing and statistics share derived insights through
-`data/library/insights_provider.dart`, separated by title kind. People
-analytics use aggregate credits for series and seasons, including each crew
-job; movie and episode analytics use ordinary credits and episode guest stars.
-The derived-credit cache uses a new namespace in 0.9.0 so incomplete entries
-from earlier parsing are refreshed. Favourite
-changes and progress-only index updates do not rebuild the aggregates. More
-than 80 ratings are analyzed in an isolate, with serialized latest-input
-workers. Statistics uses slivers so expanding all people builds only visible
-rows. Decade drill-down uses the current local ratings even while background
-insights are pending. Favourite buttons select membership for their person
-from a shared ID set, rather than rebuilding for every unrelated favourite.
-
----
-
-## Offline
-
-Without a network everything that rests on the database works: both lists,
-sorting (including divergence by already cached ratings), statistics,
-changing and deleting ratings, notes. Search needs a network or a cached response. An uncached card can still open
-from the mini snapshots saved with a rating or watchlist entry; a title with
-neither a cached response nor a snapshot shows a clear error with retry.
-
----
-
-## An update that outlives its screen
-
-A rule from Amicus, same stack: `ref` after `await` throws if the widget was
-unmounted in the meantime. Capture the `ProviderContainer` before the
-`await`. Here it matters most for saving a rating, after which other tabs
-update (lists, statistics). Thanks to drift's `watch()` streams there should
-be few such places — but not zero.
-
-## Correctness boundaries after the November 2026 audit
-
-- Search listens for catalog-client changes and restarts the current query;
-  older answers cannot mix pages from different content languages.
-- Recommendation requests depend only on seed titles; a separate reactive
-  filter excludes all currently rated keys without refetching unchanged seeds.
-- Shared comparison-source state lives in `app/ratings_preferences.dart`, not
-  a screen module. Library view models and pure sorting are separated into
-  `library_models.dart` and `library_sort.dart`; mutation transactions stay in
-  `Library`.
-- `SyncActions` owns the sequence for deleting rating and encrypted-key data.
-  The encrypted controller gates new operations until completion or recovery.
-- Numbered-part IDs belong to one snapshot identity; merging them is described
-  in [sync.md](sync.md), format 4. Movie and series IDs retain sticky behavior.
-- Notes enforce the storage code-point limit without splitting a grapheme;
-  the editor awaits persistence and retains its draft on failure.
-- Android cloud backup and device-transfer rules exclude `FlutterSecureStorage`
-  and `FlutterSecureKeyStorage` shared preferences, including cached vault keys.
-  Ordinary app data remains eligible for OS backup; restore depends on Android
-  settings and still needs validation on physical devices.
-- Rating file parsing/encoding runs in an isolate with bounded compressed and
-  expanded bytes; imports read streams, not the entire selected file eagerly.
-- Sync application reuses works, ratings and watchlist rows from its transaction
-  snapshot, including metadata of unreferenced works. It does not select each
-  merged row again. Exact payload equality avoids needless hash tie-breaking;
-  pruning orphan snapshots selects keys without decoding notes or full snapshots.
-
-## People search and filmography
-
-Discover offers a Films / People glass slider directly below the search field,
-with the same width, minimum height and corner radius as the field. It uses
-the navigation bar's surface and shared glass tint. Its frame remains in the
-header; dragging translates only the content below it, and release snaps to
-the selected mode. Taps animate the same transition without a Material press
-overlay. Both modes share the query, retain shelf scroll positions and close
-title history when switched. The history dropdown anchors below the selector
-so both modes remain accessible while history is open. Inactive search snapshots
-cannot paginate the active mode. The Films mode still searches both films and series. Large text
-can increase the selector's height, and reduced motion disables settling.
-People search uses TMDB `/search/person` with the same debounce, pagination,
-HTTP cache and stale-response protection as title search. Results show a
-portrait, name and known-for titles; opening a profile preserves search on back.
-Role filters derive from actual credit jobs: an assistant director is not
-classified as the director. Unclassified jobs remain available in Other work.
-No catalog data is added to the database or synchronization file.
-
-## Search history (0.8.1)
-
-Tapping Discover's title-search field opens an anchored dropdown of the last
-20 films and series selected from search results. Each entry contains only a
-mini snapshot: typed work key, title, year and poster path. SharedPreferences
-persists this bounded device-local list; it is excluded from rating exports,
-backups and Drive sync. No database migration or sync format change is needed.
-Opening a result moves its key to the top and refreshes its mini snapshot.
-Typing or submitting a query, pagination, and people search do not add entries.
-The dropdown shows posters and title/year/type, opens cards directly, supports
-individual removal and clearing, and closes on typing, selection or loss of
-focus. Clearing the query explicitly closes the dropdown; a subsequent tap
-on the empty field can reopen it. It overlays existing content without moving Discover shelves or results.
-Malformed stored entries are skipped so Discover can still open.
-
-## Floating navigation and favourite portraits (0.9.0)
-
-The default bottom bar floats within horizontal and bottom safe-area margins,
-using the existing navigation surface colour. A bounded glass selection moves
-with the branch pages during a horizontal drag; release snaps to a tab. Taps
-animate the same transition and tapping the active tab returns to its root.
-Each branch retains its own back stack and scroll state. Branch navigators
-are available in advance, but their screens mount only on first display;
-hidden branches stop tickers and cannot receive focus or pointer input.
-The body extends behind the capsule, exposing page content through its side
-and bottom margins without a full-width footer surface. Scrollable content
-includes the measured bar inset in its bottom padding, so final list items can
-scroll fully above the capsule. Floating destinations disable Material press
-overlays and icon transitions; only the glass selection and pages animate.
-Settings offers Floating / Classic in a dropdown like the theme selector;
-the device-local choice persists in SharedPreferences and is not synchronized.
-Reduced-motion settings disable animated settling.
-
-People shelves use a double tap on the portrait to toggle favourites. A brief
-heart animation and localized snackbar confirm the change; a translucent
-bottom-right heart remains only on saved shelf portraits. A single tap opens
-the profile. An equivalent custom accessibility action is available. Profiles
-have a static theme-primary header border and gradient, and a centered filled
-favourite button below the header; they never show the shelf heart overlay.
-
-## Rich title cards and keyboard restoration
-
-Movie cards show their facts to the right of the poster: the earliest valid
-known release date across TMDB's appended
-`release_dates` and primary date, production countries, positive production
-budget and worldwide box office in USD. The full date replaces the standalone
-year in the header; the facts are not repeated below the source ratings. Missing amounts are omitted. Country
-names are displayed as provided by TMDB, which may be in English. Series show
-the first air date (and last air date when ended/cancelled) and production countries; movie finances are not inferred
-for series. These details stay in the evictable HTTP cache, outside snapshots,
-the local schema and synchronization.
-
-The header samples at most 4,096 pixels from the same cached w342 poster used
-for display, groups them into a small colour histogram and prefers chromatic midtones
-over dark borders and white lettering. The selected colour is adjusted for
-theme brightness, blended into the surface at 24% (light) / 38% (dark), and
-repeated in a visible border. Missing/failed images use the normal
-surface. A saved-only offline card never starts a tint image request.
-
-Movie collections and movie/TV similar lists load independently of the main
-card, have their own retry, omit empty sections, deduplicate typed work keys
-and exclude the current title. Collections are ordered by release date, with
-undated titles last. Opening a related title pushes within the current tab,
-so Back returns to the previous card. TMDB movie collections do not supply TV
-franchise membership; series therefore show only the similar section.
-
-`KeyboardRestore` observes app lifecycle transitions above all app routes. On
-leaving the foreground it remembers the active editor only if the keyboard
-is visible. On return it requests that editor's keyboard after the frame,
-only if the editor is still mounted and owns the same primary focus. This
-covers search, notes and settings without persisting keyboard state across
-process restarts or reopening a keyboard the user had already dismissed.
-
-## Resource work in 0.8.4
-
-Watchlist streams select only live entries, required snapshots, relevant
-season-rating keys and effective selection fences in one transaction; they
-do not read the whole sync state. Localized-title refresh selects live keys
-and ancestor snapshots and reuses successful results for 24 hours per
-language/key generation, invalidating changed snapshots and retrying failures.
-Both refresh paths stop starting requests while backgrounded. Ratings pacing
-tracks actual requests separately from source completion.
-
-Full-screen images retain fourfold zoom with an aspect-preserving decode
-budget capped at 4,096 × 4,096 pixels. Poster colours use a bounded 128-entry
-successful-result LRU without retaining images. Release builds move debug
-information into matching Actions artifacts, backed up locally before expiry. Exact behavior,
-measurements and limits are in [optimization.md](optimization.md).
-
-## Scroll stability
-
-Discover displays the first useful candidate and actor-index snapshots promptly,
-then commits each completed pass, rather than reranking after every response.
-Taste inputs compare score, identity, title, year and genres; note, poster,
-external-rating and freshness-only changes do not rebuild taste weights.
-Equivalent watchlist rereads do not invalidate ranking, while presentation,
-membership and entry revisions remain reactive. Snapshot timestamps retain their
-existing synchronization semantics.
-
-Large taste profiles (more than 80 titles or 1,000 relevant credit entries) use a
-serialized worker and retain the previous result while computing a replacement.
-Preferred people, genres and recommendation seeds materialize with the profile,
-so reading the completed result cannot trigger another large sort on the UI
-isolate. Live rated-key filtering is independent of the pending profile.
-
-Discover defers replacing its shelf tree during vertical and horizontal scroll
-activity, including flings; descendant controls keep their own subscriptions.
-Film and people shelves use fixed-extent horizontal slots, keyed index lookup,
-independent PageStorage keys and retained visited sections. Padding and spacing
-remain unchanged, and tiles remain lazy. Loading placeholders reserve reason
-caption space, and refresh errors preserve available data. Personal-score badges
-select from one shared live-library map instead of querying each poster.
-
-Title pages retain visited headers, editors, source-rating panels, cast strips
-and related titles until the route closes. Season, episode, search, ratings and
-watchlist rows remain lazy. Expanded biographies retain their state; person role
-filters reuse derived filmography groups and combined ordering for one Person
-snapshot. An opening card uses its shared live-library rating while the individual
-query is pending; an explicit null from that query always wins. Poster tint
-reserves a transparent border before its colour arrives. Source-rating cells
-reserve two caption lines and a numeric slot sized for the current text scaler;
-long numeric values scale down only when their available width requires it.
-
-People and statistics loading counters subscribe independently of their main
-content. Insight scheduling accounts for title count, credit volume and the
-actor/director pair product: the synchronous path is limited to 80 titles,
-1,000 credit entries and an estimated 4,000 pair contributions. Larger inputs use
-the existing serialized worker. The estimate may conservatively overcount
-duplicate credits; these work limits are not measured FPS guarantees.
-
-Catalog JSON bodies and cache envelopes of at least 64 Ki characters parse or
-encode in isolates. Derived actor lists use background decoding at the same body
-threshold and background encoding above 400 credits. Small inputs avoid isolate
-startup overhead. Invalid JSON, stale-cache fallback and private atomic cache
-staging retain their previous behavior. A TMDB client shares concurrent loads by
-canonical endpoint/parameter key; try/finally clears in-flight entries after both
-success and failure without a self-waiting completion chain. Ratings-list ancestor
-snapshots load in batches of 400 keys.
-
-Root tab pages accept horizontal drags in both navigation styles. Nested
-horizontal lists win their gesture arena; losing a gesture cannot cancel a tab
-transition that never started. Nested title/person routes do not switch tabs by
-body swipe. Pages and the floating selection share a controller, including RTL
-and reduced-motion support. The glass effect uses a gradient and highlight over
-an opaque surface, without backdrop filtering that solid background.
-
-## Prepared library views
-
-Ratings filtering, ordering and day-group construction run in a serialized worker
-above 200 ratings. The retained result includes its selection settings, so an old
-list is not relabeled with a new filter while its replacement is pending. Large
-statistics summaries also filter their input in a worker and precompute the
-median, score groups, Spearman agreement and discovery/disappointment lists.
-Their retained kind drives both summary and people insights consistently.
-Statistics people-order preparation uses a serialized worker above 200 titles or
-200 people and preserves its previous result while changing role/order. All score
-profile aggregates materialize during analytics preparation, rather than lazily
-looping through contributing titles during row rendering.
-
-Initial combined filmography and role grouping run in a serialized worker above
-200 acting/crew credits. The resulting view stays provider-cached for the route
-and its controls only select prepared lists. Pure preparation goes through
-`ViewComputer`: production uses real isolates; virtual-clock widget tests replace
-only scheduling. Separate tests use actual isolate transfer and gated workers to
-check stale-request suppression and previous-result retention.
+Source clients know only their own API and return domain values. The ratings
+service chooses between sources; screens do not decide where an IMDb value
+comes from. External parsing/failure rules belong to the source contract.
+Sync merging is pure and independent of Drive and SQLite. Persistence applies
+the result in a transaction. Screens observe Drift streams, so remote changes
+update open library views without screen-specific invalidation.
+
+## Startup and client ownership
+
+`main()` renders `StartupApp` immediately. Initialization opens the database,
+creates a device ID when necessary, reads preferences and keys, then injects
+them through `ProviderScope` overrides. The first main frame therefore has
+the saved locale, theme and onboarding state. Pending initialization follows
+the system theme; failed attempts close the database before Retry.
+
+Catalog/source providers depend on keys and content language. Search restarts
+when its client changes; generation checks prevent pages from an old client
+or query from entering the active result. Riverpod automatic retries are
+disabled; explicit Retry controls handle source failures.
+
+The shared HTTP client returns 4xx/5xx responses for source-level decoding;
+transport failures remain exceptions. A service instance owns its in-memory
+failure throttles and card-request statuses. Key changes recreate it, allowing
+immediate validation/refresh without old responses replacing current status.
+
+## Library writes and views
+
+`Library` owns rating/watchlist mutations; screens do not write tables.
+`PairCalibrationStore` coordinates confirmed score changes through `Library`
+and records the comparison in the same database transaction. Rating persistence
+includes lineage snapshots and watchlist removal in one transaction. Saving
+unchanged score/note content creates no new user version. Snapshot identity
+and timestamp rules are defined only in the data model.
+
+Localized-title refresh selects live keys and ancestors at startup, language
+changes, sync and resume. Successful unchanged identities reuse results for
+24 hours per language/key generation; changed identities and failures retry.
+It requires a key and foreground state. A late result cannot apply after
+backgrounding or disposal.
+
+Watchlist streams read only live entries, required snapshots, relevant season
+rating keys and selection fences transactionally. They avoid full sync-state
+reads. Rating-list ancestor queries batch at 400 keys to stay below SQLite
+parameter limits. Poster score badges select from one shared live-rating map.
+
+Filtering, ordering and day grouping run in a serialized worker above 200
+ratings. Prepared results retain their selection settings while replacement
+work runs. Filmography grouping/combined ordering similarly uses a worker
+above 200 acting/crew credits and remains provider-cached for the route.
+The controls select prepared lists. Analytics and recommendation thresholds
+belong to their respective [analytics](analytics.md#state-and-scheduling) and
+[recommendation](recommendations.md) specifications.
+
+Pure preparation uses `ViewComputer`: production runs real isolates; widget
+tests replace scheduling, with separate tests for actual isolate transfer.
+Latest-input workers serialize computation, skip superseded queued inputs
+and retain coherent previous results until a replacement is ready.
+
+Pair selection runs locally in a serialized `ViewComputer` worker above 200
+library rows. The screen keeps the current pair stable while its rating versions
+remain valid, ignores obsolete worker results and cancels its day-boundary timer
+when backgrounded or disposed. Workflow and selection priorities are specified
+in [pair calibration](pair-calibration.md).
+
+## Lifecycle and rendering
+
+The shell retains non-rendering listeners for ongoing derived data and
+foreground services. Nested cards can pause Discover widget subscriptions
+without losing the live recommendation graph. These listeners do not rebuild
+the shell for every enrichment update.
+
+Tab navigators exist in advance, but screens mount on first display. Hidden
+branches stop tickers, focus and pointer input. Visited finite shelf sections,
+card headers/editors/source panels/cast/related rows and expanded biographies
+remain mounted for their page/route. Unbounded search, rating, season and
+episode lists stay lazy. Horizontal shelves use fixed extents, stable keys
+and separate PageStorage offsets. Discover defers feed-tree replacement until
+vertical/horizontal scrolling and flings finish.
+
+An opening card uses the shared known rating while its individual query is
+pending; an explicit null from that query takes precedence. Optional loading
+counters subscribe independently. Layout reserves placeholder reason lines,
+source captions and poster borders to avoid geometry changes on completion.
+
+`KeyboardRestore` observes lifecycle above the routes and restores the same
+mounted primary editor after a frame only when its keyboard was previously
+visible. Navigation pages and floating selection share one transition
+controller. Glass indicators use gradients/highlights over an opaque surface,
+without redundant backdrop filtering.
+
+## Cache execution
+
+`response_cache.dart` stores one atomic file per canonical TMDB request in
+the OS cache directory. API credentials are excluded from cache identity.
+Real lifetimes are used instead of extending freshness on every hit; this
+replaces the earlier `dio_cache_interceptor` approach. Source-specific cache
+lifetimes, stale fallback and quota rules are owned by
+[external sources](external-sources.md#cache-and-lifetimes).
+
+Catalog JSON and cache envelopes of at least 64 Ki characters parse/encode
+in isolates. Derived credit lists decode above the same body threshold and
+encode above 400 credits. Small inputs avoid isolate startup overhead.
+Concurrent identical TMDB loads share one in-flight request by canonical
+endpoint/parameters; `try/finally` clears success and failure paths.
+Cache-age pruning uses asynchronous filesystem metadata reads.
+
+## Images
+
+`cached_network_image` uses a shared image cache; capacity, expiry and CDN
+sizes belong to [external sources](external-sources.md). Image keys use size
+plus relative path rather than a reissued full URL. Configuration supplies
+the CDN base; a default is available before it loads.
+
+Full-screen decoding preserves aspect ratio and up to fourfold zoom, capped
+at 4,096 pixels per side. This bounds each decoded image, not the whole process
+or download size. A 128-entry LRU retains successful poster colours, never
+decoded images or failures. Sampling reads at most 4,096 pixels from the
+cached w342 image. A saved-only card starts no tint request.
+
+## Sync components
+
+| Module under `data/sync/` | Responsibility |
+| --- | --- |
+| `sync_file.dart` | Strict, bounded rating-file codec |
+| `merge.dart` | Pure deterministic merge and state comparison |
+| `sync_store.dart` | Transactional reads, apply and explicit replacement |
+| `sync_engine.dart` | One remote merge/upload pass and daily copies |
+| `drive_remote.dart` | Drive implementation of `SyncRemote` |
+| `google_account.dart` | Account initialization and authorization |
+| `sync_controller.dart` | Scheduling, status, account actions, import/export and restore |
+| `sync_actions.dart` | Coordinated rating/vault deletion and operation gating |
+| `secrets_vault.dart` | Encrypted key codec, merge and secure pending state |
+| `secrets_controller.dart` | Opt-in state, unlocking and applying restored keys/preferences |
+
+`SyncStore` reuses the transaction's row snapshot instead of selecting every
+merged row again. Full companions write nullable columns explicitly; otherwise
+Drift upserts can retain an old note or tombstone. Orphan pruning selects keys
+without decoding complete notes/snapshots. Google initialization shares
+in-flight/successful attempts and permits retry after failure. Authorization,
+format compatibility, client disposal and concurrency limits are specified in
+[sync](sync.md).

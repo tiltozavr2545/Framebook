@@ -1,12 +1,9 @@
 # Postponed features
 
-Everything deliberately left out of the MVP. Work that is scheduled moves to
-[implementation-plan.md](implementation-plan.md) (the items required before
-the code review are in Stage 6.5). Finished work doesn't go here:
-the feature history is in [../CHANGELOG.md](../CHANGELOG.md), the MVP scope in
-[project-brief.md](project-brief.md).
-
----
+Unscheduled work and unresolved product choices. Move an item to the
+[implementation plan](implementation-plan.md) when it is scheduled and remove
+it here once delivered. Completed changes belong in the
+[changelog](../CHANGELOG.md).
 
 ## Share title links with an optional score
 
@@ -25,16 +22,11 @@ replace this request with sharing an image.
 
 ## iOS
 
-Postponed by a decision at the start: for now friends get Android only. The
-iOS platform code is created by `flutter create` and is in the repository,
-but isn't maintained. When there is time:
+No implementation is scheduled. When this becomes a supported target, plan:
 
-- building on the M4 Mac, TestFlight from the developer account set up for
-  Amicus (the process is in `docs/ios-deployment-guide.md` in lk-system);
-- a separate iOS OAuth client in Google Cloud and a URL scheme for
-  google_sign_in;
-- the Keychain entry of flutter_secure_storage survives uninstalling the
-  app — decide whether that is good or bad for API keys.
+- A compatible macOS/Xcode build host, signing and TestFlight distribution.
+- A separate Google OAuth client and the URL scheme required by sign-in.
+- A decision about API keys surviving uninstall through Keychain storage.
 
 ## Comparing with friends
 
@@ -65,11 +57,11 @@ imported one or the local one?
 hand when automatic matching was wrong or found nothing. A manual link must
 be synced (`works` is derived data now), so it is a format change.
 
-## Background sync and rating refresh
+## OS background work
 
-For now both happen only while the app is open. WorkManager on Android would
-allow syncing after changes and pulling ratings once a day within the
-budget.
+Consider Android WorkManager for sync and rating refresh while the app is
+closed. This needs lifecycle, quota and battery policy beyond the current
+foreground services.
 
 ## Rewatches
 

@@ -28,27 +28,41 @@ permanent database or sync file.
 
 `candidates.dart` retrieves from TMDB only:
 
-- Up to two high-scored (7+) films and two series, with varied genres, plus
-  one low-scored (≤4) seed of each kind. Recommendations associated with a
-  disliked seed reduce its candidates' familiar score.
+- Up to two high-scored (7+) films and two series, plus one low-scored (≤4)
+  seed of each kind. Daily rotation visits all eligible seeds in score/key
+  order. The second positive seed favours different genres among the next
+  twelve eligible titles. Recommendations associated with a disliked seed
+  reduce its candidates' familiar score.
 - Combined film and TV credits of up to eight favourite people, rotated
   daily for larger lists, plus up to two people with positive evidence from
-  at least three rated works. Learned people are selected after the current
-  credits batch finishes to avoid restarting retrieval on every credit.
+  at least three rated works, also rotated daily. Learned people are selected
+  after the current credits batch finishes to avoid restarting retrieval on
+  every credit.
   Every profession contributes: acting, directing, writing and other crew
   work. Each filmography contributes its 60 highest-prior released titles,
   plus any matching watchlist entries.
-- Discover results for the two strongest genres per kind and one unfiltered
-  pool per kind, plus the existing shared trending response. Discover uses
-  popularity ordering, a minimum public score of 6, at least 50 movie / 25 TV
-  votes and a release-date upper bound of today.
+- Discover results for the strongest genre and a rotating second genre with
+  positive evidence per kind, plus one unfiltered pool per kind and the
+  existing shared trending response. Discover uses popularity ordering,
+  a minimum public score of 6, at least 50 movie / 25 TV
+  votes and a release-date upper bound of today. Each day selects one of the
+  first five pages instead of always retrieving the first page, using the
+  documented `page` parameter for [movies](https://developer.themoviedb.org/reference/discover-movie)
+  and [TV](https://developer.themoviedb.org/reference/discover-tv).
+
+Rotation uses the local calendar day. Opening the app or returning from the
+background on another day refreshes the retrieval plan; there is no midnight
+timer and no shuffle on every navigation or scroll. The same library and day
+produce the same inputs, including after restarting the app. A small library
+may reuse seeds, and overlapping source results can still recommend the same
+titles. Rotation changes retrieval inputs, not the taste model or saved scores.
 
 At most 23 retrieval jobs run per pass with three workers, an eight-second
 per-job timeout and 45 seconds of scheduling. Successes are streamed into
 the screen before the pass finishes. Individual failures do not discard
 other results; cancellation stops scheduling and publishing. Later jobs can
-still use stale HTTP responses after an offline error. The separate credits
-index retains its own four-worker/80-title budget. Requests send catalog IDs
+still use stale HTTP responses after an offline error. The separate credits index uses the limits in
+[analytics](analytics.md#credit-enrichment). Requests send catalog IDs
 and filters; scores, notes and the private library are never uploaded.
 
 Completed retrieval jobs and in-flight requests are reused in a 64-entry
@@ -60,6 +74,10 @@ with an immediate first useful candidate result and an unconditional final
 snapshot. Foreground state gates new recommendation and credit requests;
 resume can continue incomplete enrichment. Completed recommendation loads and
 fully populated credit indexes remain intact across foreground changes.
+If a new daily pass fails without retrieving any candidates, the last useful
+session pool remains visible until a later retry succeeds. Disk HTTP caches
+retain their existing lifetimes and stale-response fallback; a never-loaded
+rotating source cannot supply offline data.
 Interrupted candidate loads retain their current sections and resume from the
 same plan's session snapshot, avoiding an empty intermediate shelf batch.
 This snapshot is scoped to the catalog client and is never synced or persisted.
@@ -90,10 +108,8 @@ Future-dated titles and hidden titles are excluded. Unknown dates are allowed.
 Dedicated rows may reuse a title from For you; each row deduplicates its own
 items.
 
-The shell keeps a non-rendering listener on the feed, like sync/background
-refresh. Nested cards pause Discover's widget subscriptions; keeping the data
-graph current prevents a stale dependency refresh during route reactivation.
-These listeners do not rebuild the shell on every candidate batch.
+Shell listener ownership is described in
+[client architecture](client-architecture.md#lifecycle-and-rendering).
 
 Reasons describe actual evidence: a named liked title, a favourite person,
 a positively rated contributor, preferred genres, exploration or membership
@@ -116,20 +132,14 @@ Undo; the For you heading's hidden-items action can restore all hidden titles.
 Hiding a series also hides its seasons from recommendation rows. Search,
 ratings and the watchlist remain accessible and unchanged.
 
-Hidden natural keys are a per-device preference in
-`shared_preferences.recommendation_hidden`, like recent search history.
-Writes are serialized; failures are reported and the latest optimistic change
-is rolled back to the last successful stored set, including overlapping failed
-writes. Hiding is not a low rating and never trains the taste profile.
-It does not change the database schema or sync format, and is not carried by
-Drive/export. Favourite people still use the existing synced register.
+Hidden-title storage is defined in the
+[data model](data-model.md#outside-the-database). Writes are serialized;
+failures are reported and the latest optimistic change rolls back to the last
+successful stored set, including overlapping failed writes. Hiding is not a
+low rating and never trains the taste profile.
 
-## Validation
+## Verification scope
 
-Tests use fakes and fixtures. They cover series/part precedence, sparse and
-negative evidence, varied seeds, vote-count smoothing, 1:1 allocation,
-deduplication, exclusions, offline watchlist ranking, non-acting favourites,
-bounded/cancelled retrieval, immediate filtering without refetching, undo,
-and captions with large text. These prove rules and regressions, not a
-measured improvement in recommendation quality; real-user relevance remains
-an empirical check.
+Regression coverage is indexed in [testing](testing.md#automated-coverage-by-behavior).
+The rules and scheduling thresholds above do not establish a measured
+improvement in relevance or Android frame times; those require empirical checks.

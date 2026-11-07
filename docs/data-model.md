@@ -1,71 +1,58 @@
-# Data schema
+# Data model
 
 The local SQLite schema (through drift) and its invariants. There is no
 server, so this is the project's only schema: everything the user created
 lives here, and everything that came from external APIs is either a mini
 snapshot or an evictable cache.
 
-**Status: implemented in Stage 1.** The source of truth is the drift tables
-in `app/lib/data/db/tables.dart`; schema snapshots per version are in
-`app/drift_schemas/`. This file is for quick orientation and the "why"; when
-they disagree, the code is right. CHECK constraints (the `score_half` range,
-the allowed `kind`/`source`/`status`/`scale` values, season and episode
-numbers) and the `ratings`/`watchlist` → `works` foreign keys are enforced by
-the database itself — covered by `test/data/database_test.dart`.
+Schema declarations are in `app/lib/data/db/tables.dart`, migrations in
+`database.dart`, and versioned snapshots in `app/drift_schemas/`. CHECK
+constraints and foreign keys enforce storage boundaries; migration and
+constraint tests are part of [testing](testing.md).
 
-How this data moves between devices is in [sync.md](sync.md); where the
-external data comes from is in [external-sources.md](external-sources.md).
-
-Tables: `works`, `ratings`, `watchlist`, `favorite_people` are synced; `external_ratings`,
-`api_budget`, `sync_state` are local only.
-
----
+Schema 3 adds [pair-comparison history](pair-calibration.md), preserving
+existing ratings, notes, watchlists and favourites through Drift migrations.
+Synced tables are described below; `external_ratings`, `api_budget` and
+`sync_state` are local tables, although selected sync metadata is serialized
+into the shared file as specified in [sync](sync.md).
 
 ## Three layers of data
 
 | Layer | What | Where it lives | Synced | Can be lost |
-|---|---|---|---|---|
-| User data | ratings, notes, watchlist, favourite people | `ratings`, `watchlist`, `favorite_people` | yes | **no** |
+| --- | --- | --- | --- | --- |
+| User data | ratings, notes, watchlist, favourite people, comparison history | `ratings`, `watchlist`, `favorite_people`, `pair_comparisons` | yes | **no** |
 | Mini snapshot | title, year, poster, genres, external ids | `works` | yes, along with the rows referencing it | yes — reloaded from the API |
 | Cache | external ratings, HTTP responses, images | `external_ratings`, disk cache | no | yes — by TTL and when space runs low |
 
-The line between the snapshot and the catalog: `works` gets only what the
-**offline list of your own ratings** can't work without — showing a row,
-sorting by title/year, computing statistics by genre and decade, building a
-request to another source. Overview, cast, runtime, a season's full episode
-list — no: the card shows them, and they come from the API (through the HTTP
-cache). If a new feature wants a field in `works`, the question to it is the
-same: is it needed offline for what is already rated.
-
----
+`works` stores only what the offline library needs to display rows, sort by
+title/year, group by genre/decade and identify titles in another source.
+Overviews, cast, runtime and complete episode lists stay in the evictable
+HTTP cache. Add a snapshot field only when the saved library needs it offline.
 
 ## `work_key` — a title's key
 
 A natural string key derived from TMDB ids:
 
 | Kind | Key | Example |
-|---|---|---|
+| --- | --- | --- |
 | film | `tmdb:movie:{tmdb_id}` | `tmdb:movie:603` |
 | series | `tmdb:tv:{tmdb_id}` | `tmdb:tv:1399` |
 | season | `tmdb:tv:{tmdb_id}:s{season}` | `tmdb:tv:1399:s1` |
 | episode | `tmdb:tv:{tmdb_id}:s{season}:e{episode}` | `tmdb:tv:1399:s1:e3` |
 
-Why natural rather than a UUID: two devices that rated the same film offline
-must produce **one** row with a version conflict, not two rows that later
-have to be glued together heuristically. A key from the source gives that for
-free.
+Natural keys make offline ratings of the same title on two devices merge
+into one row with a version conflict, avoiding duplicate UUID-based rows.
 
-Why seasons and episodes go by number rather than by their own TMDB ids:
-numbers are what the other sources use (OMDb asks `Season=1&Episode=3`), and
-what a person sees. Season 0 is specials, as in TMDB.
+Season/episode keys use numbers because those are the visible identifiers
+and the parameters other sources accept, such as OMDb's `Season=1&Episode=3`.
+Season 0 represents specials, following TMDB.
 
-The `tmdb:` prefix leaves room for the case where the catalog has to come
-from another source (the TMDB availability risk, see
-[project-brief.md](project-brief.md)). Building and parsing the key is one
-pure function in one place (`lib/data/work_key.dart`), with tests; never glue
-the string by hand anywhere.
+The `tmdb:` prefix identifies the source namespace. Build and parse keys
+through `app/lib/data/work_key.dart`; never assemble them independently in
+screens or clients. TMDB IDs require their movie/TV type; external matching
+rules belong to [external sources](external-sources.md#matching-ids).
 
-### When TMDB renumbers (0.7.0)
+### When TMDB renumbers
 
 TMDB occasionally renumbers seasons and episodes (moves specials, merges a
 double episode, inserts a missing pilot), and a key built from numbers then
@@ -98,32 +85,29 @@ own, and nothing moves without the user's answer.
   numbers, for another title.
 - **Keep** (`Library.keepRatings`): the rating stays on its number and now
   belongs to the title TMDB has there, so the snapshot takes that title's
-  id (or the stand-in when the screen doesn't know it — the next refresh of
-  that card takes the real one), clearing the displaced external IDs and cache and the question doesn't come back. There
-  is no separate "dismissed" state.
-- Until answered, the complete stored snapshot survives every identity-changing snapshot write — the
-  refresh on opening a card, the ancestors saved with another rating, an
-  edit of the rating itself: a live-rated season's or episode's own id is
+  id, or the stand-in when the screen does not know it. The next refresh
+  adopts the real ID. Displaced external IDs and cached scores are cleared,
+  resolving the prompt without a separate dismissed state.
+- Until answered, the complete stored snapshot survives identity-changing
+  writes: card refresh, ancestor saves and rating edits. A live-rated part's ID is
   kept when TMDB now has another one under its number. Only Move, Keep, or
   rating the title anew after deleting it change it. A known id is never
   replaced by the stand-in either.
 - A rating's `updated_at` changes only through Move or a conflict answer —
   user actions — never through detection or Keep.
-- The sync file is unchanged: `works.tmdb_id` already travelled in it, and
-  a move is an ordinary tombstone plus an ordinary rating.
+- A move is represented by an ordinary tombstone and rating; it does not
+  require a separate sync operation type.
 - Watchlisted seasons use the same detection and Move / Keep prompt. Moves
   preserve their added date and update snapshots; a destination already
   rated is not re-added to the watchlist. Until answered, a watchlisted
   season's own TMDB id is protected from snapshot refreshes.
-
----
 
 ## Synced tables
 
 ### `works` — the mini snapshot
 
 | Column | Type | Comment |
-|---|---|---|
+| --- | --- | --- |
 | `work_key` | text PK | see above |
 | `kind` | text | `movie` / `tv` / `season` / `episode`, CHECK |
 | `parent_key` | text null | season → series, episode → season; NULL for a film and a series |
@@ -142,33 +126,22 @@ own, and nothing moves without the user's answer.
 
 Invariants:
 
-- **Everything a user row refers to, and all its ancestors, has a snapshot.**
+- **Every rating/watchlist row and all its ancestors have snapshots.**
   Rate an episode, and `works` holds the episode, its season and the series.
   Otherwise the offline list can't show "Game of Thrones · S1E3".
-- The snapshot is refreshed when the card is opened. Saved titles are also
-  refreshed in the selected content language at startup, on language changes,
-  after sync and on resume, using the evictable TMDB response cache. Since
-  0.8.4, unchanged successful titles reuse their result for up to 24 hours
-  within the current language/key generation; changed snapshots and failures
-  are reconsidered on the next trigger. Work requires a TMDB key and a resumed
-  app, and only live keys and their ancestor snapshots are read. Offline
-  snapshots remain available until a refresh succeeds. A translated season or
-  episode is not adopted when its TMDB id indicates a pending renumbering.
-  A content-language refresh changes only the device's local `title`; it does
-  not advance `snapshot_updated_at` or compete with another device's language
-  during sync. Other snapshot refreshes advance `snapshot_updated_at`, never a
-  rating's `updated_at`. An upsert
-  keeps known external IDs while identity is unchanged. A numbered part that
-  adopts another TMDB object clears the displaced object's IDs and external
-  rating cache; Move can transfer the known source IMDb ID. A pending
-  renumbering retains the complete old snapshot until the user answers.
-- `works` rows that no `ratings` / `watchlist` row refers to (including
-  through descendants) can be deleted locally on cleanup. A snapshot has no
-  tombstone: it is derived data, there is nothing to "delete on other
-  devices" — it simply stops being written to the sync file. Full tombstones
-  retain snapshots until they are compacted after 180 days. Compact deletion
-  registers retain no snapshot or foreign key; cleanup prunes unreferenced
-  snapshots while retaining every referenced ancestor ([sync.md](sync.md)).
+- Refresh may update a saved snapshot without changing the user's rating.
+  A content-language refresh changes only local `title`, without advancing
+  `snapshot_updated_at`. Other snapshot refreshes advance that timestamp,
+  never a rating's `updated_at`. Trigger/reuse scheduling belongs to the
+  [architecture](client-architecture.md#library-writes-and-views).
+  Known external IDs survive an upsert while identity is unchanged. Adopting
+  another numbered TMDB object clears displaced external IDs and cached
+  ratings; Move can transfer the source object's IMDb ID. Pending renumbering
+  retains the complete old snapshot until the user answers.
+- Cleanup may remove snapshots outside the ancestor lineage of retained
+  rating/watchlist rows. Snapshots have no deletion tombstone because they
+  are derived data. Compaction/retention rules belong to
+  [sync](sync.md#tombstones).
 - A season's and an episode's `tmdb_id` is their own TMDB id; when TMDB
   didn't send it, the series' id stands in (the column must be positive),
   and such a stand-in is never matched when TMDB renumbers (see "When TMDB
@@ -181,7 +154,7 @@ Invariants:
 ### `ratings` — scores
 
 | Column | Type | Comment |
-|---|---|---|
+| --- | --- | --- |
 | `work_key` | text PK, FK → `works` | one rating per title |
 | `score_half` | int | 2…20, CHECK; score × 2 (7.5 → 15) |
 | `note` | text null | note/review, up to 10,000 Unicode code points |
@@ -191,17 +164,13 @@ Invariants:
 | `updated_by` | text | `device_id` of the last writer — breaks ties on equal `updated_at` |
 | `deleted_at` | int null | tombstone; a row with it is never shown |
 
-Why integer half points: the storage and sync boundaries must enforce a
-discrete scale, and calibration compares scores exactly. Half points such as
-`7.5` are exactly representable in binary floating point, but an integer in
-2…20 also rules out arbitrary fractional scores at the schema boundary.
-It becomes 1–10 only for display.
+Integer half points enforce the discrete scale at the storage and sync
+boundaries. Calibration compares them exactly. The value becomes 1–10 for
+display; no floating-point personal score is stored.
 
-Why the score and the note are one row: a note without a score isn't planned
-in the MVP, and one row means one conflict in merging instead of two linked
-ones. The price: editing the note on one device and the score on another is
-resolved for the whole row (the later one wins); for one person that is
-acceptable.
+Score and note share one versioned row. Editing a note on one device and a
+score on another therefore resolves as a whole-row conflict; the later row
+wins. The model does not support a note without a score.
 
 Rating a title again after deletion (tombstone) is an UPDATE of the same row:
 `deleted_at = NULL`, new `score_half`, `scored_at`, `updated_at`.
@@ -209,32 +178,49 @@ Rating a title again after deletion (tombstone) is an UPDATE of the same row:
 ### `watchlist` — "Watchlist"
 
 | Column | Type | Comment |
-|---|---|---|
+| --- | --- | --- |
 | `work_key` | text PK, FK → `works` | `movie`, `tv`, or `season` |
 | `added_at` | int | UTC ms |
 | `updated_at` | int | UTC ms |
 | `updated_by` | text | `device_id` |
 | `deleted_at` | int null | tombstone |
 
-Rating a title removes it from the watchlist in the same transaction.
-A season rating also records a tombstone when the list entry is absent, so
-an older offline addition cannot return after the rating is deleted.
-Deleting a rating does not put the title back on the list.
+A rating write removes its watchlist entry atomically. A season rating also
+records removal when no entry exists, preserving the user's choice against
+older offline additions. Series/season selection fences are stored in
+`sync_state`; their visibility and merge rules are specified in
+[sync](sync.md#series-and-season-watchlist-choices).
 
-Several seasons can be listed under one series. Selecting the whole series
-unlists its seasons; selecting a season unlists the whole series. Group
-selection registers make this rule deterministic across offline devices
-([sync.md](sync.md)). Rows suppressed by a later opposite selection stay in
-the synced data but are hidden, so merging remains associative.
+### `favorite_people`
 
----
+One row per positive TMDB `person_id` primary key, with `name`, nullable
+relative `profile_path`, `updated_at`, `updated_by` and nullable `deleted_at`.
+The name/photo form an offline mini snapshot. A favourite refers to the whole
+person across professions. User changes advance its version monotonically;
+analytics never edits it. Permanent removal tombstones and merging are
+specified in [sync](sync.md#format-rules). Schema 2 added this table.
+
+### `pair_comparisons`
+
+Schema 3 adds immutable comparison events. `comparison_key` is the
+primary key derived from the canonically ordered natural title keys and their
+original score versions. There is no foreign key to `works`: comparison history
+can outlive a title snapshot.
+
+Each event contains `left_key` / `right_key`, their original `score_half` and
+`scored_at` values, the corresponding `left_result_*` / `right_result_*` values,
+`preference` (`left`, `equal`, `right`), local-calendar `day`, UTC `answered_at`
+and `answered_by`. Scores retain the same CHECK range as ratings. The `day`
+index supports the quota lookup. Workflow/selection belongs to
+[pair calibration](pair-calibration.md), and wire ordering to
+[sync](sync.md#format-rules).
 
 ## Local tables
 
 ### `external_ratings` — cache of external ratings
 
 | Column | Type | Comment |
-|---|---|---|
+| --- | --- | --- |
 | `work_key` | text | |
 | `source` | text | `kp` / `imdb` / `tmdb` / `rt` / `metacritic` |
 | `status` | text | `ok` / `notFound` / `error` |
@@ -244,21 +230,10 @@ the synced data but are hidden, so merging remains associative.
 | `via` | text | which API returned it (`omdb`, `poiskkino`, `tmdb`) — IMDb can come from two |
 | `fetched_at` | int | UTC ms |
 
-PK is (`work_key`, `source`). `notFound` is cached just like `ok`: otherwise a
-film missing from Kinopoisk would burn the PoiskKino limit on every open.
-`error` lives briefly (an hour) — it is a failure, not an answer. TTLs and
-the budget are in [external-sources.md](external-sources.md).
-
-As implemented in Stage 2: an `error` row is written only where the title had
-no row yet, and never replaces an `ok` or `notFound` one; the one-hour retry
-pause is kept in memory by the ratings service, so a new key retries at once.
-`via` matters: an IMDb row from PoiskKino counts as missing once an OMDb key
-is added, and gets replaced by OMDb's value.
-
-`works.kp_id` is remembered only for titles that have a snapshot (rated or on
-the watchlist). Everything else is matched again on refresh — a lookup by
-imdb id costs the same one request as a refresh by kp id, and returns the
-ratings too.
+PK is (`work_key`, `source`). `notFound` is cached as a definite answer;
+absence is not. `via` distinguishes the provider that supplied an IMDb value.
+TTLs, retry behavior and source-precedence rules belong to
+[external sources](external-sources.md#cache-and-lifetimes).
 
 Not synced: this is other people's data that goes stale, and every device
 with the user's keys fetches it on its own. A new device sees the list of
@@ -267,7 +242,7 @@ ratings right after sync, and the divergence column fills in gradually.
 ### `api_budget` — limit spending
 
 | Column | Type | Comment |
-|---|---|---|
+| --- | --- | --- |
 | `source` | text | `poiskkino` / `omdb` / `tmdb` |
 | `day` | text | `YYYY-MM-DD` UTC |
 | `used` | int | |
@@ -288,10 +263,12 @@ No schema migration is needed for these new keys. The Drive
 file's id isn't kept: every pass lists the folder anyway, to find duplicate
 files. Details are in [sync.md](sync.md).
 
----
-
 ## Outside the database
 
+- **Recent-title history** — a bounded mini-snapshot list in
+  SharedPreferences. Device-local, excluded from rating exports/Drive sync;
+  malformed stored entries are skipped. UI rules are in
+  [product behavior](features.md#discover-and-search).
 - **API keys** — `flutter_secure_storage`, never in SQLite or the rating
   sync file. Optional password-encrypted key sync uses a separate Drive file
   and keeps the derived key in secure storage ([sync.md](sync.md)).
@@ -302,62 +279,31 @@ files. Details are in [sync.md](sync.md).
   `shared_preferences.recommendation_hidden` list. They are not ratings,
   watchlist deletions or negative taste evidence; no sync/export change.
 - **The HTTP cache of API responses, and images** — on disk, evictable; see
-  [client-architecture.md](client-architecture.md).
+  [external-sources.md](external-sources.md#cache-and-lifetimes).
 - **People analytics** — compact credits in the same evictable disk cache,
   keyed by content language, natural work key and its stored TMDB identity.
-  Not in `works`, the database, exports or sync. Missing or displaced credits
-  are excluded from people aggregates until loaded.
+  The enrichment/coverage contract is in [analytics](analytics.md#credit-enrichment).
 
-### `favorite_people` — schema version 2
+## Storage invariants
 
-One row per TMDB `person_id` (positive integer primary key), with `name`,
-nullable relative `profile_path`, `updated_at`, `updated_by` and nullable
-`deleted_at`. A favourite refers to the whole person across all professions,
-not to one role. The name/photo are a mini snapshot for the offline favourites
-list. Adding/removing advances the user version monotonically; background
-analytics never edits it. Full favourite tombstones are retained permanently.
-The v1 → v2 Drift migration adds only this table and preserves existing data.
+All timestamps at the storage boundary are UTC epoch milliseconds. Release
+dates remain timezone-free `YYYY-MM-DD` strings, never timestamp conversions.
+API calendar-date parsing must reject impossible dates rather than normalize
+them into another day.
 
----
+`updated_at` advances on user changes only and monotonically within a row.
+Background snapshots, external ratings and analytics never advance it.
+`scored_at` changes only when the numeric score changes. Detailed merge and
+clock-skew rules belong to [sync](sync.md#device-clocks).
 
-## Key queries
+Notes are limited to 10,000 Unicode code points, matching SQLite `length(TEXT)`
+and sync validation. The editor preserves whole grapheme clusters within
+that limit.
 
-**The calibration** — for score `S` in the reel's gate on a title of kind
-`K` (all queries over live rows, `deleted_at is null`, the same `kind`,
-without the current title); it runs again as the reel moves:
+Query indexes include `ratings(deleted_at, score_half)`, `ratings(scored_at)`,
+`works(kind)`, `works(parent_key)` and `works(year)`. Current comparison groups
+are specified in [product behavior](features.md#rating-editor-and-lists),
+and aggregate formulas in [analytics](analytics.md).
 
-1. "The same" — `score_half = S`, by `scored_at desc, work_key asc`, with all matching rows available to scroll.
-2. "Neighbour above" — `score_half = (select min(score_half) … where score_half > S)`,
-   all matching rows in the same stable order.
-3. "Neighbour below" — symmetric, with `max(…) < S`.
-
-The calibration appears only when there are enough ratings of this kind to
-compare with: more than 20 live ratings for films, more than 10 for series,
-seasons and episodes each (counted without the current title). Below that
-the panel isn't shown at all — a handful of ratings makes "the same" and
-the neighbours noise. When it is shown, an empty group says there is
-nothing near.
-
-**The hint for a series and a season** — the average of `score_half / 2.0`
-over the live ratings of its children (`parent_key = X`). For a series, over
-its seasons; if no season is rated but episodes are, over the episodes of all
-seasons. Shown with the number of rated parts ("over 4 episodes: 7.8").
-
-**Sorting by divergence** — `score_half / 2.0 − value` for the chosen source
-(`kp` or `imdb`), absolute or signed. Rows with no cached value go to the end
-of the list marked "no data" rather than dropping out. As implemented in
-Stage 4, the `ok` value is joined into "My ratings" from `external_ratings`
-and the sort itself is a pure function (`arrangeRatings`).
-
-Indexes: `ratings(deleted_at, score_half)`, `ratings(scored_at)`,
-`works(kind)`, `works(parent_key)`, `works(year)`.
-
-Notes use one limit at every boundary: 10,000 Unicode code points, matching
-SQLite `length(TEXT)` and sync rune validation. The editor preserves whole
-grapheme clusters while enforcing that cap. Failed saves leave the editor
-open with its draft. This changes no table or CHECK constraint.
-
-`sync_state.part_identity_merge_v4` records the one-time cleanup of legacy
-season/episode external IDs; it does not change the database schema version.
-Android backup excludes the secure-storage preferences and wrapped-key files,
-while retaining ordinary app data. See the client design for startup recovery.
+`sync_state.part_identity_merge_v4` marks the one-time cleanup of legacy
+numbered-part external IDs. It changes derived data, not the schema version.

@@ -7,6 +7,7 @@ import 'dart:io' show gzip;
 import '../db/database.dart';
 import '../work_key.dart';
 import '../library/rating_note.dart';
+import '../library/pair_preference.dart';
 
 /// A permanent, compact version of a deleted row.
 final class DeletionRecord {
@@ -98,6 +99,7 @@ final class SyncState {
     this.watchlistDeletions = const [],
     this.watchlistFences = const [],
     this.favoritePeople = const [],
+    this.pairComparisons = const [],
   });
 
   final List<Work> works;
@@ -107,6 +109,7 @@ final class SyncState {
   final List<DeletionRecord> watchlistDeletions;
   final List<WatchlistFence> watchlistFences;
   final List<FavoritePerson> favoritePeople;
+  final List<PairComparison> pairComparisons;
 
   /// Cleanup cutoff in UTC milliseconds. Absence does not imply deletion.
   final int purgedBefore;
@@ -120,6 +123,7 @@ final class SyncState {
     watchlistDeletions: watchlistDeletions,
     watchlistFences: watchlistFences,
     favoritePeople: favoritePeople,
+    pairComparisons: pairComparisons,
   );
 
   bool get isEmpty =>
@@ -129,7 +133,8 @@ final class SyncState {
       ratingDeletions.isEmpty &&
       watchlistDeletions.isEmpty &&
       watchlistFences.isEmpty &&
-      favoritePeople.isEmpty;
+      favoritePeople.isEmpty &&
+      pairComparisons.isEmpty;
 
   /// Live ratings: what the first sign-in dialog counts.
   int get liveRatings => ratings.where((r) => r.deletedAt == null).length;
@@ -173,7 +178,7 @@ final class SyncFileTooNew extends SyncFileException {
 /// earlier version working, for old exports: version 1 had no
 /// `purged_before` and reads as 0.
 abstract final class SyncFile {
-  static const formatVersion = 5;
+  static const formatVersion = 6;
   // Supports a 10,000-title library even with 10,000-byte notes; protects
   // against accidental huge imports and excessive decompression expansion.
   static const maxCompressedBytes = 32 * 1024 * 1024;
@@ -220,6 +225,9 @@ abstract final class SyncFile {
         'works': [for (final w in state.works) workToJson(w)],
         'ratings': [for (final r in state.ratings) ratingToJson(r)],
         'watchlist': [for (final w in state.watchlist) watchlistToJson(w)],
+        'pair_comparisons': [
+          for (final p in state.pairComparisons) comparisonToJson(p),
+        ],
         'favorite_people': [
           for (final p in state.favoritePeople) personToJson(p),
         ],
@@ -280,6 +288,19 @@ abstract final class SyncFile {
       }
       if (version >= 5 && json['favorite_people'] is! List) {
         throw const _BadRow('missing favorite people');
+      }
+      if (version >= 6 && json['pair_comparisons'] is! List) {
+        throw const _BadRow('missing pair comparisons');
+      }
+      final comparisons = version >= 6
+          ? [
+              for (final p in _list(json, 'pair_comparisons'))
+                comparisonFromJson(p),
+            ]
+          : <PairComparison>[];
+      if (comparisons.map((p) => p.comparisonKey).toSet().length !=
+          comparisons.length) {
+        throw const _BadRow('duplicate pair comparison');
       }
       final people = version >= 5
           ? [for (final p in _list(json, 'favorite_people')) personFromJson(p)]
@@ -343,6 +364,7 @@ abstract final class SyncFile {
       }
       return SyncState(
         favoritePeople: people,
+        pairComparisons: comparisons,
         works: works,
         ratings: ratings,
         watchlist: watchlist,
@@ -360,6 +382,76 @@ abstract final class SyncFile {
     } on _BadRow catch (e) {
       throw SyncFileBroken(e.reason);
     }
+  }
+
+  static Map<String, Object?> comparisonToJson(PairComparison p) => {
+    'comparison_key': p.comparisonKey,
+    'left_key': p.leftKey,
+    'right_key': p.rightKey,
+    'left_score_half': p.leftScoreHalf,
+    'right_score_half': p.rightScoreHalf,
+    'left_scored_at': p.leftScoredAt,
+    'right_scored_at': p.rightScoredAt,
+    'left_result_score_half': p.leftResultScoreHalf,
+    'right_result_score_half': p.rightResultScoreHalf,
+    'left_result_scored_at': p.leftResultScoredAt,
+    'right_result_scored_at': p.rightResultScoredAt,
+    'preference': p.preference.name,
+    'day': p.day,
+    'answered_at': p.answeredAt,
+    'answered_by': p.answeredBy,
+  };
+
+  static PairComparison comparisonFromJson(Object? raw) {
+    final r = _Row(raw, 'pair_comparisons');
+    final left = r.string('left_key'), right = r.string('right_key');
+    int score(String key) {
+      final v = r.integer(key);
+      if (v < 2 || v > 20) throw const _BadRow('invalid comparison score');
+      return v;
+    }
+
+    int time(String key) {
+      final v = r.integer(key);
+      if (v < 0) throw const _BadRow('invalid comparison time');
+      return v;
+    }
+
+    final l = score('left_score_half'), rr = score('right_score_half');
+    final la = time('left_scored_at'), ra = time('right_scored_at');
+    final key = r.string('comparison_key'), day = r.string('day');
+    final date = DateTime.tryParse(day);
+    final preference = PairPreference.values
+        .where((p) => p.name == r.string('preference'))
+        .firstOrNull;
+    if (WorkKey.tryParse(left)?.kind != WorkKind.movie ||
+        WorkKey.tryParse(right)?.kind != WorkKind.movie ||
+        left.compareTo(right) >= 0 ||
+        key != '$left|$right|$l:$la|$rr:$ra' ||
+        preference == null ||
+        !RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(day) ||
+        date == null ||
+        date.toIso8601String().substring(0, 10) != day ||
+        r.string('answered_by').isEmpty) {
+      throw const _BadRow('invalid pair comparison');
+    }
+    return PairComparison(
+      comparisonKey: key,
+      leftKey: left,
+      rightKey: right,
+      leftScoreHalf: l,
+      rightScoreHalf: rr,
+      leftScoredAt: la,
+      rightScoredAt: ra,
+      leftResultScoreHalf: score('left_result_score_half'),
+      rightResultScoreHalf: score('right_result_score_half'),
+      leftResultScoredAt: time('left_result_scored_at'),
+      rightResultScoredAt: time('right_result_scored_at'),
+      preference: preference,
+      day: day,
+      answeredAt: time('answered_at'),
+      answeredBy: r.string('answered_by'),
+    );
   }
 
   static Map<String, Object?> personToJson(FavoritePerson p) => {

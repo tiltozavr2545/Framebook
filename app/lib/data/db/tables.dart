@@ -8,6 +8,7 @@ import 'package:drift/drift.dart';
 
 import '../api_source.dart';
 import '../work_key.dart';
+import '../library/pair_preference.dart';
 
 // The schema is in docs/data-model.md, along with the "why". Time is UTC
 // milliseconds in an int everywhere, not DateTime: the storage format must
@@ -162,4 +163,34 @@ class SyncState extends Table {
 
   @override
   Set<Column<Object>> get primaryKey => {key};
+}
+
+/// Immutable comparison events. Natural keys deduplicate offline answers to the
+/// same score versions; histories never require a title snapshot to survive.
+@DataClassName('PairComparison')
+@TableIndex(name: 'pair_comparisons_day', columns: {#day})
+class PairComparisons extends Table {
+  TextColumn get comparisonKey => text()();
+  TextColumn get leftKey => text()();
+  TextColumn get rightKey => text()();
+  IntColumn get leftScoreHalf =>
+      integer().check(leftScoreHalf.isBetweenValues(2, 20))();
+  IntColumn get rightScoreHalf =>
+      integer().check(rightScoreHalf.isBetweenValues(2, 20))();
+  IntColumn get leftScoredAt => integer()();
+  IntColumn get rightScoredAt => integer()();
+  IntColumn get leftResultScoreHalf =>
+      integer().check(leftResultScoreHalf.isBetweenValues(2, 20))();
+  IntColumn get rightResultScoreHalf =>
+      integer().check(rightResultScoreHalf.isBetweenValues(2, 20))();
+  IntColumn get leftResultScoredAt => integer()();
+  IntColumn get rightResultScoredAt => integer()();
+  TextColumn get preference => textEnum<PairPreference>().check(
+    preference.isIn(PairPreference.values.map((p) => p.name)),
+  )();
+  TextColumn get day => text()();
+  IntColumn get answeredAt => integer()();
+  TextColumn get answeredBy => text()();
+  @override
+  Set<Column<Object>> get primaryKey => {comparisonKey};
 }

@@ -4,26 +4,23 @@ How user data moves between devices and how not to lose it. There is no
 server — the user's own Google Drive plays the shared storage. What exactly
 is synced is in [data-model.md](data-model.md).
 
-**Status: implemented in Stage 5 (0.5.0)**, `app/lib/data/sync/`; where
-things live is in [client-architecture.md](client-architecture.md), "Sync
-and backup". When this file and the code disagree, the code is right.
+Implementation lives in `app/lib/data/sync/`; module ownership is mapped in
+[client architecture](client-architecture.md#sync-components). This document
+defines the transport and compatibility contract.
 
----
-
-## The overall scheme
+## Storage and access
 
 - Sign-in is Google Sign-In with the single scope
   `https://www.googleapis.com/auth/drive.appdata`. The app sees **only its own
   hidden folder** (`appDataFolder`) — neither the rest of the user's Drive,
-  nor its own files in the Drive UI. The scope is non-sensitive, which makes
-  setting up the OAuth app simpler (see [operations.md](operations.md)).
+  nor its own files in the Drive UI. OAuth configuration belongs to
+  [operations](operations.md#google-cloud-oauth-for-drive).
 - The folder holds one state file, `framebook-sync.json.gz`, and up to seven
   daily copies, `framebook-backup-YYYY-MM-DD.json.gz`.
 - Every device keeps the **full** state locally and merges it with the file
-  when syncing. There is no operation log and no "main" device.
+  when syncing. Ratings merge as registers rather than replayed mutations;
+  comparison history is retained as part of that state. There is no "main" device.
 - Without signing in, the app works fully, just on one device.
-
----
 
 ## File format
 
@@ -32,15 +29,16 @@ JSON, gzipped. Rows are the same columns as in the database, in
 
 ```json
 {
-  "format_version": 5,
+  "format_version": 6,
   "purged_before": 0,
   "rating_deletions": [],
   "watchlist_deletions": [],
   "watchlist_fences": [],
   "favorite_people": [],
+  "pair_comparisons": [],
   "written_at": 1760870400000,
   "written_by": "6f1c…-device-uuid",
-  "app_version": "0.7.0+9",
+  "app_version": "0.9.3+23",
   "works": [
     {"work_key": "tmdb:tv:1399", "kind": "tv", "parent_key": null, "tmdb_id": 1399,
      "imdb_id": "tt0944947", "kp_id": 464963, "title": "Игра престолов",
@@ -59,7 +57,19 @@ JSON, gzipped. Rows are the same columns as in the database, in
 
 (`title` is in the locale the snapshot was taken in — here, Russian.)
 
-Format rules:
+### Format rules
+
+The current writer uses format 6 and reads versions 1–6.
+
+- Version 6 adds required `pair_comparisons`. Versions 1–5 read with no
+  comparison events; clients supporting only format 5 reject format 6.
+  Events merge by `comparison_key`, ordered by `answered_at`, `answered_by`
+  and canonical-payload SHA-256 on an exact tie. History is retained without
+  title snapshots and travels in sync files, exports and daily backups.
+  Even explicit replacement merges retained comparison history with the file's
+  events instead of erasing completed answers or resetting the daily allowance.
+  History-only edits trigger automatic sync. The calendar-day quota and offline
+  limits are defined in [pair calibration](pair-calibration.md#daily-allowance).
 
 - Version 5 adds required `favorite_people`, including permanent removal
   tombstones. Versions 1–4 read with no favourite people. Older clients refuse
@@ -77,7 +87,7 @@ Format rules:
   when it rewrote the file the field would silently disappear for everyone.
   The alternative — keeping unknown fields as a raw tail and writing them
   back — is more expensive, and is only needed when versions coexist for a
-  long time. One person with two phones doesn't have that.
+  long time; that alternative is not implemented.
 - A client that sees a `format_version` higher than it supports doesn't sync
   and shows "update the app". It has no right to overwrite the file with its
   own view.
@@ -98,8 +108,6 @@ Format rules:
   external IDs are discarded and fetched again. No ratings or notes are dropped.
 - API keys, settings and the rating cache never go into the rating sync
   file. Optional encrypted key sync uses a separate file (see below).
-
----
 
 ## Merging
 
@@ -207,8 +215,7 @@ there is no sync in the background (while the app is closed).
 
 `updated_at` comes from the device's clock. If one device's clock is an hour
 behind, its edit loses to an earlier edit from the other device for that
-hour. For one person with two phones this almost never happens. The guard
-against the worst case is monotonicity within a row: the new
+hour. The local guard is monotonicity within a row: the new
 `updated_at = max(now, previous updated_at + 1)`, so an edit on a device with
 a lagging clock at least doesn't lose to its own previous version.
 
@@ -240,8 +247,6 @@ watchlist row, including full tombstones. A series or season needed by a
 remaining episode is retained. Failed uploads must leave deletion knowledge
 locally so a retry cannot resurrect an older row.
 
----
-
 ## First sign-in and sign-out
 
 - **First sign-in on a device with local data, when Drive already has a
@@ -256,8 +261,6 @@ locally so a retry cannot resurrect an older row.
   deletion releases the gate and retries edits made while suspended. Other
   devices still signed in will create the file again from their state on
   their next sync; the confirmation dialog says so.
-
----
 
 ## Backup
 
@@ -291,12 +294,10 @@ faithfully as a correct change. So, separately:
   been rated or listed again, an explicit restore can recover its earlier
   score or content. Ordinary merge uses the same deletion registers.
 
----
-
 ## Errors
 
 | Situation | Behaviour |
-|---|---|
+| --- | --- |
 | no network | quietly put off |
 | 401 / token revoked | a note in settings, "sign in again", no modal dialogs |
 | Drive quota exceeded | a message in settings; local work doesn't suffer |
@@ -305,7 +306,6 @@ faithfully as a correct change. So, separately:
 
 The last error is kept in `sync_state.last_sync_error` and is visible in
 settings along with the time of the last successful sync.
-
 
 ## Optional encrypted key sync
 

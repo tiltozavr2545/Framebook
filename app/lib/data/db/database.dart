@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 
 import '../api_source.dart';
 import '../work_key.dart';
+import '../library/pair_preference.dart';
 import 'tables.dart';
 
 part 'database.g.dart';
@@ -16,6 +17,7 @@ const _deviceIdKey = 'device_id';
     Ratings,
     Watchlist,
     FavoritePeople,
+    PairComparisons,
     ExternalRatings,
     ApiBudget,
     SyncState,
@@ -31,13 +33,17 @@ class AppDatabase extends _$AppDatabase {
   /// Any schema change means a new version, a step in [migration] and a `dart
   /// run drift_dev make-migrations` snapshot (AGENTS.md, conventions).
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
     onUpgrade: (m, from, to) async {
       if (from < 2 && to >= 2) await m.createTable(favoritePeople);
+      if (from < 3 && to >= 3) {
+        await m.createTable(pairComparisons);
+        await m.createIndex(pairComparisonsDay);
+      }
     },
     beforeOpen: (details) async {
       // SQLite turns foreign keys off by default, per connection.

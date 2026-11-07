@@ -25,6 +25,7 @@ import '../../shared/title_row.dart';
 import '../search/people_shelves.dart';
 import 'insight_sections.dart';
 import 'stats_works.dart';
+import 'pair_calibration_screen.dart';
 
 /// The kind the statistics are filtered by; `null` — all. Kept while the app
 /// is open.
@@ -202,6 +203,8 @@ class _StatsBody extends ConsumerWidget {
                     ),
                 ],
               ),
+              if (prepared.kind == WorkKind.movie)
+                PairCalibrationEntry(filmCount: titles.length),
               _Heading(l10n.statsDistribution),
               _Distribution(
                 counts: stats.distribution,

@@ -78,6 +78,9 @@ final class SyncStore {
     final works = await _db.select(_db.works).get();
     workIndex?.addEntries(works.map((work) => MapEntry(work.workKey, work)));
     return SyncState(
+      pairComparisons: await (_db.select(
+        _db.pairComparisons,
+      )..orderBy([(p) => OrderingTerm.asc(p.comparisonKey)])).get(),
       favoritePeople: await (_db.select(
         _db.favoritePeople,
       )..orderBy([(p) => OrderingTerm.asc(p.personId)])).get(),
@@ -160,6 +163,18 @@ final class SyncStore {
     final localWatchlist = {for (final w in local.watchlist) w.workKey: w};
     final merged = mergeStates(local, remote);
     var changed = 0;
+    final localComparisons = {
+      for (final p in local.pairComparisons) p.comparisonKey: p,
+    };
+    for (final p in merged.pairComparisons) {
+      final old = localComparisons[p.comparisonKey];
+      if (old == null || comparePairComparisons(p, old) > 0) {
+        await _db
+            .into(_db.pairComparisons)
+            .insertOnConflictUpdate(p.toCompanion(false));
+        changed++;
+      }
+    }
     final localPeople = {for (final p in local.favoritePeople) p.personId: p};
     for (final person in merged.favoritePeople) {
       final old = localPeople[person.personId];
@@ -345,9 +360,11 @@ final class SyncStore {
         ratingDeletions: registers.ratingDeletions,
         watchlistDeletions: registers.watchlistDeletions,
         watchlistFences: registers.watchlistFences,
+        pairComparisons: registers.pairComparisons,
       ),
     );
     file = SyncState(
+      pairComparisons: file.pairComparisons,
       favoritePeople: file.favoritePeople,
       works: file.works,
       ratings: [

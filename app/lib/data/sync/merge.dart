@@ -240,6 +240,19 @@ bool visibleWatchlistEntry(
   return true;
 }
 
+int comparePairComparisons(PairComparison a, PairComparison b) => a == b
+    ? 0
+    : _version(
+        a.answeredAt,
+        a.answeredBy,
+        false,
+        () => _hash(SyncFile.comparisonToJson(a)),
+        b.answeredAt,
+        b.answeredBy,
+        false,
+        () => _hash(SyncFile.comparisonToJson(b)),
+      );
+
 SyncState mergeStates(SyncState a, SyncState b) {
   final rd = _merge(
     a.ratingDeletions,
@@ -256,6 +269,12 @@ SyncState mergeStates(SyncState a, SyncState b) {
   final rm = {for (final d in rd) d.workKey: d};
   final wm = {for (final d in wd) d.workKey: d};
   return SyncState(
+    pairComparisons: _merge(
+      a.pairComparisons,
+      b.pairComparisons,
+      (p) => p.comparisonKey,
+      comparePairComparisons,
+    ),
     favoritePeople: _merge(
       a.favoritePeople,
       b.favoritePeople,
@@ -313,6 +332,12 @@ bool remoteBehind(SyncState local, SyncState remote) {
   }
 
   return merged.purgedBefore != remote.purgedBefore ||
+      !same(
+        merged.pairComparisons,
+        remote.pairComparisons,
+        (p) => p.comparisonKey,
+        comparePairComparisons,
+      ) ||
       !same(
         merged.favoritePeople,
         remote.favoritePeople,

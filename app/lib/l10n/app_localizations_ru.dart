@@ -678,6 +678,101 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get pairTitle => 'Попарная калибровка';
+
+  @override
+  String get pairHow => 'Как подбираются пары';
+
+  @override
+  String get pairIntro =>
+      'Сравни оценённые фильмы и проверь свою шкалу. Алгоритм выбирает близкие оценки и жанры, затем проверяет цепочки предыдущих ответов. Оценки появятся после выбора.';
+
+  @override
+  String get pairStart => 'Сравнить фильмы';
+
+  @override
+  String get pairNeedFilms => 'Для начала нужны хотя бы два оценённых фильма.';
+
+  @override
+  String get pairDailyHint =>
+      'До 5 завершённых сравнений в день. Ответы синхронизируются через Drive.';
+
+  @override
+  String pairProgress(int count) {
+    return 'Сегодня сравнено: $count из 5';
+  }
+
+  @override
+  String get pairQuestion => 'Какой фильм понравился больше?';
+
+  @override
+  String get pairFirst => 'Первый фильм';
+
+  @override
+  String get pairSecond => 'Второй фильм';
+
+  @override
+  String get pairPreferFirst => 'Первый понравился больше';
+
+  @override
+  String get pairPreferSecond => 'Второй понравился больше';
+
+  @override
+  String get pairEqual => 'Понравились одинаково';
+
+  @override
+  String get pairSkip => 'Пропустить / не помню';
+
+  @override
+  String get pairReasonBoundary =>
+      'Проверяем границу оценок на сопоставимых фильмах.';
+
+  @override
+  String get pairReasonChain =>
+      'Предыдущие ответы образуют цепочку предпочтений, которая расходится с оценками. Проверим её напрямую.';
+
+  @override
+  String get pairAgrees => 'Текущие оценки согласуются с ответом.';
+
+  @override
+  String get pairDisagrees =>
+      'Ответ расходится с оценками. Выбери правку или оставь оценки как есть.';
+
+  @override
+  String pairCorrection(String title, String before, String after) {
+    return '$title: $before → $after';
+  }
+
+  @override
+  String get pairChangeAnswer => 'Изменить ответ';
+
+  @override
+  String get pairKeep => 'Оставить оценки и сохранить ответ';
+
+  @override
+  String get pairNext => 'Сохранить ответ и продолжить';
+
+  @override
+  String get pairLimit =>
+      'На сегодня пять сравнений завершены. Возвращайся завтра.';
+
+  @override
+  String get pairFinished =>
+      'Подходящие новые пары с текущими оценками закончились. Новые оценки или изменение баллов откроют другие сравнения.';
+
+  @override
+  String get pairChanged =>
+      'Эти оценки изменились. Следующая пара учитывает актуальные баллы.';
+
+  @override
+  String get pairSaveFailed =>
+      'Не удалось сохранить сравнение. Твой выбор сохранён на экране — попробуй ещё раз.';
+
+  @override
+  String get pairLoadFailed =>
+      'Не удалось загрузить оценки или историю сравнений.';
+
+  @override
   String get statsEmpty => 'Статистика появится, когда будут оценки.';
 
   @override

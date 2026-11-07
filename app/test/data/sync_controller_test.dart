@@ -9,6 +9,8 @@ import 'package:framebook/app/preferences.dart';
 import 'package:framebook/data/db/database.dart';
 import 'package:framebook/data/db/database_provider.dart';
 import 'package:framebook/data/library/library.dart';
+import 'package:framebook/data/library/pair_calibration.dart';
+import 'package:framebook/data/library/pair_calibration_store.dart';
 import 'package:framebook/data/library/favorite_people.dart';
 import 'package:framebook/data/sources/tmdb/tmdb_models.dart';
 import 'package:framebook/data/library/work_snapshot.dart';
@@ -536,6 +538,36 @@ void main() {
     }
     fail('The edit made during upload was not synced');
   });
+
+  test(
+    'an answer without a score edit triggers automatic history sync',
+    () async {
+      final remote = MemoryRemote();
+      final (container, library) = await device(
+        'a',
+        FakeGoogleAccount(remote),
+        debounce: Duration.zero,
+      );
+      await library.rate(film, scoreHalf: 16, note: null);
+      await library.rate(other, scoreHalf: 16, note: null);
+      final controller = container.read(syncControllerProvider.notifier);
+      await controller.signIn();
+      final rows = await library.watchRatings().first;
+      await PairCalibrationStore(
+        container.read(databaseProvider),
+        library,
+      ).answer(CalibrationPair(rows[0], rows[1]), PairPreference.equal);
+      for (var i = 0; i < 200; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        final files = remote.files.values.where((f) => f.name == SyncFile.name);
+        if (files.isNotEmpty &&
+            SyncFile.decode(files.single.bytes).pairComparisons.length == 1) {
+          return;
+        }
+      }
+      fail('Comparison-only change was not automatically uploaded');
+    },
+  );
 
   test(
     'favorites-only library syncs automatically after adding and removing',

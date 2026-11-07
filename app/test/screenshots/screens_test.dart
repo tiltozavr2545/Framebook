@@ -16,6 +16,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:framebook/app/app.dart';
+import 'package:framebook/features/stats/pair_calibration_screen.dart';
+import 'package:framebook/features/stats/stats_screen.dart';
 import 'package:framebook/app/preferences.dart';
 import 'package:framebook/app/router.dart';
 import 'package:framebook/data/api_keys.dart';
@@ -297,6 +299,47 @@ void main() {
       );
       go(tester, Routes.watchlist);
       await shoot(tester, 'watchlist-$theme');
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(milliseconds: 1));
+    });
+
+    testWidgets('pair calibration $theme', skip: skip != null, (tester) async {
+      await pump(tester, brightness: brightness, seed: library);
+      go(tester, Routes.stats);
+      await settle(tester);
+      final start = find.text('Сравнить фильмы');
+      await tester.scrollUntilVisible(
+        start,
+        200,
+        scrollable: find
+            .descendant(
+              of: find.byType(StatsScreen),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      await Scrollable.ensureVisible(tester.element(start), alignment: .5);
+      await settle(tester);
+      await tester.tap(start);
+      await settle(tester);
+      expect(find.byType(PairCalibrationScreen), findsOneWidget);
+      await shoot(tester, 'pair-$theme');
+      final equal = find.text('Понравились одинаково');
+      await tester.scrollUntilVisible(
+        equal,
+        200,
+        scrollable: find
+            .descendant(
+              of: find.byType(PairCalibrationScreen),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      await Scrollable.ensureVisible(tester.element(equal), alignment: .5);
+      await settle(tester);
+      await tester.tap(equal);
+      await settle(tester);
+      await shoot(tester, 'pair-answer-$theme');
       await tester.pumpWidget(const SizedBox());
       await tester.pump(const Duration(milliseconds: 1));
     });

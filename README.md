@@ -1,121 +1,55 @@
 # Framebook
 
-> A personal diary of film and TV ratings: give your own score and see right away how it compares with Kinopoisk, IMDb and the rest.
+A personal film and TV diary for keeping your own ratings and comparing them
+with public scores. Ratings, notes and watchlists live on the device; optional
+sync uses your own Google Drive. There is no Framebook account or backend.
 
-The app doesn't keep a film catalog of its own — it is loaded on demand from third-party sources (TMDB, Kinopoisk through the PoiskKino API, OMDb). All the app owns is your ratings, notes and watchlist, and they live on the device. There is no server and no sign-up: backup and sync between devices go through the user's own Google Drive.
+## Features
 
-A project for myself and a couple of friends. The original idea and the decisions made before the start are in [docs/project-brief.md](docs/project-brief.md); the local data schema is in [docs/data-model.md](docs/data-model.md).
-
-## Status
-
-Latest release: 0.9.2 — stable shelves, less background UI work and swipe
-navigation between root tabs. The MVP is complete. Working: Discover
-with title and people search and shelves, film and series cards down to single episodes with
-cast and crew and ratings from Kinopoisk, IMDb, Rotten Tomatoes, Metacritic
-and TMDB, people with filmographies filtered by their jobs; your own ratings with notes on a
-score reel that compares as it moves, My ratings (including the sort by
-divergence from Kinopoisk or IMDb) and the watchlist; background refresh of
-ratings and statistics; sync and daily copies through your own Google
-Drive, export and import to a file; cards that open offline from what is
-saved. The [correctness audit](docs/reviews/2026-11-05/README.md) repaired
-caching, API-key changes, import recovery and large-text layouts. The latest
-[responsiveness review](docs/reviews/2026-11-06/README.md) addresses input lag
-around favourite people, recommendation calculations and expanded statistics.
-The [0.9.2 review](docs/reviews/0.9.2/README.md) addresses visible shelf
-replacement, retained scrolling state and repeated poster-score queries.
-The [0.9.1 review](docs/reviews/0.9.1/README.md) covers Discover resume, rating editing,
-source validation, sync metadata and large-text settings. The [0.9.0 review](docs/reviews/0.9.0/README.md) covers sync application
-cost, aggregate analytics credits, device-clock corrections and narrow-screen layouts. The
-[0.8.4 optimization report](docs/optimization.md) records selective library reads,
-foreground scheduling, image-memory bounds and a smaller universal APK.
-Physical-device measurements and independent review remain in Stage 7.
+- Search films, series and people, browse title cards and filmographies.
+- Rate films, series, seasons and episodes independently, with notes and
+  comparisons against your earlier ratings.
+- Compare with Kinopoisk, IMDb, TMDB, Rotten Tomatoes and Metacritic.
+- Keep a watchlist, favourite people and explore personal recommendations.
+- Explore statistics by score, genre, decade and contributor; calibrate movie
+  scores through guided pair comparisons.
+- Use saved library data offline; sync, back up, export and import it.
+- Choose English or Russian and a light or dark theme.
 
 <p>
-  <img src="docs/screenshots/search-light.png" width="200" alt="Discover: the search field over shelves">
-  <img src="docs/screenshots/card-light.png" width="200" alt="A film card: your score in red, ratings from the other sources">
-  <img src="docs/screenshots/editor-light.png" width="200" alt="The score reel, with your other ratings of the kind above it">
-  <img src="docs/screenshots/stats-dark.png" width="200" alt="Statistics in the dark theme">
+  <img src="docs/screenshots/search-light.png" width="200" alt="Discover shelves">
+  <img src="docs/screenshots/card-light.png" width="200" alt="Title card and ratings">
+  <img src="docs/screenshots/editor-light.png" width="200" alt="Rating editor">
+  <img src="docs/screenshots/stats-dark.png" width="200" alt="Statistics in dark theme">
 </p>
 
-(Rendered by `app/test/screenshots/` with stand-in posters.)
-Progress is tracked in
-[docs/implementation-plan.md](docs/implementation-plan.md). The first target
-platform is Android (an APK for myself and friends); iOS is postponed
-([docs/future-development.md](docs/future-development.md)).
+Screenshots use stand-in posters rendered by the app's screenshot tests.
 
-## What the MVP will do
+## Install
 
-- Search for films, series and people; title cards with poster, overview, seasons and episodes, and person profiles with filmographies filtered by role
-- Your own score from 1 to 10 in steps of 0.5 — for a film, a series, a single season and a single episode; the scores are independent, and a series or season shows the average of its already rated parts as a hint
-- A text note with the score
-- A calibration sheet right after rating: what else you rated the same, and the neighbours one step above and below — always within the same kind (films with films, episodes with episodes)
-- Ratings next to yours: Kinopoisk, IMDb, TMDB, Rotten Tomatoes, Metacritic — with the "mine − theirs" difference
-- "My ratings" sortable by divergence from Kinopoisk or IMDb
-- A watchlist
-- Statistics: interactive scores, genres and decades; discoveries and disagreements with Kinopoisk/IMDb; favourite authors, creative pairs and breadth of taste
-- Favourite people with Drive sync, all-role filmographies and people discovery shelves
-- Hybrid personal recommendations, a ranked watchlist, favourite-people work and exploration, with reasons and Not interested/Undo
-- Offline use for what is already rated: the list, sorting, statistics
-- Sync and backup through Google Drive (the app's hidden folder), plus export/import to a file
-- Optional password-encrypted API key and comparison-source sync, including restore on first launch
-- Two locales (en/ru), a dark theme
+Download the universal Android APK from
+[GitHub Releases](https://github.com/tiltozavr2545/Framebook/releases).
+Install an update over the existing app to retain its data.
+The [API key guide](docs/api-keys.md) explains first-launch setup
+([Russian translation](docs/api-keys.ru.md)).
 
-## Stack
+Android is the supported platform. The MVP is implemented; remaining validation
+and current work are tracked in the [implementation plan](docs/implementation-plan.md).
+Released changes are recorded in the [changelog](CHANGELOG.md).
 
-- **Client:** Flutter / Dart (Android; iOS postponed)
-- **State management:** Riverpod
-- **Navigation:** go_router
-- **Local database:** SQLite through drift
-- **External data:** TMDB API (catalog, search, posters), PoiskKino API (Kinopoisk rating), OMDb API (IMDb, Rotten Tomatoes, Metacritic) — details in [docs/external-sources.md](docs/external-sources.md)
-- **Sync:** Google Drive API v3, `appDataFolder`, Google Sign-In — details in [docs/sync.md](docs/sync.md)
-- **CI:** GitHub Actions — `dart format`, `flutter analyze`, `flutter test` on every push/PR; a signed APK in a GitHub Release for every `v*` tag
+## Development
 
-The app contains no third-party API keys: every user gets their own (free) and enters them in settings. The TMDB key is required — without it there is no search; the PoiskKino and OMDb keys are optional, and without them a card simply shows fewer ratings. Why it works this way is in [docs/project-brief.md](docs/project-brief.md).
+The app uses Flutter, Riverpod, go_router and SQLite through Drift.
+Source code is under `app/`; automation is in `Makefile`, `scripts/` and
+`.github/workflows/`.
 
-## Repository layout
-
-```
-app/                     — the Flutter app
-  lib/app/               — startup, routing, theme and shared preferences
-  lib/features/          — search, people, title, ratings, watchlist, stats, settings
-  lib/data/              — drift schema, library, API clients, caches and sync
-  lib/shared/            — what several features use at once
-  test/                  — unit and widget tests
-docs/                    — brief, data schema, sources, sync,
-                           client design, operations, postponed work
-```
-
-## Running locally
-
-```bash
-cd app
-flutter pub get
-flutter run
-```
-
-There are no secrets in the build: API keys are entered in the app itself on
-first launch ([how to get them](docs/api-keys.md)). After changing drift tables
-or localization strings, run `make codegen`. Syncing with Google Drive needs
-an OAuth client for your own `applicationId` and signing key SHA-1 — see
-[docs/operations.md](docs/operations.md).
+Follow the [development guide](docs/development.md) for SDK requirements,
+local setup and generated code. Signing, OAuth and release publication are
+covered by [operations](docs/operations.md).
 
 ## Documentation
 
-Current:
-
-- [Data schema](docs/data-model.md) — local tables, keys, invariants; the main document for understanding how things work
-- [External sources](docs/external-sources.md) — which APIs, what we take from them, id matching, cache, limits
-- [Sync and backup](docs/sync.md) — the Google Drive file format, the merge algorithm, export/import
-- [Client design](docs/client-architecture.md) — what the app is built with, and default decisions
-- [Getting the API keys](docs/api-keys.md) — TMDB, PoiskKino, OMDb step by step, what goes in each field ([in Russian](docs/api-keys.ru.md))
-- [Testing](docs/testing.md) — verification commands, automated scenarios and remaining device checks
-- [0.8.4 optimization](docs/optimization.md) — implemented changes, measurements and validation limits
-- [Responsiveness review](docs/reviews/2026-11-06/README.md) — favourite-people and recommendation repairs, measurements and device-check limits
-- [Operations](docs/operations.md) — keys, Google Cloud OAuth, signing and distributing the APK
-- [Postponed features](docs/future-development.md) — iOS, importing from other services, open questions
-- [Implementation plan](docs/implementation-plan.md) — MVP stages and their progress
-- [Changelog](CHANGELOG.md) — what appeared in which version
-
-Historical — how the project was conceived:
-
-- [Project brief](docs/project-brief.md) — the original idea, MVP scope and decisions made before the start
+The [documentation index](docs/README.md) lists the main document for each
+topic, including product behavior, architecture, storage, sources, sync,
+recommendations, testing and review reports. Agent instructions are in
+[AGENTS.md](AGENTS.md).

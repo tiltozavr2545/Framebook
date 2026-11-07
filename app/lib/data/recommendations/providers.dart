@@ -131,6 +131,10 @@ final recommendationPlanProvider = Provider.autoDispose<RecommendationPlan>((
 ) {
   final profile = ref.watch(tasteProfileProvider);
   final running = ref.watch(peopleIndexProvider.select((s) => s.running));
+  final now = ref.watch(recommendationClockProvider)();
+  final rotation =
+      DateTime.utc(now.year, now.month, now.day).millisecondsSinceEpoch ~/
+      Duration.millisecondsPerDay;
   return RecommendationPlan(
     profile: profile,
     favorites: favoriteIds(ref.watch(favoritePeopleProvider).value ?? const []),
@@ -138,8 +142,8 @@ final recommendationPlanProvider = Provider.autoDispose<RecommendationPlan>((
       for (final w in ref.watch(recommendationWatchlistProvider))
         recommendationRoot(w.key),
     },
-    now: ref.watch(recommendationClockProvider)(),
-    learnedPeople: running ? const [] : profile.topPeople,
+    now: now,
+    learnedPeople: running ? const [] : profile.peopleForRotation(rotation),
   );
 });
 
@@ -160,6 +164,7 @@ final recommendationPoolProvider =
         }
       });
       final previous = cache.poolFor(plan.signature);
+      final fallback = cache.lastUsefulPool;
       if (!ref.read(foregroundProvider)) {
         return Stream.value(previous ?? const RecommendationPool());
       }
@@ -182,7 +187,18 @@ final recommendationPoolProvider =
           active: () => active && ref.read(foregroundProvider),
           publish: (value) {
             if (active) {
+              // Remember only this plan's retrieved data. A displayed fallback
+              // belongs to the old plan and must not seed a successful retry.
               cache.rememberPool(plan.signature, value);
+              if (!value.running &&
+                  value.failed > 0 &&
+                  value.candidates.isEmpty &&
+                  fallback != null) {
+                value = RecommendationPool(
+                  candidates: fallback.candidates,
+                  failed: value.failed,
+                );
+              }
               controller.add(value);
             }
           },

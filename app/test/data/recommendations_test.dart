@@ -87,6 +87,8 @@ class _Api implements TmdbApi {
   bool brokenNeighbors = false;
   Completer<void>? barrier;
   final personIds = <int>[];
+  final seedKeys = <WorkKey>[];
+  final discovery = <(WorkKind, int?, int)>[];
   Future<List<TitleSummary>> response() async {
     calls++;
     active++;
@@ -101,6 +103,7 @@ class _Api implements TmdbApi {
 
   @override
   Future<List<TitleSummary>> recommendations(WorkKey key) async {
+    seedKeys.add(key);
     if (brokenNeighbors) throw const SourceException(SourceFailure.failed);
     return response();
   }
@@ -109,7 +112,12 @@ class _Api implements TmdbApi {
   Future<List<TitleSummary>> discoverRecommendations(
     WorkKind kind, {
     int? genre,
-  }) => response();
+    int page = 1,
+  }) {
+    discovery.add((kind, genre, page));
+    return response();
+  }
+
   @override
   Future<List<TitleSummary>> trending() => response();
   @override
@@ -140,6 +148,114 @@ class _Api implements TmdbApi {
 
 void main() {
   const today = '2026-11-06';
+  test(
+    'daily retrieval rotates inputs, stays stable and keeps its budget',
+    () async {
+      final p = profile([
+        for (final kind in [WorkKind.movie, WorkKind.tv]) ...[
+          for (var id = 1; id <= 6; id++)
+            rated(id, 20 - id, kind: kind, genres: [id]),
+          rated(7, 4, kind: kind),
+          rated(8, 6, kind: kind),
+        ],
+      ]);
+      RecommendationPlan plan(int day) => RecommendationPlan(
+        profile: p,
+        favorites: {for (var id = 1; id <= 16; id++) id},
+        learnedPeople: const [101, 102],
+        watchlist: {},
+        now: DateTime(2026, 11, day),
+      );
+      final first = plan(6);
+      expect(first, plan(6));
+      final second = plan(7);
+      expect(first, isNot(second));
+      expect(first.discoverPage, isNot(second.discoverPage));
+      expect(
+        first.seeds.map((s) => s.key),
+        isNot(second.seeds.map((s) => s.key)),
+      );
+      expect(first.people, isNot(second.people));
+      expect(
+        first.genres[WorkKind.movie],
+        isNot(second.genres[WorkKind.movie]),
+      );
+      final seenSeeds = <WorkKey>{};
+      final seenGenres = <int>{};
+      final seenPages = <int>{};
+      for (var day = 1; day <= 10; day++) {
+        final current = plan(day);
+        seenSeeds.addAll(current.seeds.map((s) => s.key));
+        seenGenres.addAll(current.genres[WorkKind.movie]!);
+        seenPages.add(current.discoverPage);
+        for (final kind in [WorkKind.movie, WorkKind.tv]) {
+          expect(
+            current.seeds.where((s) => s.key.kind == kind && s.score >= 7),
+            hasLength(2),
+          );
+          expect(
+            current.seeds.where((s) => s.key.kind == kind && s.score <= 4),
+            hasLength(1),
+          );
+        }
+      }
+      expect(seenSeeds, {for (final s in p.signals) s.key});
+      expect(seenGenres, {1, 2, 3, 4, 5, 6});
+      expect(seenPages, {1, 2, 3, 4, 5});
+      final api = _Api();
+      await loadRecommendationCandidates(
+        api,
+        first,
+        active: () => true,
+        publish: (_) {},
+      );
+      expect(api.seedKeys, first.seeds.map((s) => s.key));
+      expect(api.discovery, hasLength(6));
+      expect(
+        api.discovery.every((request) => request.$3 == first.discoverPage),
+        isTrue,
+      );
+      expect(api.calls + api.personIds.length, 23);
+      expect(api.peak, lessThanOrEqualTo(3));
+    },
+  );
+
+  test('rotation keeps sparse evidence valid and visits learned people', () {
+    final empty = profile([]);
+    expect(empty.seedsForRotation(100), isEmpty);
+    expect(empty.genresForRotation(WorkKind.movie, 100), isEmpty);
+    expect(empty.peopleForRotation(100), isEmpty);
+    final sparse = profile([
+      rated(1, 18, genres: [28]),
+    ]);
+    for (var day = 0; day < 5; day++) {
+      expect(sparse.seedsForRotation(day).single.key, const WorkKey.movie(1));
+      expect(sparse.genresForRotation(WorkKind.movie, day), [28]);
+    }
+    final learned = TasteProfile([
+      for (var id = 1; id <= 3; id++)
+        TasteSignal(
+          key: WorkKey.movie(id),
+          title: 'Title $id',
+          score: 9,
+          genres: {28},
+          year: 2000,
+          people: [
+            for (var person = 1; person <= 5; person++)
+              PeopleCredit(
+                id: person,
+                name: 'Person $person',
+                role: FilmographyRole.acting,
+              ),
+          ],
+        ),
+    ]);
+    expect(
+      {for (var day = 0; day < 5; day++) ...learned.peopleForRotation(day)},
+      {1, 2, 3, 4, 5},
+    );
+  });
+
   test(
     'changing favourites reuses unchanged source jobs and retries failures',
     () async {

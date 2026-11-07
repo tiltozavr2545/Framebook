@@ -4,17 +4,16 @@ Where the app gets everything the user didn't create: the catalog, posters,
 other people's ratings. What of it is stored locally, and for how long, is in
 [data-model.md](data-model.md).
 
-**Status: endpoints and fields confirmed with live requests on 2026-10-23.**
-The recorded responses are in `app/test/fixtures/`, captured with
-`scripts/capture-fixtures.sh` (see [operations.md](operations.md)). If
-anything below disagrees with a fixture, the fixture is right.
-
----
+Initial API fixtures were captured on 2026-10-23 and are stored under
+`app/test/fixtures/`. They record observed responses, not a guarantee that a
+live provider remains unchanged. Capture procedures belong to
+[testing](testing.md#capturing-api-fixtures), and registration steps to the
+[API key guide](api-keys.md).
 
 ## Summary
 
 | Source | Role | Key | Free limit | Required |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | [TMDB](https://developer.themoviedb.org) | catalog, search, seasons and episodes, posters, genres, `imdb_id`, TMDB rating | API Read Access Token (v4) or API key (v3) | no daily limit, a rate limit (a few dozen requests a second) | **yes** |
 | [PoiskKino API](https://poiskkino.dev) (formerly kinopoisk.dev) | Kinopoisk rating, `kp_id`; fallback source of the IMDb rating | `X-API-KEY`, issued by the Telegram bot `@poiskkinodev_bot` | **200 requests a day** | no |
 | [OMDb](https://www.omdbapi.com) | IMDb rating, Rotten Tomatoes, Metacritic; IMDb for episodes | `apikey`, issued by email | 1,000 requests a day | no |
@@ -26,12 +25,8 @@ set). Without both, the TMDB rating remains. The app doesn't treat this as an
 error: in place of an unavailable rating the card says "add a key", and a tap
 opens Sources.
 
-Why the keys belong to the user rather than the build is in
-[project-brief.md](project-brief.md). What matters here: **the limits are per
-user**, and 200 PoiskKino requests a day is one person's whole budget, not the
-app's.
-
----
+Quotas belong to each key, so all installations sharing one key also share
+its request budget.
 
 ## TMDB — the catalog
 
@@ -39,8 +34,10 @@ Base: `https://api.themoviedb.org/3`. The response language is the
 `language=ru-RU` / `en-US` parameter, following the app's locale.
 
 | What | Request |
-|---|---|
-| search | `GET /search/multi?query=…` — only `media_type` `movie` and `tv` are kept |
+| --- | --- |
+| title search | `GET /search/multi?query=…` — only `media_type` `movie` and `tv` are kept |
+| people search | `GET /search/person?query=…` |
+| person profile / filmography | `GET /person/{id}?append_to_response=combined_credits` |
 | film | `GET /movie/{id}?append_to_response=external_ids,credits,release_dates` |
 | movie collection | `GET /collection/{id}` — parts of the collection identified by `belongs_to_collection` |
 | similar titles | `GET /movie/{id}/similar`, `/tv/{id}/similar` — first page, based on genres and keywords |
@@ -48,9 +45,10 @@ Base: `https://api.themoviedb.org/3`. The response language is the
 | season | `GET /tv/{id}/season/{n}?append_to_response=aggregate_credits` — includes every episode with its `vote_average` and the season's aggregate cast |
 | an episode's ids in other databases | `GET /tv/{id}/season/{n}/episode/{m}/external_ids` |
 | genres | `GET /genre/movie/list`, `GET /genre/tv/list` — names for the statistics by genre; the lists share most ids |
+| discovery shelves | `GET /trending/all/week`, `/movie/now_playing`, and movie/TV discover by rating with a vote threshold |
 | popular people | `GET /person/popular` — first page for People discovery |
 | analytics credits | `GET /movie/{id}/credits`; series and season details with appended `aggregate_credits`; episode details with appended `credits` and guest stars — verified against the rated snapshot's TMDB identity, cached locally only |
-| personal discovery | `GET /discover/movie`, `/discover/tv` — genre/general candidate pools; local ranking and budgets are in [recommendations.md](recommendations.md) |
+| personal discovery | `GET /discover/movie`, `/discover/tv` — genre/general candidate pools; retrieval/ranking budgets are in [recommendations.md](recommendations.md) |
 | cover variants | `GET /movie/{id}/images`, `/tv/{id}/images`, `/tv/{id}/season/{n}/images`, `/tv/{id}/season/{n}/episode/{m}/images` — posters, or episode stills |
 | person photos | `GET /person/{id}/images` — profile photos for the full-screen viewer |
 | image configuration | `GET /configuration` — base URL and poster sizes |
@@ -58,9 +56,8 @@ Base: `https://api.themoviedb.org/3`. The response language is the
 Posters: `{secure_base_url}{size}{poster_path}`; `w185` in lists, `w342` in
 a card's header, `w300` for an episode still. The full-screen viewer uses
 `w780` posters and original stills when available in the configuration.
-Variant requests omit the `language` filter, then retain only the current
-cover, the UI and original languages, and images without a language; no
-movie or series backdrops are used.
+Variant requests omit the `language` filter. The viewer's image-selection
+rules are in [product behavior](features.md#images-offline-use-and-keyboard).
 
 What the fixtures confirmed:
 
@@ -79,14 +76,6 @@ What the fixtures confirmed:
 Attribution is mandatory: the About screen shows the TMDB logo and the text
 "This product uses the TMDB API but is not endorsed or certified by TMDB".
 
-**TMDB availability from Russia is not an issue for this project** (decided
-2026-10-20). Users report that `api.themoviedb.org` and `image.tmdb.org` are
-unreachable from Russia in places, but none of the app's users go online from
-a Russian IP. So TMDB stays the base of the catalog with no fallback. From the
-development machine all four APIs answer.
-
----
-
 ## PoiskKino — the Kinopoisk rating
 
 Base: `https://api.poiskkino.dev/v1.5`, the key in the `X-API-KEY` header. An
@@ -95,7 +84,7 @@ API version, so the client is isolated behind an interface, and replacing the
 source is a new class, not edits all over the code.
 
 | What | Request |
-|---|---|
+| --- | --- |
 | first match when `imdb_id` is known | `GET /movie?externalId.imdb={imdb_id}` |
 | first match without `imdb_id` | `GET /movie?externalId.tmdb={tmdb_id}` + filtering the results by `isSeries` (see below) |
 | refresh by a known `kp_id` | `GET /movie/{kp_id}` |
@@ -133,14 +122,12 @@ Other things from the fixtures:
   episode numbers, titles, dates and overviews, but not a single rating
   field. PoiskKino is never asked about a `season`/`episode`.
 
----
-
 ## OMDb — IMDb, Rotten Tomatoes, Metacritic
 
 Base: `https://www.omdbapi.com/?apikey=…`.
 
 | What | Request |
-|---|---|
+| --- | --- |
 | film / series | `?i={imdb_id}` |
 | episode | `?i={episode imdb_id}`; if TMDB doesn't know the episode's id — `?i={series imdb_id}&Season={n}&Episode={m}` |
 | season | `?i={series imdb_id}&Season={n}` — the episode list with `imdbRating`; a season has no IMDb rating of its own, so the **episode average** is shown, clearly labelled |
@@ -161,7 +148,7 @@ Errors come as `Response: "False"` with a text in `Error`, and differ only by
 that text:
 
 | `Error` | HTTP | Means |
-|---|---|---|
+| --- | --- | --- |
 | `Error getting data.` | 200 | `not_found` — the id is valid, there is no such title |
 | `Incorrect IMDb ID.` | 200 | `not_found` — the id is malformed |
 | `Movie not found!` | 200 | `not_found` (search by title, which we don't use) |
@@ -169,8 +156,6 @@ that text:
 | `Request limit reached!` | 401 (per the docs, no fixture captured) | `error`, the daily limit |
 
 An OMDb key can be 7 or 8 characters — don't check the length on entry.
-
----
 
 ## Matching ids
 
@@ -189,16 +174,23 @@ The rule: **never match by title and year.** A wrongly attached rating is
 worse than a missing one — it silently spoils the divergence sort and the
 statistics. Not found by id is `not_found`, period.
 
+Known `kp_id` values are retained only for titles with library snapshots.
+Other titles are matched again on refresh; lookup by IMDb ID costs the same
+request as refresh by Kinopoisk ID and returns the ratings too.
+
 Manual linking ("this is the wrong film on Kinopoisk") is in
 [future-development.md](future-development.md).
 
----
-
 ## Cache and lifetimes
 
+TMDB responses use the file cache; PoiskKino/OMDb results use local
+`external_ratings` rows. IMDb from PoiskKino is considered missing once an
+OMDb key is added, allowing replacement by the preferred OMDb result.
+
 | What | Where | TTL |
-|---|---|---|
+| --- | --- | --- |
 | TMDB search responses | HTTP cache | 1 day |
+| TMDB fast shelves / slow shelves | HTTP cache | 1 day / 7 days |
 | TMDB film/series/season cards | HTTP cache | 7 days |
 | TMDB genres, configuration, an episode's external ids | HTTP cache | 30 days |
 | posters | image cache | by eviction (1,500 files, 90 days) |
@@ -216,8 +208,7 @@ clock correction must not postpone refresh until that future date. Failure
 throttling likewise applies only when its recorded time is not in the future.
 HTTP cache pruning reads file modification times asynchronously.
 
-How failures are handled (as implemented in Stage 2,
-`lib/data/ratings_service.dart`):
+Failure policy in `app/lib/data/ratings_service.dart`:
 
 - A failure never overwrites an earlier value. An `error` row is written
   only where there was no row at all, so the card shows "source error"
@@ -244,17 +235,15 @@ Rotten Tomatoes/Metacritic). Invalid values are omitted, including overflowing
 JSON exponents and string values such as `Infinity`; a bad field must not
 attach data to a rounded title ID or poison statistics.
 
----
-
 ## Request budget
 
 Every request to PoiskKino and OMDb first increments the counter in
-`api_budget` (UTC days), then goes out. The services themselves may count
-days in another time zone. UTC is a conservative approximation: the counter
-may reset before the real one does, so the ceilings below leave a reserve.
+`api_budget` (UTC days), then goes out. The services may count days in another time zone, so the counter can reset
+before the provider does. The ceilings leave a reserve, and provider quota
+errors still stop spending for the day.
 
 | Source | Interactive requests (a card is open) | Background refresh | Reserve |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | PoiskKino (200) | up to 120 | up to 60 | 20 |
 | OMDb (1000) | up to 600 | up to 300 | 100 |
 
@@ -273,13 +262,13 @@ fills up with Kinopoisk ratings in about two to three weeks of normal use.
 That is expected and visible to the user: the statistics say how many
 ratings the divergence was computed over.
 
-As implemented in Stage 4 (`lib/data/background_refresh.dart`): the first
+Scheduling in `app/lib/data/background_refresh.dart`: the first
 pass starts ten seconds after launch, then one every half hour while the app
 is in the foreground; three seconds between titles that cost a request. The
 TTL is the background one (14 days for a value), and TMDB is left as is —
 without a card there is no TMDB vote to record. A pass ends when the network
 is gone, or once every source with a key has spent its background share.
-Since 0.8.4, a paused app waits for a lifecycle signal without a periodic
+A paused app waits for a lifecycle signal without a periodic
 timer, and disposal during a request cannot schedule another pass. No timer
 is created without budgeted source keys. Cancellation is checked between
 sources; a lookup already in flight can finish, including shared card work.
@@ -290,9 +279,12 @@ not select rating notes or unrelated series snapshots.
 A "limit reached" answer from the service itself caps the rest of the day at
 once, whatever the counter says.
 
----
-
 ## Key checks
+
+Source clients request plain text and parse JSON explicitly with `tryJson`.
+Letting Dio decode proxy HTML can turn a source error into an `unknown`
+transport exception that looks offline. API 4xx/5xx bodies remain source
+responses rather than being thrown before classification.
 
 When a key is entered, one trial request:
 

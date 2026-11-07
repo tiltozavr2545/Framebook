@@ -1,15 +1,30 @@
 # Changelog
 
-Framebook's version history. Moved out of AGENTS.md so that it isn't loaded
-into context in full on every session — here it is read on demand, when it is
-actually needed.
+Changes delivered in each version, with Android build numbers. Current behavior
+is maintained in the [documentation](docs/README.md), pending work in the
+[implementation plan](docs/implementation-plan.md), and historical verification
+evidence in [review reports](docs/reviews/README.md).
 
-For **why** a particular decision was made, look not here but in the document
-that describes it (`docs/`), or in `git log`. This is the chronology of what
-appeared in which version. Entry format: what was done, version in brackets;
-the version is `name+build` from `app/pubspec.yaml`.
+## 0.9.3 — Pair calibration and fresher recommendations (build 23)
 
-MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-plan.md).
+- Add pairwise calibration to movie statistics. Choose which film you enjoyed
+  more or that both were equally enjoyable; reveal existing scores after the
+  answer and apply a suggested correction only after confirmation.
+- Select pairs using conflicting preference chains, close scores, review
+  coverage, shared genres and release years. Limit completed comparisons to
+  five per local day; skipping does not spend the allowance.
+- Sync comparison history through Drive and include it in exports and backups.
+  Keep history when restoring an older file, and reject stale or duplicate
+  answers before changing scores. Schema 3 and sync format 6 retain reading
+  of earlier files; older apps must update before syncing the new format.
+- Refresh personal recommendation inputs daily: rotate rated-title seeds,
+  favourite and learned people, secondary genres and discovery pages while
+  keeping the existing request budget and stable scrolling. Retain the last
+  useful session candidates if a daily refresh fails without new results.
+- Restore side-by-side labels and choices for navigation, language and theme
+  in Settings at normal text sizes, with a vertical layout for large text.
+- Consolidate documentation into primary topic references, a documentation
+  index and separate historical validation records.
 
 ## Before the first version
 
@@ -229,7 +244,7 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
   destroying/replacing the surface, and check focus/attachment before running.
   Other Android versions and manufacturers retain their existing behavior.
 - Document the upstream evidence and physical-device validation procedure in
-  `docs/operations.md`. On 2026-11-03 the user confirmed the signed 0.7.4
+  [Android troubleshooting](docs/android-troubleshooting.md). On 2026-11-03 the user confirmed the signed 0.7.4
   build works after testing with the affected friend. No affected-device logs
   were captured locally, so the exact upstream cause is still inferred.
 

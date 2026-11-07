@@ -2199,6 +2199,928 @@ class FavoritePeopleCompanion extends UpdateCompanion<FavoritePerson> {
   }
 }
 
+class $PairComparisonsTable extends PairComparisons
+    with TableInfo<$PairComparisonsTable, PairComparison> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PairComparisonsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _comparisonKeyMeta = const VerificationMeta(
+    'comparisonKey',
+  );
+  @override
+  late final GeneratedColumn<String> comparisonKey = GeneratedColumn<String>(
+    'comparison_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _leftKeyMeta = const VerificationMeta(
+    'leftKey',
+  );
+  @override
+  late final GeneratedColumn<String> leftKey = GeneratedColumn<String>(
+    'left_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _rightKeyMeta = const VerificationMeta(
+    'rightKey',
+  );
+  @override
+  late final GeneratedColumn<String> rightKey = GeneratedColumn<String>(
+    'right_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _leftScoreHalfMeta = const VerificationMeta(
+    'leftScoreHalf',
+  );
+  @override
+  late final GeneratedColumn<int> leftScoreHalf = GeneratedColumn<int>(
+    'left_score_half',
+    aliasedName,
+    false,
+    check: () => ComparableExpr(leftScoreHalf).isBetweenValues(2, 20),
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _rightScoreHalfMeta = const VerificationMeta(
+    'rightScoreHalf',
+  );
+  @override
+  late final GeneratedColumn<int> rightScoreHalf = GeneratedColumn<int>(
+    'right_score_half',
+    aliasedName,
+    false,
+    check: () => ComparableExpr(rightScoreHalf).isBetweenValues(2, 20),
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _leftScoredAtMeta = const VerificationMeta(
+    'leftScoredAt',
+  );
+  @override
+  late final GeneratedColumn<int> leftScoredAt = GeneratedColumn<int>(
+    'left_scored_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _rightScoredAtMeta = const VerificationMeta(
+    'rightScoredAt',
+  );
+  @override
+  late final GeneratedColumn<int> rightScoredAt = GeneratedColumn<int>(
+    'right_scored_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _leftResultScoreHalfMeta =
+      const VerificationMeta('leftResultScoreHalf');
+  @override
+  late final GeneratedColumn<int> leftResultScoreHalf = GeneratedColumn<int>(
+    'left_result_score_half',
+    aliasedName,
+    false,
+    check: () => ComparableExpr(leftResultScoreHalf).isBetweenValues(2, 20),
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _rightResultScoreHalfMeta =
+      const VerificationMeta('rightResultScoreHalf');
+  @override
+  late final GeneratedColumn<int> rightResultScoreHalf = GeneratedColumn<int>(
+    'right_result_score_half',
+    aliasedName,
+    false,
+    check: () => ComparableExpr(rightResultScoreHalf).isBetweenValues(2, 20),
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _leftResultScoredAtMeta =
+      const VerificationMeta('leftResultScoredAt');
+  @override
+  late final GeneratedColumn<int> leftResultScoredAt = GeneratedColumn<int>(
+    'left_result_scored_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _rightResultScoredAtMeta =
+      const VerificationMeta('rightResultScoredAt');
+  @override
+  late final GeneratedColumn<int> rightResultScoredAt = GeneratedColumn<int>(
+    'right_result_scored_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<PairPreference, String>
+  preference = GeneratedColumn<String>(
+    'preference',
+    aliasedName,
+    false,
+    check: () => preference.isIn(PairPreference.values.map((p) => p.name)),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  ).withConverter<PairPreference>($PairComparisonsTable.$converterpreference);
+  static const VerificationMeta _dayMeta = const VerificationMeta('day');
+  @override
+  late final GeneratedColumn<String> day = GeneratedColumn<String>(
+    'day',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _answeredAtMeta = const VerificationMeta(
+    'answeredAt',
+  );
+  @override
+  late final GeneratedColumn<int> answeredAt = GeneratedColumn<int>(
+    'answered_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _answeredByMeta = const VerificationMeta(
+    'answeredBy',
+  );
+  @override
+  late final GeneratedColumn<String> answeredBy = GeneratedColumn<String>(
+    'answered_by',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    comparisonKey,
+    leftKey,
+    rightKey,
+    leftScoreHalf,
+    rightScoreHalf,
+    leftScoredAt,
+    rightScoredAt,
+    leftResultScoreHalf,
+    rightResultScoreHalf,
+    leftResultScoredAt,
+    rightResultScoredAt,
+    preference,
+    day,
+    answeredAt,
+    answeredBy,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'pair_comparisons';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PairComparison> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('comparison_key')) {
+      context.handle(
+        _comparisonKeyMeta,
+        comparisonKey.isAcceptableOrUnknown(
+          data['comparison_key']!,
+          _comparisonKeyMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_comparisonKeyMeta);
+    }
+    if (data.containsKey('left_key')) {
+      context.handle(
+        _leftKeyMeta,
+        leftKey.isAcceptableOrUnknown(data['left_key']!, _leftKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_leftKeyMeta);
+    }
+    if (data.containsKey('right_key')) {
+      context.handle(
+        _rightKeyMeta,
+        rightKey.isAcceptableOrUnknown(data['right_key']!, _rightKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_rightKeyMeta);
+    }
+    if (data.containsKey('left_score_half')) {
+      context.handle(
+        _leftScoreHalfMeta,
+        leftScoreHalf.isAcceptableOrUnknown(
+          data['left_score_half']!,
+          _leftScoreHalfMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_leftScoreHalfMeta);
+    }
+    if (data.containsKey('right_score_half')) {
+      context.handle(
+        _rightScoreHalfMeta,
+        rightScoreHalf.isAcceptableOrUnknown(
+          data['right_score_half']!,
+          _rightScoreHalfMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_rightScoreHalfMeta);
+    }
+    if (data.containsKey('left_scored_at')) {
+      context.handle(
+        _leftScoredAtMeta,
+        leftScoredAt.isAcceptableOrUnknown(
+          data['left_scored_at']!,
+          _leftScoredAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_leftScoredAtMeta);
+    }
+    if (data.containsKey('right_scored_at')) {
+      context.handle(
+        _rightScoredAtMeta,
+        rightScoredAt.isAcceptableOrUnknown(
+          data['right_scored_at']!,
+          _rightScoredAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_rightScoredAtMeta);
+    }
+    if (data.containsKey('left_result_score_half')) {
+      context.handle(
+        _leftResultScoreHalfMeta,
+        leftResultScoreHalf.isAcceptableOrUnknown(
+          data['left_result_score_half']!,
+          _leftResultScoreHalfMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_leftResultScoreHalfMeta);
+    }
+    if (data.containsKey('right_result_score_half')) {
+      context.handle(
+        _rightResultScoreHalfMeta,
+        rightResultScoreHalf.isAcceptableOrUnknown(
+          data['right_result_score_half']!,
+          _rightResultScoreHalfMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_rightResultScoreHalfMeta);
+    }
+    if (data.containsKey('left_result_scored_at')) {
+      context.handle(
+        _leftResultScoredAtMeta,
+        leftResultScoredAt.isAcceptableOrUnknown(
+          data['left_result_scored_at']!,
+          _leftResultScoredAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_leftResultScoredAtMeta);
+    }
+    if (data.containsKey('right_result_scored_at')) {
+      context.handle(
+        _rightResultScoredAtMeta,
+        rightResultScoredAt.isAcceptableOrUnknown(
+          data['right_result_scored_at']!,
+          _rightResultScoredAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_rightResultScoredAtMeta);
+    }
+    if (data.containsKey('day')) {
+      context.handle(
+        _dayMeta,
+        day.isAcceptableOrUnknown(data['day']!, _dayMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dayMeta);
+    }
+    if (data.containsKey('answered_at')) {
+      context.handle(
+        _answeredAtMeta,
+        answeredAt.isAcceptableOrUnknown(data['answered_at']!, _answeredAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_answeredAtMeta);
+    }
+    if (data.containsKey('answered_by')) {
+      context.handle(
+        _answeredByMeta,
+        answeredBy.isAcceptableOrUnknown(data['answered_by']!, _answeredByMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_answeredByMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {comparisonKey};
+  @override
+  PairComparison map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PairComparison(
+      comparisonKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}comparison_key'],
+      )!,
+      leftKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}left_key'],
+      )!,
+      rightKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}right_key'],
+      )!,
+      leftScoreHalf: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}left_score_half'],
+      )!,
+      rightScoreHalf: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}right_score_half'],
+      )!,
+      leftScoredAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}left_scored_at'],
+      )!,
+      rightScoredAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}right_scored_at'],
+      )!,
+      leftResultScoreHalf: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}left_result_score_half'],
+      )!,
+      rightResultScoreHalf: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}right_result_score_half'],
+      )!,
+      leftResultScoredAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}left_result_scored_at'],
+      )!,
+      rightResultScoredAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}right_result_scored_at'],
+      )!,
+      preference: $PairComparisonsTable.$converterpreference.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}preference'],
+        )!,
+      ),
+      day: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}day'],
+      )!,
+      answeredAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}answered_at'],
+      )!,
+      answeredBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}answered_by'],
+      )!,
+    );
+  }
+
+  @override
+  $PairComparisonsTable createAlias(String alias) {
+    return $PairComparisonsTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<PairPreference, String, String>
+  $converterpreference = const EnumNameConverter<PairPreference>(
+    PairPreference.values,
+  );
+}
+
+class PairComparison extends DataClass implements Insertable<PairComparison> {
+  final String comparisonKey;
+  final String leftKey;
+  final String rightKey;
+  final int leftScoreHalf;
+  final int rightScoreHalf;
+  final int leftScoredAt;
+  final int rightScoredAt;
+  final int leftResultScoreHalf;
+  final int rightResultScoreHalf;
+  final int leftResultScoredAt;
+  final int rightResultScoredAt;
+  final PairPreference preference;
+  final String day;
+  final int answeredAt;
+  final String answeredBy;
+  const PairComparison({
+    required this.comparisonKey,
+    required this.leftKey,
+    required this.rightKey,
+    required this.leftScoreHalf,
+    required this.rightScoreHalf,
+    required this.leftScoredAt,
+    required this.rightScoredAt,
+    required this.leftResultScoreHalf,
+    required this.rightResultScoreHalf,
+    required this.leftResultScoredAt,
+    required this.rightResultScoredAt,
+    required this.preference,
+    required this.day,
+    required this.answeredAt,
+    required this.answeredBy,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['comparison_key'] = Variable<String>(comparisonKey);
+    map['left_key'] = Variable<String>(leftKey);
+    map['right_key'] = Variable<String>(rightKey);
+    map['left_score_half'] = Variable<int>(leftScoreHalf);
+    map['right_score_half'] = Variable<int>(rightScoreHalf);
+    map['left_scored_at'] = Variable<int>(leftScoredAt);
+    map['right_scored_at'] = Variable<int>(rightScoredAt);
+    map['left_result_score_half'] = Variable<int>(leftResultScoreHalf);
+    map['right_result_score_half'] = Variable<int>(rightResultScoreHalf);
+    map['left_result_scored_at'] = Variable<int>(leftResultScoredAt);
+    map['right_result_scored_at'] = Variable<int>(rightResultScoredAt);
+    {
+      map['preference'] = Variable<String>(
+        $PairComparisonsTable.$converterpreference.toSql(preference),
+      );
+    }
+    map['day'] = Variable<String>(day);
+    map['answered_at'] = Variable<int>(answeredAt);
+    map['answered_by'] = Variable<String>(answeredBy);
+    return map;
+  }
+
+  PairComparisonsCompanion toCompanion(bool nullToAbsent) {
+    return PairComparisonsCompanion(
+      comparisonKey: Value(comparisonKey),
+      leftKey: Value(leftKey),
+      rightKey: Value(rightKey),
+      leftScoreHalf: Value(leftScoreHalf),
+      rightScoreHalf: Value(rightScoreHalf),
+      leftScoredAt: Value(leftScoredAt),
+      rightScoredAt: Value(rightScoredAt),
+      leftResultScoreHalf: Value(leftResultScoreHalf),
+      rightResultScoreHalf: Value(rightResultScoreHalf),
+      leftResultScoredAt: Value(leftResultScoredAt),
+      rightResultScoredAt: Value(rightResultScoredAt),
+      preference: Value(preference),
+      day: Value(day),
+      answeredAt: Value(answeredAt),
+      answeredBy: Value(answeredBy),
+    );
+  }
+
+  factory PairComparison.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PairComparison(
+      comparisonKey: serializer.fromJson<String>(json['comparisonKey']),
+      leftKey: serializer.fromJson<String>(json['leftKey']),
+      rightKey: serializer.fromJson<String>(json['rightKey']),
+      leftScoreHalf: serializer.fromJson<int>(json['leftScoreHalf']),
+      rightScoreHalf: serializer.fromJson<int>(json['rightScoreHalf']),
+      leftScoredAt: serializer.fromJson<int>(json['leftScoredAt']),
+      rightScoredAt: serializer.fromJson<int>(json['rightScoredAt']),
+      leftResultScoreHalf: serializer.fromJson<int>(
+        json['leftResultScoreHalf'],
+      ),
+      rightResultScoreHalf: serializer.fromJson<int>(
+        json['rightResultScoreHalf'],
+      ),
+      leftResultScoredAt: serializer.fromJson<int>(json['leftResultScoredAt']),
+      rightResultScoredAt: serializer.fromJson<int>(
+        json['rightResultScoredAt'],
+      ),
+      preference: $PairComparisonsTable.$converterpreference.fromJson(
+        serializer.fromJson<String>(json['preference']),
+      ),
+      day: serializer.fromJson<String>(json['day']),
+      answeredAt: serializer.fromJson<int>(json['answeredAt']),
+      answeredBy: serializer.fromJson<String>(json['answeredBy']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'comparisonKey': serializer.toJson<String>(comparisonKey),
+      'leftKey': serializer.toJson<String>(leftKey),
+      'rightKey': serializer.toJson<String>(rightKey),
+      'leftScoreHalf': serializer.toJson<int>(leftScoreHalf),
+      'rightScoreHalf': serializer.toJson<int>(rightScoreHalf),
+      'leftScoredAt': serializer.toJson<int>(leftScoredAt),
+      'rightScoredAt': serializer.toJson<int>(rightScoredAt),
+      'leftResultScoreHalf': serializer.toJson<int>(leftResultScoreHalf),
+      'rightResultScoreHalf': serializer.toJson<int>(rightResultScoreHalf),
+      'leftResultScoredAt': serializer.toJson<int>(leftResultScoredAt),
+      'rightResultScoredAt': serializer.toJson<int>(rightResultScoredAt),
+      'preference': serializer.toJson<String>(
+        $PairComparisonsTable.$converterpreference.toJson(preference),
+      ),
+      'day': serializer.toJson<String>(day),
+      'answeredAt': serializer.toJson<int>(answeredAt),
+      'answeredBy': serializer.toJson<String>(answeredBy),
+    };
+  }
+
+  PairComparison copyWith({
+    String? comparisonKey,
+    String? leftKey,
+    String? rightKey,
+    int? leftScoreHalf,
+    int? rightScoreHalf,
+    int? leftScoredAt,
+    int? rightScoredAt,
+    int? leftResultScoreHalf,
+    int? rightResultScoreHalf,
+    int? leftResultScoredAt,
+    int? rightResultScoredAt,
+    PairPreference? preference,
+    String? day,
+    int? answeredAt,
+    String? answeredBy,
+  }) => PairComparison(
+    comparisonKey: comparisonKey ?? this.comparisonKey,
+    leftKey: leftKey ?? this.leftKey,
+    rightKey: rightKey ?? this.rightKey,
+    leftScoreHalf: leftScoreHalf ?? this.leftScoreHalf,
+    rightScoreHalf: rightScoreHalf ?? this.rightScoreHalf,
+    leftScoredAt: leftScoredAt ?? this.leftScoredAt,
+    rightScoredAt: rightScoredAt ?? this.rightScoredAt,
+    leftResultScoreHalf: leftResultScoreHalf ?? this.leftResultScoreHalf,
+    rightResultScoreHalf: rightResultScoreHalf ?? this.rightResultScoreHalf,
+    leftResultScoredAt: leftResultScoredAt ?? this.leftResultScoredAt,
+    rightResultScoredAt: rightResultScoredAt ?? this.rightResultScoredAt,
+    preference: preference ?? this.preference,
+    day: day ?? this.day,
+    answeredAt: answeredAt ?? this.answeredAt,
+    answeredBy: answeredBy ?? this.answeredBy,
+  );
+  PairComparison copyWithCompanion(PairComparisonsCompanion data) {
+    return PairComparison(
+      comparisonKey: data.comparisonKey.present
+          ? data.comparisonKey.value
+          : this.comparisonKey,
+      leftKey: data.leftKey.present ? data.leftKey.value : this.leftKey,
+      rightKey: data.rightKey.present ? data.rightKey.value : this.rightKey,
+      leftScoreHalf: data.leftScoreHalf.present
+          ? data.leftScoreHalf.value
+          : this.leftScoreHalf,
+      rightScoreHalf: data.rightScoreHalf.present
+          ? data.rightScoreHalf.value
+          : this.rightScoreHalf,
+      leftScoredAt: data.leftScoredAt.present
+          ? data.leftScoredAt.value
+          : this.leftScoredAt,
+      rightScoredAt: data.rightScoredAt.present
+          ? data.rightScoredAt.value
+          : this.rightScoredAt,
+      leftResultScoreHalf: data.leftResultScoreHalf.present
+          ? data.leftResultScoreHalf.value
+          : this.leftResultScoreHalf,
+      rightResultScoreHalf: data.rightResultScoreHalf.present
+          ? data.rightResultScoreHalf.value
+          : this.rightResultScoreHalf,
+      leftResultScoredAt: data.leftResultScoredAt.present
+          ? data.leftResultScoredAt.value
+          : this.leftResultScoredAt,
+      rightResultScoredAt: data.rightResultScoredAt.present
+          ? data.rightResultScoredAt.value
+          : this.rightResultScoredAt,
+      preference: data.preference.present
+          ? data.preference.value
+          : this.preference,
+      day: data.day.present ? data.day.value : this.day,
+      answeredAt: data.answeredAt.present
+          ? data.answeredAt.value
+          : this.answeredAt,
+      answeredBy: data.answeredBy.present
+          ? data.answeredBy.value
+          : this.answeredBy,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PairComparison(')
+          ..write('comparisonKey: $comparisonKey, ')
+          ..write('leftKey: $leftKey, ')
+          ..write('rightKey: $rightKey, ')
+          ..write('leftScoreHalf: $leftScoreHalf, ')
+          ..write('rightScoreHalf: $rightScoreHalf, ')
+          ..write('leftScoredAt: $leftScoredAt, ')
+          ..write('rightScoredAt: $rightScoredAt, ')
+          ..write('leftResultScoreHalf: $leftResultScoreHalf, ')
+          ..write('rightResultScoreHalf: $rightResultScoreHalf, ')
+          ..write('leftResultScoredAt: $leftResultScoredAt, ')
+          ..write('rightResultScoredAt: $rightResultScoredAt, ')
+          ..write('preference: $preference, ')
+          ..write('day: $day, ')
+          ..write('answeredAt: $answeredAt, ')
+          ..write('answeredBy: $answeredBy')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    comparisonKey,
+    leftKey,
+    rightKey,
+    leftScoreHalf,
+    rightScoreHalf,
+    leftScoredAt,
+    rightScoredAt,
+    leftResultScoreHalf,
+    rightResultScoreHalf,
+    leftResultScoredAt,
+    rightResultScoredAt,
+    preference,
+    day,
+    answeredAt,
+    answeredBy,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PairComparison &&
+          other.comparisonKey == this.comparisonKey &&
+          other.leftKey == this.leftKey &&
+          other.rightKey == this.rightKey &&
+          other.leftScoreHalf == this.leftScoreHalf &&
+          other.rightScoreHalf == this.rightScoreHalf &&
+          other.leftScoredAt == this.leftScoredAt &&
+          other.rightScoredAt == this.rightScoredAt &&
+          other.leftResultScoreHalf == this.leftResultScoreHalf &&
+          other.rightResultScoreHalf == this.rightResultScoreHalf &&
+          other.leftResultScoredAt == this.leftResultScoredAt &&
+          other.rightResultScoredAt == this.rightResultScoredAt &&
+          other.preference == this.preference &&
+          other.day == this.day &&
+          other.answeredAt == this.answeredAt &&
+          other.answeredBy == this.answeredBy);
+}
+
+class PairComparisonsCompanion extends UpdateCompanion<PairComparison> {
+  final Value<String> comparisonKey;
+  final Value<String> leftKey;
+  final Value<String> rightKey;
+  final Value<int> leftScoreHalf;
+  final Value<int> rightScoreHalf;
+  final Value<int> leftScoredAt;
+  final Value<int> rightScoredAt;
+  final Value<int> leftResultScoreHalf;
+  final Value<int> rightResultScoreHalf;
+  final Value<int> leftResultScoredAt;
+  final Value<int> rightResultScoredAt;
+  final Value<PairPreference> preference;
+  final Value<String> day;
+  final Value<int> answeredAt;
+  final Value<String> answeredBy;
+  final Value<int> rowid;
+  const PairComparisonsCompanion({
+    this.comparisonKey = const Value.absent(),
+    this.leftKey = const Value.absent(),
+    this.rightKey = const Value.absent(),
+    this.leftScoreHalf = const Value.absent(),
+    this.rightScoreHalf = const Value.absent(),
+    this.leftScoredAt = const Value.absent(),
+    this.rightScoredAt = const Value.absent(),
+    this.leftResultScoreHalf = const Value.absent(),
+    this.rightResultScoreHalf = const Value.absent(),
+    this.leftResultScoredAt = const Value.absent(),
+    this.rightResultScoredAt = const Value.absent(),
+    this.preference = const Value.absent(),
+    this.day = const Value.absent(),
+    this.answeredAt = const Value.absent(),
+    this.answeredBy = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PairComparisonsCompanion.insert({
+    required String comparisonKey,
+    required String leftKey,
+    required String rightKey,
+    required int leftScoreHalf,
+    required int rightScoreHalf,
+    required int leftScoredAt,
+    required int rightScoredAt,
+    required int leftResultScoreHalf,
+    required int rightResultScoreHalf,
+    required int leftResultScoredAt,
+    required int rightResultScoredAt,
+    required PairPreference preference,
+    required String day,
+    required int answeredAt,
+    required String answeredBy,
+    this.rowid = const Value.absent(),
+  }) : comparisonKey = Value(comparisonKey),
+       leftKey = Value(leftKey),
+       rightKey = Value(rightKey),
+       leftScoreHalf = Value(leftScoreHalf),
+       rightScoreHalf = Value(rightScoreHalf),
+       leftScoredAt = Value(leftScoredAt),
+       rightScoredAt = Value(rightScoredAt),
+       leftResultScoreHalf = Value(leftResultScoreHalf),
+       rightResultScoreHalf = Value(rightResultScoreHalf),
+       leftResultScoredAt = Value(leftResultScoredAt),
+       rightResultScoredAt = Value(rightResultScoredAt),
+       preference = Value(preference),
+       day = Value(day),
+       answeredAt = Value(answeredAt),
+       answeredBy = Value(answeredBy);
+  static Insertable<PairComparison> custom({
+    Expression<String>? comparisonKey,
+    Expression<String>? leftKey,
+    Expression<String>? rightKey,
+    Expression<int>? leftScoreHalf,
+    Expression<int>? rightScoreHalf,
+    Expression<int>? leftScoredAt,
+    Expression<int>? rightScoredAt,
+    Expression<int>? leftResultScoreHalf,
+    Expression<int>? rightResultScoreHalf,
+    Expression<int>? leftResultScoredAt,
+    Expression<int>? rightResultScoredAt,
+    Expression<String>? preference,
+    Expression<String>? day,
+    Expression<int>? answeredAt,
+    Expression<String>? answeredBy,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (comparisonKey != null) 'comparison_key': comparisonKey,
+      if (leftKey != null) 'left_key': leftKey,
+      if (rightKey != null) 'right_key': rightKey,
+      if (leftScoreHalf != null) 'left_score_half': leftScoreHalf,
+      if (rightScoreHalf != null) 'right_score_half': rightScoreHalf,
+      if (leftScoredAt != null) 'left_scored_at': leftScoredAt,
+      if (rightScoredAt != null) 'right_scored_at': rightScoredAt,
+      if (leftResultScoreHalf != null)
+        'left_result_score_half': leftResultScoreHalf,
+      if (rightResultScoreHalf != null)
+        'right_result_score_half': rightResultScoreHalf,
+      if (leftResultScoredAt != null)
+        'left_result_scored_at': leftResultScoredAt,
+      if (rightResultScoredAt != null)
+        'right_result_scored_at': rightResultScoredAt,
+      if (preference != null) 'preference': preference,
+      if (day != null) 'day': day,
+      if (answeredAt != null) 'answered_at': answeredAt,
+      if (answeredBy != null) 'answered_by': answeredBy,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PairComparisonsCompanion copyWith({
+    Value<String>? comparisonKey,
+    Value<String>? leftKey,
+    Value<String>? rightKey,
+    Value<int>? leftScoreHalf,
+    Value<int>? rightScoreHalf,
+    Value<int>? leftScoredAt,
+    Value<int>? rightScoredAt,
+    Value<int>? leftResultScoreHalf,
+    Value<int>? rightResultScoreHalf,
+    Value<int>? leftResultScoredAt,
+    Value<int>? rightResultScoredAt,
+    Value<PairPreference>? preference,
+    Value<String>? day,
+    Value<int>? answeredAt,
+    Value<String>? answeredBy,
+    Value<int>? rowid,
+  }) {
+    return PairComparisonsCompanion(
+      comparisonKey: comparisonKey ?? this.comparisonKey,
+      leftKey: leftKey ?? this.leftKey,
+      rightKey: rightKey ?? this.rightKey,
+      leftScoreHalf: leftScoreHalf ?? this.leftScoreHalf,
+      rightScoreHalf: rightScoreHalf ?? this.rightScoreHalf,
+      leftScoredAt: leftScoredAt ?? this.leftScoredAt,
+      rightScoredAt: rightScoredAt ?? this.rightScoredAt,
+      leftResultScoreHalf: leftResultScoreHalf ?? this.leftResultScoreHalf,
+      rightResultScoreHalf: rightResultScoreHalf ?? this.rightResultScoreHalf,
+      leftResultScoredAt: leftResultScoredAt ?? this.leftResultScoredAt,
+      rightResultScoredAt: rightResultScoredAt ?? this.rightResultScoredAt,
+      preference: preference ?? this.preference,
+      day: day ?? this.day,
+      answeredAt: answeredAt ?? this.answeredAt,
+      answeredBy: answeredBy ?? this.answeredBy,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (comparisonKey.present) {
+      map['comparison_key'] = Variable<String>(comparisonKey.value);
+    }
+    if (leftKey.present) {
+      map['left_key'] = Variable<String>(leftKey.value);
+    }
+    if (rightKey.present) {
+      map['right_key'] = Variable<String>(rightKey.value);
+    }
+    if (leftScoreHalf.present) {
+      map['left_score_half'] = Variable<int>(leftScoreHalf.value);
+    }
+    if (rightScoreHalf.present) {
+      map['right_score_half'] = Variable<int>(rightScoreHalf.value);
+    }
+    if (leftScoredAt.present) {
+      map['left_scored_at'] = Variable<int>(leftScoredAt.value);
+    }
+    if (rightScoredAt.present) {
+      map['right_scored_at'] = Variable<int>(rightScoredAt.value);
+    }
+    if (leftResultScoreHalf.present) {
+      map['left_result_score_half'] = Variable<int>(leftResultScoreHalf.value);
+    }
+    if (rightResultScoreHalf.present) {
+      map['right_result_score_half'] = Variable<int>(
+        rightResultScoreHalf.value,
+      );
+    }
+    if (leftResultScoredAt.present) {
+      map['left_result_scored_at'] = Variable<int>(leftResultScoredAt.value);
+    }
+    if (rightResultScoredAt.present) {
+      map['right_result_scored_at'] = Variable<int>(rightResultScoredAt.value);
+    }
+    if (preference.present) {
+      map['preference'] = Variable<String>(
+        $PairComparisonsTable.$converterpreference.toSql(preference.value),
+      );
+    }
+    if (day.present) {
+      map['day'] = Variable<String>(day.value);
+    }
+    if (answeredAt.present) {
+      map['answered_at'] = Variable<int>(answeredAt.value);
+    }
+    if (answeredBy.present) {
+      map['answered_by'] = Variable<String>(answeredBy.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PairComparisonsCompanion(')
+          ..write('comparisonKey: $comparisonKey, ')
+          ..write('leftKey: $leftKey, ')
+          ..write('rightKey: $rightKey, ')
+          ..write('leftScoreHalf: $leftScoreHalf, ')
+          ..write('rightScoreHalf: $rightScoreHalf, ')
+          ..write('leftScoredAt: $leftScoredAt, ')
+          ..write('rightScoredAt: $rightScoredAt, ')
+          ..write('leftResultScoreHalf: $leftResultScoreHalf, ')
+          ..write('rightResultScoreHalf: $rightResultScoreHalf, ')
+          ..write('leftResultScoredAt: $leftResultScoredAt, ')
+          ..write('rightResultScoredAt: $rightResultScoredAt, ')
+          ..write('preference: $preference, ')
+          ..write('day: $day, ')
+          ..write('answeredAt: $answeredAt, ')
+          ..write('answeredBy: $answeredBy, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $ExternalRatingsTable extends ExternalRatings
     with TableInfo<$ExternalRatingsTable, ExternalRating> {
   @override
@@ -3207,6 +4129,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $RatingsTable ratings = $RatingsTable(this);
   late final $WatchlistTable watchlist = $WatchlistTable(this);
   late final $FavoritePeopleTable favoritePeople = $FavoritePeopleTable(this);
+  late final $PairComparisonsTable pairComparisons = $PairComparisonsTable(
+    this,
+  );
   late final $ExternalRatingsTable externalRatings = $ExternalRatingsTable(
     this,
   );
@@ -3232,6 +4157,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'ratings_scored_at',
     'CREATE INDEX ratings_scored_at ON ratings (scored_at)',
   );
+  late final Index pairComparisonsDay = Index(
+    'pair_comparisons_day',
+    'CREATE INDEX pair_comparisons_day ON pair_comparisons (day)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3241,6 +4170,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     ratings,
     watchlist,
     favoritePeople,
+    pairComparisons,
     externalRatings,
     apiBudget,
     syncState,
@@ -3249,6 +4179,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     worksYear,
     ratingsLiveScore,
     ratingsScoredAt,
+    pairComparisonsDay,
   ];
 }
 
@@ -4749,6 +5680,428 @@ typedef $$FavoritePeopleTableProcessedTableManager =
       FavoritePerson,
       PrefetchHooks Function()
     >;
+typedef $$PairComparisonsTableCreateCompanionBuilder =
+    PairComparisonsCompanion Function({
+      required String comparisonKey,
+      required String leftKey,
+      required String rightKey,
+      required int leftScoreHalf,
+      required int rightScoreHalf,
+      required int leftScoredAt,
+      required int rightScoredAt,
+      required int leftResultScoreHalf,
+      required int rightResultScoreHalf,
+      required int leftResultScoredAt,
+      required int rightResultScoredAt,
+      required PairPreference preference,
+      required String day,
+      required int answeredAt,
+      required String answeredBy,
+      Value<int> rowid,
+    });
+typedef $$PairComparisonsTableUpdateCompanionBuilder =
+    PairComparisonsCompanion Function({
+      Value<String> comparisonKey,
+      Value<String> leftKey,
+      Value<String> rightKey,
+      Value<int> leftScoreHalf,
+      Value<int> rightScoreHalf,
+      Value<int> leftScoredAt,
+      Value<int> rightScoredAt,
+      Value<int> leftResultScoreHalf,
+      Value<int> rightResultScoreHalf,
+      Value<int> leftResultScoredAt,
+      Value<int> rightResultScoredAt,
+      Value<PairPreference> preference,
+      Value<String> day,
+      Value<int> answeredAt,
+      Value<String> answeredBy,
+      Value<int> rowid,
+    });
+
+class $$PairComparisonsTableFilterComposer
+    extends Composer<_$AppDatabase, $PairComparisonsTable> {
+  $$PairComparisonsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get comparisonKey => $composableBuilder(
+    column: $table.comparisonKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get leftKey => $composableBuilder(
+    column: $table.leftKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get rightKey => $composableBuilder(
+    column: $table.rightKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get leftScoreHalf => $composableBuilder(
+    column: $table.leftScoreHalf,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get rightScoreHalf => $composableBuilder(
+    column: $table.rightScoreHalf,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get leftScoredAt => $composableBuilder(
+    column: $table.leftScoredAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get rightScoredAt => $composableBuilder(
+    column: $table.rightScoredAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get leftResultScoreHalf => $composableBuilder(
+    column: $table.leftResultScoreHalf,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get rightResultScoreHalf => $composableBuilder(
+    column: $table.rightResultScoreHalf,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get leftResultScoredAt => $composableBuilder(
+    column: $table.leftResultScoredAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get rightResultScoredAt => $composableBuilder(
+    column: $table.rightResultScoredAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<PairPreference, PairPreference, String>
+  get preference => $composableBuilder(
+    column: $table.preference,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<String> get day => $composableBuilder(
+    column: $table.day,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get answeredAt => $composableBuilder(
+    column: $table.answeredAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get answeredBy => $composableBuilder(
+    column: $table.answeredBy,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PairComparisonsTableOrderingComposer
+    extends Composer<_$AppDatabase, $PairComparisonsTable> {
+  $$PairComparisonsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get comparisonKey => $composableBuilder(
+    column: $table.comparisonKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get leftKey => $composableBuilder(
+    column: $table.leftKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get rightKey => $composableBuilder(
+    column: $table.rightKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get leftScoreHalf => $composableBuilder(
+    column: $table.leftScoreHalf,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get rightScoreHalf => $composableBuilder(
+    column: $table.rightScoreHalf,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get leftScoredAt => $composableBuilder(
+    column: $table.leftScoredAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get rightScoredAt => $composableBuilder(
+    column: $table.rightScoredAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get leftResultScoreHalf => $composableBuilder(
+    column: $table.leftResultScoreHalf,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get rightResultScoreHalf => $composableBuilder(
+    column: $table.rightResultScoreHalf,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get leftResultScoredAt => $composableBuilder(
+    column: $table.leftResultScoredAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get rightResultScoredAt => $composableBuilder(
+    column: $table.rightResultScoredAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get preference => $composableBuilder(
+    column: $table.preference,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get day => $composableBuilder(
+    column: $table.day,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get answeredAt => $composableBuilder(
+    column: $table.answeredAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get answeredBy => $composableBuilder(
+    column: $table.answeredBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PairComparisonsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PairComparisonsTable> {
+  $$PairComparisonsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get comparisonKey => $composableBuilder(
+    column: $table.comparisonKey,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get leftKey =>
+      $composableBuilder(column: $table.leftKey, builder: (column) => column);
+
+  GeneratedColumn<String> get rightKey =>
+      $composableBuilder(column: $table.rightKey, builder: (column) => column);
+
+  GeneratedColumn<int> get leftScoreHalf => $composableBuilder(
+    column: $table.leftScoreHalf,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get rightScoreHalf => $composableBuilder(
+    column: $table.rightScoreHalf,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get leftScoredAt => $composableBuilder(
+    column: $table.leftScoredAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get rightScoredAt => $composableBuilder(
+    column: $table.rightScoredAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get leftResultScoreHalf => $composableBuilder(
+    column: $table.leftResultScoreHalf,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get rightResultScoreHalf => $composableBuilder(
+    column: $table.rightResultScoreHalf,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get leftResultScoredAt => $composableBuilder(
+    column: $table.leftResultScoredAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get rightResultScoredAt => $composableBuilder(
+    column: $table.rightResultScoredAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<PairPreference, String> get preference =>
+      $composableBuilder(
+        column: $table.preference,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<String> get day =>
+      $composableBuilder(column: $table.day, builder: (column) => column);
+
+  GeneratedColumn<int> get answeredAt => $composableBuilder(
+    column: $table.answeredAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get answeredBy => $composableBuilder(
+    column: $table.answeredBy,
+    builder: (column) => column,
+  );
+}
+
+class $$PairComparisonsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PairComparisonsTable,
+          PairComparison,
+          $$PairComparisonsTableFilterComposer,
+          $$PairComparisonsTableOrderingComposer,
+          $$PairComparisonsTableAnnotationComposer,
+          $$PairComparisonsTableCreateCompanionBuilder,
+          $$PairComparisonsTableUpdateCompanionBuilder,
+          (
+            PairComparison,
+            BaseReferences<
+              _$AppDatabase,
+              $PairComparisonsTable,
+              PairComparison
+            >,
+          ),
+          PairComparison,
+          PrefetchHooks Function()
+        > {
+  $$PairComparisonsTableTableManager(
+    _$AppDatabase db,
+    $PairComparisonsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PairComparisonsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PairComparisonsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PairComparisonsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> comparisonKey = const Value.absent(),
+                Value<String> leftKey = const Value.absent(),
+                Value<String> rightKey = const Value.absent(),
+                Value<int> leftScoreHalf = const Value.absent(),
+                Value<int> rightScoreHalf = const Value.absent(),
+                Value<int> leftScoredAt = const Value.absent(),
+                Value<int> rightScoredAt = const Value.absent(),
+                Value<int> leftResultScoreHalf = const Value.absent(),
+                Value<int> rightResultScoreHalf = const Value.absent(),
+                Value<int> leftResultScoredAt = const Value.absent(),
+                Value<int> rightResultScoredAt = const Value.absent(),
+                Value<PairPreference> preference = const Value.absent(),
+                Value<String> day = const Value.absent(),
+                Value<int> answeredAt = const Value.absent(),
+                Value<String> answeredBy = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PairComparisonsCompanion(
+                comparisonKey: comparisonKey,
+                leftKey: leftKey,
+                rightKey: rightKey,
+                leftScoreHalf: leftScoreHalf,
+                rightScoreHalf: rightScoreHalf,
+                leftScoredAt: leftScoredAt,
+                rightScoredAt: rightScoredAt,
+                leftResultScoreHalf: leftResultScoreHalf,
+                rightResultScoreHalf: rightResultScoreHalf,
+                leftResultScoredAt: leftResultScoredAt,
+                rightResultScoredAt: rightResultScoredAt,
+                preference: preference,
+                day: day,
+                answeredAt: answeredAt,
+                answeredBy: answeredBy,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String comparisonKey,
+                required String leftKey,
+                required String rightKey,
+                required int leftScoreHalf,
+                required int rightScoreHalf,
+                required int leftScoredAt,
+                required int rightScoredAt,
+                required int leftResultScoreHalf,
+                required int rightResultScoreHalf,
+                required int leftResultScoredAt,
+                required int rightResultScoredAt,
+                required PairPreference preference,
+                required String day,
+                required int answeredAt,
+                required String answeredBy,
+                Value<int> rowid = const Value.absent(),
+              }) => PairComparisonsCompanion.insert(
+                comparisonKey: comparisonKey,
+                leftKey: leftKey,
+                rightKey: rightKey,
+                leftScoreHalf: leftScoreHalf,
+                rightScoreHalf: rightScoreHalf,
+                leftScoredAt: leftScoredAt,
+                rightScoredAt: rightScoredAt,
+                leftResultScoreHalf: leftResultScoreHalf,
+                rightResultScoreHalf: rightResultScoreHalf,
+                leftResultScoredAt: leftResultScoredAt,
+                rightResultScoredAt: rightResultScoredAt,
+                preference: preference,
+                day: day,
+                answeredAt: answeredAt,
+                answeredBy: answeredBy,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PairComparisonsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PairComparisonsTable,
+      PairComparison,
+      $$PairComparisonsTableFilterComposer,
+      $$PairComparisonsTableOrderingComposer,
+      $$PairComparisonsTableAnnotationComposer,
+      $$PairComparisonsTableCreateCompanionBuilder,
+      $$PairComparisonsTableUpdateCompanionBuilder,
+      (
+        PairComparison,
+        BaseReferences<_$AppDatabase, $PairComparisonsTable, PairComparison>,
+      ),
+      PairComparison,
+      PrefetchHooks Function()
+    >;
 typedef $$ExternalRatingsTableCreateCompanionBuilder =
     ExternalRatingsCompanion Function({
       required String workKey,
@@ -5329,6 +6682,8 @@ class $AppDatabaseManager {
       $$WatchlistTableTableManager(_db, _db.watchlist);
   $$FavoritePeopleTableTableManager get favoritePeople =>
       $$FavoritePeopleTableTableManager(_db, _db.favoritePeople);
+  $$PairComparisonsTableTableManager get pairComparisons =>
+      $$PairComparisonsTableTableManager(_db, _db.pairComparisons);
   $$ExternalRatingsTableTableManager get externalRatings =>
       $$ExternalRatingsTableTableManager(_db, _db.externalRatings);
   $$ApiBudgetTableTableManager get apiBudget =>

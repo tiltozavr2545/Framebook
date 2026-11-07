@@ -125,6 +125,7 @@ class SyncController extends Notifier<SyncStatus> {
             _db.ratings,
             _db.watchlist,
             _db.favoritePeople,
+            _db.pairComparisons,
           ]),
         )
         .listen((_) => _changed());
@@ -212,6 +213,7 @@ class SyncController extends Notifier<SyncStatus> {
     final drive = await _withDrive((engine) => engine.peek());
     final device = await _store.read();
     final hasLocalData =
+        device.pairComparisons.isNotEmpty ||
         device.liveRatings != 0 ||
         device.watchlist.any((entry) => entry.deletedAt == null) ||
         device.favoritePeople.any((person) => person.deletedAt == null);

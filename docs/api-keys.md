@@ -1,17 +1,15 @@
 # Getting the API keys
 
-A step-by-step guide for everyone who installs Framebook, the developer and
-friends alike. The keys are free, and everyone has their own. Why the app
-doesn't ship with keys of its own is in [project-brief.md](project-brief.md):
-in short, without a server a built-in key can be pulled out of the APK, and
-the limits would be shared by everyone.
+A step-by-step guide for installing Framebook with your own free API keys.
+Each installation uses its owner's keys. The original rationale is in the
+[project brief](project-brief.md#initial-tradeoffs).
 
 A Russian translation for the app's users is in
 [api-keys.ru.md](api-keys.ru.md); the app opens it when its interface is in
 Russian. Keep the two in step.
 
 | Service | Required | What it gives in the app | Time to get it |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | TMDB | **yes** | search, title cards, seasons and episodes, posters, TMDB rating | 10–15 minutes, key right away |
 | PoiskKino | no | Kinopoisk rating, sorting by divergence from Kinopoisk | Telegram registration |
 | OMDb | no | IMDb, Rotten Tomatoes, Metacritic | 5 minutes + an activation email |
@@ -25,8 +23,6 @@ The PoiskKino bot registration steps reflect the user's experience; its
 [site](https://poiskkino.dev/) confirms the bot and free-plan limit. The
 sites' forms are described as of October 2026. If a field is named a
 little differently, go by its meaning.
-
----
 
 ## 1. TMDB (The Movie Database)
 
@@ -54,7 +50,7 @@ registration is not adapted for phones.
 **About the application:**
 
 | Field | What to enter |
-|---|---|
+| --- | --- |
 | Type of Use | **Mobile Application**. If there is no such option, the closest one (Personal / Other) |
 | Application Name | `Framebook` |
 | Application URL | `https://github.com/tiltozavr2545/Framebook` — fine for everyone, friends included: it is the project's real page |
@@ -74,7 +70,7 @@ Source code: https://github.com/tiltozavr2545/Framebook
 **Contact details:**
 
 | Field | What to enter |
-|---|---|
+| --- | --- |
 | First Name / Last Name | your first and last name in Latin letters |
 | Email Address | the account's email |
 | Phone Number | in international format, with the country code (`+31…`, `+7…`) |
@@ -121,8 +117,6 @@ works).
 - No daily limit, only a rate limit of a few dozen requests a second —
   unreachable for one person.
 
----
-
 ## 2. PoiskKino (Kinopoisk rating)
 
 An unofficial API over Kinopoisk data (formerly kinopoisk.dev). The key comes
@@ -161,8 +155,6 @@ key works again the next day.
 a large library of ratings fills up with Kinopoisk ratings gradually, over
 several days.
 
----
-
 ## 3. OMDb (IMDb, Rotten Tomatoes, Metacritic)
 
 1. Open [omdbapi.com/apikey.aspx](https://www.omdbapi.com/apikey.aspx).
@@ -197,8 +189,6 @@ step 4); `"Error":"Request limit reached!"` means today's limit is used up.
 **Limits:** 1,000 requests a day; OMDb data is CC BY-NC 4.0, so
 non-commercial use only.
 
----
-
 ## 4. Where the keys go
 
 **In the app:** on first launch there is a key entry screen, later Settings
@@ -210,24 +200,8 @@ daily rating backups do not contain the keys. Each service is merged
 independently, so unlocking does not replace a key that exists only on one
 phone; removals are synchronized too.
 
-**For the developer, to capture fixtures** — in a file outside the
-repository:
-
-```sh
-mkdir -p ~/.config/framebook
-umask 077
-nano ~/.config/framebook/keys.env
-```
-
-```sh
-TMDB_TOKEN=eyJ...
-POISKKINO_KEY=...
-OMDB_KEY=...
-```
-
-Then run `scripts/capture-fixtures.sh` — more in [operations.md](operations.md).
-
----
+Developers capturing API fixtures should use the separate
+[testing instructions](testing.md#capturing-api-fixtures).
 
 ## 5. Keeping keys safe
 
@@ -240,6 +214,6 @@ Then run `scripts/capture-fixtures.sh` — more in [operations.md](operations.md
   - **TMDB** — look for key regeneration in Settings → API; if it isn't
     there, write to TMDB support.
 
-  Then put the new key into the app and into `keys.env`.
+  Then put the new key into the app.
 - Don't hand your keys to friends: limits are counted per key, not per
   person, and someone else's app will spend your 200 PoiskKino requests.

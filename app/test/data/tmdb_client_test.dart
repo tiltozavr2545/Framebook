@@ -80,6 +80,7 @@ void main() {
       expect(http.requests.last.uri.path, '/3/discover/movie');
       expect(q['with_genres'], '28');
       expect(q['sort_by'], 'popularity.desc');
+      expect(q['page'], '1');
       expect(q['vote_count.gte'], '50');
       expect(q['primary_release_date.lte'], '2026-10-24');
       expect(q.keys, isNot(contains('score_half')));
@@ -93,6 +94,38 @@ void main() {
         client().discoverRecommendations(WorkKind.episode),
         throwsArgumentError,
       );
+    },
+  );
+
+  test(
+    'discovery pages have separate cache entries and offline fallback',
+    () async {
+      final api = client();
+      await api.discoverRecommendations(WorkKind.movie, genre: 28, page: 2);
+      expect(http.requests.last.uri.queryParameters['page'], '2');
+      await api.discoverRecommendations(WorkKind.movie, genre: 28, page: 3);
+      expect(http.requests, hasLength(2));
+      expect(http.requests.last.uri.queryParameters['page'], '3');
+      await api.discoverRecommendations(WorkKind.movie, genre: 28, page: 2);
+      expect(http.requests, hasLength(2));
+      for (final entry in cache.entries.entries.toList()) {
+        cache.entries[entry.key] = CachedResponse(
+          entry.value.body,
+          entry.value.storedAt - const Duration(hours: 25).inMilliseconds,
+        );
+      }
+      serve((_) => null);
+      expect(
+        await api.discoverRecommendations(WorkKind.movie, genre: 28, page: 2),
+        isNotEmpty,
+      );
+      expect(http.requests, hasLength(1));
+      for (final page in [0, 501]) {
+        await expectLater(
+          api.discoverRecommendations(WorkKind.tv, page: page),
+          throwsRangeError,
+        );
+      }
     },
   );
 

@@ -60,6 +60,7 @@ class Api implements TmdbApi {
   Future<List<TitleSummary>> discoverRecommendations(
     WorkKind kind, {
     int? genre,
+    int page = 1,
   }) async => [];
   @override
   Future<List<TitleSummary>> trending() async => [];

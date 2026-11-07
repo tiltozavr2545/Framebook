@@ -1200,6 +1200,168 @@ abstract class AppLocalizations {
   /// **'Add a key in Sources to compare with {source}'**
   String coverageNeedsKey(String source);
 
+  /// No description provided for @pairTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pairwise calibration'**
+  String get pairTitle;
+
+  /// No description provided for @pairHow.
+  ///
+  /// In en, this message translates to:
+  /// **'How pairs are selected'**
+  String get pairHow;
+
+  /// No description provided for @pairIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare rated films to check your score scale. Close scores and similar genres come first; previous answers reveal preference chains worth checking. Scores appear after your choice.'**
+  String get pairIntro;
+
+  /// No description provided for @pairStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare films'**
+  String get pairStart;
+
+  /// No description provided for @pairNeedFilms.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate at least two films to start.'**
+  String get pairNeedFilms;
+
+  /// No description provided for @pairDailyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to 5 completed comparisons per day. Answers sync through Drive.'**
+  String get pairDailyHint;
+
+  /// No description provided for @pairProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} of 5 comparisons today'**
+  String pairProgress(int count);
+
+  /// No description provided for @pairQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Which film did you enjoy more?'**
+  String get pairQuestion;
+
+  /// No description provided for @pairFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'First film'**
+  String get pairFirst;
+
+  /// No description provided for @pairSecond.
+  ///
+  /// In en, this message translates to:
+  /// **'Second film'**
+  String get pairSecond;
+
+  /// No description provided for @pairPreferFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'The first film'**
+  String get pairPreferFirst;
+
+  /// No description provided for @pairPreferSecond.
+  ///
+  /// In en, this message translates to:
+  /// **'The second film'**
+  String get pairPreferSecond;
+
+  /// No description provided for @pairEqual.
+  ///
+  /// In en, this message translates to:
+  /// **'Enjoyed both equally'**
+  String get pairEqual;
+
+  /// No description provided for @pairSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip / I do not remember'**
+  String get pairSkip;
+
+  /// No description provided for @pairReasonBoundary.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking a score boundary using comparable films.'**
+  String get pairReasonBoundary;
+
+  /// No description provided for @pairReasonChain.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous answers form a preference chain that your scores do not reflect. Let us check it directly.'**
+  String get pairReasonChain;
+
+  /// No description provided for @pairAgrees.
+  ///
+  /// In en, this message translates to:
+  /// **'Your scores agree with this answer.'**
+  String get pairAgrees;
+
+  /// No description provided for @pairDisagrees.
+  ///
+  /// In en, this message translates to:
+  /// **'Your answer differs from your scores. Choose a correction or keep the scores.'**
+  String get pairDisagrees;
+
+  /// No description provided for @pairCorrection.
+  ///
+  /// In en, this message translates to:
+  /// **'{title}: {before} → {after}'**
+  String pairCorrection(String title, String before, String after);
+
+  /// No description provided for @pairChangeAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Change answer'**
+  String get pairChangeAnswer;
+
+  /// No description provided for @pairKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep scores and save answer'**
+  String get pairKeep;
+
+  /// No description provided for @pairNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Save answer and continue'**
+  String get pairNext;
+
+  /// No description provided for @pairLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Five comparisons completed today. Come back tomorrow.'**
+  String get pairLimit;
+
+  /// No description provided for @pairFinished.
+  ///
+  /// In en, this message translates to:
+  /// **'No suitable new pairs remain at these score versions. New ratings or score changes can open more comparisons.'**
+  String get pairFinished;
+
+  /// No description provided for @pairChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'These ratings changed. The next pair uses the latest scores.'**
+  String get pairChanged;
+
+  /// No description provided for @pairSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the comparison. Your choice is still here; try again.'**
+  String get pairSaveFailed;
+
+  /// No description provided for @pairLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load rated films or comparison history.'**
+  String get pairLoadFailed;
+
   /// No description provided for @statsEmpty.
   ///
   /// In en, this message translates to:

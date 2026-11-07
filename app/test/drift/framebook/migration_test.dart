@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'generated/schema.dart';
 
 import 'generated/schema_v1.dart' as v1;
+import 'generated/schema_v2.dart' as v2;
 
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -35,7 +36,7 @@ void main() {
   });
 
   test(
-    'v1 ratings, notes, watchlist, keys and deletion metadata survive v2',
+    'v1 ratings, notes, watchlist, keys and deletion metadata survive v3',
     () async {
       final schema = await verifier.schemaAt(1);
       final oldDb = v1.DatabaseAtV1(schema.newConnection());
@@ -84,7 +85,7 @@ void main() {
           );
       await oldDb.close();
       final db = AppDatabase(schema.newConnection());
-      await verifier.migrateAndValidate(db, 2);
+      await verifier.migrateAndValidate(db, 3);
       final rating = await db.select(db.ratings).getSingle();
       expect(
         (rating.scoreHalf, rating.note, rating.scoredAt, rating.updatedAt),
@@ -111,4 +112,51 @@ void main() {
       await db.close();
     },
   );
+  test('v2 data survives the comparison-history migration', () async {
+    final schema = await verifier.schemaAt(2);
+    final old = v2.DatabaseAtV2(schema.newConnection());
+    await old
+        .into(old.works)
+        .insert(
+          const v2.WorksData(
+            workKey: 'tmdb:movie:603',
+            kind: 'movie',
+            tmdbId: 603,
+            title: 'The Matrix',
+            genreIds: '[878]',
+            snapshotUpdatedAt: 10,
+          ),
+        );
+    await old
+        .into(old.ratings)
+        .insert(
+          const v2.RatingsData(
+            workKey: 'tmdb:movie:603',
+            scoreHalf: 17,
+            note: 'Keep note',
+            createdAt: 11,
+            scoredAt: 12,
+            updatedAt: 13,
+            updatedBy: 'a',
+          ),
+        );
+    await old
+        .into(old.favoritePeople)
+        .insert(
+          const v2.FavoritePeopleData(
+            personId: 138,
+            name: 'Quentin Tarantino',
+            updatedAt: 14,
+            updatedBy: 'a',
+          ),
+        );
+    await old.close();
+    final db = AppDatabase(schema.newConnection());
+    await verifier.migrateAndValidate(db, 3);
+    expect((await db.select(db.ratings).getSingle()).scoreHalf, 17);
+    expect((await db.select(db.ratings).getSingle()).note, 'Keep note');
+    expect((await db.select(db.favoritePeople).getSingle()).personId, 138);
+    expect(await db.select(db.pairComparisons).get(), isEmpty);
+    await db.close();
+  });
 }

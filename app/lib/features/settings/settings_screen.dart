@@ -32,10 +32,10 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => context.push(Routes.sync),
           ),
           const Divider(),
-          ListTile(
+          _SettingsChoice(
             leading: const Icon(Icons.view_day_outlined),
             title: Text(l10n.settingsNavigationStyle),
-            subtitle: DropdownButton<bool>(
+            selection: DropdownButton<bool>(
               isExpanded: true,
               itemHeight: null,
               value: ref.watch(floatingNavigationProvider),
@@ -57,10 +57,10 @@ class SettingsScreen extends ConsumerWidget {
               ],
             ),
           ),
-          ListTile(
+          _SettingsChoice(
             leading: const Icon(Icons.language),
             title: Text(l10n.settingsLanguage),
-            subtitle: DropdownButton<String>(
+            selection: DropdownButton<String>(
               isExpanded: true,
               itemHeight: null,
               value: locale?.languageCode ?? '',
@@ -81,10 +81,10 @@ class SettingsScreen extends ConsumerWidget {
               ],
             ),
           ),
-          ListTile(
+          _SettingsChoice(
             leading: const Icon(Icons.brightness_6_outlined),
             title: Text(l10n.settingsTheme),
-            subtitle: DropdownButton<ThemeMode>(
+            selection: DropdownButton<ThemeMode>(
               isExpanded: true,
               itemHeight: null,
               value: themeMode,
@@ -116,6 +116,63 @@ class SettingsScreen extends ConsumerWidget {
             title: Text(l10n.aboutTitle),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(Routes.about),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Use a row at normal text sizes and let accessibility text grow vertically.
+class _SettingsChoice extends StatelessWidget {
+  const _SettingsChoice({
+    required this.leading,
+    required this.title,
+    required this.selection,
+  });
+
+  final Widget leading;
+  final Widget title;
+  final Widget selection;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme.titleMedium!;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          IconTheme.merge(
+            data: IconThemeData(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            child: leading,
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final scaledSize = MediaQuery.textScalerOf(
+                  context,
+                ).scale(text.fontSize!);
+                final stacked =
+                    constraints.maxWidth < 220 ||
+                    scaledSize > text.fontSize! * 1.3;
+                final label = DefaultTextStyle(style: text, child: title);
+                return stacked
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [label, selection],
+                      )
+                    : Row(
+                        children: [
+                          Expanded(child: label),
+                          const SizedBox(width: 16),
+                          Expanded(child: selection),
+                        ],
+                      );
+              },
+            ),
           ),
         ],
       ),

@@ -1,0 +1,195 @@
+# Product behavior
+
+Current screen behavior and visual conventions. Algorithms and persistence
+rules are linked where they apply; release chronology is in the
+[changelog](../CHANGELOG.md).
+
+## Navigation and settings
+
+The root tabs are Discover, My ratings, Watchlist and Stats. Each retains its
+own back stack and scroll position. Settings opens from the app bar.
+Title routes nest inside the active tab; Back follows episode, season,
+series and the originating list. Related titles and person profiles push
+inside that tab so Back returns to the originating card.
+
+Both navigation styles support horizontal swipes on root pages. Nested
+horizontal shelves keep their gestures; nested title/person pages do not
+switch tabs through body swipes. The default floating bar has a glass
+selection that moves with the page. The classic bar remains available in
+Settings. Tapping the active tab returns to its root. Content includes enough
+bottom padding to bring the final row above the bar. Reduced motion disables
+animated settling; navigation supports RTL.
+
+Language, theme and navigation style are device preferences. Settings places
+labels and their choices side by side at normal text sizes and vertically
+when larger text requires more room.
+
+## First launch and sources
+
+Onboarding remains open until a TMDB key has been entered and the user
+chooses to continue, leaving time to add optional sources. Removing the
+TMDB key returns to onboarding. Restore from Drive is available before a key
+has been entered. The [key guide](api-keys.md) covers setup, checks and security.
+An initialization failure offers Retry without deleting local data.
+
+About shows the app version, source attribution and licenses. It also offers
+a manual update check. Automatic checks run on launch at most once per
+24 hours after a successful response; failures can retry on a later launch.
+The update banner opens the release page and can be dismissed per version.
+
+## Discover and search
+
+Discover has Films and People modes sharing one query. The mode selector
+matches the search field and supports taps and horizontal drags; changing
+modes retains the query and each mode's shelf positions. An inactive mode
+cannot paginate the active results. Large text can increase selector height.
+
+Search sends after a 400 ms pause or keyboard submission, discards obsolete
+answers and loads more pages while scrolling. Films mode includes series.
+People results show portraits, names and known-for titles. Back from a card
+or profile preserves the search.
+
+Empty title search offers personal recommendation rows followed by trending,
+cinema and all-time-best shelves. Retrieval, ranking, explanations and
+Not interested/Undo are specified in [recommendations](recommendations.md).
+Empty People search shows favourites, frequent contributors, role-based rows
+and popular people. Empty or failed optional shelves are omitted; a full
+failure without useful local rows offers Retry.
+
+The recent-title dropdown opens only from the focused, empty title field.
+It contains the latest 20 films/series opened from search results, with
+individual removal and Clear. Reopening a title moves it to the top.
+Queries, pagination and people results are not recorded. Typing, changing
+mode, selection or loss of focus closes the overlay. Clearing a query leaves
+it closed until another tap. It overlays content without moving the shelves.
+Its storage boundary is listed in the [data model](data-model.md#outside-the-database).
+
+## Title cards
+
+Cards first show catalog details, then cached source ratings while eligible
+refreshes run. Source cells load independently: one failure does not block
+another source or rating the title. Existing values remain visible through
+loading, failures and removed keys. Stale values show their date; missing
+values distinguish no data, add a key, loading, offline, exhausted quota,
+rejected key and source failure. Source coverage and freshness rules are in
+[external sources](external-sources.md).
+
+Movie headers show the earliest known valid release date, countries, positive
+budget and worldwide box office in USD beside the poster. The full date
+replaces a separate year. Series show first air date, last air date when
+ended/cancelled, and countries. Unknown facts are omitted; movie finances
+are not inferred for series. Country names follow TMDB's supplied text.
+
+Cast strips show the first 20 actors. The cast heading opens a lazy full list;
+actor profiles open above it. Names and roles reserve two scaled lines each,
+with deliberate wrapping and ellipsis. Crew lines show the relevant creators,
+directors, writers, music and camera work. Credit retrieval is described in
+[external sources](external-sources.md#tmdb--the-catalog).
+
+Movie collections and film/TV similar-title shelves load independently, omit
+empty results and have their own Retry. They deduplicate typed keys and
+exclude the current title. Collections sort by release date, undated last.
+TMDB collections do not imply TV franchise membership.
+
+Renumbered rated parts and watchlisted seasons prompt Move / Keep inline:
+above the series' seasons, the season's episodes, or below the episode header.
+Only one question appears at a time; conflicting destination scores require
+a choice. Detection and mutation rules are in the
+[data model](data-model.md#when-tmdb-renumbers).
+
+## Rating editor and lists
+
+Each card has My rating. The bottom-sheet editor uses a score reel from 1 to
+10 in half-point steps, with haptic feedback and an optional note. A new
+rating starts at 5; an existing one starts at its saved score. Scores display
+without a trailing `.0`. Future-dated movies cannot be rated yet; unknown
+dates remain rateable. Deletion requires confirmation. Failed persistence
+keeps the editor and draft open, and saving freezes the reel's current value.
+
+The comparison area appears only with more than 20 other live movie ratings
+or more than 10 other ratings of the same series, season or episode kind.
+Eligibility is checked before opening the editor so the reel stays in place.
+As the score moves, three independent shelves show all same-kind titles at
+that score and at the nearest existing score above and below, excluding the
+current title. Each group sorts by `scored_at` descending, then natural key.
+The same-score panel spans the width above the two neighbour panels; the
+area keeps a fixed height. An empty group says so. Optional comparison
+failures do not block saving, and superseded replies cannot replace the
+current selection.
+
+My ratings filters by kind and sorts by score-change date, score, year,
+title or divergence. Parts sort under their series in number order. Date
+order groups entries by local day: Today, Yesterday and full localized dates.
+Note-only changes do not move a title to a new score day. Other sorts stay
+flat. Filter/order selections last for the session. Source comparison and
+parent-average formulas are specified in [analytics](analytics.md).
+
+Watchlist shows films, whole series and seasons, newest first. Seasons group
+under a tappable series heading that need not itself be selected. Choosing
+a whole series displaces its seasons; choosing a season displaces the whole
+series. Removing offers Undo. Rating a title removes it from the list, while
+deleting that rating does not re-add it. Offline/concurrent selection rules
+are specified in [sync](sync.md#series-and-season-watchlist-choices).
+
+## People and statistics
+
+Person profiles show dates, an expandable biography and a filmography with
+your scores. The default combines all roles with one row per title. Acting,
+directing, production, writing, music, camera and Other work filters count
+unique titles and show the jobs relevant to that filter. Empty roles are
+hidden; assistant directors are not classified as directors. Talk/news
+appearances as themselves are excluded.
+
+Favourite actions apply to the whole person across roles. Profiles use a
+static violet frame and a centered favourite button. A shelf portrait opens
+on one tap and toggles favourite on double tap, with a brief heart animation,
+snackbar and a saved-heart badge. An equivalent accessibility action exists.
+
+Stats separates films, series, seasons and episodes, starting with films.
+Interactive score, genre, decade, people and pair rows open contributing
+works and then cards inside the Stats tab. It displays partial people-credit
+coverage and offers continuation. Definitions and evidence requirements are
+in [analytics](analytics.md). Movie statistics also opens guided pairwise
+calibration; its answers, score confirmation and daily allowance are specified
+in [pair calibration](pair-calibration.md).
+
+## Images, offline use and keyboard
+
+A title cover opens full screen with the current image first, followed by
+UI-language, original-language and textless variants. Episode covers use
+stills; movie/TV backdrops are excluded. Person photos use the same viewer.
+Swipe changes images and pinch zooms. The cached preview and large image
+use identical viewport constraints with `BoxFit.contain`; the route fades
+without scaling. Decode memory limits belong to the
+[architecture](client-architecture.md#images).
+
+Without a network, saved lists, edits, sorting and local statistics remain
+usable. Search needs a cached response or a connection. If a catalog card
+cannot load but a library snapshot exists, a saved card shows its title,
+poster, score, note and known source scores, with an offline explanation and
+Retry. It opens only its cached cover. Without a response or snapshot, the
+screen shows an error. Uncached genre names and people credits remain missing.
+
+After backgrounding, the keyboard reopens only for the still-mounted editor
+that owned visible keyboard focus before the pause. An explicitly dismissed
+keyboard stays hidden. This state does not survive process restarts.
+
+## Visual conventions
+
+The editing-table theme uses a cool lightbox, ink, film stock and grease-pencil
+marks. Both light and dark palettes are designed explicitly. Bundled Sofia
+Sans uses Extra Condensed for figures/titles and normal width for reading;
+static weights select the intended font file.
+
+Scores below 4 are red, 4–6.5 inclusive amber, and above 6.5 green. Sources
+on a 100-point scale are normalized before choosing colour. Reel frames and
+poster badges use the light score palette in either theme. Muted violet is
+the action accent; edge-print amber marks dates and years. Ratings and Stats
+comparisons use ruled columns; notes sit in the margin with a score-coloured
+rule. The reel remains the main visual emphasis.
+
+Poster tint prefers visible chromatic midtones over dark borders and white
+lettering. It blends into the header at 24% in light and 38% in dark themes,
+with a reserved border so loading does not change geometry. Missing artwork
+uses the ordinary surface. Source cells similarly reserve caption/numeric
+space and adapt to the current text scale.

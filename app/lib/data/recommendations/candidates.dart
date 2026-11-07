@@ -19,13 +19,12 @@ final class RecommendationPlan {
     required DateTime now,
     List<int> learnedPeople = const [],
   }) : today = recommendationDay(now) {
-    seeds = profile.seeds;
+    final rotation =
+        DateTime.utc(now.year, now.month, now.day).millisecondsSinceEpoch ~/
+        Duration.millisecondsPerDay;
+    seeds = profile.seedsForRotation(rotation);
     final all = favorites.toList()..sort();
-    final offset = all.isEmpty
-        ? 0
-        : DateTime.utc(now.year, now.month, now.day).millisecondsSinceEpoch ~/
-              Duration.millisecondsPerDay %
-              all.length;
+    final offset = all.isEmpty ? 0 : rotation % all.length;
     // Bound large favourite lists without permanently ignoring later entries.
     people = [
       for (var i = 0; i < all.length && i < 8; i++)
@@ -34,8 +33,10 @@ final class RecommendationPlan {
     people.addAll(learnedPeople.where((id) => !people.contains(id)).take(2));
     genres = {
       for (final kind in [WorkKind.movie, WorkKind.tv])
-        kind: profile.topGenres(kind),
+        kind: profile.genresForRotation(kind, rotation),
     };
+    // Rotate shallow pages rather than downloading a larger candidate pool.
+    discoverPage = 1 + rotation % 5;
   }
   final TasteProfile profile;
   final Set<WorkKey> watchlist;
@@ -43,10 +44,11 @@ final class RecommendationPlan {
   late final List<TasteSignal> seeds;
   late final List<int> people;
   late final Map<WorkKind, List<int>> genres;
+  late final int discoverPage;
   bool get enabled =>
       profile.signals.isNotEmpty || people.isNotEmpty || watchlist.isNotEmpty;
   late final String signature =
-      '$today:${enabled ? 1 : 0}:'
+      '$today:$discoverPage:${enabled ? 1 : 0}:'
       '${seeds.map((s) => s.key).join(',')}:${people.join(',')}:'
       '${genres.entries.map((e) => '${e.key.name}:${e.value.join(',')}').join(';')}:'
       '${(watchlist.toList()..sort((a, b) => a.toString().compareTo(b.toString()))).join(',')}';
@@ -76,11 +78,13 @@ final class RecommendationPool {
 final class RecommendationSourceCache {
   String? _poolSignature;
   RecommendationPool? _pool;
+  RecommendationPool? lastUsefulPool;
   RecommendationPool? poolFor(String signature) =>
       signature == _poolSignature ? _pool : null;
   void rememberPool(String signature, RecommendationPool pool) {
     _poolSignature = signature;
     _pool = pool;
+    if (pool.candidates.isNotEmpty) lastUsefulPool = pool;
   }
 
   final _jobs = <String, Future<List<RecommendationCandidate>>>{};
@@ -169,11 +173,12 @@ Future<void> loadRecommendationCandidates(
   for (final kind in [WorkKind.movie, WorkKind.tv]) {
     for (final genre in <int?>[...?plan.genres[kind], null]) {
       add(
-        'discover:${kind.name}:$genre',
+        'discover:${kind.name}:$genre:${plan.discoverPage}',
         () async => [
           for (final title in await api.discoverRecommendations(
             kind,
             genre: genre,
+            page: plan.discoverPage,
           ))
             RecommendationCandidate(title, discovered: true),
         ],

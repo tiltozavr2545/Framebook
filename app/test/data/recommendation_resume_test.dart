@@ -6,6 +6,7 @@ import 'package:framebook/app/foreground.dart';
 import 'package:framebook/data/recommendations/candidates.dart';
 import 'package:framebook/data/recommendations/profile.dart';
 import 'package:framebook/data/recommendations/providers.dart';
+import 'package:framebook/data/source_failure.dart';
 import 'package:framebook/data/sources/providers.dart';
 import 'package:framebook/data/sources/tmdb/tmdb_client.dart';
 import 'package:framebook/data/sources/tmdb/tmdb_models.dart';
@@ -23,16 +24,20 @@ class _Foreground extends Foreground {
 class _Api implements TmdbApi {
   int calls = 0;
   Completer<void>? barrier;
+  bool offline = false;
+  int resultId = 2;
   @override
   Future<List<TitleSummary>> recommendations(WorkKey key) async {
     calls++;
-    return [title(2)];
+    if (offline) throw const SourceException(SourceFailure.offline);
+    return [title(resultId)];
   }
 
   @override
   Future<List<TitleSummary>> discoverRecommendations(
     WorkKind kind, {
     int? genre,
+    int page = 1,
   }) async {
     await barrier?.future;
     return [];
@@ -46,6 +51,59 @@ class _Api implements TmdbApi {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  test(
+    'an offline daily refresh retains the last useful session pool',
+    () async {
+      final api = _Api();
+      var now = DateTime(2026, 11, 6);
+      final container = ProviderContainer(
+        overrides: [
+          foregroundProvider.overrideWith(_Foreground.new),
+          tmdbProvider.overrideWithValue(api),
+          recommendationClockProvider.overrideWithValue(() => now),
+          recommendationPlanProvider.overrideWith(
+            (ref) => RecommendationPlan(
+              profile: TasteProfile(tasteSignals([rated(1, 18)], {})),
+              favorites: {},
+              watchlist: {},
+              now: ref.watch(recommendationClockProvider)(),
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      container.listen(recommendationDisplayCandidatesProvider, (_, _) {});
+      await pumpEventQueue();
+      final before = container.read(recommendationDisplayCandidatesProvider);
+      expect(before, hasLength(1));
+      api.offline = true;
+      now = now.add(const Duration(days: 1));
+      final foreground =
+          container.read(foregroundProvider.notifier) as _Foreground;
+      foreground.set(false);
+      await pumpEventQueue();
+      foreground.set(true);
+      await pumpEventQueue();
+      expect(container.read(recommendationDisplayCandidatesProvider), before);
+      expect(container.read(recommendationPoolProvider).value!.failed, 1);
+      api.offline = false;
+      api.resultId = 3;
+      foreground.set(false);
+      await pumpEventQueue();
+      foreground.set(true);
+      await pumpEventQueue();
+      expect(container.read(recommendationPoolProvider).value!.failed, 0);
+      expect(
+        container
+            .read(recommendationDisplayCandidatesProvider)
+            .single
+            .title
+            .key,
+        const WorkKey.movie(3),
+      );
+      expect(api.calls, 3);
+    },
+  );
   for (final interrupted in [false, true]) {
     test(
       'recommendations survive resume without empty batches or refetch: interrupted=$interrupted',
