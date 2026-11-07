@@ -9,24 +9,29 @@ import 'people_index.dart';
 /// drill-down. A multi-role person contributes only once to a title.
 final class ScoreProfile {
   ScoreProfile(Iterable<RatedTitle> input)
-    : titles = {for (final t in input) t.work.workKey: t}.values.toList();
+    : titles = {for (final t in input) t.work.workKey: t}.values.toList() {
+    average = count == 0
+        ? 0
+        : titles.fold(0, (sum, t) => sum + t.rating.scoreHalf) / count / 2;
+    high = titles.where((t) => t.rating.scoreHalf >= 16).length;
+    low = titles.where((t) => t.rating.scoreHalf <= 8).length;
+    spread = count == 0
+        ? 0
+        : sqrt(
+            titles.fold<double>(
+                  0,
+                  (sum, t) => sum + pow(t.rating.scoreHalf / 2 - average, 2),
+                ) /
+                count,
+          );
+  }
   final List<RatedTitle> titles;
   int get count => titles.length;
-  late final double average = count == 0
-      ? 0
-      : titles.fold(0, (sum, t) => sum + t.rating.scoreHalf) / count / 2;
-  late final int high = titles.where((t) => t.rating.scoreHalf >= 16).length;
-  late final int low = titles.where((t) => t.rating.scoreHalf <= 8).length;
+  late final double average;
+  late final int high;
+  late final int low;
   double get highShare => count == 0 ? 0 : high / count;
-  late final double spread = count == 0
-      ? 0
-      : sqrt(
-          titles.fold<double>(
-                0,
-                (sum, t) => sum + pow(t.rating.scoreHalf / 2 - average, 2),
-              ) /
-              count,
-        );
+  late final double spread;
   bool get eligible => count >= 3;
   bool get polarizing => eligible && high > 0 && low > 0;
 }

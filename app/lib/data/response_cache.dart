@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
@@ -39,14 +40,15 @@ final class FileResponseCache implements ResponseCache {
   @override
   Future<CachedResponse?> read(String key) async {
     try {
-      final envelope = jsonDecode(await _file(key).readAsString());
-      if (envelope is! Map<String, Object?> || envelope['key'] != key) {
-        return null;
-      }
-      final body = envelope['body'];
-      final storedAt = envelope['stored_at'];
-      if (body is! String || storedAt is! int) return null;
-      return CachedResponse(body, storedAt);
+      final raw = await _file(key).readAsString();
+      final input = (key, raw);
+      return raw.length < 64 * 1024
+          ? _decodeEnvelope(input)
+          : await compute(
+              _decodeEnvelope,
+              input,
+              debugLabel: 'cache JSON read',
+            );
     } on FileSystemException {
       return null;
     } on FormatException {
@@ -64,14 +66,15 @@ final class FileResponseCache implements ResponseCache {
       // and isolates. Sharing a .tmp file can publish another writer mid-write.
       staging = await directory.createTemp('response-');
       final temp = File(p.join(staging.path, 'response.json'));
-      await temp.writeAsString(
-        jsonEncode({
-          'key': key,
-          'stored_at': response.storedAt,
-          'body': response.body,
-        }),
-        flush: true,
-      );
+      final input = (key, response);
+      final encoded = response.body.length < 64 * 1024
+          ? _encodeEnvelope(input)
+          : await compute(
+              _encodeEnvelope,
+              input,
+              debugLabel: 'cache JSON write',
+            );
+      await temp.writeAsString(encoded, flush: true);
       // Rename is atomic: a crash mid-write never leaves half a file.
       await temp.rename(file.path);
     } on FileSystemException {
@@ -103,6 +106,24 @@ final class FileResponseCache implements ResponseCache {
     }
   }
 }
+
+CachedResponse? _decodeEnvelope((String, String) input) {
+  final envelope = jsonDecode(input.$2);
+  if (envelope is! Map<String, Object?> || envelope['key'] != input.$1) {
+    return null;
+  }
+  final body = envelope['body'];
+  final storedAt = envelope['stored_at'];
+  return body is String && storedAt is int
+      ? CachedResponse(body, storedAt)
+      : null;
+}
+
+String _encodeEnvelope((String, CachedResponse) input) => jsonEncode({
+  'key': input.$1,
+  'stored_at': input.$2.storedAt,
+  'body': input.$2.body,
+});
 
 /// Overridden in `main()`: the cache directory is only known after an await.
 final responseCacheProvider = Provider<ResponseCache>(

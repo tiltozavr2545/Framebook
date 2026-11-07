@@ -91,11 +91,15 @@ final class TmdbClient implements TmdbApi {
     required String key,
     required this.language,
     DateTime Function()? clock,
-  }) : _auth = auth(key),
+    Future<Json?> Function(String)? parseJson,
+  }) : _parseJson = parseJson ?? tryJsonAsync,
+       _auth = auth(key),
        _clock = clock ?? DateTime.now;
 
   static const _base = 'https://api.themoviedb.org/3';
 
+  final Future<Json?> Function(String) _parseJson;
+  final _inFlight = <String, Future<Json>>{};
   final Dio _dio;
   final ResponseCache _cache;
   final ({Map<String, String> headers, Map<String, String> query}) _auth;
@@ -417,12 +421,34 @@ final class TmdbClient implements TmdbApi {
     Duration ttl, {
     bool localized = true,
   }) async {
+    final key = cacheKey(path, {
+      ...params,
+      if (localized) 'language': language,
+    });
+    final existing = _inFlight[key];
+    if (existing != null) return existing;
+    final pending = _load(path, params, ttl, localized: localized);
+    _inFlight[key] = pending;
+    try {
+      return await pending;
+    } finally {
+      final removed = _inFlight.remove(key);
+      assert(identical(removed, pending));
+    }
+  }
+
+  Future<Json> _load(
+    String path,
+    Map<String, String> params,
+    Duration ttl, {
+    bool localized = true,
+  }) async {
     final query = {...params, if (localized) 'language': language};
     final key = cacheKey(path, query);
     final cached = await _cache.read(key);
     // The cache is evictable and may be damaged. Only a decoded body can
     // satisfy a request or serve as an offline fallback.
-    final cachedJson = cached == null ? null : tryJson(cached.body);
+    final cachedJson = cached == null ? null : await _parseJson(cached.body);
     final now = _clock().toUtc().millisecondsSinceEpoch;
     if (cachedJson != null &&
         now - cached!.storedAt >= 0 &&
@@ -448,7 +474,7 @@ final class TmdbClient implements TmdbApi {
     final body = response.data ?? '';
     switch (response.statusCode) {
       case 200:
-        final json = tryJson(body);
+        final json = await _parseJson(body);
         if (json == null) {
           if (cachedJson != null) return cachedJson;
           throw const SourceException(SourceFailure.failed, 'not JSON');

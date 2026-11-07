@@ -28,6 +28,8 @@ import 'package:framebook/data/recommendations/ranking.dart';
 import 'package:framebook/app/ratings_preferences.dart';
 import 'package:framebook/data/library/work_snapshot.dart';
 import 'package:framebook/data/response_cache.dart';
+import 'package:framebook/data/sources/providers.dart';
+import 'package:framebook/data/source_failure.dart';
 import 'package:framebook/data/sync/google_account.dart';
 import 'package:framebook/data/sync/sync_file.dart';
 import 'package:framebook/data/sync/sync_store.dart';
@@ -45,6 +47,8 @@ import 'package:framebook/features/title/cast_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'support/api_fixtures.dart';
+import 'support/inline_view_computer.dart';
+import 'package:framebook/data/view_computer.dart';
 import 'support/fake_google.dart';
 import 'support/fake_http.dart';
 import 'support/memory_remote.dart';
@@ -89,6 +93,7 @@ void main() {
         retry: (_, _) => null,
         overrides: [
           updateChecksEnabledProvider.overrideWithValue(false),
+          viewComputerProvider.overrideWithValue(const InlineViewComputer()),
           databaseProvider.overrideWithValue(db),
           deviceIdProvider.overrideWithValue('test'),
           // Its passes run on timers; it has tests of its own.
@@ -101,6 +106,9 @@ void main() {
           initialApiKeysProvider.overrideWithValue(keys),
           dioProvider.overrideWithValue(dio),
           responseCacheProvider.overrideWithValue(MemoryResponseCache()),
+          catalogJsonParserProvider.overrideWithValue(
+            (body) async => tryJson(body),
+          ),
           posterImageProvider.overrideWithValue(
             (_, _) => MemoryImage(transparentPng),
           ),
@@ -1813,6 +1821,95 @@ void main() {
         find.text('Save people from their pages to find them here.'),
         findsOneWidget,
       );
+    },
+  );
+
+  cardTest('expanded biographies survive scrolling through filmography', (
+    tester,
+  ) async {
+    await pumpApp(
+      tester,
+      keys: tmdbOnly,
+      http: (request) {
+        if (request.uri.path == '/3/person/999') {
+          return (
+            status: 200,
+            body: jsonEncode({
+              'id': 999,
+              'name': 'Test Person',
+              'biography': List.filled(
+                100,
+                'Biography line with enough text to wrap.',
+              ).join('\n'),
+              'combined_credits': {
+                'cast': [
+                  for (var i = 1; i <= 60; i++)
+                    {'id': i, 'media_type': 'movie', 'title': 'Film $i'},
+                ],
+              },
+            }),
+          );
+        }
+        return apiFixtures(request);
+      },
+    );
+    go(tester, '/search/person/999');
+    await settle(tester);
+    await Scrollable.ensureVisible(tester.element(find.text('More')));
+    await settle(tester);
+    await tester.tap(find.text('More'));
+    await settle(tester);
+    final scroll = tester.state<ScrollableState>(find.byType(Scrollable).first);
+    scroll.position.jumpTo(scroll.position.maxScrollExtent);
+    await settle(tester);
+    scroll.position.jumpTo(0);
+    await settle(tester);
+    expect(find.text('More'), findsNothing);
+    expect(find.textContaining('Biography line'), findsOneWidget);
+  });
+
+  cardTest(
+    'page swipes change root tabs and leave shelf gestures and cards alone',
+    (tester) async {
+      await pumpApp(tester, keys: tmdbOnly);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(FramebookApp)),
+      );
+      final router = container.read(routerProvider);
+      String path() => router.routeInformationProvider.value.uri.path;
+      go(tester, Routes.ratings);
+      await settle(tester);
+      final pages = find.byKey(const ValueKey('tab-page-swipe'));
+      await tester.drag(pages, const Offset(-260, 0));
+      await settle(tester);
+      expect(path(), Routes.watchlist);
+      await tester.drag(pages, const Offset(-260, 0));
+      await settle(tester);
+      expect(path(), Routes.stats);
+      await tester.drag(pages, const Offset(-260, 0));
+      await settle(tester);
+      expect(path(), Routes.stats);
+      await container.read(floatingNavigationProvider.notifier).set(false);
+      await settle(tester);
+      await tester.drag(pages, const Offset(260, 0));
+      await settle(tester);
+      expect(path(), Routes.watchlist);
+      go(tester, Routes.search);
+      await settle(tester);
+      expect(path(), Routes.search);
+      final shelf = find
+          .byWidgetPredicate(
+            (w) => w is ListView && w.scrollDirection == Axis.horizontal,
+          )
+          .first;
+      await tester.drag(shelf, const Offset(-180, 0));
+      await settle(tester);
+      expect(path(), Routes.search);
+      go(tester, '/search/person/6384');
+      await settle(tester);
+      await tester.drag(pages, const Offset(-260, 0));
+      await settle(tester);
+      expect(path(), '/search/person/6384');
     },
   );
 

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../shared/retained_section.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -29,31 +31,33 @@ class RatingsPanel extends ConsumerWidget {
     final mine = ref.watch(myRatingProvider(target.key)).value?.scoreHalf;
     final kind = target.key.kind;
     final now = DateTime.now().toUtc().millisecondsSinceEpoch;
-    return Wrap(
-      spacing: 8,
-      runSpacing: 12,
-      children: [
-        for (final source in RatingsService.shownFor(kind))
-          _RatingCell(
-            source: source,
-            seasonAverage:
-                kind == WorkKind.season && source == RatingSource.imdb,
-            // TMDB's rating comes only with the card; a card shown from its
-            // saved snapshot has none to wait for.
-            state:
-                source == RatingSource.tmdb &&
-                    target.tmdbVote == null &&
-                    view.rows[RatingSource.tmdb] == null
-                ? const RatingNoData()
-                : ratingCellState(
-                    source: source,
-                    view: view,
-                    provider: service.providerOf(source, kind),
-                    nowMillis: now,
-                  ),
-            myScoreHalf: mine,
-          ),
-      ],
+    return RetainedSection(
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 12,
+        children: [
+          for (final source in RatingsService.shownFor(kind))
+            _RatingCell(
+              source: source,
+              seasonAverage:
+                  kind == WorkKind.season && source == RatingSource.imdb,
+              // TMDB's rating comes only with the card; a card shown from its
+              // saved snapshot has none to wait for.
+              state:
+                  source == RatingSource.tmdb &&
+                      target.tmdbVote == null &&
+                      view.rows[RatingSource.tmdb] == null
+                  ? const RatingNoData()
+                  : ratingCellState(
+                      source: source,
+                      view: view,
+                      provider: service.providerOf(source, kind),
+                      nowMillis: now,
+                    ),
+              myScoreHalf: mine,
+            ),
+        ],
+      ),
     );
   }
 }
@@ -83,6 +87,25 @@ class _RatingCell extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final muted = theme.textTheme.bodySmall?.copyWith(color: scheme.outline);
+    final scaler = MediaQuery.textScalerOf(context);
+    double linesHeight(TextStyle? style, int lines) {
+      final painter = TextPainter(
+        text: TextSpan(text: List.filled(lines, 'M').join('\n'), style: style),
+        textDirection: Directionality.of(context),
+        textScaler: scaler,
+      )..layout();
+      final height = painter.height;
+      painter.dispose();
+      return height;
+    }
+
+    final fontSize = theme.textTheme.headlineSmall?.fontSize ?? 24;
+    final scale = (scaler.scale(fontSize) / fontSize).clamp(
+      1.0,
+      double.infinity,
+    );
+    final readoutHeight = linesHeight(theme.textTheme.headlineSmall, 1);
+    final captionHeight = linesHeight(muted, 2);
 
     final (Widget value, String? caption) = switch (state) {
       RatingShown(:final row, :final stale) => (
@@ -90,15 +113,23 @@ class _RatingCell extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic,
           children: [
-            Text(
-              _value(row.value!, source),
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: scoreColor(
-                  context,
-                  source == RatingSource.rt || source == RatingSource.metacritic
-                      ? row.value! / 10
-                      : row.value!,
+            Flexible(
+              flex: 2,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: AlignmentDirectional.centerStart,
+                child: Text(
+                  _value(row.value!, source),
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: scoreColor(
+                      context,
+                      source == RatingSource.rt ||
+                              source == RatingSource.metacritic
+                          ? row.value! / 10
+                          : row.value!,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -160,7 +191,7 @@ class _RatingCell extends StatelessWidget {
 
     // A column of the readout, ruled on top like a table — no plate.
     final cell = Container(
-      width: width,
+      width: width * scale,
       padding: const EdgeInsets.fromLTRB(0, 8, 4, 4),
       decoration: BoxDecoration(
         border: Border(
@@ -189,14 +220,17 @@ class _RatingCell extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           SizedBox(
-            height: 32,
+            height: readoutHeight < 32 ? 32 : readoutHeight,
             child: Align(alignment: Alignment.centerLeft, child: value),
           ),
-          Text(
-            caption ?? '',
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: muted,
+          SizedBox(
+            height: captionHeight,
+            child: Text(
+              caption ?? '',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: muted,
+            ),
           ),
         ],
       ),

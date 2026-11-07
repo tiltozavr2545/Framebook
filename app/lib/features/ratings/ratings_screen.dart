@@ -18,6 +18,7 @@ import '../../shared/kind_filter.dart';
 import '../../shared/title_row.dart';
 import '../../shared/title_text.dart';
 import '../title/title_routes.dart';
+import 'ratings_model.dart';
 
 /// "My ratings": everything rated, from the local database — works offline.
 class RatingsScreen extends ConsumerWidget {
@@ -26,23 +27,13 @@ class RatingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final view = ref.watch(ratingsViewProvider);
-    final all = ref.watch(ratedTitlesProvider).value;
-    final shown = all == null
-        ? null
-        : arrangeRatings(
-            all,
-            kind: view.kind,
-            sort: view.sort,
-            compareWith: view.compareWith,
-            order: view.order,
-          );
+    final data = ref.watch(ratingsPageDataProvider).value;
+    final RatingsListView view =
+        data?.view ?? ref.watch<RatingsListView>(ratingsViewProvider);
+    final all = data?.all;
+    final shown = data?.shown;
+    final items = data?.items ?? const <RatingListItem>[];
     final byDivergence = view.sort == RatingsSort.divergence;
-    final items = shown == null
-        ? <RatingListItem>[]
-        : view.sort == RatingsSort.scoredAt
-        ? ratingDayItems(shown)
-        : [for (final title in shown) RatingItem(title)];
 
     return Scaffold(
       appBar: AppBar(

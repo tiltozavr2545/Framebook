@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,9 +9,10 @@ import '../../data/api_source.dart';
 import '../../data/library/divergence.dart';
 import '../../data/library/library.dart';
 import '../../data/library/stats.dart';
-import '../../data/library/insights.dart';
+import '../../data/library/prepared_views.dart';
+import '../../data/latest_worker.dart';
+import '../../data/view_computer.dart';
 import '../../data/library/insights_provider.dart';
-import '../../data/library/people_index.dart';
 import '../../data/source_failure.dart';
 import '../../data/sources/providers.dart';
 import '../../data/work_key.dart';
@@ -36,6 +38,30 @@ class StatsKindNotifier extends Notifier<WorkKind?> {
 final statsKindProvider = NotifierProvider<StatsKindNotifier, WorkKind?>(
   StatsKindNotifier.new,
 );
+
+final _statsWorkerProvider = Provider.autoDispose((ref) {
+  final computer = ref.watch(viewComputerProvider);
+  final worker = LatestWorker<StatsInput, StatsView>(
+    (input) => computer.run(prepareStatsKind, input, 'statistics summary'),
+  );
+  ref.onDispose(worker.dispose);
+  return worker;
+});
+
+class _StatsData extends AsyncNotifier<StatsView?> {
+  @override
+  FutureOr<StatsView?> build() {
+    final all = ref.watch(ratedTitlesProvider).value;
+    final kind = ref.watch(statsKindProvider);
+    if (all == null) return null;
+    final input = (all, kind);
+    if (all.length <= 200) return prepareStatsKind(input);
+    return ref.watch(_statsWorkerProvider).run(input);
+  }
+}
+
+final statsViewProvider =
+    AsyncNotifierProvider.autoDispose<_StatsData, StatsView?>(_StatsData.new);
 
 /// Genre names in the content language, from TMDB through the HTTP cache.
 /// Empty when TMDB can't be reached and nothing is cached: the rest of the
@@ -66,14 +92,11 @@ class StatsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final kind = ref.watch(statsKindProvider);
+    final requestedKind = ref.watch(statsKindProvider);
     final all = ref.watch(ratedTitlesProvider).value;
-    final titles = all == null
-        ? null
-        : [
-            for (final title in all)
-              if (kind == null || title.work.kind == kind) title,
-          ];
+    final prepared = ref.watch(statsViewProvider).value;
+    final titles = prepared?.titles;
+    final kind = prepared != null ? prepared.kind : requestedKind;
 
     return Scaffold(
       appBar: AppBar(
@@ -105,7 +128,7 @@ class StatsScreen extends ConsumerWidget {
                       icon: Icons.filter_alt_off_outlined,
                       text: l10n.ratingsEmptyKind,
                     )
-                  : _StatsBody(key: ValueKey(kind), titles: titles),
+                  : _StatsBody(key: ValueKey(kind), prepared: prepared!),
             ),
           ],
         ),
@@ -115,27 +138,20 @@ class StatsScreen extends ConsumerWidget {
 }
 
 class _StatsBody extends ConsumerWidget {
-  const _StatsBody({super.key, required this.titles});
+  const _StatsBody({super.key, required this.prepared});
 
-  final List<RatedTitle> titles;
+  final StatsView prepared;
+  List<RatedTitle> get titles => prepared.titles;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final stats = computeStats(titles);
-    final index = ref.watch(peopleIndexProvider);
+    final stats = prepared.stats;
     final insights =
-        ref
-            .watch(libraryInsightsProvider(ref.watch(statsKindProvider)))
-            .value ??
+        ref.watch(libraryInsightsProvider(prepared.kind)).value ??
         emptyLibraryInsights;
-    final profile = ScoreProfile(titles);
-    final sortedScores = titles.map((t) => t.rating.scoreHalf).toList()..sort();
-    final middle = sortedScores.length ~/ 2;
-    final median = sortedScores.length.isOdd
-        ? sortedScores[middle] / 2
-        : (sortedScores[middle - 1] + sortedScores[middle]) / 4;
+    final median = prepared.median;
     return CustomScrollView(
       slivers: [
         SliverPadding(
@@ -172,28 +188,13 @@ class _StatsBody extends ConsumerWidget {
                 runSpacing: 4,
                 children: [
                   for (final (label, subset) in [
-                    (
-                      l10n.statsScoreHigh,
-                      titles.where((t) => t.rating.scoreHalf >= 16).toList(),
-                    ),
-                    (
-                      l10n.statsScoreMiddle,
-                      titles
-                          .where(
-                            (t) =>
-                                t.rating.scoreHalf > 8 &&
-                                t.rating.scoreHalf < 16,
-                          )
-                          .toList(),
-                    ),
-                    (
-                      l10n.statsScoreLow,
-                      titles.where((t) => t.rating.scoreHalf <= 8).toList(),
-                    ),
+                    (l10n.statsScoreHigh, prepared.high),
+                    (l10n.statsScoreMiddle, prepared.medium),
+                    (l10n.statsScoreLow, prepared.low),
                   ])
                     ActionChip(
                       label: Text(
-                        '$label · ${(subset.length / profile.count * 100).round()}%',
+                        '$label · ${(subset.length / stats.count * 100).round()}%',
                       ),
                       onPressed: subset.isEmpty
                           ? null
@@ -226,6 +227,7 @@ class _StatsBody extends ConsumerWidget {
                 _DeviationTile(
                   source: source,
                   deviation: stats.deviation[source],
+                  prepared: prepared.sources[source],
                   titles: titles,
                 ),
               if (stats.genres.isNotEmpty) ...[
@@ -269,7 +271,7 @@ class _StatsBody extends ConsumerWidget {
             16,
             24 + MediaQuery.paddingOf(context).bottom,
           ),
-          sliver: SliverToBoxAdapter(child: PeopleLoadStatus(index: index)),
+          sliver: const SliverToBoxAdapter(child: PeopleIndexProgress()),
         ),
       ],
     );
@@ -373,10 +375,12 @@ class _DeviationTile extends StatelessWidget {
     required this.source,
     required this.deviation,
     required this.titles,
+    this.prepared,
   });
 
   final RatingSource source;
   final Deviation? deviation;
+  final SourceBreakdown? prepared;
   final List<RatedTitle> titles;
 
   @override
@@ -428,7 +432,7 @@ class _DeviationTile extends StatelessWidget {
             Text(l10n.statsDeviationNone(name), style: muted),
           CoverageLine(source: source, titles: titles),
           const SizedBox(height: 8),
-          SourceInsights(source: source, titles: titles),
+          SourceInsights(source: source, titles: titles, prepared: prepared),
         ],
       ),
     );

@@ -75,6 +75,51 @@ class _Index extends PeopleIndex {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  test(
+    'candidate progress preserves the displayed batch until completion',
+    () async {
+      final batches = StreamController<RecommendationPool>();
+      final c = ProviderContainer(
+        overrides: [
+          tmdbProvider.overrideWithValue(Api('test')),
+          recommendationPoolProvider.overrideWith((ref) => batches.stream),
+        ],
+      );
+      final sub = c.listen(recommendationDisplayCandidatesProvider, (_, _) {});
+      final first = <RecommendationCandidate>[];
+      // Distinct batches need not contain real API data to verify publication.
+      final title = TitleSummary(
+        key: const WorkKey.movie(1),
+        title: 'First',
+        originalTitle: null,
+        releaseDate: null,
+        posterPath: null,
+        vote: const TmdbVote(null, null),
+        genreIds: const [],
+      );
+      first.add(RecommendationCandidate(title, discovered: true));
+      final second = [
+        ...first,
+        RecommendationCandidate(title, discovered: true),
+      ];
+      batches.add(RecommendationPool(candidates: first, running: true));
+      await pumpEventQueue();
+      expect(c.read(recommendationDisplayCandidatesProvider), same(first));
+      batches.add(RecommendationPool(candidates: second, running: true));
+      await pumpEventQueue();
+      expect(c.read(recommendationDisplayCandidatesProvider), same(first));
+      batches.add(RecommendationPool(candidates: second));
+      await pumpEventQueue();
+      expect(c.read(recommendationDisplayCandidatesProvider), same(second));
+      // A new retrieval pass keeps the completed result while in progress.
+      batches.add(RecommendationPool(candidates: first, running: true));
+      await pumpEventQueue();
+      expect(c.read(recommendationDisplayCandidatesProvider), same(second));
+      sub.close();
+      c.dispose();
+      await batches.close();
+    },
+  );
   for (final scale in [1.0, 1.8, 2.0, 3.0]) {
     for (final withReason in [false, true]) {
       testWidgets(
@@ -124,7 +169,7 @@ void main() {
                 ),
                 nowPlayingShelfProvider.overrideWith((ref) async => const []),
                 bestShelfProvider.overrideWith((ref) async => const []),
-                myRatingProvider.overrideWith((ref, key) => Stream.value(null)),
+                ratedTitlesProvider.overrideWith((ref) => Stream.value([])),
               ],
               child: MaterialApp(
                 theme: FramebookTheme.light,
@@ -197,6 +242,10 @@ void main() {
       );
       addTearDown(c.dispose);
       c.listen(recommendationFeedProvider, (_, __) {});
+      var badgeUpdates = 0;
+      c.listen(myScoreHalfProvider(const WorkKey.movie(2)), (_, _) {
+        badgeUpdates++;
+      });
       changes.add([rated(1, 18)]);
       for (
         var i = 0;
@@ -209,15 +258,22 @@ void main() {
         c.read(recommendationFeedProvider).forYou.map((x) => x.title.key),
         [WorkKey.movie(2)],
       );
+      expect(c.read(myScoreHalfProvider(const WorkKey.movie(2))), isNull);
+      final unchangedBadgeUpdates = badgeUpdates;
+      changes.add([rated(1, 16)]);
+      await pumpEventQueue();
+      expect(badgeUpdates, unchangedBadgeUpdates);
       changes.add([rated(1, 18), rated(2, 12)]);
       await pumpEventQueue();
       expect(c.read(recommendationFeedProvider).forYou, isEmpty);
+      expect(c.read(myScoreHalfProvider(const WorkKey.movie(2))), 12);
       changes.add([rated(1, 18)]);
       await pumpEventQueue();
       expect(
         c.read(recommendationFeedProvider).forYou.map((x) => x.title.key),
         [const WorkKey.movie(2)],
       );
+      expect(c.read(myScoreHalfProvider(const WorkKey.movie(2))), isNull);
       expect(api.requests, 1);
       await c
           .read(hiddenRecommendationsProvider.notifier)

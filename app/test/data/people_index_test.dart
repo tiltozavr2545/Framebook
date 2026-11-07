@@ -53,6 +53,32 @@ class _Api implements TmdbApi {
 }
 
 void main() {
+  test(
+    'large derived-credit cache round trips through workers and rejects malformed JSON',
+    () async {
+      final people = List.generate(
+        600,
+        (i) => PeopleCredit(
+          id: i + 1,
+          name: 'Актёр $i с длинным именем ' * 4,
+          role: FilmographyRole.values[i % FilmographyRole.values.length],
+          profilePath: '/portrait-$i.jpg',
+        ),
+      );
+      final encoded = await encodePeopleCredits(people);
+      expect(encoded.length, greaterThan(64 * 1024));
+      final decoded = await decodePeopleCredits(encoded);
+      expect(
+        decoded.map((p) => p.toJson()).toList(),
+        people.map((p) => p.toJson()).toList(),
+      );
+      await expectLater(
+        decodePeopleCredits('[${' ' * (80 * 1024)}'),
+        throwsFormatException,
+      );
+    },
+  );
+
   TestWidgetsFlutterBinding.ensureInitialized();
   late _Api api;
   late MemoryResponseCache cache;

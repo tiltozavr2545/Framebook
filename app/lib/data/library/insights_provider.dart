@@ -28,6 +28,30 @@ final _workerProvider = Provider.autoDispose
       return worker;
     });
 
+/// Title count alone does not bound TV aggregate casts or actor/director pairs.
+bool insightsNeedWorker(
+  List<RatedTitle> titles,
+  Map<String, List<PeopleCredit>> entries,
+) {
+  if (titles.length > 80) return true;
+  var credits = 0;
+  var pairs = 0;
+  for (final title in titles) {
+    final people = entries[peopleIdentity(title)] ?? const <PeopleCredit>[];
+    credits += people.length;
+    if (credits > 1000) return true;
+    var actors = 0;
+    var directors = 0;
+    for (final person in people) {
+      if (person.role == FilmographyRole.acting) actors++;
+      if (person.role == FilmographyRole.directing) directors++;
+    }
+    pairs += actors * directors;
+    if (pairs > 4000) return true;
+  }
+  return false;
+}
+
 /// Shared by people browsing and statistics. Favourite changes and index
 /// progress alone must not recompute every person's roles and director pairs.
 final libraryInsightsProvider = FutureProvider.autoDispose
@@ -38,7 +62,7 @@ final libraryInsightsProvider = FutureProvider.autoDispose
           ? all
           : all.where((t) => t.key.kind == kind).toList();
       final input = (titles, entries);
-      if (titles.length <= 80) return _analyze(input);
+      if (!insightsNeedWorker(titles, entries)) return _analyze(input);
       return ref
           .watch(_workerProvider(kind))
           .run(input)

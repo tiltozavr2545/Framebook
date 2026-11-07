@@ -7,6 +7,8 @@ import '../../app/foreground.dart';
 import '../latest_worker.dart';
 import '../library/favorite_people.dart';
 import '../library/library.dart';
+import '../db/database.dart';
+import '../library/taste_ratings.dart';
 import '../library/people_index.dart';
 import '../sources/providers.dart';
 import '../sources/tmdb/tmdb_models.dart';
@@ -28,11 +30,101 @@ final _sourceCacheProvider = Provider.autoDispose<RecommendationSourceCache>((
   return RecommendationSourceCache();
 });
 
-final tasteProfileProvider = Provider.autoDispose<TasteProfile>((ref) {
-  final titles = ref.watch(ratedTitlesProvider).value ?? const [];
-  final credits = ref.watch(peopleIndexProvider.select((s) => s.entries));
-  return TasteProfile(tasteSignals(titles, credits));
-});
+/// Credit indexing streams progress, but partial network batches must not
+/// rebuild every taste weight and rerank the feed while the user scrolls.
+class _RecommendationCredits extends Notifier<Map<String, List<PeopleCredit>>> {
+  @override
+  Map<String, List<PeopleCredit>> build() {
+    ref.listen(peopleIndexProvider, (_, next) {
+      if (!next.running || state.isEmpty) state = next.entries;
+    });
+    return ref.read(peopleIndexProvider).entries;
+  }
+}
+
+final recommendationCreditsProvider =
+    NotifierProvider.autoDispose<
+      _RecommendationCredits,
+      Map<String, List<PeopleCredit>>
+    >(_RecommendationCredits.new);
+
+typedef _TasteInput = (List<RatedTitle>, Map<String, List<PeopleCredit>>);
+TasteProfile _buildTaste(_TasteInput input) =>
+    TasteProfile(tasteSignals(input.$1, input.$2));
+
+final _tasteWorkerProvider =
+    Provider.autoDispose<LatestWorker<_TasteInput, TasteProfile>>((ref) {
+      final worker = LatestWorker<_TasteInput, TasteProfile>(
+        (input) => compute(_buildTaste, input, debugLabel: 'taste profile'),
+      );
+      ref.onDispose(worker.dispose);
+      return worker;
+    });
+
+class _TasteProfileData extends AsyncNotifier<TasteProfile> {
+  @override
+  FutureOr<TasteProfile> build() {
+    final titles = ref.watch(tasteRatingsProvider);
+    final credits = ref.watch(recommendationCreditsProvider);
+    final input = (titles, credits);
+    var entries = 0;
+    if (titles.length <= 80) {
+      for (final title in titles) {
+        entries += credits[peopleIdentity(title)]?.length ?? 0;
+        if (entries > 1000) break;
+      }
+      if (entries <= 1000) return _buildTaste(input);
+    }
+    return ref
+        .watch(_tasteWorkerProvider)
+        .run(input)
+        .then((profile) => profile ?? TasteProfile(const []));
+  }
+}
+
+final _tasteProfileDataProvider =
+    AsyncNotifierProvider.autoDispose<_TasteProfileData, TasteProfile>(
+      _TasteProfileData.new,
+    );
+
+/// Keep the previous profile visible while a large replacement is computed.
+final tasteProfileProvider = Provider.autoDispose<TasteProfile>(
+  (ref) => ref.watch(_tasteProfileDataProvider).value ?? TasteProfile(const []),
+);
+
+bool _sameListWork(Work? a, Work? b) =>
+    identical(a, b) ||
+    a != null &&
+        b != null &&
+        a.copyWith(snapshotUpdatedAt: 0) == b.copyWith(snapshotUpdatedAt: 0);
+
+class _RecommendationWatchlist extends Notifier<List<WatchlistTitle>> {
+  @override
+  List<WatchlistTitle> build() =>
+      ref.watch(watchlistTitlesProvider).value ?? const [];
+
+  @override
+  bool updateShouldNotify(
+    List<WatchlistTitle> previous,
+    List<WatchlistTitle> next,
+  ) {
+    if (previous.length != next.length) return true;
+    for (var i = 0; i < next.length; i++) {
+      if (previous[i].entry != next[i].entry ||
+          !_sameListWork(previous[i].work, next[i].work) ||
+          !_sameListWork(previous[i].series, next[i].series)) {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+final recommendationWatchlistProvider =
+    NotifierProvider.autoDispose<
+      _RecommendationWatchlist,
+      List<WatchlistTitle>
+    >(_RecommendationWatchlist.new);
 
 final recommendationPlanProvider = Provider.autoDispose<RecommendationPlan>((
   ref,
@@ -43,9 +135,7 @@ final recommendationPlanProvider = Provider.autoDispose<RecommendationPlan>((
     profile: profile,
     favorites: favoriteIds(ref.watch(favoritePeopleProvider).value ?? const []),
     watchlist: {
-      for (final w
-          in ref.watch(watchlistTitlesProvider).value ??
-              const <WatchlistTitle>[])
+      for (final w in ref.watch(recommendationWatchlistProvider))
         recommendationRoot(w.key),
     },
     now: ref.watch(recommendationClockProvider)(),
@@ -118,12 +208,32 @@ final recommendationPoolProvider =
       return controller.stream;
     });
 
+/// Show the first useful batch promptly, then commit the completed pass once.
+/// Retrieval progress must not reshuffle every visible shelf on every response.
+class _DisplayCandidates extends Notifier<List<RecommendationCandidate>> {
+  @override
+  List<RecommendationCandidate> build() {
+    ref.listen(recommendationPoolProvider, (_, next) {
+      final pool = next.value;
+      if (pool != null && (!pool.running || state.isEmpty)) {
+        state = pool.candidates;
+      }
+    });
+    return ref.read(recommendationPoolProvider).value?.candidates ?? const [];
+  }
+}
+
+final recommendationDisplayCandidatesProvider =
+    NotifierProvider.autoDispose<
+      _DisplayCandidates,
+      List<RecommendationCandidate>
+    >(_DisplayCandidates.new);
+
 final _rankingInputProvider = Provider.autoDispose<_RankingInput>((ref) {
   return _RankingInput(
     ref.watch(tasteProfileProvider),
-    ref.watch(recommendationPoolProvider.select((s) => s.value?.candidates)) ??
-        const [],
-    ref.watch(watchlistTitlesProvider).value ?? const [],
+    ref.watch(recommendationDisplayCandidatesProvider),
+    ref.watch(recommendationWatchlistProvider),
     favoriteIds(ref.watch(favoritePeopleProvider).value ?? const []),
     ref.watch(hiddenRecommendationsProvider),
     recommendationDay(ref.watch(recommendationClockProvider)()),
@@ -183,15 +293,19 @@ final recommendationFeedProvider = Provider.autoDispose<RecommendationFeed>((
   ref,
 ) {
   final input = ref.watch(_rankingInputProvider);
+  final RecommendationFeed feed;
   if (input.candidates.length + input.watchlist.length <= 100 &&
       input.profile.signals.length <= 80) {
-    return _rank(input);
+    feed = _rank(input);
+  } else {
+    feed = ref.watch(_largeFeedProvider).value ?? const RecommendationFeed();
   }
-  final feed =
-      ref.watch(_largeFeedProvider).value ?? const RecommendationFeed();
   // A previous worker result may stay visible while reranking. User exclusions
   // apply immediately, before the new result arrives.
-  final rated = input.profile.signals.map((s) => s.key).toSet();
+  final rated = {
+    for (final title in ref.watch(tasteRatingsProvider))
+      recommendationRoot(title.key),
+  };
   final listed = input.watchlist.map((w) => recommendationRoot(w.key)).toSet();
   final listedKeys = input.watchlist.map((w) => w.key).toSet();
   bool visible(RecommendationPick p, {bool watchlist = false}) {

@@ -9,6 +9,7 @@ import '../../shared/failure_view.dart';
 import '../../shared/format.dart';
 import '../../shared/score_color.dart';
 import '../../shared/poster.dart';
+import '../../shared/retained_section.dart';
 import '../../shared/poster_tint.dart';
 import 'saved_card.dart';
 import 'cover_viewer.dart';
@@ -97,82 +98,84 @@ class TitleHeader extends StatelessWidget {
       for (final fact in facts)
         if (fact != null && fact.isNotEmpty) fact,
     ];
-    return PosterTint(
-      path: cachedCoverOnly ? null : posterPath,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Semantics(
-                button: posterPath != null && coverKey != null,
-                label: posterPath != null && coverKey != null
-                    ? AppLocalizations.of(context).coverOpen
-                    : null,
-                child: InkWell(
-                  onTap: posterPath == null || coverKey == null
-                      ? null
-                      : () => Navigator.of(context).push(
-                          coverViewerRoute(
-                            (_) => CoverViewer(
-                              currentPath: posterPath!,
-                              keyForImages: coverKey!,
-                              previewSize: ImageSize.w342,
-                              originalLanguage: originalLanguage,
-                              cachedOnly: cachedCoverOnly,
+    return RetainedSection(
+      child: PosterTint(
+        path: cachedCoverOnly ? null : posterPath,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Semantics(
+                  button: posterPath != null && coverKey != null,
+                  label: posterPath != null && coverKey != null
+                      ? AppLocalizations.of(context).coverOpen
+                      : null,
+                  child: InkWell(
+                    onTap: posterPath == null || coverKey == null
+                        ? null
+                        : () => Navigator.of(context).push(
+                            coverViewerRoute(
+                              (_) => CoverViewer(
+                                currentPath: posterPath!,
+                                keyForImages: coverKey!,
+                                previewSize: ImageSize.w342,
+                                originalLanguage: originalLanguage,
+                                cachedOnly: cachedCoverOnly,
+                              ),
                             ),
                           ),
+                    child: Poster(
+                      posterPath,
+                      size: ImageSize.w342,
+                      width: 128,
+                      icon: posterIcon,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: theme.textTheme.headlineMedium),
+                      if (original != null && original != title)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(original, style: muted),
                         ),
-                  child: Poster(
-                    posterPath,
-                    size: ImageSize.w342,
-                    width: 128,
-                    icon: posterIcon,
+                      const SizedBox(height: 10),
+                      // The first line is the edge print: release date and length.
+                      for (final (i, line) in lines.indexed)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 3),
+                          child: Text(
+                            line,
+                            style: i == 0
+                                ? theme.textTheme.labelLarge?.copyWith(
+                                    color: Reel.of(context).edge,
+                                  )
+                                : muted,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (tagline case final tagline?)
+              Padding(
+                padding: const EdgeInsets.only(top: 14),
+                child: Text(
+                  tagline,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: theme.textTheme.headlineMedium),
-                    if (original != null && original != title)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Text(original, style: muted),
-                      ),
-                    const SizedBox(height: 10),
-                    // The first line is the edge print: release date and length.
-                    for (final (i, line) in lines.indexed)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 3),
-                        child: Text(
-                          line,
-                          style: i == 0
-                              ? theme.textTheme.labelLarge?.copyWith(
-                                  color: Reel.of(context).edge,
-                                )
-                              : muted,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          if (tagline case final tagline?)
-            Padding(
-              padding: const EdgeInsets.only(top: 14),
-              child: Text(
-                tagline,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

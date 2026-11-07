@@ -400,3 +400,61 @@ MVP progress by stage is in [docs/implementation-plan.md](docs/implementation-pl
   large text by placing their wrapping dropdowns beneath the labels.
 - Omit impossible calendar dates instead of silently displaying another date
   produced by date normalization.
+
+## 0.9.2 — Stable shelves and scrolling (build 22)
+
+- Keep Discover shelves steady during vertical and horizontal scrolling,
+  applying the latest feed when the gesture and its fling finish.
+- Show the first useful recommendation batch promptly, then publish the
+  completed pass instead of reshuffling shelves after every catalog response.
+- Preserve each shelf's horizontal position and visited content when scrolling
+  away and back, including people shelves.
+- Share personal-score badge data across posters, avoiding a separate database
+  query and asynchronous badge reload for every newly visible tile.
+- Update people-index progress independently of the shelves, avoiding repeated
+  sorting and rebuilding of all people rows just to change a loading counter.
+- Keep visited title-card sections alive until the card closes, preserving
+  loaded source ratings, related titles and editor state during scrolling.
+- Reserve recommendation-caption space in loading placeholders and preserve
+  previously loaded shelf data if a refresh fails.
+- Keep title-header geometry fixed while the poster colour and border load.
+- Swipe across the root pages to move between Discover, My ratings, Watchlist
+  and Stats in both navigation styles. Horizontal shelves keep their gestures;
+  nested cards keep their own navigation.
+- Ignore note-only and external-rating updates when rebuilding recommendation
+  taste profiles, preventing background refresh from reranking unchanged tastes.
+- Parse large catalog JSON and encode/decode large response-cache envelopes in
+  background isolates instead of blocking the interface thread.
+- Remove redundant backdrop filtering over opaque navigation surfaces while
+  retaining the glass selection's gradient and border.
+- Keep intermediate actor-index batches from repeatedly rebuilding recommendation
+  tastes and reranking all shelves during background enrichment.
+- Lay out film and people shelves with fixed-width slots and stable keyed tile
+  mapping, retaining mounted tile state when the feed order changes.
+- Share concurrent requests for the same TMDB endpoint and parameters, including
+  cache decoding, and release failed requests so retry remains possible.
+- Keep actor-loading progress from rebuilding all statistics and move large
+  cast/actor-director pair calculations to workers even for small libraries.
+- Build large recommendation taste profiles in a serialized worker while keeping
+  the previous profile visible. Newly rated titles are excluded immediately.
+- Preserve expanded biographies when scrolling through a person's filmography.
+- Batch ancestor snapshot reads so large season/episode libraries cannot exceed
+  SQLite parameter limits when opening the ratings list.
+- Keep external-rating panel geometry stable as loading captions arrive, and
+  size numeric readouts and cells for large system fonts without overflow.
+- Decode/encode large derived actor-credit cache payloads in background workers,
+  including validation of damaged cached bodies.
+- Show an already loaded personal rating while the card's individual query is
+  pending, while honoring a confirmed deletion immediately.
+- Reuse prepared filmography groups and combined credit ordering when switching
+  a person's role filter instead of rebuilding both lists on every selection.
+- Avoid rebuilding recommendation inputs when only snapshot freshness changes
+  or the watchlist query repeats the same data; keep sync timestamps intact.
+- Prepare preferred people, genres and recommendation seeds together with the
+  taste profile so deferred sorting does not return to the interface thread.
+- Prepare large rating-list filters, ordering and day groups in a serialized
+  worker, retaining the previous list and ignoring superseded requests.
+- Prepare statistics summaries, medians, source comparisons and people ordering
+  outside the widget build; retain coherent previous summaries during updates.
+- Prepare large initial filmographies in a worker, reusing the resulting role
+  groups and combined credits across filter selections.

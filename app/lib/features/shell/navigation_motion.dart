@@ -89,7 +89,7 @@ class _NavigationPagesState extends State<NavigationPages> {
   }
 }
 
-/// A bounded blur and a fine highlight give the moving selection a glass rim.
+/// A tinted gradient and fine highlight give the moving selection a glass rim.
 class GlassNavigationBar extends StatelessWidget {
   const GlassNavigationBar({
     super.key,

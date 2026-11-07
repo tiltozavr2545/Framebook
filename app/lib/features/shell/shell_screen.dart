@@ -62,8 +62,7 @@ class _ShellScreenState extends ConsumerState<ShellScreen>
   void _settle(int index) {
     _dragging = false;
     _routeIndex = index;
-    if (MediaQuery.disableAnimationsOf(context) ||
-        !ref.read(floatingNavigationProvider)) {
+    if (MediaQuery.disableAnimationsOf(context)) {
       _position.value = index.toDouble();
     } else {
       _position.animateTo(
@@ -81,6 +80,35 @@ class _ShellScreenState extends ConsumerState<ShellScreen>
     _settle(index);
     if (reset) widget.shell.goBranch(index, initialLocation: true);
   }
+
+  void _startDrag() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    _position.stop();
+    _dragOrigin = widget.shell.currentIndex;
+    _dragging = true;
+  }
+
+  void _cancelDrag() {
+    if (_dragging) _settle(_dragOrigin);
+  }
+
+  void _updateDrag(double delta) {
+    _position.value = (_position.value + delta).clamp(
+      0.0,
+      AppTab.values.length - 1.0,
+    );
+    final index = _position.value.round();
+    if (index != widget.shell.currentIndex) {
+      _routeIndex = index;
+      widget.shell.goBranch(index);
+    }
+  }
+
+  void _endDrag(double velocity) => _settle(
+    (_position.value + (velocity.abs() > 2 ? velocity.sign * 0.35 : 0))
+        .round()
+        .clamp(0, AppTab.values.length - 1),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -111,10 +139,39 @@ class _ShellScreenState extends ConsumerState<ShellScreen>
         children: [
           const UpdateBanner(),
           Expanded(
-            child: NavigationMotion(
-              position: _position,
-              enabled: floating,
-              child: shell,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final root =
+                    GoRouterState.of(context).uri.path ==
+                    AppTab.values[shell.currentIndex].path;
+                final direction =
+                    Directionality.of(context) == TextDirection.rtl
+                    ? 1.0
+                    : -1.0;
+                return GestureDetector(
+                  key: const ValueKey('tab-page-swipe'),
+                  behavior: HitTestBehavior.translucent,
+                  onHorizontalDragStart: root ? (_) => _startDrag() : null,
+                  onHorizontalDragUpdate: root
+                      ? (details) => _updateDrag(
+                          details.delta.dx / constraints.maxWidth * direction,
+                        )
+                      : null,
+                  onHorizontalDragEnd: root
+                      ? (details) => _endDrag(
+                          (details.primaryVelocity ?? 0) /
+                              constraints.maxWidth *
+                              direction,
+                        )
+                      : null,
+                  onHorizontalDragCancel: root ? _cancelDrag : null,
+                  child: NavigationMotion(
+                    position: _position,
+                    enabled: true,
+                    child: shell,
+                  ),
+                );
+              },
             ),
           ),
         ],
@@ -125,30 +182,10 @@ class _ShellScreenState extends ConsumerState<ShellScreen>
               selectedIndex: shell.currentIndex,
               destinations: destinations,
               onSelected: _select,
-              onDragStart: () {
-                FocusManager.instance.primaryFocus?.unfocus();
-                _position.stop();
-                _dragOrigin = shell.currentIndex;
-                _dragging = true;
-              },
-              onDragUpdate: (delta) {
-                _position.value = (_position.value + delta).clamp(
-                  0.0,
-                  AppTab.values.length - 1.0,
-                );
-                final index = _position.value.round();
-                if (index != widget.shell.currentIndex) {
-                  _routeIndex = index;
-                  widget.shell.goBranch(index);
-                }
-              },
-              onDragEnd: (velocity) => _settle(
-                (_position.value +
-                        (velocity.abs() > 2 ? velocity.sign * 0.35 : 0))
-                    .round()
-                    .clamp(0, AppTab.values.length - 1),
-              ),
-              onDragCancel: () => _settle(_dragOrigin),
+              onDragStart: _startDrag,
+              onDragUpdate: _updateDrag,
+              onDragEnd: _endDrag,
+              onDragCancel: _cancelDrag,
             )
           : NavigationBar(
               selectedIndex: shell.currentIndex,

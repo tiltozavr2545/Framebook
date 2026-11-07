@@ -41,7 +41,11 @@ class MyRatingSection extends ConsumerStatefulWidget {
   ConsumerState<MyRatingSection> createState() => _MyRatingSectionState();
 }
 
-class _MyRatingSectionState extends ConsumerState<MyRatingSection> {
+class _MyRatingSectionState extends ConsumerState<MyRatingSection>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   WorkKey get _key => widget.lineage.last.key;
 
   @override
@@ -56,9 +60,18 @@ class _MyRatingSectionState extends ConsumerState<MyRatingSection> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final rating = ref.watch(myRatingProvider(_key)).value;
+    final storedRating = ref.watch(myRatingProvider(_key));
+    final rating = storedRating.hasValue
+        ? storedRating.value
+        : ref
+              .watch(ratedTitlesProvider)
+              .value
+              ?.where((title) => title.work.workKey == _key.toString())
+              .firstOrNull
+              ?.rating;
     final kind = _key.kind;
     final watchlistable = kind != WorkKind.episode;
     final listed =
@@ -325,15 +338,15 @@ class MyScoreBadge extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final rating = ref.watch(myRatingProvider(workKey)).value;
-    if (rating == null) return const SizedBox.shrink();
+    final half = ref.watch(myScoreHalfProvider(workKey));
+    if (half == null) return const SizedBox.shrink();
     final theme = Theme.of(context);
     final figure = Text(
-      formatMyScore(rating.scoreHalf),
+      formatMyScore(half),
       style: theme.textTheme.headlineSmall?.copyWith(
         color: onPoster
-            ? scoreColorFor(Brightness.light, rating.scoreHalf / 2)
-            : scoreColor(context, rating.scoreHalf / 2),
+            ? scoreColorFor(Brightness.light, half / 2)
+            : scoreColor(context, half / 2),
         fontWeight: FontWeight.w800,
         height: 1,
       ),

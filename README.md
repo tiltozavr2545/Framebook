@@ -8,7 +8,8 @@ A project for myself and a couple of friends. The original idea and the decision
 
 ## Status
 
-Latest release: 0.9.1 — the MVP is complete. Working: Discover
+Latest release: 0.9.2 — stable shelves, less background UI work and swipe
+navigation between root tabs. The MVP is complete. Working: Discover
 with title and people search and shelves, film and series cards down to single episodes with
 cast and crew and ratings from Kinopoisk, IMDb, Rotten Tomatoes, Metacritic
 and TMDB, people with filmographies filtered by their jobs; your own ratings with notes on a
@@ -20,6 +21,8 @@ saved. The [correctness audit](docs/reviews/2026-11-05/README.md) repaired
 caching, API-key changes, import recovery and large-text layouts. The latest
 [responsiveness review](docs/reviews/2026-11-06/README.md) addresses input lag
 around favourite people, recommendation calculations and expanded statistics.
+The [0.9.2 review](docs/reviews/0.9.2/README.md) addresses visible shelf
+replacement, retained scrolling state and repeated poster-score queries.
 The [0.9.1 review](docs/reviews/0.9.1/README.md) covers Discover resume, rating editing,
 source validation, sync metadata and large-text settings. The [0.9.0 review](docs/reviews/0.9.0/README.md) covers sync application
 cost, aggregate analytics credits, device-clock corrections and narrow-screen layouts. The

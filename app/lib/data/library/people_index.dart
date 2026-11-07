@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../app/preferences.dart';
 import '../../app/foreground.dart';
@@ -10,6 +11,24 @@ import '../source_failure.dart';
 import '../sources/providers.dart';
 import '../sources/tmdb/tmdb_models.dart';
 import 'library.dart';
+
+List<PeopleCredit> _decodeCredits(String body) => [
+  for (final row in jsonDecode(body) as List<Object?>)
+    PeopleCredit.fromCache(row as Map<String, Object?>),
+];
+
+String _encodeCredits(List<PeopleCredit> people) =>
+    jsonEncode([for (final person in people) person.toJson()]);
+
+Future<List<PeopleCredit>> decodePeopleCredits(String body) =>
+    body.length < 64 * 1024
+    ? Future.value(_decodeCredits(body))
+    : compute(_decodeCredits, body, debugLabel: 'people cache decode');
+
+Future<String> encodePeopleCredits(List<PeopleCredit> people) =>
+    people.length <= 400
+    ? Future.value(_encodeCredits(people))
+    : compute(_encodeCredits, people, debugLabel: 'people cache encode');
 
 String peopleIdentity(RatedTitle title) =>
     '${title.work.workKey}@${title.work.tmdbId}';
@@ -143,11 +162,9 @@ class PeopleIndex extends Notifier<PeopleIndexState> {
           final cached = await cache.read(cacheKey(title));
           if (cached == null) continue;
           try {
-            final raw = jsonDecode(cached.body) as List<Object?>;
-            entries[identity] = [
-              for (final item in raw)
-                PeopleCredit.fromCache(item as Map<String, Object?>),
-            ];
+            final people = await decodePeopleCredits(cached.body);
+            if (!current()) return;
+            entries[identity] = people;
             dirty = true;
           } on Object {
             // A damaged cache is a miss, not a failed statistics screen.
@@ -182,7 +199,7 @@ class PeopleIndex extends Notifier<PeopleIndexState> {
             await cache.write(
               cacheKey(title),
               CachedResponse(
-                jsonEncode([for (final p in people) p.toJson()]),
+                await encodePeopleCredits(people),
                 DateTime.now().toUtc().millisecondsSinceEpoch,
               ),
             );

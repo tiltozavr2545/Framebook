@@ -21,6 +21,31 @@ are settled before anything is built on top of them.
 - [x] Stage 6.5 — Required items from the postponed list (0.7.0; item 5 postponed)
 - [ ] Stage 7 — Code review, optimization, a second review
 
+## 0.9.2 — Stable shelves and scrolling
+
+Version: `0.9.2+22`. Scope closed at the author's request after continued source
+review and repairs, followed by commit, push and release preparation.
+
+Discover batches candidate and credit publications, suppresses equivalent rating
+and watchlist inputs, defers replacements during scrolling and uses fixed-width
+keyed shelves. Large profile, catalog/cache and cast analytics work runs in
+serialized/background workers. Visited card sections, biographies and known
+ratings retain their state; rating panels reserve caption geometry at large text
+sizes. People/statistics progress updates independently and filmographies reuse
+derived lists. Ancestor reads use bounded SQL batches. Body swipes switch root
+tabs in both navigation styles without stealing shelf or nested-card gestures.
+
+Final validation passed 597 tests (20 opt-in renderers skipped), formatting,
+analysis and version checks. The signed universal APK and release certificate
+verification passed. The final signed APK installed over the existing app
+on the connected physical phone; Android reports 0.9.2+22. Release distribution
+is [v0.9.2](https://github.com/tiltozavr2545/Framebook/releases/tag/v0.9.2) with
+the signed universal APK. Source review is closed; no
+additional unrelated scope is included. The author also requested completing
+worker preparation for large rating lists, statistics and initial filmographies
+before publication; these additions are implemented and under final validation.
+Details: [reviews/0.9.2/README.md](reviews/0.9.2/README.md).
+
 ## 0.9.1 — Reliability and smoother resume
 
 Version: `0.9.1+21`, following the published 0.9.0 release. Review was closed

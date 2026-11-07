@@ -988,14 +988,16 @@ final class Library {
         for (final ancestor in WorkKey.parse(work.workKey).lineage)
           if (ancestor.kind != work.kind) ancestor.toString(),
     };
-    final ancestors = ancestorKeys.isEmpty
-        ? const <String, Work>{}
-        : {
-            for (final work in await (_db.select(
-              _db.works,
-            )..where((w) => w.workKey.isIn(ancestorKeys))).get())
-              work.workKey: work,
-          };
+    final ancestors = <String, Work>{};
+    final keys = ancestorKeys.toList();
+    for (var offset = 0; offset < keys.length; offset += 400) {
+      final chunk = keys.skip(offset).take(400);
+      for (final work in await (_db.select(
+        _db.works,
+      )..where((w) => w.workKey.isIn(chunk))).get()) {
+        ancestors[work.workKey] = work;
+      }
+    }
     return [
       for (final (rating, work, external) in rows)
         _rated(rating, work, external, WorkKey.parse(work.workKey), ancestors),
@@ -1056,6 +1058,16 @@ final partsAverageProvider = StreamProvider.autoDispose
 
 final ratedTitlesProvider = StreamProvider.autoDispose<List<RatedTitle>>(
   (ref) => ref.watch(libraryProvider).watchRatings(),
+);
+
+/// Shelf badges share the live library instead of starting a query per tile.
+final ratingScoresProvider = Provider.autoDispose<Map<WorkKey, int>>((ref) {
+  final titles = ref.watch(ratedTitlesProvider).value ?? const <RatedTitle>[];
+  return {for (final title in titles) title.key: title.rating.scoreHalf};
+});
+
+final myScoreHalfProvider = Provider.autoDispose.family<int?, WorkKey>(
+  (ref, key) => ref.watch(ratingScoresProvider.select((scores) => scores[key])),
 );
 
 final watchlistTitlesProvider =

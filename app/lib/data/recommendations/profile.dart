@@ -117,7 +117,16 @@ final class TasteProfile {
         _decadeCounts[key] = (_decadeCounts[key] ?? 0) + 1;
       }
     }
+    _topPeople = List.unmodifiable(_computeTopPeople());
+    _seeds = List.unmodifiable(_computeSeeds());
+    _topGenres = {
+      for (final kind in WorkKind.values)
+        kind: List.unmodifiable(_computeTopGenres(kind)),
+    };
   }
+  late final List<int> _topPeople;
+  late final List<TasteSignal> _seeds;
+  late final Map<WorkKind, List<int>> _topGenres;
   final List<TasteSignal> signals;
   late final double average;
   final _genres = <(WorkKind, int), double>{};
@@ -134,7 +143,9 @@ final class TasteProfile {
       (_genres[(kind, id)] ?? 0) / ((_genreCounts[(kind, id)] ?? 0) + 3);
   double personAffinity(int id) =>
       (_people[id] ?? 0) / ((_peopleCounts[id] ?? 0) + 3);
-  List<int> get topPeople {
+  List<int> get topPeople => _topPeople;
+
+  List<int> _computeTopPeople() {
     final ids =
         _people.keys
             .where(
@@ -161,7 +172,9 @@ final class TasteProfile {
               genres.length;
   }
 
-  List<int> topGenres(WorkKind kind) {
+  List<int> topGenres(WorkKind kind) => _topGenres[kind]!;
+
+  List<int> _computeTopGenres(WorkKind kind) {
     final ids =
         _genreCounts.keys
             .where((k) => k.$1 == kind && genreAffinity(kind, k.$2) > 0)
@@ -179,7 +192,9 @@ final class TasteProfile {
 
   /// At most two varied positive seeds and one negative seed of each kind.
   /// Dates never weight preference: imported libraries often share one date.
-  List<TasteSignal> get seeds {
+  List<TasteSignal> get seeds => _seeds;
+
+  List<TasteSignal> _computeSeeds() {
     final out = <TasteSignal>[];
     for (final kind in [WorkKind.movie, WorkKind.tv]) {
       final positive =

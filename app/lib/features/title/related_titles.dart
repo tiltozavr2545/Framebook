@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../shared/retained_section.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -21,24 +23,26 @@ class RelatedTitles extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final collection = this.collection;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (collection != null)
+    return RetainedSection(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (collection != null)
+            _Titles(
+              label: collection.name ?? l10n.titleCollection,
+              current: current,
+              value: ref.watch(collectionTitlesProvider(collection.id)),
+              retry: () =>
+                  ref.invalidate(collectionTitlesProvider(collection.id)),
+            ),
           _Titles(
-            label: collection.name ?? l10n.titleCollection,
+            label: l10n.titleSimilar,
             current: current,
-            value: ref.watch(collectionTitlesProvider(collection.id)),
-            retry: () =>
-                ref.invalidate(collectionTitlesProvider(collection.id)),
+            value: ref.watch(similarTitlesProvider(current)),
+            retry: () => ref.invalidate(similarTitlesProvider(current)),
           ),
-        _Titles(
-          label: l10n.titleSimilar,
-          current: current,
-          value: ref.watch(similarTitlesProvider(current)),
-          retry: () => ref.invalidate(similarTitlesProvider(current)),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

@@ -4,6 +4,7 @@ import '../../app/preferences.dart';
 import '../api_keys.dart';
 import '../api_source.dart';
 import '../http.dart';
+import '../source_failure.dart';
 import '../response_cache.dart';
 import 'omdb/omdb_client.dart';
 import 'poiskkino/poiskkino_client.dart';
@@ -11,6 +12,12 @@ import 'tmdb/tmdb_client.dart';
 
 // Clients are rebuilt when a key or the language changes, and everything
 // that depends on them (cards, ratings) is fetched again by itself.
+
+/// Widget tests use the same parser synchronously under their fake clock;
+/// production and parser tests retain real isolate execution for large bodies.
+final catalogJsonParserProvider = Provider<Future<Json?> Function(String)>(
+  (ref) => tryJsonAsync,
+);
 
 final tmdbProvider = Provider<TmdbApi>((ref) {
   // Without a TMDB key the router keeps the user on onboarding, so cards are
@@ -21,6 +28,7 @@ final tmdbProvider = Provider<TmdbApi>((ref) {
     ref.watch(responseCacheProvider),
     key: key?.value ?? '',
     language: ref.watch(contentLanguageProvider),
+    parseJson: ref.watch(catalogJsonParserProvider),
   );
 });
 

@@ -15,6 +15,17 @@ void main() {
 
   tearDown(() => dir.delete(recursive: true));
 
+  test(
+    'large malformed envelopes remain cache misses after isolate parsing',
+    () async {
+      await cache.write('large', CachedResponse('я' * (80 * 1024), 42));
+      expect((await cache.read('large'))?.body, 'я' * (80 * 1024));
+      final file = (await cache.directory.list().single) as File;
+      await file.writeAsString('{${' ' * (80 * 1024)}');
+      expect(await cache.read('large'), isNull);
+    },
+  );
+
   test('reads back what was written, including long odd keys', () async {
     final key = 'tmdb:/search/multi?query=${'Матрица / ? & ' * 40}';
     await cache.write(key, const CachedResponse('{"a":1}', 42));

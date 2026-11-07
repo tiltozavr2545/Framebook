@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import 'http.dart';
 
@@ -115,6 +116,11 @@ Json? tryJson(String? body) {
     return null;
   }
 }
+
+/// Large catalog responses must not parse JSON on the scrolling UI isolate.
+Future<Json?> tryJsonAsync(String body) => body.length < 64 * 1024
+    ? Future.value(tryJson(body))
+    : compute(tryJson, body, debugLabel: 'catalog JSON');
 
 /// `YYYY` from `YYYY-MM-DD`. A date without a time is never turned into a
 /// `DateTime` (AGENTS.md, pitfalls).

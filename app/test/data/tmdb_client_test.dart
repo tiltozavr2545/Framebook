@@ -38,6 +38,32 @@ void main() {
     serve(apiFixtures);
   });
 
+  test(
+    'concurrent identical catalog requests share loading and allow retry',
+    () async {
+      final api = client();
+      final movies = await Future.wait([api.movie(603), api.movie(603)]);
+      expect(movies[0].title, movies[1].title);
+      expect(http.requests.length, 1);
+      cache = MemoryResponseCache();
+      serve((_) => null);
+      final failing = client();
+      final first = expectLater(
+        failing.movie(603),
+        throwsA(isA<SourceException>()),
+      );
+      final second = expectLater(
+        failing.movie(603),
+        throwsA(isA<SourceException>()),
+      );
+      await Future.wait([first, second]);
+      expect(http.requests.length, 1);
+      serve(apiFixtures);
+      expect((await failing.movie(603)).key, const WorkKey.movie(603));
+      expect(http.requests.length, 1);
+    },
+  );
+
   test('popular people use their own cached endpoint', () async {
     final people = await client().popularPeople();
     expect(people.single.id, 6384);

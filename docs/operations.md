@@ -7,8 +7,8 @@ external API keys, the Google OAuth client, and distributing the APK.
 **Status: keys, signing and releases are in use since Stages 0–2; the
 Google Cloud project for Drive sync since Stage 5 (0.5.0).**
 
-Current version: **0.9.1+21**. The latest correctness/resource review and
-validation are recorded in [reviews/0.9.1/README.md](reviews/0.9.1/README.md).
+Current version: **0.9.2+22**. The latest correctness/resource review and
+validation are recorded in [reviews/0.9.2/README.md](reviews/0.9.2/README.md).
 Earlier optimizations and packaging decisions are tracked in
 [optimization.md](optimization.md).
 The distribution target remains a universal APK.

@@ -1,8 +1,13 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../data/api_source.dart';
 import '../../data/library/insights.dart';
+import '../../data/library/prepared_views.dart';
+import '../../data/latest_worker.dart';
+import '../../data/view_computer.dart';
 import '../../data/library/library.dart';
 import '../../data/sources/tmdb/tmdb_models.dart';
 import '../../l10n/app_localizations.dart';
@@ -30,7 +35,7 @@ class InsightHeading extends StatelessWidget {
   );
 }
 
-class InsightSections extends StatefulWidget {
+class InsightSections extends ConsumerStatefulWidget {
   const InsightSections({
     super.key,
     required this.titles,
@@ -41,61 +46,75 @@ class InsightSections extends StatefulWidget {
   final LibraryInsights insights;
   final Map<int, String> genreNames;
   @override
-  State<InsightSections> createState() => _InsightSectionsState();
+  ConsumerState<InsightSections> createState() => _InsightSectionsState();
 }
 
-enum _Order { frequent, highest, reliable, polarizing }
-
-class _InsightSectionsState extends State<InsightSections> {
+class _InsightSectionsState extends ConsumerState<InsightSections> {
   FilmographyRole? _role;
-  _Order _order = _Order.frequent;
+  PeopleOrder _order = PeopleOrder.frequent;
   bool _showAll = false;
+
+  InsightViewInput? _input;
+  InsightView? _view;
+  int _revision = 0;
+  late final _worker = LatestWorker<InsightViewInput, InsightView>(
+    (input) => ref
+        .read(viewComputerProvider)
+        .run(prepareInsights, input, 'statistics people view'),
+  );
+
+  void _prepare() {
+    final input = (widget.titles, widget.insights, _role, _order);
+    if (_input == input) return;
+    _input = input;
+    final revision = ++_revision;
+    if (widget.titles.length <= 200 && widget.insights.people.length <= 200) {
+      _view = prepareInsights(input);
+      return;
+    }
+    unawaited(
+      _worker
+          .run(input)
+          .then(
+            (view) {
+              if (mounted && revision == _revision && view != null) {
+                setState(() => _view = view);
+              }
+            },
+            onError: (Object error, StackTrace stack) {
+              if (mounted && revision == _revision) {
+                FlutterError.reportError(
+                  FlutterErrorDetails(exception: error, stack: stack),
+                );
+              }
+            },
+          ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _worker.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final insights = widget.insights;
-    final titles = [...widget.titles]
-      ..sort((a, b) {
-        final score = b.rating.scoreHalf.compareTo(a.rating.scoreHalf);
-        return score != 0
-            ? score
-            : b.rating.scoredAt.compareTo(a.rating.scoredAt);
-      });
-    final genres =
-        insights.genres.entries.where((e) => e.value.eligible).toList()
-          ..sort((a, b) {
-            final share = b.value.highShare.compareTo(a.value.highShare);
-            return share != 0
-                ? share
-                : b.value.average.compareTo(a.value.average);
-          });
-    final ranked = <(PersonInsight, ScoreProfile)>[];
-    for (final person in insights.people) {
-      final profile = _role == null ? person.profile : person.roles[_role];
-      if (profile == null ||
-          _order != _Order.frequent && !profile.eligible ||
-          _order == _Order.polarizing && !profile.polarizing) {
-        continue;
-      }
-      ranked.add((person, profile));
+    _prepare();
+    final view = _view;
+    if (view == null) {
+      return const SliverToBoxAdapter(child: SizedBox(height: 32));
     }
-    ranked.sort((a, b) {
-      final cmp = switch (_order) {
-        _Order.frequent => b.$2.count.compareTo(a.$2.count),
-        _Order.highest => b.$2.average.compareTo(a.$2.average),
-        _Order.reliable => b.$2.highShare.compareTo(a.$2.highShare),
-        _Order.polarizing => b.$2.spread.compareTo(a.$2.spread),
-      };
-      if (cmp != 0) return cmp;
-      final count = b.$2.count.compareTo(a.$2.count);
-      return count != 0 ? count : a.$1.person.id.compareTo(b.$1.person.id);
-    });
-    String orderLabel(_Order order) => switch (order) {
-      _Order.frequent => l10n.statsPeopleFrequent,
-      _Order.highest => l10n.statsPeopleHighest,
-      _Order.reliable => l10n.statsPeopleReliable,
-      _Order.polarizing => l10n.statsPeoplePolarizing,
+    final titles = view.titles;
+    final genres = view.genres;
+    final ranked = view.ranked;
+    String orderLabel(PeopleOrder order) => switch (order) {
+      PeopleOrder.frequent => l10n.statsPeopleFrequent,
+      PeopleOrder.highest => l10n.statsPeopleHighest,
+      PeopleOrder.reliable => l10n.statsPeopleReliable,
+      PeopleOrder.polarizing => l10n.statsPeoplePolarizing,
     };
     return SliverList.list(
       children: [
@@ -144,7 +163,7 @@ class _InsightSectionsState extends State<InsightSections> {
           spacing: 8,
           runSpacing: 4,
           children: [
-            for (final order in _Order.values)
+            for (final order in PeopleOrder.values)
               ChoiceChip(
                 label: Text(orderLabel(order)),
                 selected: _order == order,
@@ -194,8 +213,8 @@ class _InsightSectionsState extends State<InsightSections> {
         const SizedBox(height: 8),
         Text(
           l10n.statsEffectiveDiversity(
-            categoryBreadth(insights.genres.values).toStringAsFixed(1),
-            categoryBreadth(insights.decades.values).toStringAsFixed(1),
+            view.genreBreadth.toStringAsFixed(1),
+            view.decadeBreadth.toStringAsFixed(1),
           ),
         ),
         const SizedBox(height: 8),
@@ -272,26 +291,23 @@ class _WorksTile extends StatelessWidget {
 }
 
 class SourceInsights extends StatelessWidget {
-  const SourceInsights({super.key, required this.source, required this.titles});
+  const SourceInsights({
+    super.key,
+    required this.source,
+    required this.titles,
+    this.prepared,
+  });
   final RatingSource source;
   final List<RatedTitle> titles;
+  final SourceBreakdown? prepared;
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final shared = titles
-        .where((t) => t.divergenceFrom(source) != null)
-        .toList();
-    final finds = shared.where((t) => t.divergenceFrom(source)! >= 1).toList()
-      ..sort(
-        (a, b) =>
-            b.divergenceFrom(source)!.compareTo(a.divergenceFrom(source)!),
-      );
-    final disappointments =
-        shared.where((t) => t.divergenceFrom(source)! <= -1).toList()..sort(
-          (a, b) =>
-              a.divergenceFrom(source)!.compareTo(b.divergenceFrom(source)!),
-        );
-    final agreement = rankAgreement(titles, source);
+    final data = prepared ?? SourceBreakdown(titles, source);
+    final finds = data.finds;
+    final disappointments = data.disappointments;
+    final agreement = data.agreement;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -304,7 +320,7 @@ class SourceInsights extends StatelessWidget {
               ? l10n.statsAgreementMissing
               : l10n.statsAgreementValue(
                   agreement.toStringAsFixed(2),
-                  shared.length,
+                  data.count,
                 ),
         ),
         Wrap(

@@ -135,9 +135,11 @@ class PosterTint extends ConsumerWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        border: color == null
-            ? null
-            : Border.all(color: accent.withValues(alpha: 0.65)),
+        border: Border.all(
+          color: color == null
+              ? Colors.transparent
+              : accent.withValues(alpha: 0.65),
+        ),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,

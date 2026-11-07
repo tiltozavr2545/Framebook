@@ -17,6 +17,8 @@ import 'package:framebook/features/stats/stats_screen.dart';
 import 'package:framebook/l10n/app_localizations.dart';
 
 import '../data/insights_test.dart' show rated;
+import '../support/inline_view_computer.dart';
+import 'package:framebook/data/view_computer.dart';
 
 class _Index extends PeopleIndex {
   @override
@@ -24,6 +26,9 @@ class _Index extends PeopleIndex {
 }
 
 Widget app(Widget child) => ProviderScope(
+  overrides: [
+    viewComputerProvider.overrideWithValue(const InlineViewComputer()),
+  ],
   child: MaterialApp(
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,

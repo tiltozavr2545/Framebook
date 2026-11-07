@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/theme.dart';
+import '../../data/library/prepared_views.dart';
+import '../../data/latest_worker.dart';
+import '../../data/view_computer.dart';
 import '../../data/sources/providers.dart';
 import '../../data/sources/tmdb/tmdb_models.dart';
 import '../../data/work_key.dart';
@@ -19,6 +22,29 @@ final personProvider = FutureProvider.autoDispose.family<Person, int>(
   (ref, id) => ref.watch(tmdbProvider).person(id),
 );
 
+final _personWorker = Provider.autoDispose
+    .family<LatestWorker<Person, PersonView>, int>((ref, id) {
+      final computer = ref.watch(viewComputerProvider);
+      final worker = LatestWorker<Person, PersonView>(
+        (person) => computer.run(preparePerson, person, 'filmography'),
+      );
+      ref.onDispose(worker.dispose);
+      return worker;
+    });
+final preparedPersonProvider = FutureProvider.autoDispose
+    .family<PersonView, int>((ref, id) async {
+      final worker = ref.watch(_personWorker(id));
+      final person = await ref.watch(personProvider(id).future);
+      if (person.acting.length + person.crew.length <= 200) {
+        return preparePerson(person);
+      }
+      final result = await worker.run(person);
+      if (result == null) {
+        throw StateError('Superseded filmography preparation');
+      }
+      return result;
+    });
+
 /// A person: who they are and what they made. A title opens its card in the
 /// same tab, and back returns here.
 class PersonScreen extends ConsumerStatefulWidget {
@@ -32,32 +58,19 @@ class PersonScreen extends ConsumerStatefulWidget {
 
 class _PersonScreenState extends ConsumerState<PersonScreen> {
   FilmographyRole? _role;
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return TitlePage(
-      value: ref.watch(personProvider(widget.id)),
+      value: ref.watch(preparedPersonProvider(widget.id)),
       onRetry: () => ref.invalidate(personProvider(widget.id)),
-      builder: (context, person) {
-        final groups = person.filmography;
+      builder: (context, prepared) {
+        final person = prepared.person;
+        final groups = prepared.groups;
+        final allCredits = prepared.all;
         final role = groups.containsKey(_role)
             ? _role
             : groups.keys.firstOrNull;
-        final combined = <String, PersonCredit>{};
-        for (final credit in [...person.acting, ...person.crew]) {
-          final old = combined[credit.title.key.toString()];
-          combined[credit.title.key.toString()] = PersonCredit(
-            title: credit.title,
-            roles: {...?old?.roles, ...credit.roles}.toList(),
-          );
-        }
-        final allCredits = combined.values.toList()
-          ..sort(
-            (a, b) => (b.title.releaseDate ?? '9999').compareTo(
-              a.title.releaseDate ?? '9999',
-            ),
-          );
         final credits = _role == null
             ? allCredits
             : groups[role] ?? const <PersonCredit>[];
@@ -210,13 +223,18 @@ class _Biography extends StatefulWidget {
   State<_Biography> createState() => _BiographyState();
 }
 
-class _BiographyState extends State<_Biography> {
+class _BiographyState extends State<_Biography>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   var _open = false;
 
   static const _folded = 6;
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final style = theme.textTheme.bodyMedium;

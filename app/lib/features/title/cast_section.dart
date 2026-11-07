@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../shared/retained_section.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../data/sources/tmdb/tmdb_models.dart';
@@ -87,55 +89,58 @@ class _CastStrip extends StatelessWidget {
       return height;
     }
 
-    return SizedBox(
-      height:
-          _width * 3 / 2 +
-          6 +
-          twoLineHeight(nameStyle) +
-          twoLineHeight(roleStyle),
-      // The strip runs to the screen edges, past the card's padding.
-      child: OverflowBox(
-        maxWidth: MediaQuery.sizeOf(context).width,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: cast.length.clamp(0, _shown),
-          separatorBuilder: (_, _) => const SizedBox(width: 10),
-          itemBuilder: (context, index) {
-            final person = cast[index];
-            return SizedBox(
-              width: _width,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(6),
-                onTap: () => openPerson(context, person.personId),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Poster(
-                      person.profilePath,
-                      size: ImageSize.w185,
-                      width: _width,
-                      icon: Icons.person_outline,
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      person.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: nameStyle,
-                    ),
-                    if (person.character case final role? when role.isNotEmpty)
+    return RetainedSection(
+      child: SizedBox(
+        height:
+            _width * 3 / 2 +
+            6 +
+            twoLineHeight(nameStyle) +
+            twoLineHeight(roleStyle),
+        // The strip runs to the screen edges, past the card's padding.
+        child: OverflowBox(
+          maxWidth: MediaQuery.sizeOf(context).width,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: cast.length.clamp(0, _shown),
+            separatorBuilder: (_, _) => const SizedBox(width: 10),
+            itemBuilder: (context, index) {
+              final person = cast[index];
+              return SizedBox(
+                width: _width,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(6),
+                  onTap: () => openPerson(context, person.personId),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Poster(
+                        person.profilePath,
+                        size: ImageSize.w185,
+                        width: _width,
+                        icon: Icons.person_outline,
+                      ),
+                      const SizedBox(height: 6),
                       Text(
-                        role,
+                        person.name,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: roleStyle,
+                        style: nameStyle,
                       ),
-                  ],
+                      if (person.character case final role?
+                          when role.isNotEmpty)
+                        Text(
+                          role,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: roleStyle,
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );

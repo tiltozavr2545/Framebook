@@ -679,3 +679,80 @@ budget capped at 4,096 × 4,096 pixels. Poster colours use a bounded 128-entry
 successful-result LRU without retaining images. Release builds move debug
 information into matching Actions artifacts, backed up locally before expiry. Exact behavior,
 measurements and limits are in [optimization.md](optimization.md).
+
+## Scroll stability
+
+Discover displays the first useful candidate and actor-index snapshots promptly,
+then commits each completed pass, rather than reranking after every response.
+Taste inputs compare score, identity, title, year and genres; note, poster,
+external-rating and freshness-only changes do not rebuild taste weights.
+Equivalent watchlist rereads do not invalidate ranking, while presentation,
+membership and entry revisions remain reactive. Snapshot timestamps retain their
+existing synchronization semantics.
+
+Large taste profiles (more than 80 titles or 1,000 relevant credit entries) use a
+serialized worker and retain the previous result while computing a replacement.
+Preferred people, genres and recommendation seeds materialize with the profile,
+so reading the completed result cannot trigger another large sort on the UI
+isolate. Live rated-key filtering is independent of the pending profile.
+
+Discover defers replacing its shelf tree during vertical and horizontal scroll
+activity, including flings; descendant controls keep their own subscriptions.
+Film and people shelves use fixed-extent horizontal slots, keyed index lookup,
+independent PageStorage keys and retained visited sections. Padding and spacing
+remain unchanged, and tiles remain lazy. Loading placeholders reserve reason
+caption space, and refresh errors preserve available data. Personal-score badges
+select from one shared live-library map instead of querying each poster.
+
+Title pages retain visited headers, editors, source-rating panels, cast strips
+and related titles until the route closes. Season, episode, search, ratings and
+watchlist rows remain lazy. Expanded biographies retain their state; person role
+filters reuse derived filmography groups and combined ordering for one Person
+snapshot. An opening card uses its shared live-library rating while the individual
+query is pending; an explicit null from that query always wins. Poster tint
+reserves a transparent border before its colour arrives. Source-rating cells
+reserve two caption lines and a numeric slot sized for the current text scaler;
+long numeric values scale down only when their available width requires it.
+
+People and statistics loading counters subscribe independently of their main
+content. Insight scheduling accounts for title count, credit volume and the
+actor/director pair product: the synchronous path is limited to 80 titles,
+1,000 credit entries and an estimated 4,000 pair contributions. Larger inputs use
+the existing serialized worker. The estimate may conservatively overcount
+duplicate credits; these work limits are not measured FPS guarantees.
+
+Catalog JSON bodies and cache envelopes of at least 64 Ki characters parse or
+encode in isolates. Derived actor lists use background decoding at the same body
+threshold and background encoding above 400 credits. Small inputs avoid isolate
+startup overhead. Invalid JSON, stale-cache fallback and private atomic cache
+staging retain their previous behavior. A TMDB client shares concurrent loads by
+canonical endpoint/parameter key; try/finally clears in-flight entries after both
+success and failure without a self-waiting completion chain. Ratings-list ancestor
+snapshots load in batches of 400 keys.
+
+Root tab pages accept horizontal drags in both navigation styles. Nested
+horizontal lists win their gesture arena; losing a gesture cannot cancel a tab
+transition that never started. Nested title/person routes do not switch tabs by
+body swipe. Pages and the floating selection share a controller, including RTL
+and reduced-motion support. The glass effect uses a gradient and highlight over
+an opaque surface, without backdrop filtering that solid background.
+
+## Prepared library views
+
+Ratings filtering, ordering and day-group construction run in a serialized worker
+above 200 ratings. The retained result includes its selection settings, so an old
+list is not relabeled with a new filter while its replacement is pending. Large
+statistics summaries also filter their input in a worker and precompute the
+median, score groups, Spearman agreement and discovery/disappointment lists.
+Their retained kind drives both summary and people insights consistently.
+Statistics people-order preparation uses a serialized worker above 200 titles or
+200 people and preserves its previous result while changing role/order. All score
+profile aggregates materialize during analytics preparation, rather than lazily
+looping through contributing titles during row rendering.
+
+Initial combined filmography and role grouping run in a serialized worker above
+200 acting/crew credits. The resulting view stays provider-cached for the route
+and its controls only select prepared lists. Pure preparation goes through
+`ViewComputer`: production uses real isolates; virtual-clock widget tests replace
+only scheduling. Separate tests use actual isolate transfer and gated workers to
+check stale-request suppression and previous-result retention.

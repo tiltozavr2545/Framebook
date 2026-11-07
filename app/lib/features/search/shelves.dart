@@ -16,6 +16,9 @@ import '../../data/work_key.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/failure_view.dart';
 import '../../shared/poster.dart';
+import '../../shared/horizontal_shelf.dart';
+import '../../shared/retained_section.dart';
+import '../../shared/scroll_stable_content.dart';
 import '../title/my_rating.dart';
 import '../title/title_routes.dart';
 
@@ -50,75 +53,87 @@ class Shelves extends ConsumerWidget {
               ],
             ),
     ];
-    final allFailed = values.every((v) => v.hasError);
+    final allFailed = values.every(
+      (v) => v.hasError && (v.value?.isEmpty ?? true),
+    );
     if (allFailed && feed.isEmpty && hidden.isEmpty) {
       final error = values[0].error;
-      return _Offline(
-        failure: error is SourceException ? error.failure : null,
-        onRetry: () {
-          for (final (_, p) in shelves) {
-            ref.invalidate(p);
-          }
-          ref.invalidate(recommendationPoolProvider);
-        },
+      return ScrollStableContent(
+        child: _Offline(
+          failure: error is SourceException ? error.failure : null,
+          onRetry: () {
+            for (final (_, p) in shelves) {
+              ref.invalidate(p);
+            }
+            ref.invalidate(recommendationPoolProvider);
+          },
+        ),
       );
     }
-    return ListView(
-      padding: EdgeInsets.only(
-        bottom: 24 + MediaQuery.paddingOf(context).bottom,
-      ),
-      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      children: [
-        _Shelf(
-          label: l10n.shelfForYou,
-          value:
-              feed.forYou.isEmpty &&
-                  (pool.isLoading || (pool.value?.running ?? false))
-              ? const AsyncLoading()
-              : AsyncData([for (final p in feed.forYou) p.title]),
-          reasons: {for (final p in feed.forYou) p.title.key: p},
-          action: hidden.isEmpty
-              ? null
-              : IconButton(
-                  icon: const Icon(Icons.visibility_off_outlined),
-                  tooltip: l10n.recommendationsHidden,
-                  onPressed: () => _restoreHidden(context, ref),
-                ),
-          showEmpty: hidden.isNotEmpty,
+    return ScrollStableContent(
+      child: ListView(
+        padding: EdgeInsets.only(
+          bottom: 24 + MediaQuery.paddingOf(context).bottom,
         ),
-        for (final (label, items) in [
-          (l10n.recommendationsWatchlist, feed.watchlist),
-          (l10n.recommendationsPeople, feed.people),
-          (l10n.recommendationsExplore, feed.explore),
-        ])
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        children: [
           _Shelf(
-            label: label,
-            value: AsyncData([for (final p in items) p.title]),
-            reasons: {for (final p in items) p.title.key: p},
+            key: const ValueKey('for-you'),
+            withReasons: true,
+            label: l10n.shelfForYou,
+            value:
+                feed.forYou.isEmpty &&
+                    (pool.isLoading || (pool.value?.running ?? false))
+                ? const AsyncLoading()
+                : AsyncData([for (final p in feed.forYou) p.title]),
+            reasons: {for (final p in feed.forYou) p.title.key: p},
+            action: hidden.isEmpty
+                ? null
+                : IconButton(
+                    icon: const Icon(Icons.visibility_off_outlined),
+                    tooltip: l10n.recommendationsHidden,
+                    onPressed: () => _restoreHidden(context, ref),
+                  ),
+            showEmpty: hidden.isNotEmpty,
           ),
-        if (pool.hasError || (pool.value?.failed ?? 0) > 0 && feed.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: TextButton.icon(
-              icon: const Icon(Icons.refresh),
-              label: Text(l10n.recommendationsRetry),
-              onPressed: () => ref.invalidate(recommendationPoolProvider),
+          for (final (label, items) in [
+            (l10n.recommendationsWatchlist, feed.watchlist),
+            (l10n.recommendationsPeople, feed.people),
+            (l10n.recommendationsExplore, feed.explore),
+          ])
+            _Shelf(
+              key: ValueKey(label),
+              withReasons: true,
+              label: label,
+              value: AsyncData([for (final p in items) p.title]),
+              reasons: {for (final p in items) p.title.key: p},
             ),
-          ),
-        for (final (i, (label, _)) in shelves.indexed)
-          _Shelf(label: label, value: values[i]),
-      ],
+          if (pool.hasError || (pool.value?.failed ?? 0) > 0 && feed.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TextButton.icon(
+                icon: const Icon(Icons.refresh),
+                label: Text(l10n.recommendationsRetry),
+                onPressed: () => ref.invalidate(recommendationPoolProvider),
+              ),
+            ),
+          for (final (i, (label, _)) in shelves.indexed)
+            _Shelf(key: ValueKey(label), label: label, value: values[i]),
+        ],
+      ),
     );
   }
 }
 
 class _Shelf extends StatelessWidget {
   const _Shelf({
+    super.key,
     required this.label,
     required this.value,
     this.reasons = const {},
     this.action,
     this.showEmpty = false,
+    this.withReasons = false,
   });
 
   final String label;
@@ -126,6 +141,7 @@ class _Shelf extends StatelessWidget {
   final Map<WorkKey, RecommendationPick> reasons;
   final Widget? action;
   final bool showEmpty;
+  final bool withReasons;
 
   static const _width = 112.0;
 
@@ -133,55 +149,63 @@ class _Shelf extends StatelessWidget {
   Widget build(BuildContext context) {
     final titles = value.value;
     // A shelf that failed or has nothing is left out, not shown empty.
-    if (value.hasError || (titles != null && titles.isEmpty && !showEmpty)) {
+    if ((value.hasError && titles == null) ||
+        (titles != null && titles.isEmpty && !showEmpty)) {
       return const SizedBox.shrink();
     }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  label,
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-              ),
-              if (action != null) action!,
-            ],
-          ),
-        ),
-        if (titles != null && titles.isEmpty)
+    return RetainedSection(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Text(AppLocalizations.of(context).recommendationsEmpty),
-          )
-        else
-          SizedBox(
-            height: _shelfHeight(context, reasons.isNotEmpty),
-            child: titles == null
-                ? const _Skeleton(width: _width)
-                : ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: titles.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: 12),
-                    itemBuilder: (context, index) => _ShelfItem(
-                      title: titles[index],
-                      width: _width,
-                      reason: reasons[titles[index].key],
-                    ),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    label,
+                    style: Theme.of(context).textTheme.headlineSmall,
                   ),
+                ),
+                if (action != null) action!,
+              ],
+            ),
           ),
-      ],
+          if (titles != null && titles.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Text(AppLocalizations.of(context).recommendationsEmpty),
+            )
+          else
+            SizedBox(
+              height: _shelfHeight(context, withReasons || reasons.isNotEmpty),
+              child: titles == null
+                  ? const _Skeleton(width: _width)
+                  : HorizontalShelf(
+                      key: PageStorageKey(label),
+                      itemKeys: [for (final title in titles) title.key],
+                      itemWidth: _width,
+                      itemBuilder: (context, index) => _ShelfItem(
+                        key: ValueKey(titles[index].key),
+                        title: titles[index],
+                        width: _width,
+                        reason: reasons[titles[index].key],
+                      ),
+                    ),
+            ),
+        ],
+      ),
     );
   }
 }
 
 class _ShelfItem extends ConsumerWidget {
-  const _ShelfItem({required this.title, required this.width, this.reason});
+  const _ShelfItem({
+    super.key,
+    required this.title,
+    required this.width,
+    this.reason,
+  });
 
   final TitleSummary title;
   final double width;
