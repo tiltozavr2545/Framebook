@@ -115,7 +115,7 @@ class TitleHeader extends StatelessWidget {
                   child: InkWell(
                     onTap: posterPath == null || coverKey == null
                         ? null
-                        : () => Navigator.of(context).push(
+                        : () => Navigator.of(context, rootNavigator: true).push(
                             coverViewerRoute(
                               (_) => CoverViewer(
                                 currentPath: posterPath!,

@@ -12,8 +12,10 @@ Title routes nest inside the active tab; Back follows episode, season,
 series and the originating list. Related titles and person profiles push
 inside that tab so Back returns to the originating card.
 
-Both navigation styles support horizontal swipes on root pages. Nested
-horizontal shelves keep their gestures; nested title/person pages do not
+Both navigation styles appear only on root tabs and support horizontal swipes
+there. Movie, series, season, episode, person and full cast pages hide the bar;
+returning to a root tab restores the selected style. Horizontal shelves keep
+their gestures; nested title/person pages do not
 switch tabs through body swipes. The default floating bar has a glass
 selection that moves with the page. The classic bar remains available in
 Settings. Tapping the active tab returns to its root. Content includes enough
@@ -158,6 +160,8 @@ in [pair calibration](pair-calibration.md).
 A title cover opens full screen with the current image first, followed by
 UI-language, original-language and textless variants. Episode covers use
 stills; movie/TV backdrops are excluded. Person photos use the same viewer.
+The viewer covers the tab navigation, including the floating bottom bar;
+closing it returns to the card in its original tab.
 Swipe changes images and pinch zooms. The cached preview and large image
 use identical viewport constraints with `BoxFit.contain`; the route fades
 without scaling. Decode memory limits belong to the

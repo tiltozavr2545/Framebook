@@ -750,11 +750,6 @@ void main() {
     },
   );
 
-  Finder tab(String label) => find.descendant(
-    of: find.byType(NavigationBar),
-    matching: find.text(label),
-  );
-
   /// Inception, rated before the test starts.
   Future<void> inceptionRated(Library library, int scoreHalf) => library.rate(
     [
@@ -882,7 +877,7 @@ void main() {
     expect(find.text('8.5'), findsOneWidget);
     expect(find.text('Классика'), findsOneWidget);
 
-    await tester.tap(tab('Ratings'));
+    go(tester, Routes.ratings);
     await settle(tester);
     expect(inList('Матрица'), findsOneWidget);
     expect(inList('Film · 1999'), findsOneWidget);
@@ -943,7 +938,7 @@ void main() {
     await settle(tester);
     await tester.tap(find.text('Want to watch'));
     await settle(tester);
-    await tester.tap(tab('Watchlist'));
+    go(tester, Routes.watchlist);
     await settle(tester);
     expect(inList('Игра Престолов'), findsOneWidget);
     expect(inList('Сезон 1'), findsOneWidget);
@@ -969,7 +964,7 @@ void main() {
     await settle(tester);
     expect(find.text('On the watchlist'), findsOneWidget);
 
-    await tester.tap(tab('Watchlist'));
+    go(tester, Routes.watchlist);
     await settle(tester);
     expect(inList('Матрица'), findsOneWidget);
 
@@ -1050,7 +1045,7 @@ void main() {
     await tester.tap(find.text('Cancel'));
     await settle(tester);
     expect(find.text('My rating'), findsOneWidget);
-    await tester.tap(tab('Ratings'));
+    go(tester, Routes.ratings);
     await settle(tester);
     expect(inList('Матрица'), findsOneWidget);
     expect(inList('8.5'), findsOneWidget);
@@ -1070,14 +1065,14 @@ void main() {
     await tester.tap(find.text('Save'));
     await settle(tester);
     expect(find.text('Saved from the editor'), findsOneWidget);
-    await tester.tap(tab('Watchlist'));
+    go(tester, Routes.watchlist);
     await settle(tester);
     expect(inList('Матрица'), findsNothing);
-    await tester.tap(tab('Ratings'));
+    go(tester, Routes.ratings);
     await settle(tester);
     expect(inList('Матрица'), findsOneWidget);
     expect(inList('5'), findsOneWidget);
-    await tester.tap(tab('Stats'));
+    go(tester, Routes.stats);
     await settle(tester);
     expect(find.text('your score, the only one so far'), findsOneWidget);
     expect(find.text('5.0'), findsOneWidget);
@@ -1119,7 +1114,7 @@ void main() {
       keys: tmdbOnly,
       seed: (library) => inceptionRated(library, 17),
     );
-    await tester.tap(tab('Ratings'));
+    go(tester, Routes.ratings);
     await settle(tester);
     expect(inList('Начало'), findsOneWidget);
 
@@ -1215,7 +1210,7 @@ void main() {
       await tester.tap(find.widgetWithText(TextButton, 'Move'));
       await settle(tester);
       expect(find.text(question), findsNothing);
-      await tester.tap(tab('Watchlist'));
+      go(tester, Routes.watchlist);
       await settle(tester);
       expect(inList('Сезон 1'), findsOneWidget);
       expect(inList('Сезон 2'), findsNothing);
@@ -1300,7 +1295,7 @@ void main() {
     // unknown (background refresh is off in tests).
     go(tester, '/search/movie/603');
     await settle(tester);
-    await tester.tap(tab('Ratings'));
+    go(tester, Routes.ratings);
     await settle(tester);
 
     await tester.tap(find.byTooltip('Sort'));
@@ -1346,7 +1341,7 @@ void main() {
         );
       },
     );
-    await tester.tap(tab('Stats'));
+    go(tester, Routes.stats);
     await settle(tester);
     // The list, not the chip row that also scrolls.
     final statsList = find.descendant(
@@ -1676,7 +1671,9 @@ void main() {
       await settle(tester);
       expect(
         tester.getRect(find.text('Role 25')).bottom,
-        lessThan(tester.getRect(find.byType(NavigationBar)).top),
+        lessThanOrEqualTo(
+          tester.view.physicalSize.height / tester.view.devicePixelRatio,
+        ),
       );
       await tester.scrollUntilVisible(
         find.text('Actor 0'),
@@ -1913,80 +1910,107 @@ void main() {
     },
   );
 
-  cardTest(
-    'floating navigation follows a drag, preserves cards and supports classic mode',
-    (tester) async {
-      await pumpApp(tester, keys: tmdbOnly);
-      go(tester, '/search/person/6384');
+  cardTest('both navigation styles hide on cards and return on Back', (
+    tester,
+  ) async {
+    await pumpApp(tester, keys: tmdbOnly);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(FramebookApp)),
+    );
+    final router = container.read(routerProvider);
+    for (final floating in [true, false]) {
+      await container.read(floatingNavigationProvider.notifier).set(floating);
       await settle(tester);
-      final bar = find.byKey(const ValueKey('glass-navigation'));
-      final navRect = tester.getRect(find.byType(NavigationBar));
-      expect(navRect.left, greaterThan(0));
-      expect(navRect.right, lessThan(360));
-      final scope = tester.widget<NavigationMotion>(
-        find.byType(NavigationMotion),
-      );
-      final gesture = await tester.startGesture(
-        tester.getCenter(bar) - const Offset(115, 0),
-      );
-      await gesture.moveBy(const Offset(45, 0));
-      await tester.pump();
-      await gesture.moveBy(const Offset(60, 0));
-      await tester.pump();
-      expect(scope.position.value, greaterThan(0));
-      expect(scope.position.value % 1, isNonZero);
-      expect(find.byType(FractionalTranslation), findsWidgets);
-      await gesture.up();
-      await settle(tester);
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(FramebookApp)),
-      );
-      expect(
-        container.read(routerProvider).routeInformationProvider.value.uri.path,
-        Routes.ratings,
-      );
-      expect(
-        tester.getRect(find.byType(NavigationPages)).bottom,
-        greaterThan(navRect.top),
-      );
-      await tester.tap(
-        find.descendant(
-          of: find.byType(NavigationBar),
-          matching: find.text('Discover'),
-        ),
-      );
-      await settle(tester);
-      expect(find.byType(PersonScreen), findsOneWidget);
-      unawaited(container.read(routerProvider).push<void>(Routes.settings));
-      await settle(tester);
-      await tester.tap(
-        find.byWidgetPredicate((widget) => widget is DropdownButton<bool>),
-      );
-      await settle(tester);
-      await tester.tap(find.text('Classic').last);
-      await settle(tester);
-      expect(container.read(floatingNavigationProvider), isFalse);
-      container.read(routerProvider).pop();
-      await settle(tester);
-      expect(bar, findsNothing);
-      expect(tester.getRect(find.byType(NavigationBar)).left, 0);
-      await tester.tap(
-        find.descendant(
-          of: find.byType(NavigationBar),
-          matching: find.text('Stats'),
-        ),
-      );
-      await settle(tester);
-      expect(
-        find.text('Statistics will be here once you have ratings.'),
-        findsOneWidget,
-      );
-      await container.read(floatingNavigationProvider.notifier).set(true);
-      await settle(tester);
-      expect(bar, findsOneWidget);
-      expect(scope.position.value, 3);
-    },
-  );
+      for (final card in [
+        '/search/movie/603',
+        '/search/tv/1399',
+        '/search/tv/1399/s/1',
+        '/search/tv/1399/s/1/e/3',
+        '/search/person/6384',
+      ]) {
+        expect(find.byType(NavigationBar), findsOneWidget);
+        unawaited(router.push<void>(card));
+        await settle(tester);
+        expect(find.byType(NavigationBar), findsNothing);
+        expect(find.byKey(const ValueKey('glass-navigation')), findsNothing);
+        router.pop();
+        await settle(tester);
+        expect(find.byType(NavigationBar), findsOneWidget);
+      }
+    }
+  });
+
+  cardTest('floating navigation follows a drag and supports classic mode', (
+    tester,
+  ) async {
+    await pumpApp(tester, keys: tmdbOnly);
+    final bar = find.byKey(const ValueKey('glass-navigation'));
+    final navRect = tester.getRect(find.byType(NavigationBar));
+    expect(navRect.left, greaterThan(0));
+    expect(navRect.right, lessThan(360));
+    final scope = tester.widget<NavigationMotion>(
+      find.byType(NavigationMotion),
+    );
+    final gesture = await tester.startGesture(
+      tester.getCenter(bar) - const Offset(115, 0),
+    );
+    await gesture.moveBy(const Offset(45, 0));
+    await tester.pump();
+    await gesture.moveBy(const Offset(60, 0));
+    await tester.pump();
+    expect(scope.position.value, greaterThan(0));
+    expect(scope.position.value % 1, isNonZero);
+    expect(find.byType(FractionalTranslation), findsWidgets);
+    await gesture.up();
+    await settle(tester);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(FramebookApp)),
+    );
+    expect(
+      container.read(routerProvider).routeInformationProvider.value.uri.path,
+      Routes.ratings,
+    );
+    expect(
+      tester.getRect(find.byType(NavigationPages)).bottom,
+      greaterThan(navRect.top),
+    );
+    await tester.tap(
+      find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.text('Discover'),
+      ),
+    );
+    await settle(tester);
+    expect(find.text('Trending this week'), findsOneWidget);
+    unawaited(container.read(routerProvider).push<void>(Routes.settings));
+    await settle(tester);
+    await tester.tap(
+      find.byWidgetPredicate((widget) => widget is DropdownButton<bool>),
+    );
+    await settle(tester);
+    await tester.tap(find.text('Classic').last);
+    await settle(tester);
+    expect(container.read(floatingNavigationProvider), isFalse);
+    container.read(routerProvider).pop();
+    await settle(tester);
+    expect(bar, findsNothing);
+    expect(tester.getRect(find.byType(NavigationBar)).left, 0);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.text('Stats'),
+      ),
+    );
+    await settle(tester);
+    expect(
+      find.text('Statistics will be here once you have ratings.'),
+      findsOneWidget,
+    );
+    await container.read(floatingNavigationProvider.notifier).set(true);
+    await settle(tester);
+    expect(bar, findsOneWidget);
+    expect(scope.position.value, 3);
+  });
 
   cardTest(
     'shelf portrait double tap toggles favourites and single tap opens profile',
@@ -2053,7 +2077,7 @@ void main() {
         keys: tmdbOnly,
         seed: (library) => matrixRated(library, 17),
       );
-      await tester.tap(tab('Stats'));
+      go(tester, Routes.stats);
       await settle(tester);
       await tester.tap(find.text('Scores 8–10 · 100%'));
       await tester.pumpAndSettle();

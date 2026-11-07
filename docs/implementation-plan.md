@@ -7,15 +7,14 @@ verification evidence in the [review reports](reviews/README.md).
 
 ## Latest delivery
 
-Version 0.9.3 implements the Settings layout repair, daily recommendation-source
-rotation and guided pair calibration in movie statistics. Current behavior is
-specified in [features](features.md), [recommendations](recommendations.md) and
-[pair calibration](pair-calibration.md); the release history is in the
-[changelog](../CHANGELOG.md#093--pair-calibration-and-fresher-recommendations-build-23).
+Version 0.9.4 hides both bottom navigation styles on title, person and full cast
+pages and opens full-screen images above the tab shell. Current behavior is
+specified in [features](features.md); the release history is in the
+[changelog](../CHANGELOG.md#094--bottom-navigation-visibility-build-24).
 
-Implementation, migration and compatibility checks are complete. Verification
+Implementation and automated checks are complete. Verification
 results and their limits are recorded in
-[delivery validation](reviews/delivery-validation.md#093--pair-calibration-and-daily-rotation).
+[delivery validation](reviews/delivery-validation.md#bottom-navigation-visibility-repair--2026-11-07).
 The platform and independent-review work below remains separate.
 
 ## MVP stages

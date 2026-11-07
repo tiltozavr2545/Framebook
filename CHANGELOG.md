@@ -5,6 +5,13 @@ is maintained in the [documentation](docs/README.md), pending work in the
 [implementation plan](docs/implementation-plan.md), and historical verification
 evidence in [review reports](docs/reviews/README.md).
 
+## 0.9.4 — Bottom navigation visibility (build 24)
+
+- Hide floating and classic bottom navigation on title, person and full cast
+  pages; restore it when returning to a main tab.
+- Open full-screen covers and person photos above the tab shell so navigation
+  cannot overlap the image viewer.
+
 ## 0.9.3 — Pair calibration and fresher recommendations (build 23)
 
 - Add pairwise calibration to movie statistics. Choose which film you enjoyed

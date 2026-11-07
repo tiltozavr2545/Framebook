@@ -66,7 +66,7 @@ class EpisodeScreen extends ConsumerWidget {
             child: InkWell(
               onTap: episode.stillPath == null
                   ? null
-                  : () => Navigator.of(context).push(
+                  : () => Navigator.of(context, rootNavigator: true).push(
                       coverViewerRoute(
                         (_) => CoverViewer(
                           currentPath: episode.stillPath!,

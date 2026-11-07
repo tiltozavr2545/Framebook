@@ -171,7 +171,7 @@ class _Header extends StatelessWidget {
                 key: const ValueKey('person-photo'),
                 onTap: person.profilePath == null
                     ? null
-                    : () => Navigator.of(context).push(
+                    : () => Navigator.of(context, rootNavigator: true).push(
                         coverViewerRoute(
                           (_) => CoverViewer(
                             currentPath: person.profilePath!,

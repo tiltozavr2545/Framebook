@@ -125,6 +125,9 @@ class _ShellScreenState extends ConsumerState<ShellScreen>
     final l10n = AppLocalizations.of(context);
     final shell = widget.shell;
     final floating = ref.watch(floatingNavigationProvider);
+    final root =
+        GoRouterState.of(context).uri.path ==
+        AppTab.values[shell.currentIndex].path;
     if (!_dragging && _routeIndex != shell.currentIndex) {
       _routeIndex = shell.currentIndex;
       _position.value = _routeIndex.toDouble();
@@ -134,16 +137,13 @@ class _ShellScreenState extends ConsumerState<ShellScreen>
         NavigationDestination(icon: Icon(tab.icon), label: tab.label(l10n)),
     ];
     return Scaffold(
-      extendBody: floating,
+      extendBody: floating && root,
       body: Column(
         children: [
           const UpdateBanner(),
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final root =
-                    GoRouterState.of(context).uri.path ==
-                    AppTab.values[shell.currentIndex].path;
                 final direction =
                     Directionality.of(context) == TextDirection.rtl
                     ? 1.0
@@ -176,7 +176,9 @@ class _ShellScreenState extends ConsumerState<ShellScreen>
           ),
         ],
       ),
-      bottomNavigationBar: floating
+      bottomNavigationBar: !root
+          ? null
+          : floating
           ? GlassNavigationBar(
               position: _position,
               selectedIndex: shell.currentIndex,

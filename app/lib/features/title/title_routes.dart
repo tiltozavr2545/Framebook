@@ -13,7 +13,7 @@ import 'tv_screen.dart';
 
 /// Cards nest inside the branch of the tab they were opened from:
 /// `…/movie/603`, `…/tv/1399`, `…/tv/1399/s/1`, `…/tv/1399/s/1/e/3`. The bottom
-/// navigation stays in place, and back leads to the season, the series, the
+/// navigation is hidden, and back leads to the season, the series, the
 /// list, in that order. The same routes hang under Search, My ratings and
 /// Watchlist.
 abstract final class TitleRoutes {

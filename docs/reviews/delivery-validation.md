@@ -5,6 +5,16 @@ consolidation. These are recorded results, not checks rerun for the
 documentation rewrite. Dedicated audits and measured optimization reports are
 listed in the [review index](README.md) rather than repeated here.
 
+## Bottom navigation visibility repair — 2026-11-07
+
+`make verify` passed: 628 tests passed and 22 were skipped; formatting and
+static analysis passed. A widget regression covers both navigation styles on
+movie, series, season, episode and person cards and restoration after Back.
+Existing card workflows and full cast layout checks follow the new visibility
+rule. Full-screen image routes open on the root navigator.
+
+No APK build or physical-device check was performed for this repair.
+
 ## Initial Android delivery
 
 The preparation-stage universal compile-check APK was 46.6 MB. Release
