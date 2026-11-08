@@ -94,8 +94,8 @@ The completed implementation passed `make verify`: 627 tests passed and
 22 opt-in renderers were skipped; formatting and static analysis were clean.
 `make codegen` completed for schema 3 and sync format 6. Settings renders and
 pair calibration before/after an answer were inspected in light and dark themes.
-The release candidate is `0.9.3+23`; release hooks repeat verification and compile
-the universal APK before upload, and the publication workflow verifies signing.
+The release candidate was `0.9.3+23`; release hooks repeated verification and compiled
+the universal APK before upload, and the publication workflow verified signing.
 
 Regressions cover deterministic pair selection and conflicting two-step chains,
 equality without a false strict preference, confirmed corrections at score

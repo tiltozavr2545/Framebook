@@ -63,12 +63,24 @@ final class LibraryInsights {
     required this.people,
     required this.duos,
     required this.covered,
-  });
+  }) : discoveryPeopleByRole = {
+         for (final role in FilmographyRole.values)
+           if (people.where((person) => person.roles.containsKey(role)).toList()
+               case final group when group.isNotEmpty)
+             role:
+                 (group..sort(
+                       (a, b) =>
+                           b.roles[role]!.count.compareTo(a.roles[role]!.count),
+                     ))
+                     .take(20)
+                     .toList(growable: false),
+       };
   final Map<int, ScoreProfile> genres;
   final Map<int, ScoreProfile> decades;
   final List<PersonInsight> people;
   final List<DuoInsight> duos;
   final int covered;
+  final Map<FilmographyRole, List<PersonInsight>> discoveryPeopleByRole;
 }
 
 LibraryInsights analyzeLibrary(

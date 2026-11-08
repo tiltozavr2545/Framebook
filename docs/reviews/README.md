@@ -7,17 +7,19 @@ in the [implementation plan](../implementation-plan.md).
 
 | Record | Scope |
 | --- | --- |
+| [0.7.4 Samsung investigation](0.7.4/README.md) | Affected-device reports, scoped workaround and original verification |
 | [Delivery validation](delivery-validation.md) | Milestone checks, calibration/rotation and statistics redesign |
 | [2026-11-02 audit](2026-11-02/README.md) | Repository inventory, correctness findings, resolutions and verification |
 | [2026-11-05 review](2026-11-05/README.md) | Cache/source races, import recovery and initial optimization measurements |
-| [0.8.4 optimization](../optimization.md) | Selected changes, host measurements, rejected options and packaging results |
+| [0.8.4 optimization](0.8.4/README.md) | Selected changes, host measurements, rejected options and packaging results |
 | [2026-11-06 responsiveness review](2026-11-06/README.md) | Favourite-people, recommendation and statistics responsiveness |
 | [0.9.0 review](0.9.0/README.md) | Sync application cost, credits, clock corrections and layouts |
 | [0.9.1 review](0.9.1/README.md) | Resume, rating-editor races, source validation and narrow layouts |
 | [0.9.2 review](0.9.2/README.md) | Shelf stability, worker preparation and retained view state |
 | [0.9.4 review](0.9.4/README.md) | Storage/sync correctness, title identity, recovery and measured worker responsiveness |
+| [0.9.5 review](0.9.5/README.md) | Responsiveness, bounded reads/workers, action races and storage-failure recovery in the unreleased version |
 
-The [Samsung investigation](../android-troubleshooting.md#samsung-android-14-resume)
-keeps its affected-device evidence beside the diagnostic procedure.
+Current Samsung reproduction and recovery procedures belong to
+[Android troubleshooting](../android-troubleshooting.md).
 Reusable commands and test conventions belong to [testing](../testing.md),
 not to individual release reports.

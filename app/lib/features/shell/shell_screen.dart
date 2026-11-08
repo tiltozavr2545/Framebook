@@ -12,6 +12,7 @@ import '../../data/update_checker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../data/sync/sync_controller.dart';
 import '../../l10n/app_localizations.dart';
+import '../../shared/preference_action.dart';
 
 /// Bottom navigation tabs, in display order.
 enum AppTab {
@@ -217,8 +218,10 @@ class UpdateBanner extends ConsumerWidget {
           child: Text(l10n.updateOpen),
         ),
         TextButton(
-          onPressed: () =>
-              ref.read(updateControllerProvider.notifier).dismiss(),
+          onPressed: () => savePreference(
+            context,
+            ref.read(updateControllerProvider.notifier).dismiss,
+          ),
           child: Text(l10n.updateDismiss),
         ),
       ],

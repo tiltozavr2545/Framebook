@@ -15,7 +15,7 @@ import '../data/insights_test.dart' show rated;
 
 void main() {
   testWidgets(
-    'an older comparison cannot replace a newer request for the same score',
+    'an older comparison is discarded when returning to the same score',
     (tester) async {
       final requests = <Completer<Calibration>>[];
       await tester.pumpWidget(
@@ -36,17 +36,21 @@ void main() {
           ),
         ),
       );
+      await tester.pump();
       tester.widget<ScoreReel>(find.byType(ScoreReel)).onChanged(12);
+      await tester.pump(const Duration(milliseconds: 120));
       tester.widget<ScoreReel>(find.byType(ScoreReel)).onChanged(10);
-      requests.last.complete(
-        Calibration(same: [rated(2, 10)], above: [], below: []),
-      );
-      await tester.pumpAndSettle();
-      expect(find.text('Title 2'), findsOneWidget);
+      await tester.pump(const Duration(milliseconds: 120));
+      expect(requests, hasLength(1));
       requests.first.complete(
         Calibration(same: [rated(1, 10)], above: [], below: []),
       );
-      requests[1].complete(const Calibration(same: [], above: [], below: []));
+      await tester.pump();
+      expect(find.text('Title 1'), findsNothing);
+      expect(requests, hasLength(2));
+      requests.last.complete(
+        Calibration(same: [rated(2, 10)], above: [], below: []),
+      );
       await tester.pumpAndSettle();
       expect(find.text('Title 2'), findsOneWidget);
       expect(find.text('Title 1'), findsNothing);

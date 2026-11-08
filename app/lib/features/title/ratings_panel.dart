@@ -13,6 +13,7 @@ import '../../data/source_failure.dart';
 import '../../data/work_key.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/format.dart';
+import '../../shared/local_data_failure.dart';
 import '../../shared/score_color.dart';
 import 'title_ratings.dart';
 
@@ -32,29 +33,39 @@ class RatingsPanel extends ConsumerWidget {
     final kind = target.key.kind;
     final now = DateTime.now().toUtc().millisecondsSinceEpoch;
     return RetainedSection(
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 12,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (final source in RatingsService.shownFor(kind))
-            _RatingCell(
-              source: source,
-              seasonAverage:
-                  kind == WorkKind.season && source == RatingSource.imdb,
-              // TMDB's rating comes only with the card; a card shown from its
-              // saved snapshot has none to wait for.
-              state:
-                  source == RatingSource.tmdb &&
-                      target.tmdbVote == null &&
-                      view.rows[RatingSource.tmdb] == null
-                  ? const RatingNoData()
-                  : ratingCellState(
-                      source: source,
-                      view: view,
-                      provider: service.providerOf(source, kind),
-                      nowMillis: now,
-                    ),
-              myScoreHalf: mine,
+          Wrap(
+            spacing: 8,
+            runSpacing: 12,
+            children: [
+              for (final source in RatingsService.shownFor(kind))
+                _RatingCell(
+                  source: source,
+                  seasonAverage:
+                      kind == WorkKind.season && source == RatingSource.imdb,
+                  // TMDB's rating comes only with the card; a card shown from its
+                  // saved snapshot has none to wait for.
+                  state:
+                      source == RatingSource.tmdb &&
+                          target.tmdbVote == null &&
+                          view.rows[RatingSource.tmdb] == null
+                      ? const RatingNoData()
+                      : ratingCellState(
+                          source: source,
+                          view: view,
+                          provider: service.providerOf(source, kind),
+                          nowMillis: now,
+                        ),
+                  myScoreHalf: mine,
+                ),
+            ],
+          ),
+          if (view.localFailure)
+            LocalDataFailure(
+              onRetry: () => ref.invalidate(titleRatingsProvider(target)),
             ),
         ],
       ),

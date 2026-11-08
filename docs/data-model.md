@@ -285,9 +285,11 @@ files. Details are in [sync.md](sync.md).
 - **API keys** — `flutter_secure_storage`, never in SQLite or the rating
   sync file. Optional password-encrypted key sync uses a separate Drive file
   and keeps the derived key in secure storage ([sync.md](sync.md)).
-- **Settings** (theme, language, the default source for the divergence sort,
-  `divergence_source`) — `shared_preferences`. Optional encrypted key sync
-  includes only `divergence_source`; theme and language remain per-device.
+- **Settings** (theme, language, navigation style and the default source for
+  divergence sorting) — `shared_preferences`. Optional encrypted key sync
+  includes only the comparison source (`divergence_source`); the other
+  presentation settings remain per-device. Write scheduling belongs to
+  [client architecture](client-architecture.md#device-preferences).
 - **Hidden Discover suggestions** — typed natural keys in the per-device
   `shared_preferences.recommendation_hidden` list. They are not ratings,
   watchlist deletions or negative taste evidence; no sync/export change.

@@ -93,6 +93,7 @@ class _PairCalibrationScreenState extends ConsumerState<PairCalibrationScreen> {
   CalibrationPair? _pair;
   PairPreference? _preference;
   bool _selecting = true, _saving = false, _scheduled = false;
+  bool _selectionFailed = false;
   String? _error;
   int _generation = 0;
   Timer? _midnight;
@@ -149,20 +150,29 @@ class _PairCalibrationScreenState extends ConsumerState<PairCalibrationScreen> {
     };
     final available = _used(history) < dailyPairLimit;
     final current = _pair;
-    bool matches(RatedTitle expected) => rows.any(
-      (r) =>
-          r.work.workKey == expected.work.workKey &&
-          r.rating.deletedAt == null &&
-          r.rating.scoreHalf == expected.rating.scoreHalf &&
-          r.rating.scoredAt == expected.rating.scoredAt,
-    );
+    RatedTitle? latest(RatedTitle expected) {
+      for (final row in rows) {
+        if (row.work.workKey == expected.work.workKey &&
+            row.rating.deletedAt == null &&
+            row.rating.scoreHalf == expected.rating.scoreHalf &&
+            row.rating.scoredAt == expected.rating.scoredAt) {
+          return row;
+        }
+      }
+      return null;
+    }
+
+    final left = current == null ? null : latest(current.left);
+    final right = current == null ? null : latest(current.right);
     if (available &&
         current != null &&
         !reviewed.contains(current.version) &&
         !_skipped.contains(current.version) &&
-        matches(current.left) &&
-        matches(current.right)) {
-      setState(() {});
+        left != null &&
+        right != null) {
+      setState(() {
+        _pair = CalibrationPair(left, right, reason: current.reason);
+      });
       return;
     }
     final generation = ++_generation;
@@ -176,6 +186,7 @@ class _PairCalibrationScreenState extends ConsumerState<PairCalibrationScreen> {
       _pair = null;
       _preference = null;
       _selecting = available;
+      _selectionFailed = false;
     });
     if (!available) return;
     final input = (
@@ -201,7 +212,7 @@ class _PairCalibrationScreenState extends ConsumerState<PairCalibrationScreen> {
       if (mounted && generation == _generation) {
         setState(() {
           _selecting = false;
-          _error = AppLocalizations.of(context).pairLoadFailed;
+          _selectionFailed = true;
         });
       }
     }
@@ -317,6 +328,10 @@ class _PairCalibrationScreenState extends ConsumerState<PairCalibrationScreen> {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           if (_error != null) ...[const SizedBox(height: 12), Text(_error!)],
+          if (_selectionFailed && !failed) ...[
+            Text(l10n.pairLoadFailed),
+            TextButton(onPressed: _schedule, child: Text(l10n.retry)),
+          ],
           if (failed) ...[
             Text(l10n.pairLoadFailed),
             TextButton(
@@ -341,6 +356,7 @@ class _PairCalibrationScreenState extends ConsumerState<PairCalibrationScreen> {
               !_selecting &&
               used < dailyPairLimit &&
               pair == null &&
+              !_selectionFailed &&
               !failed)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),

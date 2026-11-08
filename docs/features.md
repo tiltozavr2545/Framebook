@@ -25,6 +25,8 @@ animated settling; navigation supports RTL.
 Language, theme and navigation style are device preferences. Settings places
 labels and their choices side by side at normal text sizes and vertically
 when larger text requires more room.
+Failed theme, language, navigation-style or comparison-source persistence reports
+an error and restores the last saved selection without interrupting later edits.
 
 ## First launch and sources
 
@@ -33,11 +35,17 @@ chooses to continue, leaving time to add optional sources. Removing the
 TMDB key returns to onboarding. Restore from Drive is available before a key
 has been entered. The [key guide](api-keys.md) covers setup, checks and security.
 An initialization failure offers Retry without deleting local data.
+Checking or removing a key temporarily disables that key's controls; repeated
+keyboard submissions do not start another check or spend additional requests.
+
+## Updates
 
 About shows the app version, source attribution and licenses. It also offers
 a manual update check. Automatic checks run on launch at most once per
 24 hours after a successful response; failures can retry on a later launch.
 The update banner opens the release page and can be dismissed per version.
+Dismissal waits for successful persistence; a failure keeps the banner and
+reports an error. A late dismissal cannot hide a newer release notice.
 
 ## Discover and search
 
@@ -125,6 +133,11 @@ open, and saving freezes the reel's current value.
 Failed deletion and watchlist changes show a retryable error while preserving
 the saved state. Card controls prevent duplicate writes while their operation
 is pending. Optional snapshot-refresh failures do not interrupt the card.
+The watchlist toggle waits for known membership before enabling. A failed
+initial membership read offers Retry while the independent Rate action remains
+available when eligible.
+Opening a rating editor also blocks repeated taps while local reads are pending
+and until the editor closes, preventing stacked drafts for the same title.
 A missing query result is not proof that a title is unrated. Until either the
 individual query or the loaded library confirms the state, the card shows
 loading or a retryable local-data error. Known library ratings remain visible
@@ -142,6 +155,10 @@ The same-score panel spans the width above the two neighbour panels; the
 area keeps a fixed height. An empty group says so. Optional comparison
 failures do not block saving, and superseded replies cannot replace the
 current selection.
+Rapid reel changes wait 100 milliseconds before requesting a comparison.
+Lookups run one at a time and skip superseded queued scores. Closing the
+editor or saving cancels deferred work; the last useful comparison remains
+visible while a replacement loads.
 
 My ratings filters by kind and sorts by rating date, score, year,
 title or divergence. Parts sort under their series in number order. Date

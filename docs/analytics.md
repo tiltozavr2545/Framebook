@@ -73,6 +73,10 @@ cache fallback belong to [external sources](external-sources.md).
 `insights_provider.dart` shares derived results between people browsing and
 Stats, independently of favourites. Favourite changes and progress-only
 updates do not rebuild aggregates. Counters subscribe separately from content.
+Per-kind inputs also suppress external-score refreshes, snapshot-date-only
+refreshes and changes to other title kinds. Local rating/snapshot content
+remains observable so notes, titles, posters and score edits still update people
+drill-downs. Public-score comparison continues to use its own current statistics inputs.
 Decade drill-down can use current local ratings while detailed insights load.
 
 The synchronous path is limited to 80 titles, 1,000 credit entries and an
@@ -98,3 +102,7 @@ kind/selection so the UI does not relabel an older result as a new one.
 Score profiles materialize during preparation, avoiding aggregate loops in
 row rendering. Worker and layout verification is indexed in
 [testing](testing.md).
+People discovery also prepares each role's twenty most frequent contributors
+inside the insight calculation. Widgets localize only those bounded shelves;
+they do not filter and sort the full contributor graph during rebuilding.
+Complete people/role profiles remain available for statistics and drill-down.

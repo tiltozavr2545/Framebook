@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../app/preferences.dart';
 import 'sync/sync_controller.dart';
@@ -72,6 +73,7 @@ class UpdateController extends Notifier<UpdateRelease?> {
   static const _checked = 'update_last_check';
   static const _dismissed = 'update_dismissed';
   Future<UpdateResult>? _running;
+  Future<void>? _dismissal;
   UpdateRelease? lastRelease;
   static const _cachedVersion = 'update_cached_version';
   static const _cachedUrl = 'update_cached_url';
@@ -162,13 +164,24 @@ class UpdateController extends Notifier<UpdateRelease?> {
     }
   }
 
-  Future<void> dismiss() async {
+  Future<void> dismiss() {
+    if (_dismissal case final pending?) return pending;
     final release = state;
-    if (release == null) return;
-    state = null;
-    await ref
-        .read(sharedPreferencesProvider)
-        .setString(_dismissed, release.version);
+    if (release == null) return Future.value();
+    final prefs = ref.read(sharedPreferencesProvider);
+    return _dismissal = _saveDismissal(prefs, release).whenComplete(() {
+      _dismissal = null;
+    });
+  }
+
+  Future<void> _saveDismissal(
+    SharedPreferences prefs,
+    UpdateRelease release,
+  ) async {
+    if (!await prefs.setString(_dismissed, release.version)) {
+      throw StateError('Could not dismiss update');
+    }
+    if (ref.mounted && state?.version == release.version) state = null;
   }
 }
 

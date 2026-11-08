@@ -62,6 +62,50 @@ const director = PeopleCredit(
 
 void main() {
   test(
+    'discovery shelves use role frequency and retain full analytics membership',
+    () {
+      final titles = [rated(1, 16), rated(2, 18), rated(3, 14)];
+      final actors = [
+        for (var id = 1; id <= 25; id++)
+          PeopleCredit(id: id, name: 'Actor $id', role: FilmographyRole.acting),
+      ];
+      const writer = PeopleCredit(
+        id: 1,
+        name: 'Actor 1',
+        role: FilmographyRole.writing,
+      );
+      final insights = analyzeLibrary(titles, {
+        peopleIdentity(titles[0]): [...actors, director, writer],
+        peopleIdentity(titles[1]): [actors.last, director],
+        peopleIdentity(titles[2]): [writer],
+      });
+      expect(insights.people, hasLength(25));
+      final acting = insights.discoveryPeopleByRole[FilmographyRole.acting]!;
+      expect(acting, hasLength(20));
+      expect(acting.first.person.id, 25);
+      expect(acting.first.roles[FilmographyRole.acting]!.count, 2);
+      expect(
+        insights
+            .discoveryPeopleByRole[FilmographyRole.writing]!
+            .single
+            .person
+            .id,
+        1,
+      );
+      expect(
+        insights.discoveryPeopleByRole.containsKey(FilmographyRole.music),
+        isFalse,
+      );
+      expect(
+        insights.people
+            .singleWhere((person) => person.person.id == 1)
+            .profile
+            .count,
+        2,
+      );
+    },
+  );
+  test(
     'profiles deduplicate titles, count high/low boundaries and population spread',
     () {
       final a = rated(1, 16), b = rated(2, 8), c = rated(3, 12);

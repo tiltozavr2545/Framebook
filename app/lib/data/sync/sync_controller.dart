@@ -12,6 +12,7 @@ import 'google_account.dart';
 import 'merge.dart';
 import 'sync_engine.dart';
 import 'sync_file.dart';
+import 'sync_compute.dart';
 import 'sync_store.dart';
 
 /// What the Sync and backup screen shows.
@@ -270,7 +271,7 @@ class SyncController extends Notifier<SyncStatus> {
     return (
       device: device.liveRatings,
       drive: remote.liveRatings,
-      merged: mergeStates(device, remote).liveRatings,
+      merged: (await mergeStatesAsync(device, remote)).liveRatings,
     );
   }
 
@@ -485,14 +486,15 @@ class SyncController extends Notifier<SyncStatus> {
     final lastSyncAt = int.tryParse(
       await _store.stateValue(SyncStore.lastSyncKey) ?? '',
     );
-    final stale = unsyncedDrops(device, file, lastSyncAt: lastSyncAt);
+    final review = await reviewStaleAsync(device, file, lastSyncAt: lastSyncAt);
+    final stale = review.drops;
     return (
       file: file,
       device: device.liveRatings,
       inFile: file.liveRatings,
-      merged: mergeStates(device, file).liveRatings,
+      merged: (await mergeStatesAsync(device, file)).liveRatings,
       stale: stale.ratings.length + stale.watchlist.length,
-      fingerprint: staleFingerprint(device, file, lastSyncAt: lastSyncAt),
+      fingerprint: review.fingerprint,
     );
   }
 
@@ -511,11 +513,14 @@ class SyncController extends Notifier<SyncStatus> {
         final lastSyncAt = int.tryParse(
           await _store.stateValue(SyncStore.lastSyncKey) ?? '',
         );
-        final stale = unsyncedDrops(device, file, lastSyncAt: lastSyncAt);
+        final review = await reviewStaleAsync(
+          device,
+          file,
+          lastSyncAt: lastSyncAt,
+        );
+        final stale = review.drops;
         final count = stale.ratings.length + stale.watchlist.length;
-        if (count > 0 &&
-            staleFingerprint(device, file, lastSyncAt: lastSyncAt) !=
-                reviewedFingerprint) {
+        if (count > 0 && review.fingerprint != reviewedFingerprint) {
           return _preview(file);
         }
         if (keepStale && count > 0) {

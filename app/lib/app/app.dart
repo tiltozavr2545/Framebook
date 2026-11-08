@@ -14,8 +14,8 @@ class FramebookApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(secretsControllerProvider);
-    ref.watch(updateControllerProvider);
+    ref.listen(secretsControllerProvider, (_, _) {});
+    ref.listen(updateControllerProvider, (_, _) {});
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,

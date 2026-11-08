@@ -18,6 +18,7 @@ import '../../shared/kind_filter.dart';
 import '../../shared/title_row.dart';
 import '../../shared/title_text.dart';
 import '../../shared/local_data_failure.dart';
+import '../../shared/preference_action.dart';
 import '../title/title_routes.dart';
 import 'ratings_model.dart';
 
@@ -161,7 +162,8 @@ class _DivergenceControls extends ConsumerWidget {
               ChoiceChip(
                 label: Text(ratingSourceLabel(l10n, source)),
                 selected: source == view.compareWith,
-                onSelected: (_) => notifier.compareWith(source),
+                onSelected: (_) =>
+                    savePreference(context, () => notifier.compareWith(source)),
               ),
             const SizedBox(height: 24, child: VerticalDivider(width: 8)),
             for (final (order, label) in orders)

@@ -148,6 +148,10 @@ however many times the devices synced, the states converge. This property is
 the main thing the rest of the algorithm rests on, and it is covered by tests
 on random sequences of edits (property-based).
 
+Large-state execution and transaction ownership are described in
+[client architecture](client-architecture.md#sync-components). Scheduling does
+not change the merge rules or file format.
+
 ### Series and season watchlist choices
 
 Each series has two permanent LWW selection registers: the latest explicit
@@ -388,9 +392,8 @@ and [cryptography](https://pub.dev/documentation/cryptography/latest/).
 Rating files are limited to 32 MiB compressed and 128 MiB expanded. Imports
 check file metadata and read through a bounded stream; Drive downloads are
 bounded too. Gzip output is capped before JSON parsing, and production rating
-encoding/decoding runs in an isolate. A test round-trips 10,000 titles with
-1,000-character notes; longer notes and different scripts consume more of the
-byte limit. Oversized files are rejected without modifying Drive. These byte
+encoding/decoding runs in an isolate. Long notes and different scripts consume different amounts of the
+byte limit; regression coverage is indexed in [testing](testing.md). Oversized files are rejected without modifying Drive. These byte
 limits are a resource boundary, not a promise of a particular title count.
 
 Every Google Drive access owns an authenticated HTTP client. Rating sync

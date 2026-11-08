@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/preferences.dart';
 import '../../app/router.dart';
 import '../../l10n/app_localizations.dart';
+import '../../shared/preference_action.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -42,7 +43,12 @@ class SettingsScreen extends ConsumerWidget {
               underline: const SizedBox.shrink(),
               onChanged: (floating) {
                 if (floating != null) {
-                  ref.read(floatingNavigationProvider.notifier).set(floating);
+                  savePreference(
+                    context,
+                    () => ref
+                        .read(floatingNavigationProvider.notifier)
+                        .set(floating),
+                  );
                 }
               },
               items: [
@@ -65,9 +71,12 @@ class SettingsScreen extends ConsumerWidget {
               itemHeight: null,
               value: locale?.languageCode ?? '',
               underline: const SizedBox.shrink(),
-              onChanged: (code) => ref
-                  .read(localeProvider.notifier)
-                  .set(code == null || code.isEmpty ? null : Locale(code)),
+              onChanged: (code) => savePreference(
+                context,
+                () => ref
+                    .read(localeProvider.notifier)
+                    .set(code == null || code.isEmpty ? null : Locale(code)),
+              ),
               items: [
                 DropdownMenuItem(value: '', child: Text(l10n.languageSystem)),
                 DropdownMenuItem(
@@ -91,7 +100,10 @@ class SettingsScreen extends ConsumerWidget {
               underline: const SizedBox.shrink(),
               onChanged: (mode) {
                 if (mode != null) {
-                  ref.read(themeModeProvider.notifier).set(mode);
+                  savePreference(
+                    context,
+                    () => ref.read(themeModeProvider.notifier).set(mode),
+                  );
                 }
               },
               items: [

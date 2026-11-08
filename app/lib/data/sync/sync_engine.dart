@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import 'merge.dart';
 import 'sync_file.dart';
+import 'sync_compute.dart';
 import 'sync_store.dart';
 
 /// A file in the app's hidden Drive folder.
@@ -152,7 +153,10 @@ final class SyncEngine {
     if (mains.isEmpty) return null;
     var state = const SyncState();
     for (final file in mains) {
-      state = mergeStates(state, await _decode(await _download(file.id)));
+      state = await mergeStatesAsync(
+        state,
+        await _decode(await _download(file.id)),
+      );
     }
     return state;
   }
@@ -206,7 +210,10 @@ final class SyncEngine {
       final bytes = await _download(main.id);
       var remote = await _decode(bytes);
       for (final extra in extras) {
-        remote = mergeStates(remote, await _decode(await _download(extra.id)));
+        remote = await mergeStatesAsync(
+          remote,
+          await _decode(await _download(extra.id)),
+        );
       }
 
       try {
@@ -232,7 +239,9 @@ final class SyncEngine {
           local.watchlist.any(
             (w) => w.deletedAt != null && w.updatedAt < watermark,
           );
-      if (!remoteBehind(local, remote) && extras.isEmpty && !purgeable) {
+      if (!await remoteBehindAsync(local, remote) &&
+          extras.isEmpty &&
+          !purgeable) {
         return _done(
           started,
           applied: applied,
@@ -342,7 +351,10 @@ final class SyncEngine {
       uploaded: uploaded,
       modifiedTime: modified,
       syncedAt: started,
-      pendingChanges: remoteBehind(await _store.read(), acknowledged),
+      pendingChanges: await remoteBehindAsync(
+        await _store.read(),
+        acknowledged,
+      ),
     );
   }
 

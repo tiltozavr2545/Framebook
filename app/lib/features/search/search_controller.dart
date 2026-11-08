@@ -125,6 +125,12 @@ class SearchNotifier extends Notifier<SearchState> {
           ? tmdb.searchPeople(query, page: page)
           : tmdb.search(query, page: page));
       if (!ref.mounted || generation != _generation) return;
+      if (found.page != page || found.pages < 0) {
+        throw const SourceException(
+          SourceFailure.failed,
+          'invalid search page',
+        );
+      }
       // Results can shift between pages; skip duplicates.
       final seen = {for (final r in state.results) r.key};
       final seenPeople = {for (final p in state.people) p.id};

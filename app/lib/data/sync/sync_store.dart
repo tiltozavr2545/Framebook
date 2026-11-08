@@ -8,6 +8,7 @@ import '../work_key.dart';
 import '../timestamps.dart';
 import 'merge.dart';
 import 'sync_file.dart';
+import 'sync_compute.dart';
 
 final class StaleReviewRequired implements Exception {
   const StaleReviewRequired(this.count, this.fingerprint);
@@ -121,6 +122,15 @@ final class SyncStore {
     ),
   ).watchlistFences;
 
+  /// Selection metadata for local actions, including legacy live selections.
+  /// Never materializes ratings, notes, snapshots or comparison history.
+  Future<List<WatchlistFence>> readWatchlistFences() async => effectiveFences(
+    await (_db.select(_db.watchlist)..where(
+          (row) => row.deletedAt.isNull() & row.workKey.like('tmdb:tv:%'),
+        ))
+        .get(),
+  );
+
   /// Applies the per-key register merge in a transaction. When [guard] is
   /// set, the reviewed fingerprint is checked in that same transaction.
   Future<int> apply(
@@ -137,14 +147,15 @@ final class SyncStore {
     final localWorks = <String, Work>{};
     var local = await _read(workIndex: localWorks);
     if (guard) {
-      final drops = unsyncedDrops(local, remote, lastSyncAt: lastSyncAt);
+      final review = await reviewStaleAsync(
+        local,
+        remote,
+        lastSyncAt: lastSyncAt,
+      );
+      final drops = review.drops;
       final count = drops.ratings.length + drops.watchlist.length;
       if (count > 0) {
-        final fingerprint = staleFingerprint(
-          local,
-          remote,
-          lastSyncAt: lastSyncAt,
-        );
+        final fingerprint = review.fingerprint;
         if (keep == null || reviewedFingerprint != fingerprint) {
           throw StaleReviewRequired(count, fingerprint);
         }
@@ -162,7 +173,7 @@ final class SyncStore {
     }
     final localRatings = {for (final r in local.ratings) r.workKey: r};
     final localWatchlist = {for (final w in local.watchlist) w.workKey: w};
-    final merged = mergeStates(local, remote);
+    final merged = await mergeStatesAsync(local, remote);
     var changed = 0;
     final localComparisons = {
       for (final p in local.pairComparisons) p.comparisonKey: p,
@@ -245,7 +256,7 @@ final class SyncStore {
     required int now,
     SyncState? remote,
   }) => _db.transaction(() async {
-    final normalized = mergeStates(
+    final normalized = await mergeStatesAsync(
       const SyncState(),
       remote ?? const SyncState(),
     );
@@ -319,7 +330,7 @@ final class SyncStore {
     final listed = state.watchlist
         .where((w) => w.deletedAt != null && w.updatedAt < p)
         .toList();
-    final compact = mergeStates(
+    final compact = await mergeStatesAsync(
       state,
       SyncState(
         purgedBefore: p,
@@ -354,8 +365,8 @@ final class SyncStore {
     // Replacement is an explicit edit of retained data, but an old export
     // must not turn a row already forgotten here into a new live version.
     final localState = await read();
-    final registers = mergeStates(localState, file);
-    final absent = droppedBy(file, registers);
+    final registers = await mergeStatesAsync(localState, file);
+    final absent = await droppedByAsync(file, registers);
     await apply(
       SyncState(
         ratingDeletions: registers.ratingDeletions,
@@ -384,7 +395,7 @@ final class SyncStore {
       watchlistDeletions: file.watchlistDeletions,
       watchlistFences: file.watchlistFences,
     );
-    await _saveDeletions(mergeStates(localState, file));
+    await _saveDeletions(await mergeStatesAsync(localState, file));
     var changed = 0;
     final wantedPeople = {for (final p in file.favoritePeople) p.personId: p};
     final existingPeople = {
@@ -528,7 +539,7 @@ final class SyncStore {
           );
       changed++;
     }
-    await saveFences((await read()).watchlistFences);
+    await saveFences(await readWatchlistFences());
     await _pruneWorks();
     return changed;
   });

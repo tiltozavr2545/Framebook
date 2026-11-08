@@ -290,7 +290,7 @@ Versions are listed from oldest to newest; append new entries at the end.
   the winner. The file format and merge ordering stay unchanged.
 - Expand regression coverage and validate version tools in CI. Record the
   size/performance investigation and its remaining work in
-  [docs/optimization.md](docs/optimization.md).
+  [0.8.4 optimization report](docs/reviews/0.8.4/README.md).
 
 ## 0.8.4 — Smaller builds and less repeated work (build 18)
 
@@ -307,7 +307,7 @@ Versions are listed from oldest to newest; append new entries at the end.
 - Remove unused icon and JSON generator dependencies. SDK, database schema,
   sync compatibility and signing certificate remain unchanged.
 - Document the completed optimization work and its measured limits in
-  [docs/optimization.md](docs/optimization.md).
+  [0.8.4 optimization report](docs/reviews/0.8.4/README.md).
 
 ## 0.8.5 — Library insights, favourite people and recommendations (build 19)
 
@@ -558,6 +558,38 @@ Versions are listed from oldest to newest; append new entries at the end.
 - Keep the original rating date when editing a film, series, season or episode
   score, so the title stays in its date group and list position. Deleting a
   rating and rating again sets a new date; edits still sync normally.
+- Reuse prepared people analytics when only public scores or another title kind
+  changes, while keeping local title, poster, note and score edits visible.
+- Offer Retry after failed film-pair preparation, and keep an unsaved answer
+  when the displayed films' local titles or posters refresh.
+- Wait for saved watchlist membership before enabling its card toggle, with
+  Retry after a failed read and independent access to rating the title.
+- Keep update notices available after failed dismissal storage, and prevent
+  a delayed dismissal from hiding a newer release notice.
 - Show unknown release dates in the usual date field on title cards, including
   saved offline cards. Remove the separate "Not released yet" label and its
   explanation below the rating controls, preserving rating eligibility rules.
+- Avoid loading the entire rating library and comparison history when adding
+  or removing watchlist entries. Switching from several seasons to a whole
+  series preserves selection history once rather than rereading it per season.
+- Compute series and season average scores in SQLite without loading episode
+  notes or complete snapshots into the interface isolate.
+- Coalesce rapid score-reel changes and serialize comparison lookups, skipping
+  obsolete scores and canceling deferred work when the editor closes.
+- Keep cached external scores visible after a local storage failure and offer
+  Retry instead of leaving rating cells loading indefinitely.
+- Avoid rebuilding library screens for unrelated cached scores or sync
+  bookkeeping when their displayed data has not changed.
+- Stop starting additional rating-source requests after a title card closes.
+- Reject repeated search pages before caching them, keeping existing results
+  available with Retry instead of repeatedly loading the same page.
+- Prevent repeated taps from opening stacked rating editors during slow reads.
+- Prepare contributor-role shelves together with analytics instead of sorting
+  the full people list whenever Discover rebuilds.
+- Keep background key-sync and update-check status changes from rebuilding the
+  whole application, and prevent overlapping key checks/removals from repeated
+  keyboard submissions or taps.
+- Run large sync merges and remote-state comparisons outside the interface
+  isolate while preserving the same conflict and deletion rules.
+- Restore the last saved preference and report failed settings writes, keeping
+  rapid theme, language, navigation and comparison-source changes in order.

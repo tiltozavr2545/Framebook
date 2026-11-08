@@ -28,7 +28,7 @@ point; the repository [README](../README.md) introduces the app.
 | Android recovery and Samsung resume diagnostics | [Android troubleshooting](android-troubleshooting.md) |
 | Current work and remaining delivery checks | [Implementation plan](implementation-plan.md) |
 | Unscheduled ideas and unresolved product choices | [Future development](future-development.md) |
-| Changes delivered in each version | [Changelog](../CHANGELOG.md) |
+| Version history and explicitly unreleased changes | [Changelog](../CHANGELOG.md) |
 | Findings, measurements and historical verification evidence | [Review index](reviews/README.md) |
 | Original motivation and initial tradeoffs | [Project brief](project-brief.md) |
 | Shared agent instructions | [AGENTS.md](../AGENTS.md) |
@@ -49,5 +49,13 @@ numbers when a source reference will remain accurate.
 The Russian API key guide is an intentional translation, not an extra technical
 reference; keep it aligned with the English guide. The public site and privacy
 policy in [gh-pages/](gh-pages/) serve a separate audience and must remain
-self-contained. Review reports and the changelog describe past changes; they
-do not define current behavior.
+self-contained. Review reports retain historical evidence; the changelog groups
+changes by version, including explicitly unreleased entries. Neither defines
+current behavior.
+
+When adding a repair, update the topic reference for its resulting behavior,
+record the user-facing change in the changelog and retain reproduction/test
+results in the version's review report. Keep delivery status and outstanding
+acceptance only in the implementation plan, and unscheduled ideas only in
+future development. Reusable verification procedures belong to testing;
+release-specific commands, samples and outcomes in reports are historical evidence.

@@ -1,8 +1,9 @@
 # External sources
 
 Where the app gets everything the user didn't create: the catalog, posters,
-other people's ratings. What of it is stored locally, and for how long, is in
-[data-model.md](data-model.md).
+other people's ratings. This document owns source matching, parsing, caching
+and request budgets. Persistent storage boundaries belong to the
+[data model](data-model.md).
 
 Initial API fixtures were captured on 2026-10-23 and are stored under
 `app/test/fixtures/`. They record observed responses, not a guarantee that a
@@ -75,6 +76,12 @@ What the fixtures confirmed:
 
 Attribution is mandatory: the About screen shows the TMDB logo and the text
 "This product uses the TMDB API but is not endorsed or certified by TMDB".
+
+Title and people search responses must identify the requested positive page
+and a nonnegative total-page count before entering or leaving the HTTP cache.
+A repeated or mismatched page is an error, with a valid stale response retained
+as fallback. Search preserves loaded results and offers Retry instead of
+automatically loading the same invalid page again.
 
 ## PoiskKino — the Kinopoisk rating
 
@@ -203,7 +210,7 @@ OMDb key is added, allowing replacement by the preferred OMDb result.
 | external rating, `ok` | `external_ratings` | 14 days for background refresh; an open card asks again if it is older than 7 days and the budget allows |
 | external rating, `not_found` | `external_ratings` | 30 days |
 | external rating, `error` | `external_ratings` + the service's memory | 1 hour (see below) |
-| mini snapshot | `works` | refreshed when a card is opened or a user saves that title; saved translated titles are refreshed separately with 24-hour reuse per language/key generation |
+| mini snapshot | `works` | Not an expiring cache; refresh ownership is defined in [client architecture](client-architecture.md#library-writes-and-views) |
 
 A stale value is **shown**, not hidden: the card shows a rating's age when it
 is past its TTL. A film's rating barely changes in two weeks, while an empty
@@ -293,6 +300,8 @@ sources; a lookup already in flight can finish, including shared card work.
 Pacing records actual lookups after acquiring budget, so local missing-ID
 results and joins to an existing request add no extra delay. The queue does
 not select rating notes or unrelated series snapshots.
+Closing or rebuilding a title card also cancels subsequent source lookups;
+an already active request may complete and populate the cache.
 
 A "limit reached" answer from the service itself caps the rest of the day at
 once, whatever the counter says.
@@ -336,8 +345,8 @@ responses. They do not consume PoiskKino or OMDb request budgets. They are
 optional sections: failures do not prevent rating or viewing the main card.
 
 Movie production statuses and planned/in-production TV statuses provide
-evidence for a pending-release notice when no valid premiere date is known.
-They do not imply that an already premiered series becomes unreleased while
-later seasons are produced. Rating and recommendation eligibility still
-require a valid release date as specified in [product behavior](features.md)
-and [recommendations](recommendations.md).
+pre-release evidence only when no valid premiere date is known. They do not
+imply that an already premiered series becomes unreleased while later seasons
+are produced. Card presentation and rating eligibility belong to
+[product behavior](features.md#title-cards); recommendation eligibility belongs
+to [recommendations](recommendations.md#ranking-and-explanations).

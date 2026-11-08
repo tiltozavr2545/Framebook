@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/theme.dart';
 import '../../data/db/database.dart';
+import '../../data/latest_worker.dart';
 import '../../data/library/library.dart';
 import '../../data/library/work_snapshot.dart';
 import '../../data/work_key.dart';
@@ -53,6 +54,7 @@ class _MyRatingSectionState extends ConsumerState<MyRatingSection>
 
   WorkKey get _key => widget.lineage.last.key;
   bool _deleting = false;
+  bool _editing = false;
   bool _updatingWatchlist = false;
 
   @override
@@ -101,8 +103,10 @@ class _MyRatingSectionState extends ConsumerState<MyRatingSection>
     }
     final kind = _key.kind;
     final watchlistable = kind != WorkKind.episode;
-    final listed =
-        watchlistable && (ref.watch(inWatchlistProvider(_key)).value ?? false);
+    final watchlist = watchlistable && rating == null
+        ? ref.watch(inWatchlistProvider(_key))
+        : null;
+    final listed = watchlist?.value ?? false;
     final parts = kind == WorkKind.tv || kind == WorkKind.season
         ? ref.watch(partsAverageProvider(_key)).value
         : null;
@@ -123,14 +127,23 @@ class _MyRatingSectionState extends ConsumerState<MyRatingSection>
             _Unrated(
               listed: listed,
               watchlistable: watchlistable,
-              onRate: canRate ? () => _edit(null) : null,
-              onToggleWatchlist: _updatingWatchlist ? null : _toggleWatchlist,
+              onRate: canRate && !_editing ? () => _edit(null) : null,
+              onToggleWatchlist:
+                  _updatingWatchlist || watchlist?.hasValue != true
+                  ? null
+                  : _toggleWatchlist,
             )
           else
             _Rated(
               rating: rating,
-              onEdit: canRate && !_deleting ? () => _edit(rating) : null,
-              onDelete: _deleting ? null : () => _delete(),
+              onEdit: canRate && !_deleting && !_editing
+                  ? () => _edit(rating)
+                  : null,
+              onDelete: _deleting || _editing ? null : () => _delete(),
+            ),
+          if (watchlist != null && watchlist.hasError && !watchlist.hasValue)
+            LocalDataFailure(
+              onRetry: () => ref.invalidate(inWatchlistProvider(_key)),
             ),
           if (parts != null) ...[
             const SizedBox(height: 8),
@@ -157,6 +170,16 @@ class _MyRatingSectionState extends ConsumerState<MyRatingSection>
   /// Opens the editor and saves. Everything from ref is taken before the
   /// awaits: the card may be closed by then (AGENTS.md, pitfalls).
   Future<void> _edit(Rating? current) async {
+    if (_editing) return;
+    setState(() => _editing = true);
+    try {
+      await _openEditor(current);
+    } finally {
+      if (mounted) setState(() => _editing = false);
+    }
+  }
+
+  Future<void> _openEditor(Rating? current) async {
     final library = ref.read(libraryProvider);
     final lineage = widget.lineage;
     final l10n = AppLocalizations.of(context);
@@ -476,10 +499,20 @@ class _RatingEditorState extends State<RatingEditor> {
   bool _saving = false;
   bool _saveFailed = false;
   int _comparisonRevision = 0;
+  Timer? _comparisonTimer;
+  late final _comparisonWorker =
+      LatestWorker<({int half, int revision}), Calibration?>((input) async {
+        if (!mounted || input.revision != _comparisonRevision || _saving) {
+          return null;
+        }
+        return widget.compare(input.half);
+      });
 
   Future<void> _save() async {
     final score = _scoreHalf;
     if (_saving || score == null || !validRatingNote(_note.text)) return;
+    _comparisonTimer?.cancel();
+    _comparisonRevision++;
     final draft = (scoreHalf: score, note: _note.text);
     setState(() {
       _saving = true;
@@ -491,28 +524,46 @@ class _RatingEditorState extends State<RatingEditor> {
     } catch (_) {
       if (mounted) setState(() => _saveFailed = true);
     } finally {
-      if (mounted) setState(() => _saving = false);
+      if (mounted) {
+        setState(() => _saving = false);
+        final half = _scoreHalf;
+        if (_saveFailed &&
+            widget.showComparison &&
+            half != null &&
+            _shown?.scoreHalf != half) {
+          unawaited(_compare(half, ++_comparisonRevision));
+        }
+      }
     }
   }
 
   @override
   void initState() {
     super.initState();
-    if (widget.showComparison && _scoreHalf != null) _compare(_scoreHalf!);
+    if (widget.showComparison && _scoreHalf != null) {
+      unawaited(_compare(_scoreHalf!, ++_comparisonRevision));
+    }
   }
 
   @override
   void dispose() {
+    _comparisonTimer?.cancel();
+    _comparisonWorker.dispose();
     _note.dispose();
     super.dispose();
   }
 
-  Future<void> _compare(int half) async {
-    final revision = ++_comparisonRevision;
+  Future<void> _compare(int half, int revision) async {
     try {
-      final calibration = await widget.compare(half);
+      final calibration = await _comparisonWorker.run((
+        half: half,
+        revision: revision,
+      ));
       // Only the answer for the score still in the gate counts.
-      if (!mounted || _scoreHalf != half || revision != _comparisonRevision) {
+      if (calibration == null ||
+          !mounted ||
+          _scoreHalf != half ||
+          revision != _comparisonRevision) {
         return;
       }
       setState(() => _shown = (scoreHalf: half, calibration: calibration));
@@ -524,9 +575,15 @@ class _RatingEditorState extends State<RatingEditor> {
   }
 
   void _changed(int? half) {
-    if (half == null) _comparisonRevision++;
+    final revision = ++_comparisonRevision;
+    _comparisonTimer?.cancel();
     setState(() => _scoreHalf = half);
-    if (widget.showComparison && half != null) _compare(half);
+    if (widget.showComparison && half != null) {
+      // Fast reel movement must not queue full-library comparisons per frame.
+      _comparisonTimer = Timer(const Duration(milliseconds: 100), () {
+        unawaited(_compare(half, revision));
+      });
+    }
   }
 
   @override

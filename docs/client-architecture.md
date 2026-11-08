@@ -60,6 +60,16 @@ transport failures remain exceptions. A service instance owns its in-memory
 failure throttles and card-request statuses. Key changes recreate it, allowing
 immediate validation/refresh without old responses replacing current status.
 
+## Device preferences
+
+Theme, language, navigation style and comparison-source selections update
+optimistically while per-preference writes serialize. A rejected/failed write
+restores the latest successful selection only when no newer selection is queued.
+UI actions report a recoverable error. Comparison-source rollback preserves
+the current title-kind filter, sort and divergence direction.
+Storage and synchronization boundaries belong to the
+[data model](data-model.md#outside-the-database).
+
 ## Library writes and views
 
 `Library` owns rating/watchlist mutations; screens do not write tables.
@@ -81,6 +91,15 @@ Watchlist streams read only live entries, required snapshots, relevant season
 rating keys and selection fences transactionally. They avoid full sync-state
 reads. Rating-list ancestor queries batch at 400 keys to stay below SQLite
 parameter limits. Poster score badges select from one shared live-rating map.
+Watchlist mutations read only selection metadata and relevant library rows;
+group changes retain legacy selection fences once before removing opposite
+entries. Series/season part averages return SQL aggregates by kind rather than
+materializing complete rating rows, notes and snapshots.
+Library streams suppress identical content after unrelated table invalidations,
+including external-cache writes and sync bookkeeping. Equality includes notes,
+ancestor snapshots, source values and watchlist visibility. Errors reset the
+comparison baseline so successful recovery always publishes, even when the
+data matches the last successful result. Each subscription owns its baseline.
 
 Filtering, ordering and day grouping run in a serialized worker above 200
 ratings. Prepared results retain their selection settings while replacement
@@ -99,11 +118,9 @@ in bounded batches before transfer; the preparation is cached per published
 index snapshot. The exact scheduling contract belongs to
 [recommendations](recommendations.md).
 
-Pair selection runs locally in a serialized `ViewComputer` worker above 200
-library rows. The screen keeps the current pair stable while its rating versions
-remain valid, ignores obsolete worker results and cancels its day-boundary timer
-when backgrounded or disposed. Workflow and selection priorities are specified
-in [pair calibration](pair-calibration.md).
+Pair-selection scheduling and stable-pair behavior belong to
+[pair calibration](pair-calibration.md#selection); it uses the same latest-input
+worker boundary.
 
 ## Lifecycle and rendering
 
@@ -111,6 +128,10 @@ The shell retains non-rendering listeners for ongoing derived data and
 foreground services. Nested cards can pause Discover widget subscriptions
 without losing the live recommendation graph. These listeners do not rebuild
 the shell for every enrichment update.
+
+The application root retains encrypted-key and update-check services through
+non-rendering listeners. Their status changes update their owning panels and
+banners without rebuilding `MaterialApp`.
 
 Optional background rating refresh keeps its loop alive after a local storage
 exception. The active indicator resets and the next normal interval or resume
@@ -133,6 +154,8 @@ An opening card uses the shared known rating while its individual query is
 pending; an explicit null from that query takes precedence. Optional loading
 counters subscribe independently. Layout reserves placeholder reason lines,
 source captions and poster borders to avoid geometry changes on completion.
+External-rating stream and refresh storage failures remain local to the panel,
+retain cached values and offer Retry instead of leaving loading cells running.
 
 `KeyboardRestore` observes lifecycle above the routes and restores the same
 mounted primary editor after a frame only when its keyboard was previously
@@ -171,10 +194,17 @@ cached w342 image. A saved-only card starts no tint request.
 
 ## Sync components
 
+Full-state merges, stale-edit reviews and remote-behind checks use an isolate
+above 2,000 combined input rows, counting all snapshots, user rows and permanent
+metadata. Small inputs stay local. Only detached values cross the boundary;
+database reads, consent decisions and application keep their transaction
+boundaries. The pure merge and file-format rules belong to [sync](sync.md).
+
 | Module under `data/sync/` | Responsibility |
 | --- | --- |
 | `sync_file.dart` | Strict, bounded rating-file codec |
 | `merge.dart` | Pure deterministic merge and state comparison |
+| `sync_compute.dart` | Size-aware background execution of large merges/comparisons |
 | `sync_store.dart` | Transactional reads, apply and explicit replacement |
 | `sync_engine.dart` | One remote merge/upload pass and daily copies |
 | `drive_remote.dart` | Drive implementation of `SyncRemote` |

@@ -1,35 +1,26 @@
 # Implementation plan
 
-Current delivery status and remaining work. Released features belong in the
+Current delivery status and remaining work. Versioned changes belong in the
 [changelog](../CHANGELOG.md), current rules in the
 [technical references](README.md#product-and-technical-reference), and
 verification evidence in the [review reports](reviews/README.md).
 
-## Latest delivery
+## Current work
 
-Version 0.9.5 preserves rating dates during ordinary score edits for all title
-kinds and simplifies release details on cards. Unknown dates appear in the
-header's date field; the separate pending-release label and explanation are
-removed. Rating eligibility rules remain unchanged. Current behavior is
-specified in [features](features.md); the release history is in the
-[changelog](../CHANGELOG.md#095--stable-rating-dates-and-simpler-release-details-build-25).
+Implementation and automated verification of the requested repairs in
+0.9.5+25 are complete. Release assets and publication status belong to
+[GitHub Releases](https://github.com/tiltozavr2545/Framebook/releases/tag/v0.9.5).
+User-facing changes belong to the
+[changelog](../CHANGELOG.md#095--stable-rating-dates-and-simpler-release-details-build-25);
+confirmed findings, measurements and final verification belong to the
+[0.9.5 review](reviews/0.9.5/README.md).
 
-Implementation and automated verification are complete. Results
-and their limits are recorded in
-[delivery validation](reviews/delivery-validation.md#rating-dates-and-release-details--095).
-The [stability review](reviews/0.9.4/README.md) records additional repairs and
-host responsiveness measurements for the previous version. The platform and
-independent-review work below remains separate.
-
-## Statistics redesign
-
-The statistics redesign selected on 2026-11-08 replaces the long analytics
-feed with a compact overview and focused detail routes. Implementation,
-automated verification and host-rendered visual inspection are complete;
-evidence is in [delivery validation](reviews/delivery-validation.md#statistics-redesign--2026-11-08).
-Current behavior belongs to [features](features.md#people-and-statistics)
-and [analytics](analytics.md). Physical-device acceptance remains part of
-the separate delivery checklist below.
+The user closed further code review on 2026-11-08. Documentation consolidation
+is complete. Current behavior is maintained in the topic
+references linked from the [documentation index](README.md), rather than
+repeated here. Earlier milestone evidence, including the statistics redesign,
+is retained in [delivery validation](reviews/delivery-validation.md).
+Physical-device and independent-review acceptance below remains open.
 
 ## MVP stages
 

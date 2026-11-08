@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:framebook/data/sources/providers.dart';
+import 'package:framebook/data/source_failure.dart';
 import 'package:framebook/data/sources/tmdb/tmdb_client.dart';
 import 'package:framebook/data/sources/tmdb/tmdb_models.dart';
 import 'package:framebook/features/search/search_controller.dart';
@@ -15,15 +16,62 @@ class _SearchApi implements TmdbApi {
       requests.putIfAbsent(query, Completer<SearchPage>.new).future;
 
   final peopleRequests = <int, Completer<SearchPage>>{};
+  final peopleCalls = <int>[];
   @override
-  Future<SearchPage> searchPeople(String query, {int page = 1}) =>
-      peopleRequests.putIfAbsent(page, Completer<SearchPage>.new).future;
+  Future<SearchPage> searchPeople(String query, {int page = 1}) {
+    peopleCalls.add(page);
+    return peopleRequests.putIfAbsent(page, Completer<SearchPage>.new).future;
+  }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 void main() {
+  test(
+    'a repeated page stops automatic pagination and can be retried',
+    () async {
+      final api = _SearchApi();
+      final container = ProviderContainer(
+        overrides: [tmdbProvider.overrideWithValue(api)],
+      );
+      addTearDown(container.dispose);
+      final search = container.read(searchProvider.notifier);
+      search.selectKind(SearchKind.people);
+      search.submit('name');
+      const person = PersonSummary(id: 1, name: 'First');
+      api.peopleRequests[1]!.complete(
+        const SearchPage([], people: [person], page: 1, pages: 2),
+      );
+      await pumpEventQueue();
+      search.loadMore();
+      api.peopleRequests[2]!.complete(
+        const SearchPage([], people: [person], page: 1, pages: 2),
+      );
+      await pumpEventQueue();
+      expect(container.read(searchProvider).failure, SourceFailure.failed);
+      expect(container.read(searchProvider).page, 1);
+      expect(container.read(searchProvider).people.single.id, 1);
+      search.loadMore();
+      expect(api.peopleCalls, [1, 2]);
+      api.peopleRequests.remove(2);
+      search.retry();
+      api.peopleRequests[2]!.complete(
+        const SearchPage(
+          [],
+          people: [PersonSummary(id: 2, name: 'Second')],
+          page: 2,
+          pages: 2,
+        ),
+      );
+      await pumpEventQueue();
+      expect(container.read(searchProvider).failure, isNull);
+      expect(container.read(searchProvider).people.map((person) => person.id), [
+        1,
+        2,
+      ]);
+    },
+  );
   test(
     'switching mode rejects old answers and paginates people by id',
     () async {

@@ -15,6 +15,8 @@ final class RatingsView {
     this.rows = const {},
     this.loading = const {},
     this.failures = const {},
+    this.readFailed = false,
+    this.refreshFailed = false,
   });
 
   final Map<RatingSource, ExternalRating> rows;
@@ -22,15 +24,22 @@ final class RatingsView {
 
   /// How the last attempt ended during this visit to the card.
   final Map<ApiSource, SourceFailure> failures;
+  final bool readFailed;
+  final bool refreshFailed;
+  bool get localFailure => readFailed || refreshFailed;
 
   RatingsView copyWith({
     Map<RatingSource, ExternalRating>? rows,
     Set<ApiSource>? loading,
     Map<ApiSource, SourceFailure>? failures,
+    bool? readFailed,
+    bool? refreshFailed,
   }) => RatingsView(
     rows: rows ?? this.rows,
     loading: loading ?? this.loading,
     failures: failures ?? this.failures,
+    readFailed: readFailed ?? this.readFailed,
+    refreshFailed: refreshFailed ?? this.refreshFailed,
   );
 }
 
@@ -49,22 +58,41 @@ class TitleRatings extends Notifier<RatingsView> {
     final rows = ref
         .watch(databaseProvider)
         .watchExternalRatings(target.key.toString())
-        .listen((rows) {
-          if (!active) return;
-          state = state.copyWith(
-            rows: {for (final row in rows) row.source: row},
-          );
-        });
+        .listen(
+          (rows) {
+            if (!active) return;
+            state = state.copyWith(
+              rows: {for (final row in rows) row.source: row},
+              readFailed: false,
+            );
+          },
+          onError: (Object _) {
+            if (active && ref.mounted) {
+              state = state.copyWith(readFailed: true);
+            }
+          },
+        );
     ref.onDispose(rows.cancel);
     unawaited(_refresh(service, () => active));
     return const RatingsView();
   }
 
   Future<void> _refresh(RatingsService service, bool Function() active) async {
+    try {
+      await _load(service, active);
+    } on Object {
+      if (active() && ref.mounted) {
+        state = state.copyWith(refreshFailed: true, loading: const {});
+      }
+    }
+  }
+
+  Future<void> _load(RatingsService service, bool Function() active) async {
     // A Notifier survives dependency rebuilds, so its current ref can be
     // mounted while an older build's request is still answering.
     final outcomes = await service.refresh(
       target,
+      cancelled: () => !active() || !ref.mounted,
       onStart: (api) {
         if (!active() || !ref.mounted) return;
         state = state.copyWith(loading: {...state.loading, api});
@@ -138,7 +166,8 @@ RatingCellState ratingCellState({
   required int nowMillis,
 }) {
   final row = view.rows[source];
-  final refreshing = provider != null && view.loading.contains(provider);
+  final refreshing =
+      !view.localFailure && provider != null && view.loading.contains(provider);
   if (row != null && row.status == RatingStatus.ok) {
     final age = nowMillis - row.fetchedAt;
     return RatingShown(
@@ -150,6 +179,7 @@ RatingCellState ratingCellState({
   if (row != null && row.status == RatingStatus.notFound) {
     return const RatingNoData();
   }
+  if (view.localFailure) return const RatingFailed(SourceFailure.failed);
   if (provider == null) return RatingNeedsKey(RatingsService.keyFor(source));
   if (refreshing) return const RatingLoading();
   final failure = view.failures[provider];

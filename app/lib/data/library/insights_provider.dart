@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../work_key.dart';
+import '../db/database.dart';
 import '../latest_worker.dart';
 import '../sources/tmdb/tmdb_models.dart';
 import 'insights.dart';
@@ -19,6 +20,47 @@ final emptyLibraryInsights = LibraryInsights(
 
 typedef _Input = (List<RatedTitle>, Map<String, List<PeopleCredit>>);
 LibraryInsights _analyze(_Input input) => analyzeLibrary(input.$1, input.$2);
+
+bool _sameSnapshot(Work? a, Work? b) =>
+    a == b ||
+    a != null &&
+        b != null &&
+        a.copyWith(snapshotUpdatedAt: b.snapshotUpdatedAt) == b;
+
+/// Source scores do not affect people aggregates. Keep complete local rows so
+/// drill-down titles, posters and notes still follow library edits.
+class _InsightTitles extends Notifier<List<RatedTitle>> {
+  _InsightTitles(this.kind);
+
+  final WorkKind? kind;
+
+  @override
+  List<RatedTitle> build() {
+    final all = ref.watch(ratedTitlesProvider).value ?? const <RatedTitle>[];
+    return kind == null
+        ? all
+        : all.where((title) => title.work.kind == kind).toList();
+  }
+
+  @override
+  bool updateShouldNotify(List<RatedTitle> previous, List<RatedTitle> next) {
+    if (previous.length != next.length) return true;
+    for (var i = 0; i < next.length; i++) {
+      final a = previous[i];
+      final b = next[i];
+      if (a.rating != b.rating ||
+          !_sameSnapshot(a.work, b.work) ||
+          !_sameSnapshot(a.series, b.series) ||
+          !_sameSnapshot(a.season, b.season)) {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+final _insightTitlesProvider = NotifierProvider.autoDispose
+    .family<_InsightTitles, List<RatedTitle>, WorkKind?>(_InsightTitles.new);
 
 final _creditPayloadProvider = FutureProvider.autoDispose((ref) {
   final entries = ref.watch(peopleIndexProvider.select((s) => s.entries));
@@ -62,11 +104,8 @@ bool insightsNeedWorker(
 /// progress alone must not recompute every person's roles and director pairs.
 final libraryInsightsProvider = FutureProvider.autoDispose
     .family<LibraryInsights, WorkKind?>((ref, kind) {
-      final all = ref.watch(ratedTitlesProvider).value ?? const <RatedTitle>[];
+      final titles = ref.watch(_insightTitlesProvider(kind));
       final entries = ref.watch(peopleIndexProvider.select((s) => s.entries));
-      final titles = kind == null
-          ? all
-          : all.where((t) => t.key.kind == kind).toList();
       final input = (titles, entries);
       if (!insightsNeedWorker(titles, entries)) return _analyze(input);
       final worker = ref.watch(_workerProvider(kind));

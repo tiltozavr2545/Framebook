@@ -35,7 +35,7 @@ The [API key guide](docs/api-keys.md) explains first-launch setup
 
 Android is the supported platform. The MVP is implemented; remaining validation
 and current work are tracked in the [implementation plan](docs/implementation-plan.md).
-Released changes are recorded in the [changelog](CHANGELOG.md).
+Version history and unreleased changes are recorded in the [changelog](CHANGELOG.md).
 
 ## Development
 

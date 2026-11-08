@@ -90,30 +90,21 @@ class _PeopleShelvesState extends ConsumerState<PeopleShelves> {
               title: l10n.peopleFrequent,
               people: insights.people.take(20).map(person).toList(),
             ),
-          for (final role in FilmographyRole.values)
-            if (insights.people.where((p) => p.roles.containsKey(role)).toList()
-                case final group when group.isNotEmpty)
-              _PeopleShelf(
-                title: filmographyLabel(l10n, role),
-                people:
-                    (group..sort(
-                          (a, b) => b.roles[role]!.count.compareTo(
-                            a.roles[role]!.count,
-                          ),
-                        ))
-                        .take(20)
-                        .map(
-                          (p) => PersonSummary(
-                            id: p.person.id,
-                            name: p.person.name,
-                            profilePath: p.person.profilePath,
-                            knownFor: [
-                              l10n.statsRatingCount(p.roles[role]!.count),
-                            ],
-                          ),
-                        )
-                        .toList(),
-              ),
+          for (final MapEntry(key: role, value: group)
+              in insights.discoveryPeopleByRole.entries)
+            _PeopleShelf(
+              title: filmographyLabel(l10n, role),
+              people: group
+                  .map(
+                    (p) => PersonSummary(
+                      id: p.person.id,
+                      name: p.person.name,
+                      profilePath: p.person.profilePath,
+                      knownFor: [l10n.statsRatingCount(p.roles[role]!.count)],
+                    ),
+                  )
+                  .toList(),
+            ),
           if (hasTitles) const PeopleIndexProgress(),
           if (popular.value case final people? when people.isNotEmpty)
             _PeopleShelf(title: l10n.peoplePopular, people: people)

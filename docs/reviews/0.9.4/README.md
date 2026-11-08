@@ -1,7 +1,9 @@
 # Stability review for 0.9.4
 
 Review pass conducted on 2026-11-07–08 and closed after the requested repairs.
-The version remains 0.9.4+24; no release is part of this review.
+This review targeted 0.9.4+24 and did not include a release. Later repairs may
+supersede individual findings; current rules belong to the
+[technical references](../../README.md#product-and-technical-reference).
 This record tracks confirmed findings, verification and measured limits;
 it does not assert that the project has no remaining defects.
 

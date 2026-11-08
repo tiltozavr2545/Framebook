@@ -71,6 +71,7 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
   late final TextEditingController _controller;
   late _Status _status;
   bool _obscured = true;
+  bool _busy = false;
 
   ApiSource get _source => widget.source;
 
@@ -93,12 +94,16 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
   }
 
   Future<void> _save() async {
+    if (_busy) return;
     final value = _controller.text.trim();
     if (value.isEmpty) {
       setState(() => _status = _Status.empty);
       return;
     }
-    setState(() => _status = _Status.checking);
+    setState(() {
+      _busy = true;
+      _status = _Status.checking;
+    });
     // Everything from ref before the await: after it the screen may already be
     // closed, and ref would throw (AGENTS.md, pitfalls).
     final keys = ref.read(apiKeysProvider.notifier);
@@ -122,10 +127,14 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
       if (mounted) setState(() => _status = status);
     } catch (_) {
       if (mounted) setState(() => _status = _Status.storageFailed);
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
   Future<void> _remove() async {
+    if (_busy) return;
+    setState(() => _busy = true);
     try {
       await ref.read(apiKeysProvider.notifier).remove(_source);
       if (!mounted) return;
@@ -133,6 +142,8 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
       setState(() => _status = _Status.missing);
     } catch (_) {
       if (mounted) setState(() => _status = _Status.storageFailed);
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
@@ -159,7 +170,7 @@ class _KeyCardState extends ConsumerState<_KeyCard> {
         l10n.sourceOmdbHint,
       ),
     };
-    final checking = _status == _Status.checking;
+    final checking = _busy;
 
     return Card(
       child: Padding(

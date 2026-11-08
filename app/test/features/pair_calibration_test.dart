@@ -1,5 +1,6 @@
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:framebook/app/foreground.dart';
@@ -20,6 +21,20 @@ class _Foreground extends Foreground {
   @override
   bool build() => true;
   void set(bool value) => state = value;
+}
+
+class _FailOnceComputer extends ViewComputer {
+  var calls = 0;
+
+  @override
+  Future<O> run<I, O>(
+    ComputeCallback<I, O> callback,
+    I input,
+    String label,
+  ) async {
+    if (++calls == 1) throw StateError('Worker unavailable');
+    return callback(input);
+  }
 }
 
 void main() {
@@ -51,6 +66,7 @@ void main() {
     WidgetTester tester, {
     String locale = 'en',
     double scale = 1,
+    ViewComputer computer = const InlineViewComputer(),
   }) async {
     tester.view.physicalSize = const Size(320, 780);
     tester.view.devicePixelRatio = 1;
@@ -60,7 +76,7 @@ void main() {
         overrides: [
           databaseProvider.overrideWithValue(db),
           libraryProvider.overrideWithValue(library),
-          viewComputerProvider.overrideWithValue(const InlineViewComputer()),
+          viewComputerProvider.overrideWithValue(computer),
           pairCalibrationClockProvider.overrideWithValue(() => now),
           foregroundProvider.overrideWith(_Foreground.new),
         ],
@@ -100,6 +116,64 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(milliseconds: 1));
   }
+
+  testWidgets(
+    'failed pair selection offers Retry without claiming completion',
+    (tester) async {
+      for (var id = 13; id <= 201; id++) {
+        await library.rate(
+          [WorkSnapshot(key: WorkKey.movie(id), tmdbId: id, title: 'Film $id')],
+          scoreHalf: 16,
+          note: null,
+        );
+      }
+      final computer = _FailOnceComputer();
+      await pump(tester, computer: computer);
+      final l10n = AppLocalizations.of(
+        tester.element(find.byType(PairCalibrationScreen)),
+      );
+      expect(computer.calls, 1);
+      expect(find.text(l10n.pairLoadFailed), findsOneWidget);
+      expect(find.text(l10n.pairFinished), findsNothing);
+      await tap(tester, l10n.retry);
+      expect(computer.calls, 2);
+      expect(find.text(l10n.pairLoadFailed), findsNothing);
+      expect(find.text(l10n.pairFinished), findsNothing);
+      expect(find.text(l10n.pairQuestion), findsOneWidget);
+      expect(await db.select(db.pairComparisons).get(), isEmpty);
+      await unmount(tester);
+    },
+  );
+
+  testWidgets(
+    'an active pair follows snapshot edits without losing its answer',
+    (tester) async {
+      await pump(tester);
+      final l10n = AppLocalizations.of(
+        tester.element(find.byType(PairCalibrationScreen)),
+      );
+      await tap(tester, l10n.pairEqual);
+      final title = tester
+          .widgetList<Text>(find.textContaining('Film '))
+          .first
+          .data!;
+      final id = int.parse(title.substring('Film '.length));
+      final row = (await library.watchRatings().first).singleWhere(
+        (row) => row.key == WorkKey.movie(id),
+      );
+      await library.rate(
+        [WorkSnapshot(key: row.key, tmdbId: id, title: 'Updated title')],
+        scoreHalf: row.rating.scoreHalf,
+        note: row.rating.note,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Updated title'), findsOneWidget);
+      expect(find.text(title), findsNothing);
+      expect(find.text(l10n.pairChangeAnswer), findsOneWidget);
+      expect(await db.select(db.pairComparisons).get(), isEmpty);
+      await unmount(tester);
+    },
+  );
 
   for (final locale in ['en', 'ru']) {
     for (final scale in [1.0, 2.0]) {

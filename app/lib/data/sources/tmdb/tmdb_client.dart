@@ -101,7 +101,20 @@ final class TmdbClient implements TmdbApi {
   static final _detailPath = RegExp(r'^/(movie|tv|person)/([0-9]+)$');
   static final _seasonPath = RegExp(r'^/tv/[0-9]+/season/([0-9]+)$');
 
-  static bool _matchesRequestedIdentity(String path, Json json) {
+  static bool _matchesRequestedResponse(
+    String path,
+    Map<String, String> params,
+    Json json,
+  ) {
+    if (path == '/search/multi' || path == '/search/person') {
+      final page = json.integer('page');
+      final pages = json.integer('total_pages');
+      return page != null &&
+          page > 0 &&
+          page == int.tryParse(params['page'] ?? '1') &&
+          pages != null &&
+          pages >= 0;
+    }
     final detail = _detailPath.firstMatch(path);
     if (detail != null) {
       return json.integer('id') == int.tryParse(detail.group(2)!);
@@ -466,7 +479,8 @@ final class TmdbClient implements TmdbApi {
     // satisfy a request or serve as an offline fallback.
     final decodedCache = cached == null ? null : await _parseJson(cached.body);
     final cachedJson =
-        decodedCache != null && _matchesRequestedIdentity(path, decodedCache)
+        decodedCache != null &&
+            _matchesRequestedResponse(path, params, decodedCache)
         ? decodedCache
         : null;
     final now = _clock().toUtc().millisecondsSinceEpoch;
@@ -495,7 +509,7 @@ final class TmdbClient implements TmdbApi {
     switch (response.statusCode) {
       case 200:
         final json = await _parseJson(body);
-        if (json == null || !_matchesRequestedIdentity(path, json)) {
+        if (json == null || !_matchesRequestedResponse(path, params, json)) {
           if (cachedJson != null) return cachedJson;
           throw const SourceException(
             SourceFailure.failed,

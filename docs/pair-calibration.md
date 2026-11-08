@@ -23,6 +23,9 @@ with unequal scores offers bringing either movie to the other's score. Keeping
 the existing scores still records the stated preference. Merely choosing a
 preference does not save an event or rewrite ratings; the subsequent action
 confirms completion. Failed saves retain the choice on screen for retry.
+Failed pair preparation shows a load error and Retry instead of claiming that
+no pairs remain. A valid displayed pair adopts refreshed local title/poster
+snapshots without discarding its unsaved answer or changing its score version.
 
 Scores remain integer half points within the existing storage range. Only a
 confirmed correction changes ratings, preserving notes and the diary dates

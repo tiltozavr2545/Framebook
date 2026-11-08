@@ -102,13 +102,13 @@ Building:
 - `keytool` and `apksigner` use the JDK from Android Studio:
   `/Applications/Android Studio.app/Contents/jbr/Contents/Home`. To check an
   APK's signature: `apksigner verify --print-certs <apk>`.
-- `applicationId` is `com.github.tiltozavr2545.framebook`, `minSdk` 26,
-  `targetSdk`/`compileSdk` 36.
+- Package identity and Android SDK levels are declared in
+  `app/android/app/build.gradle.kts`; use that source for build configuration.
 
 ## Android symbols
 
-Starting with 0.8.4, `make build-apk`, `make build-apk-check`, CI and the release
-workflow use `--split-debug-info` without obfuscation. The APK remains universal
+`make build-apk`, `make build-apk-check`, CI and the release workflow use
+`--split-debug-info` without obfuscation. The APK remains universal
 and uses the existing signing key. A raw `flutter build apk --release` omits
 this setting; use the Makefile targets for comparable builds.
 
@@ -124,8 +124,8 @@ Do not run `git clean -x` over that directory without copying the backup.
 To decode a saved Dart crash stack from the matching ARM64 release:
 
 ```sh
-unzip framebook-0.8.4-symbols.zip -d framebook-0.8.4-symbols
-flutter symbolize -i crash.txt -d framebook-0.8.4-symbols/app.android-arm64.symbols
+unzip framebook-X.Y.Z-symbols.zip -d symbols
+flutter symbolize -i crash.txt -d symbols/app.android-arm64.symbols
 ```
 
 Use `app.android-arm.symbols` for ARM32 and `app.android-x64.symbols` for x86-64.
@@ -156,7 +156,7 @@ candidate and complete applicable checks before publication.
 Users install the APK from the release page, allowing installation from that
 source. Updates install over the existing package with the same signing key
 and a higher Android `versionCode`. In-app update behavior is specified in
-[product behavior](features.md#first-launch-and-sources).
+[product behavior](features.md#updates).
 
 ## CI
 
@@ -169,19 +169,22 @@ call external APIs. Only `release-apk.yml` uses the signing secrets.
 ## CI Java and release recovery
 
 CI and release jobs explicitly select Temurin JDK 21 through a pinned
-`actions/setup-java` action. Gradle 8.12 supports this runtime; the hosted
-runner's default Java 25 is incompatible. The first 0.8.4 release attempt
-passed all tests but stopped during Gradle startup for this reason.
+`actions/setup-java` action. The Gradle wrapper and selected JDK must remain
+compatible; their exact
+versions are declared in `app/android/gradle/wrapper/gradle-wrapper.properties`
+and `.github/workflows/`. The original incompatibility and recovery evidence
+are recorded in the [0.8.4 report](reviews/0.8.4/README.md#release-workflow-recovery).
 
 To publish an existing tag after fixing workflow infrastructure, dispatch the
 current workflow from `main` instead of moving the tag:
 
 ```sh
-gh workflow run release-apk.yml --ref main -f release_tag=v0.8.4
+gh workflow run release-apk.yml --ref main -f release_tag=vX.Y.Z
 ```
 
 The job checks out the requested tag, checks its pubspec version, reruns tests,
-builds with JDK 21, checks the certificate and retains matching symbols in Actions artifacts.
+builds with the selected JDK, checks the certificate and retains matching
+symbols in Actions artifacts.
 The symbols README records the checked-out commit, not the dispatch commit.
 Use this recovery path only when the release has not already been published;
 the workflow deliberately does not overwrite existing release assets.

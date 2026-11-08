@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../l10n/app_localizations.dart';
+import 'preference_writes.dart';
 
 /// Read during startup before the main application is built, so its first
 /// frame uses the saved theme and language.
@@ -15,16 +16,27 @@ const _localeKey = 'locale';
 
 /// Device-local presentation preference, excluded from account synchronization.
 class FloatingNavigationNotifier extends Notifier<bool> {
+  late PreferenceWrites<bool> _writes;
   @override
-  bool build() =>
-      ref.watch(sharedPreferencesProvider).getBool('floating_navigation') ??
-      true;
+  bool build() {
+    final initial =
+        ref.watch(sharedPreferencesProvider).getBool('floating_navigation') ??
+        true;
+    _writes = PreferenceWrites(initial);
+    return initial;
+  }
 
-  Future<void> set(bool enabled) async {
+  Future<void> set(bool enabled) {
+    final prefs = ref.read(sharedPreferencesProvider);
+    final writes = _writes;
     state = enabled;
-    await ref
-        .read(sharedPreferencesProvider)
-        .setBool('floating_navigation', enabled);
+    return writes.save(
+      enabled,
+      () => prefs.setBool('floating_navigation', enabled),
+      (saved) {
+        if (ref.mounted && identical(writes, _writes)) state = saved;
+      },
+    );
   }
 }
 
@@ -34,22 +46,29 @@ final floatingNavigationProvider =
     );
 
 class ThemeModeNotifier extends Notifier<ThemeMode> {
+  late PreferenceWrites<ThemeMode> _writes;
   @override
   ThemeMode build() {
     final stored = ref
         .watch(sharedPreferencesProvider)
         .getString(_themeModeKey);
-    return ThemeMode.values.firstWhere(
+    final initial = ThemeMode.values.firstWhere(
       (m) => m.name == stored,
       orElse: () => ThemeMode.system,
     );
+    _writes = PreferenceWrites(initial);
+    return initial;
   }
 
-  Future<void> set(ThemeMode mode) async {
+  Future<void> set(ThemeMode mode) {
+    final prefs = ref.read(sharedPreferencesProvider);
+    final writes = _writes;
     state = mode;
-    await ref
-        .read(sharedPreferencesProvider)
-        .setString(_themeModeKey, mode.name);
+    return writes.save(mode, () => prefs.setString(_themeModeKey, mode.name), (
+      saved,
+    ) {
+      if (ref.mounted && identical(writes, _writes)) state = saved;
+    });
   }
 }
 
@@ -60,23 +79,31 @@ final themeModeProvider = NotifierProvider<ThemeModeNotifier, ThemeMode>(
 /// `null` means system: Flutter picks the first supported locale from the
 /// device's list, or en.
 class LocaleNotifier extends Notifier<Locale?> {
+  late PreferenceWrites<Locale?> _writes;
   @override
   Locale? build() {
     final stored = ref.watch(sharedPreferencesProvider).getString(_localeKey);
+    Locale? initial;
     for (final locale in AppLocalizations.supportedLocales) {
-      if (locale.languageCode == stored) return locale;
+      if (locale.languageCode == stored) initial = locale;
     }
-    return null;
+    _writes = PreferenceWrites(initial);
+    return initial;
   }
 
-  Future<void> set(Locale? locale) async {
-    state = locale;
+  Future<void> set(Locale? locale) {
     final prefs = ref.read(sharedPreferencesProvider);
-    if (locale == null) {
-      await prefs.remove(_localeKey);
-    } else {
-      await prefs.setString(_localeKey, locale.languageCode);
-    }
+    final writes = _writes;
+    state = locale;
+    return writes.save(
+      locale,
+      () => locale == null
+          ? prefs.remove(_localeKey)
+          : prefs.setString(_localeKey, locale.languageCode),
+      (saved) {
+        if (ref.mounted && identical(writes, _writes)) state = saved;
+      },
+    );
   }
 }
 

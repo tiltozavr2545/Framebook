@@ -1,11 +1,13 @@
 import 'dart:math';
 
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart' show mapEquals;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api_source.dart';
 import '../db/database.dart';
 import '../db/database_provider.dart';
+import '../distinct_stream.dart';
 import '../sync/merge.dart';
 import '../sync/sync_file.dart';
 import '../sync/sync_store.dart';
@@ -180,9 +182,11 @@ final class Library {
         if (rating != null && rating.deletedAt == null) return;
       }
       final store = SyncStore(_db);
-      final state = await store.read();
+      final fences = key.kind == WorkKind.movie
+          ? const <WatchlistFence>[]
+          : await store.readWatchlistFences();
       final old = await _watchlistRow(k);
-      if (old != null && visibleWatchlistEntry(old, state.watchlistFences)) {
+      if (old != null && visibleWatchlistEntry(old, fences)) {
         return;
       }
       await _putSnapshots(lineage, now, adopt: key);
@@ -198,7 +202,7 @@ final class Library {
       final deletion = await _deletionTime(SyncStore.watchlistDeletionsKey, k);
       if (version <= deletion) version = _next(version, deletion);
       if (series != null) {
-        for (final fence in state.watchlistFences) {
+        for (final fence in fences) {
           if (fence.seriesKey == series.toString() &&
               version <= fence.updatedAt) {
             version = _next(version, fence.updatedAt);
@@ -212,12 +216,12 @@ final class Library {
         );
         await store.saveFences(
           mergeStates(
-            state,
+            SyncState(watchlistFences: fences),
             SyncState(watchlistFences: [fence]),
           ).watchlistFences,
         );
         if (key.kind == WorkKind.season) {
-          await _unlist(series.toString(), version);
+          await _unlist(series.toString(), version, preserveFences: false);
         } else {
           final seasons =
               await (_db.select(_db.watchlist).join([
@@ -232,7 +236,11 @@ final class Library {
                   ))
                   .get();
           for (final row in seasons) {
-            await _unlist(row.readTable(_db.watchlist).workKey, version);
+            await _unlist(
+              row.readTable(_db.watchlist).workKey,
+              version,
+              preserveFences: false,
+            );
           }
         }
       }
@@ -658,9 +666,20 @@ final class Library {
       return Stream.value(null);
     }
     final k = key.toString();
-    final query = _db.select(_db.ratings).join([
-      innerJoin(_db.works, _db.works.workKey.equalsExp(_db.ratings.workKey)),
-    ])..where(_db.ratings.deletedAt.isNull());
+    final kind = _db.works.kind;
+    final count = _db.ratings.workKey.count();
+    final average = _db.ratings.scoreHalf.avg();
+    final query =
+        _db.selectOnly(_db.ratings).join([
+            innerJoin(
+              _db.works,
+              _db.works.workKey.equalsExp(_db.ratings.workKey),
+              useColumns: false,
+            ),
+          ])
+          ..addColumns([kind, count, average])
+          ..where(_db.ratings.deletedAt.isNull())
+          ..groupBy([kind]);
     if (key.kind == WorkKind.season) {
       query.where(_db.works.parentKey.equals(k));
     } else {
@@ -671,23 +690,15 @@ final class Library {
       );
     }
     return query.watch().map((rows) {
-      final byKind = <WorkKind, List<int>>{};
-      for (final row in rows) {
-        final work = row.readTable(_db.works);
-        byKind
-            .putIfAbsent(work.kind, () => [])
-            .add(row.readTable(_db.ratings).scoreHalf);
-      }
-      final parts = byKind.containsKey(WorkKind.season)
-          ? WorkKind.season
-          : WorkKind.episode;
-      final scores = byKind[parts];
-      if (scores == null || scores.isEmpty) return null;
-      final sum = scores.reduce((a, b) => a + b);
+      if (rows.isEmpty) return null;
+      final row = rows.firstWhere(
+        (row) => row.readWithConverter(kind) == WorkKind.season,
+        orElse: () => rows.first,
+      );
       return PartsAverage(
-        average: sum / scores.length / 2,
-        count: scores.length,
-        parts: parts,
+        average: row.read(average)! / 2,
+        count: row.read(count)!,
+        parts: row.readWithConverter(kind)!,
       );
     });
   }
@@ -781,108 +792,147 @@ final class Library {
       for (final source in compareSources)
         source: _db.alias(_db.externalRatings, source.name),
     };
-    return (_db.select(_db.ratings).join([
-      innerJoin(_db.works, _db.works.workKey.equalsExp(_db.ratings.workKey)),
-      for (final MapEntry(key: source, value: table) in compared.entries)
-        leftOuterJoin(
-          table,
-          table.workKey.equalsExp(_db.ratings.workKey) &
-              table.source.equalsValue(source),
-        ),
-    ])..where(_db.ratings.deletedAt.isNull())).watch().asyncMap(
-      (rows) => _withAncestors([
-        for (final row in rows)
-          (
-            row.readTable(_db.ratings),
-            row.readTable(_db.works),
-            {
-              for (final MapEntry(key: source, value: table)
-                  in compared.entries)
-                if (row.readTableOrNull(table) case final found?) source: found,
-            },
+    return distinctData(
+      (_db.select(_db.ratings).join([
+        innerJoin(_db.works, _db.works.workKey.equalsExp(_db.ratings.workKey)),
+        for (final MapEntry(key: source, value: table) in compared.entries)
+          leftOuterJoin(
+            table,
+            table.workKey.equalsExp(_db.ratings.workKey) &
+                table.source.equalsValue(source),
           ),
-      ]),
+      ])..where(_db.ratings.deletedAt.isNull())).watch().asyncMap(
+        (rows) => _withAncestors([
+          for (final row in rows)
+            (
+              row.readTable(_db.ratings),
+              row.readTable(_db.works),
+              {
+                for (final MapEntry(key: source, value: table)
+                    in compared.entries)
+                  if (row.readTableOrNull(table) case final found?)
+                    source: found,
+              },
+            ),
+        ]),
+      ),
+      _sameRatings,
     );
   }
 
   /// Visible entries and their series snapshots, most recently added first.
-  Stream<List<WatchlistTitle>> watchWatchlist() => _db
-      .customSelect(
-        'SELECT 1',
-        readsFrom: {_db.watchlist, _db.ratings, _db.works, _db.syncState},
-      )
-      .watch()
-      .asyncMap(
-        (_) => _db.transaction(() async {
-          final rows =
-              await (_db.select(_db.watchlist).join([
-                      innerJoin(
-                        _db.works,
-                        _db.works.workKey.equalsExp(_db.watchlist.workKey),
-                      ),
-                    ])
-                    ..where(_db.watchlist.deletedAt.isNull())
-                    ..orderBy([OrderingTerm.desc(_db.watchlist.addedAt)]))
-                  .get();
-          final entries = [
-            for (final row in rows) row.readTable(_db.watchlist),
-          ];
-          final fences = await SyncStore(_db).effectiveFences(entries);
-          final bySeries = <String, List<WatchlistFence>>{};
-          for (final fence in fences) {
-            bySeries.putIfAbsent(fence.seriesKey, () => []).add(fence);
-          }
-          final seasons = {
-            for (final row in rows)
-              if (row.readTable(_db.works).kind == WorkKind.season)
-                row.readTable(_db.works).workKey,
-          };
-          final rated = <String>{};
-          final parents = <String, Work>{};
-          // Bound SQLite parameter counts and never materialize rating notes.
-          final keys = seasons.toList();
-          for (var offset = 0; offset < keys.length; offset += 400) {
-            final chunk = keys.skip(offset).take(400).toList();
-            final query = _db.selectOnly(_db.ratings)
-              ..addColumns([_db.ratings.workKey])
-              ..where(
-                _db.ratings.deletedAt.isNull() &
-                    _db.ratings.workKey.isIn(chunk),
-              );
-            rated.addAll([
-              for (final row in await query.get())
-                row.read(_db.ratings.workKey)!,
-            ]);
-            final series = chunk
-                .map((key) => WorkKey.parse(key).parent.toString())
-                .toSet();
-            for (final work in await (_db.select(
-              _db.works,
-            )..where((w) => w.workKey.isIn(series))).get()) {
-              parents[work.workKey] = work;
+  Stream<List<WatchlistTitle>> watchWatchlist() => distinctData(
+    _db
+        .customSelect(
+          'SELECT 1',
+          readsFrom: {_db.watchlist, _db.ratings, _db.works, _db.syncState},
+        )
+        .watch()
+        .asyncMap(
+          (_) => _db.transaction(() async {
+            final rows =
+                await (_db.select(_db.watchlist).join([
+                        innerJoin(
+                          _db.works,
+                          _db.works.workKey.equalsExp(_db.watchlist.workKey),
+                        ),
+                      ])
+                      ..where(_db.watchlist.deletedAt.isNull())
+                      ..orderBy([OrderingTerm.desc(_db.watchlist.addedAt)]))
+                    .get();
+            final entries = [
+              for (final row in rows) row.readTable(_db.watchlist),
+            ];
+            final fences = await SyncStore(_db).effectiveFences(entries);
+            final bySeries = <String, List<WatchlistFence>>{};
+            for (final fence in fences) {
+              bySeries.putIfAbsent(fence.seriesKey, () => []).add(fence);
             }
-          }
-          return [
-            for (final row in rows)
-              if (row.readTable(_db.watchlist) case final entry)
-                if (!rated.contains(entry.workKey) &&
-                    visibleWatchlistEntry(
-                      entry,
-                      bySeries[(WorkKey.parse(entry.workKey).kind == WorkKind.tv
-                                  ? WorkKey.parse(entry.workKey)
-                                  : WorkKey.parse(entry.workKey).parent)
-                              .toString()] ??
-                          const [],
-                    ))
-                  WatchlistTitle(
-                    entry: entry,
-                    work: row.readTable(_db.works),
-                    series:
-                        parents[WorkKey.parse(entry.workKey).parent.toString()],
-                  ),
-          ];
-        }),
-      );
+            final seasons = {
+              for (final row in rows)
+                if (row.readTable(_db.works).kind == WorkKind.season)
+                  row.readTable(_db.works).workKey,
+            };
+            final rated = <String>{};
+            final parents = <String, Work>{};
+            // Bound SQLite parameter counts and never materialize rating notes.
+            final keys = seasons.toList();
+            for (var offset = 0; offset < keys.length; offset += 400) {
+              final chunk = keys.skip(offset).take(400).toList();
+              final query = _db.selectOnly(_db.ratings)
+                ..addColumns([_db.ratings.workKey])
+                ..where(
+                  _db.ratings.deletedAt.isNull() &
+                      _db.ratings.workKey.isIn(chunk),
+                );
+              rated.addAll([
+                for (final row in await query.get())
+                  row.read(_db.ratings.workKey)!,
+              ]);
+              final series = chunk
+                  .map((key) => WorkKey.parse(key).parent.toString())
+                  .toSet();
+              for (final work in await (_db.select(
+                _db.works,
+              )..where((w) => w.workKey.isIn(series))).get()) {
+                parents[work.workKey] = work;
+              }
+            }
+            return [
+              for (final row in rows)
+                if (row.readTable(_db.watchlist) case final entry)
+                  if (!rated.contains(entry.workKey) &&
+                      visibleWatchlistEntry(
+                        entry,
+                        bySeries[(WorkKey.parse(entry.workKey).kind ==
+                                        WorkKind.tv
+                                    ? WorkKey.parse(entry.workKey)
+                                    : WorkKey.parse(entry.workKey).parent)
+                                .toString()] ??
+                            const [],
+                      ))
+                    WatchlistTitle(
+                      entry: entry,
+                      work: row.readTable(_db.works),
+                      series:
+                          parents[WorkKey.parse(
+                            entry.workKey,
+                          ).parent.toString()],
+                    ),
+            ];
+          }),
+        ),
+    _sameWatchlist,
+  );
+
+  static bool _sameRatings(List<RatedTitle> previous, List<RatedTitle> next) {
+    if (previous.length != next.length) return false;
+    for (var i = 0; i < next.length; i++) {
+      final a = previous[i], b = next[i];
+      if (a.rating != b.rating ||
+          a.work != b.work ||
+          a.series != b.series ||
+          a.season != b.season ||
+          !mapEquals(a.external, b.external)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  static bool _sameWatchlist(
+    List<WatchlistTitle> previous,
+    List<WatchlistTitle> next,
+  ) {
+    if (previous.length != next.length) return false;
+    for (var i = 0; i < next.length; i++) {
+      final a = previous[i], b = next[i];
+      if (a.entry != b.entry || a.work != b.work || a.series != b.series) {
+        return false;
+      }
+    }
+    return true;
+  }
 
   Future<Rating?> _ratingRow(String key) => (_db.select(
     _db.ratings,
@@ -961,7 +1011,7 @@ final class Library {
     final previous = max(old?.updatedAt ?? 0, compact);
     if (old != null) {
       final store = SyncStore(_db);
-      await store.saveFences((await store.read()).watchlistFences);
+      await store.saveFences(await store.readWatchlistFences());
       await (_db.update(
         _db.watchlist,
       )..where((w) => w.workKey.equals(key))).write(
@@ -987,13 +1037,18 @@ final class Library {
   }
 
   /// Takes a title off the watchlist with a tombstone, if it is on it.
-  Future<void> _unlist(String key, int now) async {
+  Future<void> _unlist(
+    String key,
+    int now, {
+    bool preserveFences = true,
+  }) async {
     final listed = await _watchlistRow(key);
     if (listed == null || listed.deletedAt != null) return;
     final workKey = WorkKey.parse(key);
-    if (workKey.kind == WorkKind.tv || workKey.kind == WorkKind.season) {
+    if (preserveFences &&
+        (workKey.kind == WorkKind.tv || workKey.kind == WorkKind.season)) {
       final store = SyncStore(_db);
-      await store.saveFences((await store.read()).watchlistFences);
+      await store.saveFences(await store.readWatchlistFences());
     }
     await (_db.update(
       _db.watchlist,

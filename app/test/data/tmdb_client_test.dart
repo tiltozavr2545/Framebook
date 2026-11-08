@@ -38,6 +38,41 @@ void main() {
     serve(apiFixtures);
   });
 
+  for (final people in [false, true]) {
+    test(
+      'search rejects a repeated page before caching: people=$people',
+      () async {
+        final api = client();
+        Future<SearchPage> load() => people
+            ? api.searchPeople('name', page: 2)
+            : api.search('name', page: 2);
+        serve(
+          (_) => (status: 200, body: '{"page":1,"total_pages":2,"results":[]}'),
+        );
+        await expectLater(load(), throwsA(isA<SourceException>()));
+        expect(cache.entries, isEmpty);
+        serve(
+          (_) => (status: 200, body: '{"page":2,"total_pages":2,"results":[]}'),
+        );
+        expect((await load()).page, 2);
+        final key = cache.entries.keys.single;
+        cache.entries[key] = CachedResponse(
+          '{"page":1,"total_pages":2,"results":[]}',
+          now.millisecondsSinceEpoch,
+        );
+        await load();
+        expect(http.requests, hasLength(2));
+        expect(cache.entries[key]!.body, contains('"page":2'));
+        now = now.add(TmdbTtl.search);
+        serve(
+          (_) => (status: 200, body: '{"page":1,"total_pages":2,"results":[]}'),
+        );
+        expect((await load()).page, 2);
+        expect(cache.entries[key]!.body, contains('"page":2'));
+      },
+    );
+  }
+
   for (final endpoint in ['movie', 'tv', 'person', 'season']) {
     test(
       '$endpoint rejects a mismatched detail response and retries',
@@ -432,6 +467,9 @@ void main() {
     });
 
     test('sends the query, page and language; key in the header', () async {
+      serve(
+        (_) => (status: 200, body: '{"page":2,"total_pages":2,"results":[]}'),
+      );
       await client().search('Матрица', page: 2);
       final request = http.requests.single;
       expect(request.uri.path, '/3/search/multi');

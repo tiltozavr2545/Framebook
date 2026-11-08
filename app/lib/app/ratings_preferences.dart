@@ -4,6 +4,7 @@ import '../data/library/divergence.dart';
 import '../data/library/library.dart';
 import '../data/work_key.dart';
 import 'preferences.dart';
+import 'preference_writes.dart';
 
 /// The chosen filter and order of "My ratings". Kept while the app is open;
 /// the source to compare with is remembered across launches
@@ -18,18 +19,21 @@ typedef RatingsListView = ({
 const _compareWithKey = 'divergence_source';
 
 class RatingsListViewNotifier extends Notifier<RatingsListView> {
+  late PreferenceWrites<RatingSource> _writes;
   @override
   RatingsListView build() {
     final stored = ref
         .watch(sharedPreferencesProvider)
         .getString(_compareWithKey);
+    final source = compareSources.firstWhere(
+      (s) => s.name == stored,
+      orElse: () => RatingSource.kp,
+    );
+    _writes = PreferenceWrites(source);
     return (
       kind: null,
       sort: RatingsSort.scoredAt,
-      compareWith: compareSources.firstWhere(
-        (s) => s.name == stored,
-        orElse: () => RatingSource.kp,
-      ),
+      compareWith: source,
       order: DivergenceOrder.furthest,
     );
   }
@@ -48,16 +52,29 @@ class RatingsListViewNotifier extends Notifier<RatingsListView> {
     order: state.order,
   );
 
-  Future<void> compareWith(RatingSource source) async {
+  Future<void> compareWith(RatingSource source) {
+    final prefs = ref.read(sharedPreferencesProvider);
+    final writes = _writes;
     state = (
       kind: state.kind,
       sort: state.sort,
       compareWith: source,
       order: state.order,
     );
-    await ref
-        .read(sharedPreferencesProvider)
-        .setString(_compareWithKey, source.name);
+    return writes.save(
+      source,
+      () => prefs.setString(_compareWithKey, source.name),
+      (saved) {
+        if (ref.mounted && identical(writes, _writes)) {
+          state = (
+            kind: state.kind,
+            sort: state.sort,
+            compareWith: saved,
+            order: state.order,
+          );
+        }
+      },
+    );
   }
 
   void orderBy(DivergenceOrder order) => state = (

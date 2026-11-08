@@ -1,7 +1,11 @@
 # Framebook 0.8.4 optimization
 
+Historical implementation and measurement evidence. Current runtime rules are
+maintained in [client architecture](../../client-architecture.md); current
+build/release procedures belong to [operations](../../operations.md).
+
 Target: **0.8.4+18**. This records the implemented follow-up to the
-[0.8.3 correctness review](reviews/2026-11-05/README.md), the measurements,
+[0.8.3 correctness review](../2026-11-05/README.md), the measurements,
 and the limits of those measurements. No schema or sync-format change is needed.
 
 ## Completed work
@@ -52,7 +56,7 @@ and the limits of those measurements. No schema or sync-format change is needed.
   three symbol files and uploads them as `framebook-<version>-symbols`
   Actions artifacts for 90 days. Release assets contain only the APK; download
   symbols before artifact expiry and retain a local backup for crash decoding.
-  See [operations.md](operations.md#android-symbols) for symbolization.
+  See [operations.md](../../operations.md#android-symbols) for symbolization.
 - **Unused dependencies.** Removed the direct `cupertino_icons`,
   `json_serializable` and `json_annotation` declarations and the unused
   generator's `source_helper`. Other resolved versions stay unchanged;
@@ -147,3 +151,10 @@ on the pending timer, then passed with the production fix restored.
 `make verify-version BASE_REF=HEAD` and `make build-apk-check` passed before
 commit. The physical-phone check found no connected device; no emulator was
 started and no real-account sync was performed.
+
+## Release workflow recovery
+
+The first 0.8.4 release attempt passed tests but stopped during Gradle startup:
+the hosted runner's default Java 25 was incompatible with Gradle 8.12. CI and
+release jobs selected Temurin JDK 21. The current recovery procedure is in
+[operations](../../operations.md#ci-java-and-release-recovery).
