@@ -7,19 +7,19 @@ verification evidence in the [review reports](reviews/README.md).
 
 ## Latest delivery
 
-Version 0.9.4 combines a simpler statistics overview and focused detail pages,
-automatic catch-up for missing public ratings, date-preserving score review
-and navigation, stability and typography repairs. Current behavior is
+Version 0.9.5 preserves rating dates during ordinary score edits for all title
+kinds and simplifies release details on cards. Unknown dates appear in the
+header's date field; the separate pending-release label and explanation are
+removed. Rating eligibility rules remain unchanged. Current behavior is
 specified in [features](features.md); the release history is in the
-[changelog](../CHANGELOG.md#094--clearer-statistics-and-automatic-rating-catch-up-build-24).
+[changelog](../CHANGELOG.md#095--stable-rating-dates-and-simpler-release-details-build-25).
 
-Implementation and automated checks are complete. Verification
-results and their limits are recorded in
-[delivery validation](reviews/delivery-validation.md#bottom-navigation-visibility-repair--2026-11-07).
+Implementation and automated verification are complete. Results
+and their limits are recorded in
+[delivery validation](reviews/delivery-validation.md#rating-dates-and-release-details--095).
 The [stability review](reviews/0.9.4/README.md) records additional repairs and
-host responsiveness measurements for the same version. Automated
-verification is complete. The platform and independent-review work below
-remains separate.
+host responsiveness measurements for the previous version. The platform and
+independent-review work below remains separate.
 
 ## Statistics redesign
 

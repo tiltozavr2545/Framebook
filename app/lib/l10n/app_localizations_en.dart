@@ -465,12 +465,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ratingRate => 'Rate';
 
   @override
-  String get ratingNotReleased => 'Rating is available after release.';
-
-  @override
-  String get titleNotReleased => 'Not released yet';
-
-  @override
   String get titleReleaseDateUnknown => 'Release date unknown';
 
   @override

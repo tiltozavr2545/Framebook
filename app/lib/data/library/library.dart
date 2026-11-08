@@ -106,7 +106,7 @@ final class Library {
           RatingsCompanion(
             scoreHalf: Value(scoreHalf),
             note: Value(cleanNote),
-            scoredAt: rescored ? Value(now) : const Value.absent(),
+            scoredAt: revived ? Value(now) : const Value.absent(),
             updatedAt: Value(_next(now, old.updatedAt)),
             updatedBy: Value(deviceId),
             deletedAt: const Value(null),
@@ -122,12 +122,8 @@ final class Library {
   }
 
   /// Changes the score of an already rated title (the calibration sheet's
-  /// header), keeping its note. Pair calibration preserves the diary date.
-  Future<void> rescore(
-    WorkKey key,
-    int scoreHalf, {
-    bool preserveScoredAt = false,
-  }) {
+  /// header), keeping its note and diary date.
+  Future<void> rescore(WorkKey key, int scoreHalf) {
     _checkScore(scoreHalf);
     final k = key.toString();
     return _db.transaction(() async {
@@ -140,7 +136,6 @@ final class Library {
       await (_db.update(_db.ratings)..where((r) => r.workKey.equals(k))).write(
         RatingsCompanion(
           scoreHalf: Value(scoreHalf),
-          scoredAt: preserveScoredAt ? const Value.absent() : Value(now),
           updatedAt: Value(_next(now, old.updatedAt)),
           updatedBy: Value(deviceId),
         ),

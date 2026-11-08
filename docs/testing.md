@@ -101,6 +101,8 @@ as any app installation using that key.
 | Search, people, pagination, stale responses, selected-title history | `features/search_controller_test.dart`, `features/search_history_test.dart`, `app_test.dart` |
 | API parsing, typed identity matching, caching and quotas | `data/*_client_test.dart`, `data/ratings_service_test.dart`, `data/response_cache_test.dart` |
 | Rating, notes, cancellation, deletion, watchlist, season grouping | `data/library_test.dart`, `features/rating_note_test.dart`, `app_test.dart` |
+| Score edits preserving diary dates/order for all title kinds, re-rating after deletion and date-preserving sync | `data/library_test.dart`, `data/sync_test.dart` |
+| Unknown dates in card headers in both locales, saved cards and removal of separate release notices | `app_test.dart` |
 | Failed card/watchlist writes, Undo retry and release-date eligibility | `features/library_action_failure_test.dart` |
 | Unknown personal-rating reads, Retry and retaining existing note drafts | `features/rating_load_guard_test.dart`, `features/rating_initial_state_test.dart` |
 | Retrying failed initial library reads on ratings, watchlist and statistics | `features/local_library_failure_test.dart` |

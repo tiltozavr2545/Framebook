@@ -552,3 +552,12 @@ Versions are listed from oldest to newest; append new entries at the end.
   removing height-estimation corrections during scrolling.
 - Preserve Russian Cyrillic glyph forms in English mode for saved titles,
   names and notes instead of using the font's default Bulgarian forms.
+
+## 0.9.5 — Stable rating dates and simpler release details (build 25)
+
+- Keep the original rating date when editing a film, series, season or episode
+  score, so the title stays in its date group and list position. Deleting a
+  rating and rating again sets a new date; edits still sync normally.
+- Show unknown release dates in the usual date field on title cards, including
+  saved offline cards. Remove the separate "Not released yet" label and its
+  explanation below the rating controls, preserving rating eligibility rules.

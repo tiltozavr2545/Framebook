@@ -18,7 +18,7 @@ enum DivergenceOrder {
 }
 
 /// Filters "My ratings" by kind (`null` — all) and sorts it. Ties are broken
-/// by the most recent score and then the natural key, so the order is stable
+/// by the most recent rating date and then the natural key, so the order is stable
 /// even when an import gave many titles the same timestamp. Sorting by divergence
 /// compares with [compareWith]; titles without its value go to the end rather
 /// than dropping out (docs/data-model.md, "Key queries").

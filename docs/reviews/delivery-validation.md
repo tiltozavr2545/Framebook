@@ -220,3 +220,24 @@ The signed universal preview built successfully (64.4 MB) and installed over
 the existing app with `adb install -r`, preserving app data. Android confirmed
 a successful cold activity launch. Version/build remained 0.9.4+24; the user
 will assess scrolling smoothness and typography on the physical device.
+
+## Rating dates and release details — 0.9.5
+
+Implemented on 2026-11-08. Version 0.9.5+25 preserves `scored_at` for ordinary
+score edits and direct score corrections across films, series, seasons and episodes. Edits advance
+the sync version; deleting and rating again sets a new diary date. Existing
+dates remain unchanged, without a schema migration or sync-format change.
+
+Unknown or invalid release dates appear in each card's header date field,
+including saved offline cards, in both interface languages. The separate
+pending-release label and explanation below rating controls were removed.
+Rating and recommendation eligibility rules were retained.
+
+`make codegen`, `make verify` and `make verify-version` passed. The final full
+suite passed 773 tests with 22 opt-in renderers skipped; formatting, static
+analysis and version-script fixtures were clean. Regression coverage checked
+persisted dates, complete date ordering, re-rating with the same score after deletion,
+lagging clocks, unchanged saves and two-device sync for all four title kinds.
+Full-app checks exercise header placement in both locales, offline cards,
+future-film restrictions and undated series. No physical-device check or
+installation is claimed for this change.

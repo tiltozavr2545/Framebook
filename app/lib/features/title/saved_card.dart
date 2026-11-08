@@ -9,6 +9,7 @@ import '../../data/source_failure.dart';
 import '../../data/work_key.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/failure_view.dart';
+import '../../shared/format.dart';
 import '../../shared/title_text.dart';
 import 'my_rating.dart';
 import 'ratings_panel.dart';
@@ -104,7 +105,7 @@ class _Saved extends StatelessWidget {
           coverKey: key,
           cachedCoverOnly: true,
           originalTitle: work.originalTitle,
-          facts: [lines.subtitle],
+          facts: [context.formatReleaseDate(work.releaseDate), lines.subtitle],
         ),
         const SizedBox(height: 16),
         MyRatingSection(

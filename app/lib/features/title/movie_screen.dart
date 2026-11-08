@@ -34,7 +34,9 @@ class MovieScreen extends ConsumerWidget {
           originalTitle: movie.originalTitle,
           facts: [
             joinFacts([
-              context.formatDate(movie.premiereDate ?? movie.releaseDate),
+              context.formatReleaseDate(
+                movie.premiereDate ?? movie.releaseDate,
+              ),
               if (movie.runtime case final runtime?)
                 context.formatRuntime(runtime),
             ]),

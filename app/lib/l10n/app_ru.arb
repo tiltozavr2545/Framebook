@@ -154,8 +154,6 @@
   "undo": "Вернуть",
 
   "ratingRate": "Оценить",
-  "ratingNotReleased": "Оценка станет доступна после выхода.",
-  "titleNotReleased": "Ещё не вышел",
   "titleReleaseDateUnknown": "Дата выхода неизвестна",
   "ratingMine": "Моя оценка",
   "ratingEdit": "Изменить",

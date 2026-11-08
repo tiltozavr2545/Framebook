@@ -81,12 +81,15 @@ rejected key and source failure. Source coverage and freshness rules are in
 Movie headers show the earliest known valid release date, countries, positive
 budget and worldwide box office in USD beside the poster. The full date
 replaces a separate year. Series show first air date, last air date when
-ended/cancelled, and countries. Unknown facts are omitted; movie finances
-are not inferred for series. Country names follow TMDB's supplied text.
-Cards explicitly show when a title has not been released or its release date
-is unknown. Planned series and series in production have their own status
-labels instead of appearing as ongoing; a known past premiere still permits
-rating while later seasons are in production.
+ended/cancelled, and countries. Seasons and episodes show their air date.
+An unknown or invalid release date appears as "Release date unknown" in the
+normal header date field, including saved offline cards. Other unknown facts
+are omitted; movie finances are not inferred for series. Country names follow
+TMDB's supplied text.
+Cards have no separate "Not released yet" status or release explanation below
+the rating controls. Planned series and series in production have their own
+status labels instead of appearing as ongoing; a known past premiere still
+permits rating while later seasons are in production.
 
 Cast strips show the first 20 actors. The cast heading opens a lazy full list;
 actor profiles open above it. Names and roles reserve two scaled lines each,
@@ -114,11 +117,11 @@ Each card has My rating. The bottom-sheet editor uses a score reel from 1 to
 rating starts at 5; an existing one starts at its saved score. Scores display
 without a trailing `.0`. Films, series, seasons and episodes require a valid
 release date on or before today to add or edit a rating, including saved cards
-without catalog access. Missing or invalid dates show an explicit explanation
-and keep rating disabled; adding to the watchlist remains available. Existing
-ratings are retained and can still be deleted. Deletion requires
-confirmation. Failed persistence keeps the editor and draft open, and saving
-freezes the reel's current value.
+without catalog access. Missing or invalid dates keep rating disabled; the
+header date field shows that the date is unknown. Adding to the watchlist
+remains available. Existing ratings are retained and can still be deleted.
+Deletion requires confirmation. Failed persistence keeps the editor and draft
+open, and saving freezes the reel's current value.
 Failed deletion and watchlist changes show a retryable error while preserving
 the saved state. Card controls prevent duplicate writes while their operation
 is pending. Optional snapshot-refresh failures do not interrupt the card.
@@ -140,12 +143,13 @@ area keeps a fixed height. An empty group says so. Optional comparison
 failures do not block saving, and superseded replies cannot replace the
 current selection.
 
-My ratings filters by kind and sorts by score-change date, score, year,
+My ratings filters by kind and sorts by rating date, score, year,
 title or divergence. Parts sort under their series in number order. Date
 order groups entries by local day: Today, Yesterday and full localized dates.
-Note-only changes do not move a title to a new score day. Other sorts stay
-flat. Filter/order selections last for the session. Source comparison and
-parent-average formulas are specified in [analytics](analytics.md).
+Score and note edits preserve the rating date and its position in date order
+for every title kind. Deleting a rating and rating again starts a new date.
+Other sorts stay flat. Filter/order selections last for the session. Source
+comparison and parent-average formulas are specified in [analytics](analytics.md).
 
 Ratings, watchlist and statistics show a local-library error with Retry if
 reading or preparing their first useful data fails. Retry restarts the affected

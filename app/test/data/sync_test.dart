@@ -639,6 +639,48 @@ void main() {
       expect(remote.files.values.single.modified, before);
     });
 
+    test(
+      'score edits sync their new version with the original diary date',
+      () async {
+        for (final lineage in [
+          _film(1),
+          _episode.take(1).toList(),
+          _episode.take(2).toList(),
+          _episode,
+        ]) {
+          await a.library.rate(lineage, scoreHalf: 16, note: 'Original');
+        }
+        await a.engine.sync();
+        await b.engine.sync();
+        final before = await a.store.read();
+        b.now += 100;
+        for (final lineage in [
+          _film(1),
+          _episode.take(1).toList(),
+          _episode.take(2).toList(),
+          _episode,
+        ]) {
+          await b.library.rate(lineage, scoreHalf: 18, note: 'Edited');
+        }
+        await b.engine.sync();
+        await a.engine.sync();
+        expect(await a.state(), await b.state());
+        final after = await a.store.read();
+        expect(after.ratings, hasLength(4));
+        for (final current in after.ratings) {
+          final previous = before.ratings.singleWhere(
+            (row) => row.workKey == current.workKey,
+          );
+          expect(current.scoreHalf, 18);
+          expect(current.note, 'Edited');
+          expect(current.scoredAt, previous.scoredAt);
+          expect(current.createdAt, previous.createdAt);
+          expect(current.updatedAt, greaterThan(previous.updatedAt));
+          expect(current.updatedBy, b.id);
+        }
+      },
+    );
+
     test('edits on both sides merge', () async {
       await a.library.rate(_film(1), scoreHalf: 16, note: null);
       await a.engine.sync();

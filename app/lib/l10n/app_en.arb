@@ -166,8 +166,6 @@
   "undo": "Undo",
 
   "ratingRate": "Rate",
-  "ratingNotReleased": "Rating is available after release.",
-  "titleNotReleased": "Not released yet",
   "titleReleaseDateUnknown": "Release date unknown",
   "ratingMine": "My rating",
   "ratingEdit": "Change",

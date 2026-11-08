@@ -52,7 +52,7 @@ class SeasonScreen extends ConsumerWidget {
             facts: [
               tv.title,
               joinFacts([
-                season.year?.toString(),
+                context.formatReleaseDate(season.airDate),
                 if (season.episodes.isNotEmpty)
                   l10n.episodeCount(season.episodes.length),
               ]),

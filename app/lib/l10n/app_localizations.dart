@@ -896,18 +896,6 @@ abstract class AppLocalizations {
   /// **'Rate'**
   String get ratingRate;
 
-  /// No description provided for @ratingNotReleased.
-  ///
-  /// In en, this message translates to:
-  /// **'Rating is available after release.'**
-  String get ratingNotReleased;
-
-  /// No description provided for @titleNotReleased.
-  ///
-  /// In en, this message translates to:
-  /// **'Not released yet'**
-  String get titleNotReleased;
-
   /// No description provided for @titleReleaseDateUnknown.
   ///
   /// In en, this message translates to:

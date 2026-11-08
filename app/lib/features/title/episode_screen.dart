@@ -94,7 +94,7 @@ class EpisodeScreen extends ConsumerWidget {
           Text(
             joinFacts([
               l10n.episodeCode(episode.season, episode.number),
-              context.formatDate(episode.airDate),
+              context.formatReleaseDate(episode.airDate),
               if (episode.runtime case final runtime?)
                 context.formatRuntime(runtime),
             ]),

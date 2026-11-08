@@ -112,7 +112,7 @@ class TvScreen extends ConsumerWidget {
         (tv.status == TvStatus.ended || tv.status == TvStatus.canceled)) {
       return '$first–$last';
     }
-    return first;
+    return first ?? AppLocalizations.of(context).titleReleaseDateUnknown;
   }
 
   static String? _status(AppLocalizations l10n, TvStatus status) =>

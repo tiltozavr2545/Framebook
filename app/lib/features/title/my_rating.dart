@@ -132,12 +132,6 @@ class _MyRatingSectionState extends ConsumerState<MyRatingSection>
               onEdit: canRate && !_deleting ? () => _edit(rating) : null,
               onDelete: _deleting ? null : () => _delete(),
             ),
-          if (!canRate) ...[
-            if (release == ReleaseState.upcoming) Text(l10n.titleNotReleased),
-            if (releaseDate == null || !validCalendarDate(releaseDate))
-              Text(l10n.titleReleaseDateUnknown),
-            Text(l10n.ratingNotReleased),
-          ],
           if (parts != null) ...[
             const SizedBox(height: 8),
             Text(

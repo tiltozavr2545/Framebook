@@ -266,14 +266,19 @@ void main() {
       expect(row.note, 'Пересмотрел');
     });
 
-    test('changing the score moves scored_at', () async {
-      await library.rate([matrix], scoreHalf: 17, note: null);
-      now = now.add(const Duration(hours: 1));
-      await library.rate([matrix], scoreHalf: 18, note: null);
-      final row = (await ratingRow(matrix.key))!;
-      expect(row.scoreHalf, 18);
-      expect(row.scoredAt, ms(now));
-    });
+    test(
+      'changing the score keeps scored_at and advances its version',
+      () async {
+        await library.rate([matrix], scoreHalf: 17, note: null);
+        final first = now;
+        now = now.add(const Duration(hours: 1));
+        await library.rate([matrix], scoreHalf: 18, note: null);
+        final row = (await ratingRow(matrix.key))!;
+        expect(row.scoreHalf, 18);
+        expect(row.scoredAt, ms(first));
+        expect(row.updatedAt, ms(now));
+      },
+    );
 
     test('saving the same thing again writes no new version', () async {
       await library.rate([matrix], scoreHalf: 17, note: 'x');
@@ -323,13 +328,72 @@ void main() {
 
     test('rescore changes the score and keeps the note', () async {
       await library.rate([matrix], scoreHalf: 17, note: 'x');
+      final first = now;
       now = now.add(const Duration(minutes: 1));
       await library.rescore(matrix.key, 18);
       final row = (await ratingRow(matrix.key))!;
       expect(row.scoreHalf, 18);
       expect(row.note, 'x');
-      expect(row.scoredAt, ms(now));
+      expect(row.scoredAt, ms(first));
+      expect(row.updatedAt, ms(now));
     });
+
+    for (final lineage in [
+      [matrix],
+      [WorkSnapshot.tv(thrones)],
+      season(),
+      episode(3),
+    ]) {
+      final key = lineage.last.key;
+      test(
+        '$key edits keep diary ordering; rating after deletion resets it',
+        () async {
+          await library.rate(lineage, scoreHalf: 16, note: 'Original');
+          final original = (await ratingRow(key))!;
+          now = now.add(const Duration(days: 1));
+          await library.rate(film(999), scoreHalf: 14, note: null);
+          final otherKey = film(999).single.key.toString();
+          Future<List<String>> order() async => arrangeRatings(
+            await library.watchRatings().first,
+          ).map((title) => title.work.workKey).toList();
+          final initialOrder = [otherKey, key.toString()];
+          expect(await order(), initialOrder);
+          now = now.add(const Duration(days: 1));
+          await library.rate(lineage, scoreHalf: 18, note: 'Edited');
+          var current = (await ratingRow(key))!;
+          expect(current.scoreHalf, 18);
+          expect(current.note, 'Edited');
+          expect(current.scoredAt, original.scoredAt);
+          expect(current.createdAt, original.createdAt);
+          expect(current.updatedAt, ms(now));
+          expect(await order(), initialOrder);
+          // A second device's lagging clock must advance the sync version only.
+          final editor = Library(db, deviceId: 'device-b', clock: () => now);
+          now = now.subtract(const Duration(days: 7));
+          await editor.rescore(key, 15);
+          final rescored = (await ratingRow(key))!;
+          expect(rescored.scoreHalf, 15);
+          expect(rescored.note, 'Edited');
+          expect(rescored.scoredAt, original.scoredAt);
+          expect(rescored.updatedAt, current.updatedAt + 1);
+          expect(rescored.updatedBy, 'device-b');
+          expect(await order(), initialOrder);
+          await editor.rescore(key, 15);
+          expect(await ratingRow(key), rescored);
+          now = now.add(const Duration(days: 10));
+          await library.deleteRating(key);
+          now = now.add(const Duration(days: 1));
+          // Even the same score starts a new diary entry after deletion.
+          await library.rate(lineage, scoreHalf: 15, note: null);
+          current = (await ratingRow(key))!;
+          expect(current.deletedAt, isNull);
+          expect(current.createdAt, original.createdAt);
+          expect(current.scoredAt, ms(now));
+          expect(current.updatedAt, ms(now));
+          expect(await order(), [key.toString(), otherKey]);
+        },
+      );
+    }
   });
 
   group('watchlist', () {

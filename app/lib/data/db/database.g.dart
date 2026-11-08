@@ -1130,7 +1130,7 @@ class Rating extends DataClass implements Insertable<Rating> {
   final String? note;
   final int createdAt;
 
-  /// The last ordinary score edit; notes and pair corrections preserve it.
+  /// The current rating's date; edits preserve it, rating after deletion resets it.
   final int scoredAt;
 
   /// The last user change of any kind; merging goes by it.

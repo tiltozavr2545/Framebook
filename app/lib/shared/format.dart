@@ -19,6 +19,10 @@ extension Formatting on BuildContext {
     ).format(DateTime(parts[0], parts[1], parts[2]));
   }
 
+  /// A title card always reserves its date field, even without a valid date.
+  String formatReleaseDate(String? ymd) =>
+      formatDate(ymd) ?? AppLocalizations.of(this).titleReleaseDateUnknown;
+
   /// UTC ms → a short date in local time.
   String formatTimestamp(int millis) => DateFormat.MMMd(
     _locale,

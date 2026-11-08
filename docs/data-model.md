@@ -166,7 +166,7 @@ Invariants:
 | `score_half` | int | 2…20, CHECK; score × 2 (7.5 → 15) |
 | `note` | text null | note/review, up to 10,000 Unicode code points |
 | `created_at` | int | UTC ms, the first rating |
-| `scored_at` | int | UTC ms, the last ordinary **score** edit (not the note or a pair-calibration correction) — for "by date" sorting and "recent" in the calibration |
+| `scored_at` | int | UTC ms, when the current rating was first saved; score/note edits and pair-calibration corrections preserve it — for "by date" sorting and "recent" in the calibration |
 | `updated_at` | int | UTC ms, the last user change of any kind — merging goes by it |
 | `updated_by` | text | `device_id` of the last writer — breaks ties on equal `updated_at` |
 | `deleted_at` | int null | tombstone; a row with it is never shown |
@@ -181,6 +181,10 @@ wins. The model does not support a note without a score.
 
 Rating a title again after deletion (tombstone) is an UPDATE of the same row:
 `deleted_at = NULL`, new `score_half`, `scored_at`, `updated_at`.
+The original `created_at` stays. Editing a live rating keeps `scored_at` for
+films, series, seasons and episodes, including direct score corrections.
+Existing saved dates are retained without migration; earlier score-edit dates
+cannot be reconstructed.
 
 ### `watchlist` — "Watchlist"
 
@@ -306,8 +310,9 @@ them into another day.
 
 `updated_at` advances on user changes only and monotonically within a row.
 Background snapshots, external ratings and analytics never advance it.
-`scored_at` changes when an ordinary numeric-score edit occurs. Pair-calibration
-corrections preserve it while advancing `updated_at` / `updated_by`. Detailed
+`scored_at` is set on a new rating or rating again after deletion. Score edits,
+note edits and pair-calibration corrections preserve it while advancing
+`updated_at` / `updated_by`; unchanged saves create no new version. Detailed
 merge and clock-skew rules belong to [sync](sync.md#device-clocks).
 
 Notes are limited to 10,000 Unicode code points, matching SQLite `length(TEXT)`

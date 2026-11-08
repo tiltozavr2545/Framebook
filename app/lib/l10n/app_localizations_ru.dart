@@ -468,12 +468,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get ratingRate => 'Оценить';
 
   @override
-  String get ratingNotReleased => 'Оценка станет доступна после выхода.';
-
-  @override
-  String get titleNotReleased => 'Ещё не вышел';
-
-  @override
   String get titleReleaseDateUnknown => 'Дата выхода неизвестна';
 
   @override

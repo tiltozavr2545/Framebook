@@ -659,43 +659,131 @@ void main() {
     tester.element(find.byType(FramebookApp)),
   ).read(routerProvider).go(location);
 
-  for (final status in ['Planned', 'In Production', 'Unknown']) {
-    cardTest('undated $status series explains release and prevents rating', (
-      tester,
-    ) async {
-      await pumpApp(
+  for (final locale in ['en', 'ru']) {
+    for (final kind in ['movie', 'tv', 'season', 'episode', 'saved']) {
+      cardTest('unknown $kind date stays in its header in $locale', (
         tester,
-        keys: tmdbOnly,
-        http: (request) {
-          if (request.uri.path == '/3/tv/1399') {
-            final json =
-                jsonDecode(fixture('tmdb/tv_1399_ru.json'))
-                    as Map<String, dynamic>;
-            json['first_air_date'] = '';
-            json['last_air_date'] = '';
-            json['status'] = status;
-            return (status: 200, body: jsonEncode(json));
-          }
-          return apiFixtures(request);
-        },
-      );
-      go(tester, '/search/tv/1399');
-      await settle(tester);
-      expect(find.text('Release date unknown'), findsOneWidget);
-      expect(
-        find.text('Not released yet'),
-        status == 'Unknown' ? findsNothing : findsOneWidget,
-      );
-      final rate = find.ancestor(
-        of: find.text('Rate'),
-        matching: find.byWidgetPredicate((widget) => widget is FilledButton),
-      );
-      expect(tester.widget<FilledButton>(rate).onPressed, isNull);
-      await tester.tap(find.text('Want to watch'));
-      await settle(tester);
-      expect(find.text('On the watchlist'), findsOneWidget);
-      expect(find.text('ongoing'), findsNothing);
-    });
+      ) async {
+        await pumpApp(
+          tester,
+          keys: tmdbOnly,
+          seed: kind == 'saved'
+              ? (library) => library.rate(
+                  const [
+                    WorkSnapshot(
+                      key: WorkKey.movie(603),
+                      tmdbId: 603,
+                      title: 'Saved film',
+                    ),
+                  ],
+                  scoreHalf: 16,
+                  note: null,
+                )
+              : null,
+          http: (request) {
+            if (kind == 'saved' && request.uri.path == '/3/movie/603') {
+              return null;
+            }
+            final response = apiFixtures(request);
+            if (response == null) return null;
+            if ([
+              '/3/movie/603',
+              '/3/tv/1399',
+              '/3/tv/1399/season/1',
+            ].contains(request.uri.path)) {
+              final json = jsonDecode(response.body) as Map<String, dynamic>;
+              json['release_date'] = '';
+              json['first_air_date'] = '';
+              json['air_date'] = '2000-02-30';
+              for (final episode in (json['episodes'] as List? ?? [])) {
+                (episode as Map<String, dynamic>)['air_date'] = null;
+              }
+              return (status: 200, body: jsonEncode(json));
+            }
+            return response;
+          },
+        );
+        final container = ProviderScope.containerOf(
+          tester.element(find.byType(FramebookApp)),
+        );
+        await container.read(localeProvider.notifier).set(Locale(locale));
+        go(tester, switch (kind) {
+          'tv' => '/search/tv/1399',
+          'season' => '/search/tv/1399/s/1',
+          'episode' => '/search/tv/1399/s/1/e/3',
+          _ => '/search/movie/603',
+        });
+        await settle(tester);
+        final unknown = locale == 'ru'
+            ? 'Дата выхода неизвестна'
+            : 'Release date unknown';
+        expect(find.textContaining(unknown), findsOneWidget);
+        final header = kind == 'episode'
+            ? find.textContaining(unknown)
+            : find.descendant(
+                of: find.byType(TitleHeader),
+                matching: find.textContaining(unknown),
+              );
+        expect(header, findsOneWidget);
+        for (final removed in [
+          'Not released yet',
+          'Rating is available after release.',
+          'Ещё не вышел',
+          'Оценка станет доступна после выхода.',
+        ]) {
+          expect(find.text(removed), findsNothing);
+        }
+      });
+    }
+  }
+
+  for (final status in ['Planned', 'In Production', 'Unknown']) {
+    cardTest(
+      'undated $status series shows its date in the header and prevents rating',
+      (tester) async {
+        await pumpApp(
+          tester,
+          keys: tmdbOnly,
+          http: (request) {
+            if (request.uri.path == '/3/tv/1399') {
+              final json =
+                  jsonDecode(fixture('tmdb/tv_1399_ru.json'))
+                      as Map<String, dynamic>;
+              json['first_air_date'] = '';
+              json['last_air_date'] = '';
+              json['status'] = status;
+              return (status: 200, body: jsonEncode(json));
+            }
+            return apiFixtures(request);
+          },
+        );
+        go(tester, '/search/tv/1399');
+        await settle(tester);
+        expect(
+          find.descendant(
+            of: find.byType(TitleHeader),
+            matching: find.textContaining('Release date unknown'),
+          ),
+          findsOneWidget,
+        );
+        expect(find.text('Not released yet'), findsNothing);
+        expect(find.text('Rating is available after release.'), findsNothing);
+        final rate = find.ancestor(
+          of: find.text('Rate'),
+          matching: find.byWidgetPredicate((widget) => widget is FilledButton),
+        );
+        expect(tester.widget<FilledButton>(rate).onPressed, isNull);
+        await Scrollable.ensureVisible(
+          tester.element(find.text('Want to watch')),
+          alignment: 0.5,
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Want to watch'));
+        await settle(tester);
+        expect(find.text('On the watchlist'), findsOneWidget);
+        expect(find.text('ongoing'), findsNothing);
+      },
+    );
   }
 
   cardTest('future films cannot be rated but can be watchlisted', (
@@ -730,7 +818,8 @@ void main() {
           .onPressed,
       isNull,
     );
-    expect(find.text('Rating is available after release.'), findsOneWidget);
+    expect(find.text('Rating is available after release.'), findsNothing);
+    expect(find.text('Not released yet'), findsNothing);
     await tester.tap(find.text('Want to watch'));
     await settle(tester);
     expect(find.text('On the watchlist'), findsOneWidget);

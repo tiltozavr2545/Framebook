@@ -107,7 +107,7 @@ class PairCalibrationStore {
     for (final title in [pair.left, pair.right]) {
       final half = changes[title.work.workKey];
       if (half != null) {
-        await library.rescore(title.key, half, preserveScoredAt: true);
+        await library.rescore(title.key, half);
       }
     }
     Future<Rating> result(RatedTitle title) => (db.select(
