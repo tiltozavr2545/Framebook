@@ -25,8 +25,12 @@ preference does not save an event or rewrite ratings; the subsequent action
 confirms completion. Failed saves retain the choice on screen for retry.
 
 Scores remain integer half points within the existing storage range. Only a
-confirmed correction changes ratings, preserving notes and the ordinary sync
-timestamps. Unsupported correction maps are rejected. Before saving, the store
+confirmed correction changes ratings, preserving notes and the diary dates
+(`created_at` and `scored_at`). The sync version (`updated_at` / `updated_by`)
+still advances, so corrections reach other devices without moving films in
+date-based lists or recent-rating groups. The daily hint only states the
+comparison allowance; sync details stay on the Sync screen.
+Unsupported correction maps are rejected. Before saving, the store
 rechecks both live score versions and whether the original or resulting pair
 was already answered. The quota check, optional rescores and saved answer share
 one transaction. A changed/deleted rating invalidates the pending pair rather

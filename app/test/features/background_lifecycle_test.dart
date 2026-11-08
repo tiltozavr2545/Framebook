@@ -22,9 +22,12 @@ import '../support/fake_http.dart';
 class _PendingOmdb implements OmdbApi {
   final requested = Completer<void>();
   final result = Completer<OmdbRatings?>();
+  final ids = <String>[];
 
   @override
   Future<OmdbRatings?> byImdbId(String id) {
+    ids.add(id);
+    if (ids.length > 1) return Future.value(null);
     requested.complete();
     return result.future;
   }
@@ -43,7 +46,7 @@ class _FailingRead extends QueryInterceptor {
     String statement,
     List<Object?> args,
   ) {
-    if (failNext) {
+    if (failNext && statement.contains('INNER JOIN')) {
       failNext = false;
       failures++;
       return Future.error(
@@ -55,6 +58,91 @@ class _FailingRead extends QueryInterceptor {
 }
 
 void main() {
+  Future<void> until(WidgetTester tester, bool Function() ready) async {
+    for (var i = 0; i < 100 && !ready(); i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 10)),
+      );
+      await tester.pump(const Duration(seconds: 3));
+    }
+    expect(ready(), isTrue);
+  }
+
+  Future<void> rate(AppDatabase db, int id) =>
+      Library(db, deviceId: 'test').rate(
+        [
+          WorkSnapshot(
+            key: WorkKey.movie(id),
+            tmdbId: id,
+            title: 'Film $id',
+            imdbId: 'tt$id',
+          ),
+        ],
+        scoreHalf: 16,
+        note: null,
+      );
+
+  for (final duringPass in [false, true]) {
+    testWidgets(
+      duringPass
+          ? 'new ratings during a pass are picked up without the periodic delay'
+          : 'a new rating wakes an idle background refresh',
+      (tester) async {
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+        final db = AppDatabase(NativeDatabase.memory());
+        final api = _PendingOmdb();
+        if (duringPass) await tester.runAsync(() => rate(db, 1));
+        final container = ProviderContainer(
+          overrides: [
+            databaseProvider.overrideWithValue(db),
+            ratingsServiceProvider.overrideWithValue(
+              RatingsService(db, omdb: api),
+            ),
+          ],
+        );
+        final states = <bool>[];
+        try {
+          container.listen(
+            backgroundRefreshProvider,
+            (_, next) => states.add(next),
+          );
+          await tester.pump(BackgroundRefreshNotifier.startDelay);
+          if (duringPass) {
+            await until(tester, () => api.requested.isCompleted);
+          } else {
+            await until(
+              tester,
+              () => states.contains(true) && states.last == false,
+            );
+          }
+          await tester.runAsync(() => rate(db, 2));
+          if (duringPass) {
+            // Deliver the rating-key stream while the first request is blocked.
+            for (var i = 0; i < 10; i++) {
+              await tester.runAsync(
+                () => Future<void>.delayed(const Duration(milliseconds: 10)),
+              );
+              await tester.pump();
+            }
+          }
+          api.result.complete(null);
+          await until(tester, () => api.ids.contains('tt2'));
+          expect(api.ids, duringPass ? ['tt1', 'tt2'] : ['tt2']);
+          // The polling above advances at most five minutes, below the
+          // half-hour interval: only the library-change trigger can pass.
+        } finally {
+          if (!api.result.isCompleted) api.result.complete(null);
+          container.dispose();
+          await tester.pump(const Duration(hours: 1));
+          await tester.runAsync(db.close);
+        }
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   testWidgets('a failed local read does not terminate background refresh', (
     tester,
   ) async {
@@ -167,6 +255,7 @@ void main() {
         } else {
           container.dispose();
         }
+        await tester.pump(const Duration(milliseconds: 1));
         api.result.complete(null);
         // Let fake-zone continuations and real SQLite IO both finish.
         for (var i = 0; i < 20; i++) {
@@ -177,7 +266,7 @@ void main() {
         }
         await tester.pump();
         if (rebuild) container.dispose();
-        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 1));
         // Do not advance half an hour: the test must detect a retained timer.
         expect(tester.binding.transientCallbackCount, 0);
         await tester.runAsync(db.close);

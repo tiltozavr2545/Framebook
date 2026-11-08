@@ -709,8 +709,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pairNeedFilms => 'Rate at least two films to start.';
 
   @override
-  String get pairDailyHint =>
-      'Up to 5 completed comparisons per day. Answers sync through Drive.';
+  String get pairDailyHint => 'Up to 5 comparisons per day.';
 
   @override
   String pairProgress(int count) {

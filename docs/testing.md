@@ -132,12 +132,20 @@ present, not exhaustive coverage of every branch or platform interaction.
 Pair regressions cover deterministic score/genre neighbourhoods, conflicting
 and non-strict equality chains, all legal score-boundary corrections, duplicate
 submission, quota races, stale ratings and preserving concurrent note edits.
+Corrections preserve diary dates for either or both films while advancing sync
+versions; codec and merge regressions retain both the new score and old date.
 They also cover v2-to-v3 data preservation, v6 comparison codecs and merge laws,
 legacy files, history retention during replacement, shared quotas through a fake
 Drive, hidden scores, skips, equality confirmation and next-day resume. These
 checks do not replace the two-physical-phone sync scenario.
 
 ## Regression-test conventions
+
+Background-refresh regressions include a 155-film backlog after quota
+exhaustion: 150 automatic lookups on the next day, remaining interactive
+capacity, continuation on a later day and the resulting statistics coverage.
+They also exercise per-source gap priority, retry after a quota error across
+UTC midnight, and new ratings waking both idle and active refresh loops.
 
 - Changes to pure logic require tests: sync merging/convergence, natural-key
   construction, source-ID matching, calibration selection and statistical

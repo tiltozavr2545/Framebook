@@ -714,8 +714,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get pairNeedFilms => 'Для начала нужны хотя бы два оценённых фильма.';
 
   @override
-  String get pairDailyHint =>
-      'До 5 завершённых сравнений в день. Ответы синхронизируются через Drive.';
+  String get pairDailyHint => 'До 5 сравнений в день.';
 
   @override
   String pairProgress(int count) {

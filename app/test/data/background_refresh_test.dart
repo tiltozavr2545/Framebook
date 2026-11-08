@@ -9,6 +9,7 @@ import 'package:framebook/data/budget.dart';
 import 'package:framebook/data/db/database.dart';
 import 'package:framebook/data/http.dart';
 import 'package:framebook/data/library/library.dart';
+import 'package:framebook/data/library/stats.dart';
 import 'package:framebook/data/library/work_snapshot.dart';
 import 'package:framebook/data/ratings_service.dart';
 import 'package:framebook/data/source_failure.dart';
@@ -165,6 +166,163 @@ void main() {
   });
 
   group('a pass', () {
+    test(
+      'a large backlog resumes on later days and enters statistics',
+      () async {
+        for (var id = 1; id <= 155; id++) {
+          await library.rate(film(id), scoreHalf: 16, note: 'Saved note $id');
+        }
+        final before = await db.select(db.ratings).get();
+        serve((r) {
+          final id = int.parse(
+            r.uri.queryParameters['externalId.imdb']!.substring(2),
+          );
+          return (
+            status: 200,
+            body: jsonEncode({
+              'docs': [
+                {
+                  'id': id,
+                  'rating': {'kp': 7.0, 'imdb': 7.5},
+                  'votes': {'kp': 100, 'imdb': 100},
+                },
+              ],
+            }),
+          );
+        });
+        final s = service(omdb: false);
+        await db.exhaustBudget(ApiSource.poiskkino, day, 180);
+        await run(s);
+        expect(http.requests, isEmpty);
+        expect(
+          computeStats(await library.watchRatings().first).deviation,
+          isEmpty,
+        );
+
+        now = now.add(const Duration(days: 1));
+        final tomorrow = AppDatabase.budgetDay(now);
+        await run(s);
+        expect(http.requests, hasLength(150));
+        expect(await db.budgetUsed(ApiSource.poiskkino, tomorrow), 150);
+        final stats = computeStats(await library.watchRatings().first);
+        expect(stats.count, 155);
+        expect(stats.deviation[RatingSource.kp]!.count, 150);
+        expect(stats.deviation[RatingSource.kp]!.signed, 1.0);
+        expect(
+          coverage(
+            await library.watchRatings().first,
+            RatingSource.kp,
+            (_) => true,
+          ),
+          (loaded: 150, total: 155),
+        );
+
+        // Reopening does not reset the counter. A card can still use its share.
+        final reopened = service(omdb: false);
+        await run(reopened);
+        expect(http.requests, hasLength(150));
+        final pending = await BackgroundRefresh(
+          db,
+          reopened,
+        ).queue(missingOnly: true);
+        expect(pending, hasLength(5));
+        await reopened.refresh(pending.first);
+        expect(http.requests, hasLength(151));
+        await run(reopened);
+        expect(http.requests, hasLength(151));
+
+        now = now.add(const Duration(days: 1));
+        await run(reopened);
+        expect(http.requests, hasLength(155));
+        expect(
+          computeStats(
+            await library.watchRatings().first,
+          ).deviation[RatingSource.kp]!.count,
+          155,
+        );
+        expect(await BackgroundRefresh(db, reopened).queue(), isEmpty);
+        expect(await db.select(db.ratings).get(), before);
+      },
+    );
+
+    test(
+      'KP gaps precede refreshing known KP values even when IMDb is missing',
+      () async {
+        for (final id in [1, 2]) {
+          await library.rate(film(id), scoreHalf: 16, note: null);
+        }
+        await db.putExternalRatings([
+          ExternalRating(
+            workKey: 'tmdb:movie:1',
+            source: RatingSource.kp,
+            status: RatingStatus.ok,
+            value: 7,
+            scale: 10,
+            via: ApiSource.poiskkino,
+            fetchedAt: now
+                .subtract(const Duration(days: 20))
+                .millisecondsSinceEpoch,
+          ),
+          ExternalRating(
+            workKey: 'tmdb:movie:2',
+            source: RatingSource.kp,
+            status: RatingStatus.error,
+            scale: 10,
+            via: ApiSource.poiskkino,
+            fetchedAt: now.millisecondsSinceEpoch,
+          ),
+        ]);
+        await db.exhaustBudget(ApiSource.poiskkino, day, 149);
+        await run(service());
+        final kp = http.requests
+            .where((r) => r.uri.host == 'api.poiskkino.dev')
+            .toList();
+        expect(kp, hasLength(1));
+        expect(kp.single.uri.queryParameters['externalId.imdb'], 'tt0000002');
+        expect(
+          (await db.externalRatingsFor(
+            'tmdb:movie:1',
+          )).singleWhere((r) => r.source == RatingSource.kp).value,
+          7,
+        );
+        expect(
+          (await db.externalRatingsFor(
+            'tmdb:movie:2',
+          )).singleWhere((r) => r.source == RatingSource.kp).status,
+          RatingStatus.notFound,
+        );
+      },
+    );
+
+    test(
+      'a provider quota error just before midnight retries on the next day',
+      () async {
+        await library.rate([matrix], scoreHalf: 17, note: null);
+        now = DateTime.utc(2026, 10, 25, 23, 59);
+        serve((_) => (status: 403, body: '{}'));
+        final s = service(omdb: false);
+        await run(s);
+        expect(http.requests, hasLength(1));
+        expect(await db.budgetUsed(ApiSource.poiskkino, day), 200);
+        now = now.add(const Duration(minutes: 2));
+        serve(apiFixtures);
+        await run(s);
+        expect(http.requests, hasLength(1));
+        expect(
+          (await db.externalRatingsFor(
+            matrix.key.toString(),
+          )).singleWhere((r) => r.source == RatingSource.kp).value,
+          8.501,
+        );
+        expect(
+          computeStats(
+            await library.watchRatings().first,
+          ).deviation[RatingSource.kp]!.count,
+          1,
+        );
+      },
+    );
+
     test(
       'missing lookup IDs neither consume budget nor add pacing waits',
       () async {

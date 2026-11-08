@@ -49,6 +49,68 @@ void main() {
   });
   tearDown(() => db.close());
 
+  for (final preference in PairPreference.values) {
+    test('a $preference correction preserves diary dates and syncs', () async {
+      // An inverted order offers a correction to both films; equality offers
+      // a one-film correction. All paths must preserve each film's own date.
+      await library.rescore(
+        const WorkKey.movie(1),
+        preference == PairPreference.right ? 18 : 14,
+      );
+      now = now.add(const Duration(days: 1));
+      await library.rescore(
+        const WorkKey.movie(2),
+        preference == PairPreference.right ? 14 : 18,
+      );
+      final original = await pair(1, 2);
+      final before = await SyncStore(db).read();
+      now = now.add(const Duration(days: 7));
+      final changes = calibrationCorrections(original, preference).last;
+      final event = await store.answer(original, preference, changes: changes);
+      final after = await SyncStore(db).read();
+      for (final previous in before.ratings) {
+        final current = after.ratings.singleWhere(
+          (r) => r.workKey == previous.workKey,
+        );
+        if (changes.containsKey(previous.workKey)) {
+          expect(current.scoreHalf, changes[previous.workKey]);
+          expect(current.createdAt, previous.createdAt);
+          expect(current.scoredAt, previous.scoredAt);
+          expect(current.note, previous.note);
+          expect(current.updatedAt, greaterThan(previous.updatedAt));
+          expect(current.updatedBy, library.deviceId);
+        } else {
+          expect(current, previous);
+        }
+      }
+      expect(event.leftResultScoredAt, original.left.rating.scoredAt);
+      expect(event.rightResultScoredAt, original.right.rating.scoredAt);
+      expect(event.answeredAt, now.toUtc().millisecondsSinceEpoch);
+      expect(comparisonResultVersion(event), (await pair(1, 2)).version);
+      await expectLater(
+        store.answer(original, preference, changes: changes),
+        throwsA(isA<CalibrationStale>()),
+      );
+      await expectLater(
+        store.answer(await pair(1, 2), preference),
+        throwsA(isA<CalibrationStale>()),
+      );
+
+      final decoded = SyncFile.decode(
+        SyncFile.encode(
+          after,
+          writtenAt: now.toUtc().millisecondsSinceEpoch,
+          writtenBy: 'a',
+          appVersion: 'test',
+        ),
+      );
+      // A device with the old scores must accept the new score without
+      // needing a newer diary date, regardless of merge direction.
+      expect(mergeStates(before, decoded).ratings, after.ratings);
+      expect(mergeStates(decoded, before).ratings, after.ratings);
+    });
+  }
+
   test(
     'an answer alone preserves scores; equality correction is explicit',
     () async {

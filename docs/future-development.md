@@ -5,6 +5,23 @@ Unscheduled work and unresolved product choices. Move an item to the
 it here once delivered. Completed changes belong in the
 [changelog](../CHANGELOG.md).
 
+## Simpler statistics
+
+Requested on 2026-11-08; the layout has not been selected. Replace the long
+analytics feed with a readable summary for everyday use. Options under
+consideration are a minimal single screen, a short overview linking to focused
+details, or a small set of plain-language insight cards. The proposed default
+is the overview: rating count and mean, a few highly rated titles and genres,
+then links to score distribution, people and public-score comparison.
+
+Proposed removals from the statistics UI include median, numeric correlation,
+score spread, effective diversity, creative duos and reliability/polarization
+rankings. Consolidate duplicate genre summaries, use one selected comparison
+source at a time and describe higher/lower personal scores directly instead
+of inferring discoveries or disappointments. Keep actor/director summaries
+and decades in details. These are proposals, not changes to the current
+[analytics contract](analytics.md) or the shared recommendation calculations.
+
 ## Share title links with an optional score
 
 Postponed on 2026-11-06 while HTTPS App Links hosting is unresolved.

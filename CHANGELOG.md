@@ -530,3 +530,10 @@ Versions are listed from oldest to newest; append new entries at the end.
   Retry on failed reads, so slow loading cannot hide an existing score or note.
 - Keep full snapshot-refresh versions increasing after a device clock correction,
   preserving a confirmed renumbering identity when older snapshots are merged.
+- Preserve the original rating dates when correcting scores through pair
+  calibration, keeping films in their existing date groups.
+- Shorten the pair-calibration daily hint to the comparison allowance.
+- Automatically catch up on missing Kinopoisk ratings with up to 150 daily
+  requests, filling gaps before refreshing known values and preserving a
+  reserve for title cards. Newly rated titles wake the queue immediately;
+  unfinished work continues on later days and updates source comparisons.

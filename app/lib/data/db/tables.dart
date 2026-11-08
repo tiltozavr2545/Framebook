@@ -71,7 +71,7 @@ class Ratings extends Table {
       text().nullable().check(note.length.isSmallerOrEqualValue(10000))();
   IntColumn get createdAt => integer()();
 
-  /// The last change of the score itself, not of the note.
+  /// The last ordinary score edit; notes and pair corrections preserve it.
   IntColumn get scoredAt => integer()();
 
   /// The last user change of any kind; merging goes by it.

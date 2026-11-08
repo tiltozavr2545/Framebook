@@ -225,7 +225,9 @@ Failure policy in `app/lib/data/ratings_service.dart`:
 - The one-hour pause before retrying lives in the service's memory, not in
   the table: changing a key recreates the service, and the retry should
   happen right away, not an hour later. An `error` row in the table is
-  therefore always considered stale.
+  therefore always considered stale. A provider quota failure pauses until
+  the next UTC budget day instead, so a failure just before midnight does
+  not suppress the new day's first retry for an additional hour.
 - Offline is not the source's answer: nothing is written and nothing is
   remembered, so the next card open retries.
 - The HTTP cache (TMDB only) serves a stale entry when the network is down
@@ -250,27 +252,37 @@ errors still stop spending for the day.
 
 | Source | Interactive requests (a card is open) | Background refresh | Reserve |
 | --- | --- | --- | --- |
-| PoiskKino (200) | up to 120 | up to 60 | 20 |
-| OMDb (1000) | up to 600 | up to 300 | 100 |
+| PoiskKino (200) | at least 30 | up to 150 | 20 |
+| OMDb (1000) | at least 600 | up to 300 | 100 |
 
 There is one counter per source, so the split is enforced with ceilings on
 that shared counter (`lib/data/budget.dart`): background refresh runs only
-while less than its share (60 / 300) has been spent today, and requests from
+while less than its share (150 / 300) has been spent today, and requests from
 an open card run while less than `daily − reserve` (180 / 900) has. The card
 is guaranteed at least the "interactive" column, and gets more on days when
 background refresh didn't run. When the ceiling is reached the cell keeps its
 cached value and says "daily limit used up".
 
 **Background refresh** runs while the app is open (no OS background tasks in
-the MVP): a queue of rated titles that have no rating at all, then the
-oldest. It goes with pauses, without parallelism. A library of 1,000 films
-fills up with Kinopoisk ratings in about two to three weeks of normal use.
-That is expected and visible to the user: the statistics say how many
-ratings the divergence was computed over.
+the MVP). Each pass first fills missing/error ratings for every configured
+source, then refreshes stale known answers. A known value or definite
+`not_found` is not refreshed in the first phase just because another source
+is missing. This protects the Kinopoisk catch-up allowance from unrelated
+IMDb gaps. Fresh answers are reused; a real `not_found` keeps its normal TTL.
+Requests run sequentially with pauses. The PoiskKino ceiling is three quarters
+of its daily allowance; the remaining quarter contains 30 guaranteed card
+requests and the existing 20-request safety reserve. Interactive lookups also
+count toward the shared background ceiling. Missing ratings resume on later
+days without opening each card. Catch-up speed depends on foreground time,
+network access and the provider's allowance; the statistics show coverage
+and automatically include newly fetched numeric ratings.
 
 Scheduling in `app/lib/data/background_refresh.dart`: the first
 pass starts ten seconds after launch, then one every half hour while the app
-is in the foreground; three seconds between titles that cost a request. The
+is in the foreground. A change to the live set of rated title keys wakes an
+idle pass immediately; changes arriving during a pass schedule another pass
+without the half-hour delay. Score/note edits and external-cache updates do
+not restart it. There are three seconds between titles that cost a request. The
 TTL is the background one (14 days for a value), and TMDB is left as is —
 without a card there is no TMDB vote to record. A pass ends when the network
 is gone, or once every source with a key has spent its background share.

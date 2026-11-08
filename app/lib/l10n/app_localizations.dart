@@ -1269,7 +1269,7 @@ abstract class AppLocalizations {
   /// No description provided for @pairDailyHint.
   ///
   /// In en, this message translates to:
-  /// **'Up to 5 completed comparisons per day. Answers sync through Drive.'**
+  /// **'Up to 5 comparisons per day.'**
   String get pairDailyHint;
 
   /// No description provided for @pairProgress.

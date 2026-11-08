@@ -250,7 +250,7 @@
   "pairIntro": "Compare rated films to check your score scale. Close scores and similar genres come first; previous answers reveal preference chains worth checking. Scores appear after your choice.",
   "pairStart": "Compare films",
   "pairNeedFilms": "Rate at least two films to start.",
-  "pairDailyHint": "Up to 5 completed comparisons per day. Answers sync through Drive.",
+  "pairDailyHint": "Up to 5 comparisons per day.",
   "pairProgress": "{count} of 5 comparisons today",
   "@pairProgress": {"placeholders": {"count": {"type": "int"}}},
   "pairQuestion": "Which film did you enjoy more?",

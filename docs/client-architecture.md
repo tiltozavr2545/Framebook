@@ -114,7 +114,12 @@ the shell for every enrichment update.
 
 Optional background rating refresh keeps its loop alive after a local storage
 exception. The active indicator resets and the next normal interval or resume
-can retry; a failed pass does not start an immediate retry loop.
+can retry; a failed pass does not start an immediate retry loop. A narrow
+live-rating-key subscription wakes catch-up when titles are added or removed,
+including additions during an active pass. It does not read notes or react
+to cache updates. Missing-source and stale-cache phases share the same daily
+counter; priorities and allowances belong to
+[external sources](external-sources.md#request-budget).
 
 Tab navigators exist in advance, but screens mount on first display. Hidden
 branches stop tickers, focus and pointer input. Visited finite shelf sections,

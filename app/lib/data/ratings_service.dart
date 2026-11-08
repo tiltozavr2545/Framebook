@@ -144,9 +144,11 @@ final class RatingsService {
   /// [onRequest] fires after acquiring budget, only for an actual lookup;
   /// [onStart] also includes local short circuits and shared in-flight work.
   /// [cancelled] stops subsequent lookups without interrupting a shared request.
+  /// [missingOnly] fills gaps without spending requests on stale known answers.
   Future<Map<ApiSource, SourceFailure?>> refresh(
     RatingTarget target, {
     bool background = false,
+    bool missingOnly = false,
     void Function(ApiSource api)? onStart,
     void Function(ApiSource api)? onRequest,
     void Function(ApiSource api, SourceFailure? failure)? onDone,
@@ -173,13 +175,15 @@ final class RatingsService {
       // A recent failure goes first: an `error` row in the table doesn't
       // remember it.
       final recent = _failures[(key, api)];
-      if (recent != null &&
-          now >= recent.$2 &&
-          now - recent.$2 < RatingTtl.failure.inMilliseconds) {
+      if (recent != null && _retryPaused(recent, now)) {
         outcomes[api] = recent.$1;
         continue;
       }
-      if (!sources.any((s) => _stale(existing[s], api, now, background))) {
+      if (!sources.any(
+        (s) =>
+            (!missingOnly || _missing(existing[s], api)) &&
+            _stale(existing[s], api, now, background),
+      )) {
         continue;
       }
 
@@ -208,26 +212,44 @@ final class RatingsService {
   /// `fetched_at` of its oldest stale row, `0` when a row is missing. The
   /// queue goes by it: no rating at all first, then the oldest
   /// (docs/external-sources.md, "Request budget").
-  int? backgroundDue(WorkKey key, List<ExternalRating> rows, {int? now}) {
+  int? backgroundDue(
+    WorkKey key,
+    List<ExternalRating> rows, {
+    int? now,
+    bool missingOnly = false,
+  }) {
     final at = now ?? _clock().toUtc().millisecondsSinceEpoch;
     final existing = {for (final row in rows) row.source: row};
     int? due;
     for (final api in const [ApiSource.poiskkino, ApiSource.omdb]) {
       final recent = _failures[(key.toString(), api)];
-      if (recent != null &&
-          at >= recent.$2 &&
-          at - recent.$2 < RatingTtl.failure.inMilliseconds) {
+      if (recent != null && _retryPaused(recent, at)) {
         continue;
       }
       for (final source in shownFor(key.kind)) {
         if (providerOf(source, key.kind) != api) continue;
         final row = existing[source];
+        if (missingOnly && !_missing(row, api)) continue;
         if (!_stale(row, api, at, true)) continue;
-        final since = row == null || row.via != api ? 0 : row.fetchedAt;
+        final since = _missing(row, api) ? 0 : row!.fetchedAt;
         if (due == null || since < due) due = since;
       }
     }
     return due;
+  }
+
+  static bool _missing(ExternalRating? row, ApiSource api) =>
+      row == null || row.via != api || row.status == RatingStatus.error;
+
+  static bool _retryPaused((SourceFailure, int) failure, int now) {
+    if (now < failure.$2) return false;
+    if (failure.$1 == SourceFailure.limitReached) {
+      String day(int at) => AppDatabase.budgetDay(
+        DateTime.fromMillisecondsSinceEpoch(at, isUtc: true),
+      );
+      return day(now) == day(failure.$2);
+    }
+    return now - failure.$2 < RatingTtl.failure.inMilliseconds;
   }
 
   bool _stale(ExternalRating? row, ApiSource api, int now, bool background) {

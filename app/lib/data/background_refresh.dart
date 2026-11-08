@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -15,9 +16,9 @@ import 'work_key.dart';
 /// "My ratings" and the statistics have something to compare with without
 /// opening every card (docs/external-sources.md, "Request budget").
 ///
-/// One pass goes through a queue — titles with no rating at all first, then
-/// the oldest — one title at a time, with a pause after every one that cost
-/// a request. Spending is held to the background ceilings by the service.
+/// Each pass fills gaps for every source before refreshing stale known
+/// answers, one title at a time, with a pause after actual requests. Spending
+/// is held to the background ceilings by the service.
 final class BackgroundRefresh {
   BackgroundRefresh(
     this._db,
@@ -32,7 +33,7 @@ final class BackgroundRefresh {
   final Duration pause;
 
   /// The rated titles that need asking, most overdue first.
-  Future<List<RatingTarget>> queue() async {
+  Future<List<RatingTarget>> queue({bool missingOnly = false}) async {
     final rated =
         await (_db.select(_db.works).join([
               innerJoin(
@@ -78,7 +79,11 @@ final class BackgroundRefresh {
     final due = <(int, String, RatingTarget)>[];
     for (final work in rated) {
       final key = WorkKey.parse(work.workKey);
-      final since = _service.backgroundDue(key, rows[work.workKey] ?? const []);
+      final since = _service.backgroundDue(
+        key,
+        rows[work.workKey] ?? const [],
+        missingOnly: missingOnly,
+      );
       if (since == null) continue;
       final whole = key.kind == WorkKind.movie || key.kind == WorkKind.tv;
       due.add((
@@ -109,21 +114,27 @@ final class BackgroundRefresh {
     final budgeted = _service.budgetedSources;
     if (budgeted.isEmpty) return;
     final spent = <ApiSource>{};
-    for (final target in await queue()) {
+    // Fill every source's gaps before refreshing known values. A missing
+    // IMDb row must not let a stale Kinopoisk value jump ahead of KP gaps.
+    for (final missingOnly in [true, false]) {
       if (cancelled()) return;
-      var requested = false;
-      final outcomes = await _service.refresh(
-        target,
-        background: true,
-        cancelled: cancelled,
-        onRequest: (_) => requested = true,
-      );
-      if (outcomes.values.contains(SourceFailure.offline)) return;
-      for (final MapEntry(key: api, value: failure) in outcomes.entries) {
-        if (failure == SourceFailure.limitReached) spent.add(api);
+      for (final target in await queue(missingOnly: missingOnly)) {
+        if (cancelled()) return;
+        var requested = false;
+        final outcomes = await _service.refresh(
+          target,
+          background: true,
+          missingOnly: missingOnly,
+          cancelled: cancelled,
+          onRequest: (_) => requested = true,
+        );
+        if (outcomes.values.contains(SourceFailure.offline)) return;
+        for (final MapEntry(key: api, value: failure) in outcomes.entries) {
+          if (failure == SourceFailure.limitReached) spent.add(api);
+        }
+        if (spent.containsAll(budgeted)) return;
+        if (requested && !cancelled()) await wait(pause);
       }
-      if (spent.containsAll(budgeted)) return;
-      if (requested && !cancelled()) await wait(pause);
     }
   }
 }
@@ -133,8 +144,9 @@ final backgroundRefreshEnabledProvider = Provider<bool>((ref) => true);
 
 /// Runs [BackgroundRefresh] passes while the app is in the foreground: a
 /// first one shortly after start, then every half hour (a new day brings a
-/// new budget; a new key restarts it at once). The state is whether a pass
-/// is going on now — for the "loaded for N of M" indicator.
+/// new budget; new rated titles wake it without waiting for the interval).
+/// A new key rebuilds the loop. State reports whether a pass is active,
+/// for the "loaded for N of M" indicator.
 class BackgroundRefreshNotifier extends Notifier<bool> {
   static const startDelay = Duration(seconds: 10);
   static const interval = Duration(minutes: 30);
@@ -144,7 +156,8 @@ class BackgroundRefreshNotifier extends Notifier<bool> {
     if (!ref.watch(backgroundRefreshEnabledProvider)) return false;
     final service = ref.watch(ratingsServiceProvider);
     if (service.budgetedSources.isEmpty) return false;
-    final refresh = BackgroundRefresh(ref.watch(databaseProvider), service);
+    final db = ref.watch(databaseProvider);
+    final refresh = BackgroundRefresh(db, service);
     final sleeper = _Sleeper();
     var foreground = _isForeground(WidgetsBinding.instance.lifecycleState);
     final lifecycle = AppLifecycleListener(
@@ -154,12 +167,43 @@ class BackgroundRefreshNotifier extends Notifier<bool> {
       },
     );
     var cancelled = false;
+    var changed = false;
+    List<String>? previousKeys;
+    final libraryChanges =
+        (db.selectOnly(db.ratings)
+              ..addColumns([db.ratings.workKey])
+              ..where(db.ratings.deletedAt.isNull())
+              ..orderBy([OrderingTerm.asc(db.ratings.workKey)]))
+            .map((row) => row.read(db.ratings.workKey)!)
+            .watch()
+            .listen(
+              (keys) {
+                if (cancelled) return;
+                if (previousKeys != null && !listEquals(previousKeys, keys)) {
+                  changed = true;
+                  sleeper.wake();
+                }
+                previousKeys = keys;
+              },
+              // This optional listener must not terminate normal scheduled
+              // retries after a local storage failure.
+              onError: (Object _) {},
+            );
     ref.onDispose(() {
       cancelled = true;
+      unawaited(libraryChanges.cancel());
       lifecycle.dispose();
       sleeper.wake();
     });
-    unawaited(_loop(refresh, sleeper, () => cancelled, () => foreground));
+    bool takeChanges() {
+      final pending = changed;
+      changed = false;
+      return pending;
+    }
+
+    unawaited(
+      _loop(refresh, sleeper, () => cancelled, () => foreground, takeChanges),
+    );
     return false;
   }
 
@@ -168,6 +212,7 @@ class BackgroundRefreshNotifier extends Notifier<bool> {
     _Sleeper sleeper,
     bool Function() cancelled,
     bool Function() foreground,
+    bool Function() takeChanges,
   ) async {
     await sleeper.sleep(foreground() ? startDelay : null);
     while (!cancelled()) {
@@ -177,6 +222,7 @@ class BackgroundRefreshNotifier extends Notifier<bool> {
         continue;
       }
       state = true;
+      takeChanges();
       try {
         await refresh.run(
           cancelled: () => cancelled() || !foreground(),
@@ -189,7 +235,7 @@ class BackgroundRefreshNotifier extends Notifier<bool> {
         if (!cancelled()) state = false;
       }
       if (cancelled()) return;
-      if (foreground()) await sleeper.sleep(interval);
+      if (foreground() && !takeChanges()) await sleeper.sleep(interval);
     }
   }
 

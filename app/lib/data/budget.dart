@@ -21,7 +21,7 @@ final class ApiQuota {
   /// Never spent: the service's day and our UTC day may not line up.
   final int reserve;
 
-  /// Ceiling for background refresh (Stage 4).
+  /// Ceiling for automatic missing-rating and stale-cache lookups.
   final int background;
 
   int get interactiveCeiling => daily - reserve;
@@ -32,7 +32,7 @@ final class ApiQuota {
     ApiSource.poiskkino => const ApiQuota(
       daily: 200,
       reserve: 20,
-      background: 60,
+      background: 150,
     ),
     ApiSource.omdb => const ApiQuota(
       daily: 1000,
