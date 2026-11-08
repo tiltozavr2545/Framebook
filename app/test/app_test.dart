@@ -658,6 +658,45 @@ void main() {
     tester.element(find.byType(FramebookApp)),
   ).read(routerProvider).go(location);
 
+  for (final status in ['Planned', 'In Production', 'Unknown']) {
+    cardTest('undated $status series explains release and prevents rating', (
+      tester,
+    ) async {
+      await pumpApp(
+        tester,
+        keys: tmdbOnly,
+        http: (request) {
+          if (request.uri.path == '/3/tv/1399') {
+            final json =
+                jsonDecode(fixture('tmdb/tv_1399_ru.json'))
+                    as Map<String, dynamic>;
+            json['first_air_date'] = '';
+            json['last_air_date'] = '';
+            json['status'] = status;
+            return (status: 200, body: jsonEncode(json));
+          }
+          return apiFixtures(request);
+        },
+      );
+      go(tester, '/search/tv/1399');
+      await settle(tester);
+      expect(find.text('Release date unknown'), findsOneWidget);
+      expect(
+        find.text('Not released yet'),
+        status == 'Unknown' ? findsNothing : findsOneWidget,
+      );
+      final rate = find.ancestor(
+        of: find.text('Rate'),
+        matching: find.byWidgetPredicate((widget) => widget is FilledButton),
+      );
+      expect(tester.widget<FilledButton>(rate).onPressed, isNull);
+      await tester.tap(find.text('Want to watch'));
+      await settle(tester);
+      expect(find.text('On the watchlist'), findsOneWidget);
+      expect(find.text('ongoing'), findsNothing);
+    });
+  }
+
   cardTest('future films cannot be rated but can be watchlisted', (
     tester,
   ) async {

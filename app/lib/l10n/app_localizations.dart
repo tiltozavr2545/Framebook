@@ -680,6 +680,18 @@ abstract class AppLocalizations {
   /// **'ongoing'**
   String get tvStatusRunning;
 
+  /// No description provided for @tvStatusPlanned.
+  ///
+  /// In en, this message translates to:
+  /// **'announced'**
+  String get tvStatusPlanned;
+
+  /// No description provided for @tvStatusInProduction.
+  ///
+  /// In en, this message translates to:
+  /// **'in production'**
+  String get tvStatusInProduction;
+
   /// No description provided for @tvStatusEnded.
   ///
   /// In en, this message translates to:
@@ -889,6 +901,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Rating is available after release.'**
   String get ratingNotReleased;
+
+  /// No description provided for @titleNotReleased.
+  ///
+  /// In en, this message translates to:
+  /// **'Not released yet'**
+  String get titleNotReleased;
+
+  /// No description provided for @titleReleaseDateUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Release date unknown'**
+  String get titleReleaseDateUnknown;
 
   /// No description provided for @ratingMine.
   ///

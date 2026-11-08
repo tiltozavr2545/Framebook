@@ -102,9 +102,12 @@ keys; repeated requests with the same candidate data are stable.
 
 Rated films and series with any rated parts are excluded from discovery.
 Watchlisted films and series with watchlisted seasons live in the separate
-watchlist row instead. That row ranks all locally available entries, including
-seasons, and remains usable without retrieval. It never edits the watchlist.
-Future-dated titles and hidden titles are excluded. Unknown dates are allowed.
+watchlist row instead. That row ranks locally available entries, including
+seasons, and remains usable without retrieval. All recommendation rows require
+a valid release date on or before today; undated, invalid-dated and future
+titles remain in the watchlist but are excluded from suggestions. It never
+edits the watchlist.
+Hidden titles are excluded.
 Dedicated rows may reuse a title from For you; each row deduplicates its own
 items.
 

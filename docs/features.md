@@ -83,6 +83,10 @@ budget and worldwide box office in USD beside the poster. The full date
 replaces a separate year. Series show first air date, last air date when
 ended/cancelled, and countries. Unknown facts are omitted; movie finances
 are not inferred for series. Country names follow TMDB's supplied text.
+Cards explicitly show when a title has not been released or its release date
+is unknown. Planned series and series in production have their own status
+labels instead of appearing as ongoing; a known past premiere still permits
+rating while later seasons are in production.
 
 Cast strips show the first 20 actors. The cast heading opens a lazy full list;
 actor profiles open above it. Names and roles reserve two scaled lines each,
@@ -108,8 +112,11 @@ Detection and mutation rules are in the
 Each card has My rating. The bottom-sheet editor uses a score reel from 1 to
 10 in half-point steps, with haptic feedback and an optional note. A new
 rating starts at 5; an existing one starts at its saved score. Scores display
-without a trailing `.0`. Future-dated movies cannot be rated yet; unknown
-dates, including impossible calendar dates, remain rateable. Deletion requires
+without a trailing `.0`. Films, series, seasons and episodes require a valid
+release date on or before today to add or edit a rating, including saved cards
+without catalog access. Missing or invalid dates show an explicit explanation
+and keep rating disabled; adding to the watchlist remains available. Existing
+ratings are retained and can still be deleted. Deletion requires
 confirmation. Failed persistence keeps the editor and draft open, and saving
 freezes the reel's current value.
 Failed deletion and watchlist changes show a retryable error while preserving

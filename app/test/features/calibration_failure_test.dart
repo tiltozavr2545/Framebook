@@ -50,7 +50,12 @@ void main() {
             body: MyRatingSection(
               refreshSnapshots: false,
               lineage: [
-                WorkSnapshot(key: WorkKey.movie(1), tmdbId: 1, title: 'Film'),
+                WorkSnapshot(
+                  key: WorkKey.movie(1),
+                  tmdbId: 1,
+                  title: 'Film',
+                  releaseDate: '2000-01-01',
+                ),
               ],
             ),
           ),

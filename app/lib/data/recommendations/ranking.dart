@@ -85,7 +85,9 @@ double candidateQuality(TitleSummary title) {
 }
 
 bool releasedForRecommendations(TitleSummary title, String today) =>
-    title.releaseDate == null || title.releaseDate!.compareTo(today) <= 0;
+    title.releaseDate != null &&
+    validCalendarDate(title.releaseDate!) &&
+    title.releaseDate!.compareTo(today) <= 0;
 
 RecommendationFeed rankRecommendations({
   required TasteProfile profile,

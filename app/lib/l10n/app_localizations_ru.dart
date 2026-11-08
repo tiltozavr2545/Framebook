@@ -322,6 +322,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get tvStatusRunning => 'выходит';
 
   @override
+  String get tvStatusPlanned => 'анонсирован';
+
+  @override
+  String get tvStatusInProduction => 'в производстве';
+
+  @override
   String get tvStatusEnded => 'завершён';
 
   @override
@@ -462,7 +468,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get ratingRate => 'Оценить';
 
   @override
-  String get ratingNotReleased => 'Оценка станет доступна после выхода фильма.';
+  String get ratingNotReleased => 'Оценка станет доступна после выхода.';
+
+  @override
+  String get titleNotReleased => 'Ещё не вышел';
+
+  @override
+  String get titleReleaseDateUnknown => 'Дата выхода неизвестна';
 
   @override
   String get ratingMine => 'Моя оценка';
@@ -1059,7 +1071,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get navRatings => 'Оценки';
 
   @override
-  String get navWatchlist => 'Посмотреть';
+  String get navWatchlist => 'В планах';
 
   @override
   String get navStats => 'Статистика';
@@ -1392,7 +1404,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get recommendationsRestoreHint =>
-      'Снова показывать все рекомендации, скрытые на этом устройстве? Оценки и список «Посмотреть» останутся прежними.';
+      'Снова показывать все рекомендации, скрытые на этом устройстве? Оценки и список «В планах» останутся прежними.';
 
   @override
   String get recommendationsRestore => 'Показывать снова';
@@ -1415,7 +1427,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get recommendationsBecauseExplore => 'Открой что-то новое';
 
   @override
-  String get recommendationsBecauseWatchlist => 'Из твоего списка «Посмотреть»';
+  String get recommendationsBecauseWatchlist => 'Из твоего списка «В планах»';
 
   @override
   String recommendationsBecauseTitle(String title) {

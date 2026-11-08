@@ -48,7 +48,10 @@ class MovieScreen extends ConsumerWidget {
           tagline: movie.tagline,
         ),
         const SizedBox(height: 16),
-        MyRatingSection(lineage: [WorkSnapshot.movie(movie)]),
+        MyRatingSection(
+          lineage: [WorkSnapshot.movie(movie)],
+          awaitingRelease: movie.awaitingRelease,
+        ),
         const SizedBox(height: 16),
         RatingsPanel(
           target: RatingTarget(

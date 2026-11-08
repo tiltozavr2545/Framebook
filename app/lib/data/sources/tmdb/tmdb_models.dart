@@ -125,6 +125,7 @@ final class MovieDetails {
     this.countries = const [],
     this.collection,
     this.premiereDate,
+    this.awaitingRelease = false,
   });
 
   factory MovieDetails.fromJson(Json json) {
@@ -150,6 +151,12 @@ final class MovieDetails {
         json.object('belongs_to_collection'),
       ),
       premiereDate: firstReleaseDate(json),
+      awaitingRelease: const {
+        'Rumored',
+        'Planned',
+        'In Production',
+        'Post Production',
+      }.contains(json.string('status')),
       // A film has imdb_id both at the root and in external_ids; the root is
       // more reliable.
       imdbId:
@@ -180,6 +187,7 @@ final class MovieDetails {
   final List<String> countries;
   final MovieCollection? collection;
   final String? premiereDate;
+  final bool awaitingRelease;
   final String? imdbId;
   final TmdbVote vote;
 
@@ -271,19 +279,25 @@ final class TvDetails {
   int get regularSeasonCount => seasons.where((s) => s.number > 0).length;
 }
 
-/// Series status — only what changes the label in the header.
+/// Series status, including production before a known premiere.
 enum TvStatus {
+  planned,
+  inProduction,
   running,
   ended,
   canceled,
   unknown;
 
   static TvStatus parse(String? value) => switch (value) {
-    'Returning Series' || 'In Production' || 'Planned' => running,
+    'Planned' || 'Pilot' => planned,
+    'In Production' => inProduction,
+    'Returning Series' => running,
     'Ended' => ended,
     'Canceled' || 'Cancelled' => canceled,
     _ => unknown,
   };
+
+  bool get awaitingRelease => this == planned || this == inProduction;
 }
 
 /// A season in a series' season list.
@@ -546,6 +560,24 @@ String? firstReleaseDate(Json json) {
   if (primary != null && validCalendarDate(primary)) dates.add(primary);
   dates.sort();
   return dates.firstOrNull;
+}
+
+enum ReleaseState { released, upcoming, unknown }
+
+/// A past premiere takes precedence over production of later TV seasons.
+/// Missing or malformed dates alone do not establish that a title is unreleased.
+ReleaseState releaseState(
+  String? date, {
+  required DateTime today,
+  bool awaitingRelease = false,
+}) {
+  if (date != null && validCalendarDate(date)) {
+    final calendar = DateTime.parse(date);
+    return calendar.isAfter(DateTime(today.year, today.month, today.day))
+        ? ReleaseState.upcoming
+        : ReleaseState.released;
+  }
+  return awaitingRelease ? ReleaseState.upcoming : ReleaseState.unknown;
 }
 
 bool validCalendarDate(String date) {

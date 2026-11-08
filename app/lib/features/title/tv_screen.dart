@@ -55,7 +55,10 @@ class TvScreen extends ConsumerWidget {
           tagline: tv.tagline,
         ),
         const SizedBox(height: 16),
-        MyRatingSection(lineage: [WorkSnapshot.tv(tv)]),
+        MyRatingSection(
+          lineage: [WorkSnapshot.tv(tv)],
+          awaitingRelease: tv.status.awaitingRelease,
+        ),
         const SizedBox(height: 16),
         RatingsPanel(
           target: RatingTarget(
@@ -114,6 +117,8 @@ class TvScreen extends ConsumerWidget {
 
   static String? _status(AppLocalizations l10n, TvStatus status) =>
       switch (status) {
+        TvStatus.planned => l10n.tvStatusPlanned,
+        TvStatus.inProduction => l10n.tvStatusInProduction,
         TvStatus.running => l10n.tvStatusRunning,
         TvStatus.ended => l10n.tvStatusEnded,
         TvStatus.canceled => l10n.tvStatusCanceled,

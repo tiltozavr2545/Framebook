@@ -42,45 +42,65 @@ class _FailWrites extends QueryInterceptor {
 }
 
 void main() {
-  for (final releaseDate in ['2099-02-30', '2099-13-01', '2099-01-01']) {
-    testWidgets('rating eligibility validates calendar date $releaseDate', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            myRatingProvider.overrideWith((ref, key) => Stream.value(null)),
-            inWatchlistProvider.overrideWith((ref, key) => Stream.value(false)),
-            ratedTitlesProvider.overrideWith((ref) => Stream.value([])),
-          ],
-          child: MaterialApp(
-            theme: FramebookTheme.light,
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: Scaffold(
-              body: MyRatingSection(
-                refreshSnapshots: false,
-                lineage: [
-                  WorkSnapshot(
-                    key: const WorkKey.movie(1),
-                    tmdbId: 1,
-                    title: 'Film',
-                    releaseDate: releaseDate,
+  for (final key in [
+    const WorkKey.movie(1),
+    const WorkKey.tv(1),
+    const WorkKey.season(1, 1),
+    const WorkKey.episode(1, 1, 1),
+  ]) {
+    for (final releaseDate in [
+      null,
+      '',
+      '2099-02-30',
+      '2099-13-01',
+      '2099-01-01',
+      '2000-01-01',
+    ]) {
+      testWidgets(
+        'rating eligibility validates $key calendar date $releaseDate',
+        (tester) async {
+          await tester.pumpWidget(
+            ProviderScope(
+              overrides: [
+                myRatingProvider.overrideWith((ref, key) => Stream.value(null)),
+                inWatchlistProvider.overrideWith(
+                  (ref, key) => Stream.value(false),
+                ),
+                ratedTitlesProvider.overrideWith((ref) => Stream.value([])),
+                partsAverageProvider.overrideWith(
+                  (ref, key) => Stream.value(null),
+                ),
+              ],
+              child: MaterialApp(
+                theme: FramebookTheme.light,
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+                supportedLocales: AppLocalizations.supportedLocales,
+                home: Scaffold(
+                  body: MyRatingSection(
+                    refreshSnapshots: false,
+                    lineage: [
+                      WorkSnapshot(
+                        key: key,
+                        tmdbId: 1,
+                        title: 'Film',
+                        releaseDate: releaseDate,
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
-          ),
-        ),
+          );
+          await tester.pumpAndSettle();
+          final button = tester.widget<FilledButton>(
+            find.byWidgetPredicate((widget) => widget is FilledButton),
+          );
+          expect(button.onPressed == null, releaseDate != '2000-01-01');
+          await tester.pumpWidget(const SizedBox.shrink());
+          await tester.pump(const Duration(milliseconds: 1));
+        },
       );
-      await tester.pumpAndSettle();
-      final button = tester.widget<FilledButton>(
-        find.byWidgetPredicate((widget) => widget is FilledButton),
-      );
-      expect(button.onPressed == null, releaseDate == '2099-01-01');
-      await tester.pumpWidget(const SizedBox.shrink());
-      await tester.pump(const Duration(milliseconds: 1));
-    });
+    }
   }
 
   const lineage = [

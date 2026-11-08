@@ -322,6 +322,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tvStatusRunning => 'ongoing';
 
   @override
+  String get tvStatusPlanned => 'announced';
+
+  @override
+  String get tvStatusInProduction => 'in production';
+
+  @override
   String get tvStatusEnded => 'ended';
 
   @override
@@ -460,6 +466,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ratingNotReleased => 'Rating is available after release.';
+
+  @override
+  String get titleNotReleased => 'Not released yet';
+
+  @override
+  String get titleReleaseDateUnknown => 'Release date unknown';
 
   @override
   String get ratingMine => 'My rating';

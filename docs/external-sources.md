@@ -322,3 +322,10 @@ primary release date. Movie collections and similar lists use the seven-day
 detail/slow-shelf cache, with the same stale-cache fallback as other TMDB
 responses. They do not consume PoiskKino or OMDb request budgets. They are
 optional sections: failures do not prevent rating or viewing the main card.
+
+Movie production statuses and planned/in-production TV statuses provide
+evidence for a pending-release notice when no valid premiere date is known.
+They do not imply that an already premiered series becomes unreleased while
+later seasons are produced. Rating and recommendation eligibility still
+require a valid release date as specified in [product behavior](features.md)
+and [recommendations](recommendations.md).

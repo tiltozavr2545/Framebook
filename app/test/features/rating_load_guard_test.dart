@@ -22,7 +22,12 @@ void main() {
         final db = AppDatabase(NativeDatabase.memory());
         final library = Library(db, deviceId: 'test');
         const lineage = [
-          WorkSnapshot(key: WorkKey.movie(1), tmdbId: 1, title: 'Film'),
+          WorkSnapshot(
+            key: WorkKey.movie(1),
+            tmdbId: 1,
+            title: 'Film',
+            releaseDate: '2000-01-01',
+          ),
         ];
         await tester.runAsync(
           () => library.rate(

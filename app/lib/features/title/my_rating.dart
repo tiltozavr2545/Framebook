@@ -30,6 +30,7 @@ class MyRatingSection extends ConsumerStatefulWidget {
     super.key,
     required this.lineage,
     this.refreshSnapshots = true,
+    this.awaitingRelease = false,
   });
 
   final List<WorkSnapshot> lineage;
@@ -37,6 +38,9 @@ class MyRatingSection extends ConsumerStatefulWidget {
   /// Whether opening refreshes the saved snapshots from [lineage]; not when
   /// the lineage came from those very snapshots (a card shown offline).
   final bool refreshSnapshots;
+
+  /// Catalog production status, when available; never inferred from no date.
+  final bool awaitingRelease;
 
   @override
   ConsumerState<MyRatingSection> createState() => _MyRatingSectionState();
@@ -103,18 +107,12 @@ class _MyRatingSectionState extends ConsumerState<MyRatingSection>
         ? ref.watch(partsAverageProvider(_key)).value
         : null;
     final releaseDate = widget.lineage.last.releaseDate;
-    final date = releaseDate != null && validCalendarDate(releaseDate)
-        ? DateTime.tryParse(releaseDate)
-        : null;
-    final today = DateTime.now();
-    final unreleased =
-        kind == WorkKind.movie &&
-        date != null &&
-        DateTime(
-          date.year,
-          date.month,
-          date.day,
-        ).isAfter(DateTime(today.year, today.month, today.day));
+    final release = releaseState(
+      releaseDate,
+      today: DateTime.now(),
+      awaitingRelease: widget.awaitingRelease,
+    );
+    final canRate = release == ReleaseState.released;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -125,16 +123,21 @@ class _MyRatingSectionState extends ConsumerState<MyRatingSection>
             _Unrated(
               listed: listed,
               watchlistable: watchlistable,
-              onRate: unreleased ? null : () => _edit(null),
+              onRate: canRate ? () => _edit(null) : null,
               onToggleWatchlist: _updatingWatchlist ? null : _toggleWatchlist,
             )
           else
             _Rated(
               rating: rating,
-              onEdit: unreleased || _deleting ? null : () => _edit(rating),
+              onEdit: canRate && !_deleting ? () => _edit(rating) : null,
               onDelete: _deleting ? null : () => _delete(),
             ),
-          if (unreleased) Text(l10n.ratingNotReleased),
+          if (!canRate) ...[
+            if (release == ReleaseState.upcoming) Text(l10n.titleNotReleased),
+            if (releaseDate == null || !validCalendarDate(releaseDate))
+              Text(l10n.titleReleaseDateUnknown),
+            Text(l10n.ratingNotReleased),
+          ],
           if (parts != null) ...[
             const SizedBox(height: 8),
             Text(

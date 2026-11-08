@@ -116,6 +116,8 @@
   "titleSeasons": "Seasons",
   "titleEpisodes": "Episodes",
   "tvStatusRunning": "ongoing",
+  "tvStatusPlanned": "announced",
+  "tvStatusInProduction": "in production",
   "tvStatusEnded": "ended",
   "tvStatusCanceled": "canceled",
   "seasonCount": "{count, plural, one{{count} season} other{{count} seasons}}",
@@ -165,6 +167,8 @@
 
   "ratingRate": "Rate",
   "ratingNotReleased": "Rating is available after release.",
+  "titleNotReleased": "Not released yet",
+  "titleReleaseDateUnknown": "Release date unknown",
   "ratingMine": "My rating",
   "ratingEdit": "Change",
   "ratingDelete": "Delete",

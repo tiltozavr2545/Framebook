@@ -48,7 +48,7 @@ class Api implements TmdbApi {
         key: WorkKey.movie(2),
         title: 'recommended',
         originalTitle: null,
-        releaseDate: null,
+        releaseDate: '2000-01-01',
         posterPath: null,
         vote: TmdbVote(null, null),
         genreIds: [],

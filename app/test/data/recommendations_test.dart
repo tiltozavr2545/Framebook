@@ -31,16 +31,22 @@ TitleSummary title(
 );
 TasteProfile profile(List<RatedTitle> ratedTitles) =>
     TasteProfile(tasteSignals(ratedTitles, {}));
-WatchlistTitle watch(int id, {List<int> genres = const [28]}) => WatchlistTitle(
+WatchlistTitle watch(
+  int id, {
+  List<int> genres = const [28],
+  String? date = '2000-01-01',
+  WorkKind kind = WorkKind.movie,
+}) => WatchlistTitle(
   entry: WatchlistEntry(
-    workKey: 'tmdb:movie:$id',
+    workKey: '${kind == WorkKind.movie ? WorkKey.movie(id) : WorkKey.tv(id)}',
     addedAt: 0,
     updatedAt: 0,
     updatedBy: 'a',
   ),
   work: Work(
-    workKey: 'tmdb:movie:$id',
-    kind: WorkKind.movie,
+    workKey: '${kind == WorkKind.movie ? WorkKey.movie(id) : WorkKey.tv(id)}',
+    kind: kind,
+    releaseDate: date,
     tmdbId: id,
     title: 'Listed $id',
     genreIds: '[${genres.join(',')}]',
@@ -66,6 +72,7 @@ RatedTitle part(int season, int? episode, int half) {
       kind: key.kind,
       tmdbId: season * 1000 + (episode ?? 0),
       title: 'Part',
+      releaseDate: '2000-01-01',
       parentKey: '${key.parent}',
       genreIds: '[]',
       snapshotUpdatedAt: 0,
@@ -148,6 +155,36 @@ class _Api implements TmdbApi {
 
 void main() {
   const today = '2026-11-06';
+  for (final kind in [WorkKind.movie, WorkKind.tv]) {
+    test('recommendations require a valid past or current $kind date', () {
+      final dates = <String?>[
+        null,
+        '',
+        '2025-02-30',
+        'invalid',
+        '2026-11-07',
+        today,
+        '2000-01-01',
+      ];
+      final feed = rankRecommendations(
+        profile: profile([rated(99, 18)]),
+        candidates: [
+          for (var i = 0; i < dates.length; i++)
+            RecommendationCandidate(title(i + 1, kind: kind, date: dates[i])),
+        ],
+        watchlist: [
+          for (var i = 0; i < dates.length; i++)
+            watch(i + 11, kind: kind, date: dates[i]),
+        ],
+        favorites: {},
+        hidden: {},
+        today: today,
+      );
+      expect(feed.forYou.map((p) => p.title.key.tmdbId).toSet(), {6, 7});
+      expect(feed.explore.map((p) => p.title.key.tmdbId).toSet(), {6, 7});
+      expect(feed.watchlist.map((p) => p.title.key.tmdbId).toSet(), {16, 17});
+    });
+  }
   test(
     'daily retrieval rotates inputs, stays stable and keeps its budget',
     () async {
@@ -456,7 +493,7 @@ void main() {
         isFalse,
       );
       expect(releasedForRecommendations(title(1, date: today), today), isTrue);
-      expect(releasedForRecommendations(title(1, date: null), today), isTrue);
+      expect(releasedForRecommendations(title(1, date: null), today), isFalse);
     },
   );
   test(
