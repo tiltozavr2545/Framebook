@@ -38,6 +38,9 @@ final class SearchHistoryEntry {
 class SearchHistoryNotifier extends Notifier<List<SearchHistoryEntry>> {
   static const limit = 20;
   static const storageKey = 'recent_search_titles_v1';
+  Future<void> _writes = Future.value();
+  List<SearchHistoryEntry> _persisted = const [];
+  int _revision = 0;
 
   @override
   List<SearchHistoryEntry> build() {
@@ -75,7 +78,7 @@ class SearchHistoryNotifier extends Notifier<List<SearchHistoryEntry>> {
         // A damaged preference must not prevent Discover from opening.
       }
     }
-    return List.unmodifiable(entries);
+    return _persisted = List.unmodifiable(entries);
   }
 
   Future<void> remember(SearchHistoryEntry entry) => _save(
@@ -89,14 +92,25 @@ class SearchHistoryNotifier extends Notifier<List<SearchHistoryEntry>> {
       _save(state.where((entry) => entry.key != key).toList());
   Future<void> clear() => _save([]);
 
-  Future<void> _save(List<SearchHistoryEntry> entries) async {
-    state = List.unmodifiable(entries);
-    await ref
-        .read(sharedPreferencesProvider)
-        .setStringList(
+  Future<void> _save(List<SearchHistoryEntry> entries) {
+    final next = List<SearchHistoryEntry>.unmodifiable(entries);
+    final revision = ++_revision;
+    final prefs = ref.read(sharedPreferencesProvider);
+    state = next;
+    return _writes = _writes.then((_) async {
+      try {
+        final saved = await prefs.setStringList(
           storageKey,
-          entries.map((entry) => jsonEncode(entry.toJson())).toList(),
+          next.map((entry) => jsonEncode(entry.toJson())).toList(),
         );
+        if (!saved) throw StateError('Could not save search history');
+        _persisted = next;
+      } on Object {
+        // Recent-title metadata must not interrupt opening a title. Roll back
+        // only the latest draft; newer queued user actions remain authoritative.
+        if (ref.mounted && revision == _revision) state = _persisted;
+      }
+    });
   }
 }
 

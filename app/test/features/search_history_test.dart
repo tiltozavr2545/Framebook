@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,7 +8,68 @@ import 'package:framebook/data/work_key.dart';
 import 'package:framebook/features/search/search_history.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+class _InterruptedHistoryPreferences implements SharedPreferences {
+  List<String> values = [
+    jsonEncode({'key': 'tmdb:movie:9', 'title': 'Saved'}),
+  ];
+  final writes = <List<String>>[];
+  final first = Completer<bool>();
+  bool failing = true;
+  bool throwing = false;
+  @override
+  List<String>? getStringList(String key) => values;
+  @override
+  Future<bool> setStringList(String key, List<String> value) async {
+    writes.add(value);
+    final success = writes.length == 1 ? await first.future : !failing;
+    if (throwing && !success) throw StateError('Preferences unavailable');
+    if (success) values = value;
+    return success;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 void main() {
+  for (final throwing in [false, true]) {
+    test(
+      'history writes serialize and recover from storage failure: throws $throwing',
+      () async {
+        final prefs = _InterruptedHistoryPreferences()..throwing = throwing;
+        final container = ProviderContainer(
+          overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+        );
+        addTearDown(container.dispose);
+        final history = container.read(searchHistoryProvider.notifier);
+        final first = history.remember(
+          const SearchHistoryEntry(key: WorkKey.movie(1), title: 'First'),
+        );
+        final second = history.clear();
+        await pumpEventQueue();
+        expect(prefs.writes, hasLength(1));
+        prefs.first.complete(false);
+        await Future.wait([first, second]);
+        expect(prefs.writes, hasLength(2));
+        expect(container.read(searchHistoryProvider).map((e) => e.key), [
+          const WorkKey.movie(9),
+        ]);
+        prefs.failing = false;
+        await history.remember(
+          const SearchHistoryEntry(key: WorkKey.movie(3), title: 'Retry'),
+        );
+        final restarted = ProviderContainer(
+          overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+        );
+        addTearDown(restarted.dispose);
+        expect(restarted.read(searchHistoryProvider).map((e) => e.key), [
+          const WorkKey.movie(3),
+          const WorkKey.movie(9),
+        ]);
+      },
+    );
+  }
+
   test(
     'recent titles deduplicate by typed id, stay bounded and persist',
     () async {

@@ -16,6 +16,7 @@ import '../../data/library/rating_note.dart';
 import '../../data/sources/tmdb/tmdb_models.dart';
 import '../../shared/poster.dart';
 import '../../shared/title_text.dart';
+import '../../shared/local_data_failure.dart';
 import 'score_reel.dart';
 
 /// "My rating" on a card of any kind: the score and note, or a button to
@@ -47,6 +48,8 @@ class _MyRatingSectionState extends ConsumerState<MyRatingSection>
   bool get wantKeepAlive => true;
 
   WorkKey get _key => widget.lineage.last.key;
+  bool _deleting = false;
+  bool _updatingWatchlist = false;
 
   @override
   void initState() {
@@ -54,7 +57,13 @@ class _MyRatingSectionState extends ConsumerState<MyRatingSection>
     // The card was just opened: refresh the snapshots that already exist
     // (title in the current language, poster), never creating new ones.
     if (widget.refreshSnapshots) {
-      unawaited(ref.read(libraryProvider).refreshSnapshots(widget.lineage));
+      unawaited(
+        ref.read(libraryProvider).refreshSnapshots(widget.lineage).catchError((
+          Object _,
+        ) {
+          // Optional derived metadata must not prevent using the card.
+        }),
+      );
     }
   }
 
@@ -64,14 +73,28 @@ class _MyRatingSectionState extends ConsumerState<MyRatingSection>
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final storedRating = ref.watch(myRatingProvider(_key));
+    final libraryRatings = storedRating.hasValue
+        ? null
+        : ref.watch(ratedTitlesProvider);
     final rating = storedRating.hasValue
         ? storedRating.value
-        : ref
-              .watch(ratedTitlesProvider)
-              .value
+        : libraryRatings?.value
               ?.where((title) => title.work.workKey == _key.toString())
               .firstOrNull
               ?.rating;
+    if (!storedRating.hasValue && !(libraryRatings?.hasValue ?? false)) {
+      return storedRating.hasError || (libraryRatings?.hasError ?? false)
+          ? LocalDataFailure(
+              onRetry: () {
+                ref.invalidate(myRatingProvider(_key));
+                ref.invalidate(ratedTitlesProvider);
+              },
+            )
+          : const SizedBox(
+              height: 72,
+              child: Center(child: CircularProgressIndicator()),
+            );
+    }
     final kind = _key.kind;
     final watchlistable = kind != WorkKind.episode;
     final listed =
@@ -80,12 +103,13 @@ class _MyRatingSectionState extends ConsumerState<MyRatingSection>
         ? ref.watch(partsAverageProvider(_key)).value
         : null;
     final releaseDate = widget.lineage.last.releaseDate;
-    final date = releaseDate == null ? null : DateTime.tryParse(releaseDate);
+    final date = releaseDate != null && validCalendarDate(releaseDate)
+        ? DateTime.tryParse(releaseDate)
+        : null;
     final today = DateTime.now();
     final unreleased =
         kind == WorkKind.movie &&
         date != null &&
-        RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(releaseDate!) &&
         DateTime(
           date.year,
           date.month,
@@ -102,13 +126,13 @@ class _MyRatingSectionState extends ConsumerState<MyRatingSection>
               listed: listed,
               watchlistable: watchlistable,
               onRate: unreleased ? null : () => _edit(null),
-              onToggleWatchlist: _toggleWatchlist,
+              onToggleWatchlist: _updatingWatchlist ? null : _toggleWatchlist,
             )
           else
             _Rated(
               rating: rating,
-              onEdit: unreleased ? null : () => _edit(rating),
-              onDelete: () => _delete(),
+              onEdit: unreleased || _deleting ? null : () => _edit(rating),
+              onDelete: _deleting ? null : () => _delete(),
             ),
           if (unreleased) Text(l10n.ratingNotReleased),
           if (parts != null) ...[
@@ -138,6 +162,25 @@ class _MyRatingSectionState extends ConsumerState<MyRatingSection>
   Future<void> _edit(Rating? current) async {
     final library = ref.read(libraryProvider);
     final lineage = widget.lineage;
+    final l10n = AppLocalizations.of(context);
+    var initial = current;
+    if (initial == null) {
+      final stored = ref.read(myRatingProvider(lineage.last.key));
+      try {
+        // A library fallback can lag a concurrent import. Confirm absence
+        // before offering a draft that could replace an existing private note.
+        initial = stored.hasValue
+            ? stored.value
+            : await library.watchRating(lineage.last.key).first;
+      } on Object {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(l10n.localDataLoadFailed)));
+        }
+        return;
+      }
+    }
     var showComparison = false;
     try {
       showComparison = await library.hasCalibration(lineage.last.key);
@@ -156,8 +199,8 @@ class _MyRatingSectionState extends ConsumerState<MyRatingSection>
       showDragHandle: true,
       builder: (_) => RatingEditor(
         showComparison: showComparison,
-        initialScoreHalf: current?.scoreHalf,
-        initialNote: current?.note,
+        initialScoreHalf: initial?.scoreHalf,
+        initialNote: initial?.note,
         compare: (half) => library.calibration(lineage.last.key, half),
         onSave: (draft) =>
             library.rate(lineage, scoreHalf: draft.scoreHalf, note: draft.note),
@@ -166,33 +209,62 @@ class _MyRatingSectionState extends ConsumerState<MyRatingSection>
   }
 
   Future<void> _delete() async {
+    if (_deleting) return;
     final library = ref.read(libraryProvider);
     final l10n = AppLocalizations.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.ratingDeleteTitle),
-        content: Text(l10n.ratingDeleteBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(l10n.ratingDelete),
-          ),
-        ],
-      ),
-    );
-    if (confirmed ?? false) await library.deleteRating(_key);
+    final key = _key;
+    setState(() => _deleting = true);
+    try {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(l10n.ratingDeleteTitle),
+          content: Text(l10n.ratingDeleteBody),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(l10n.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(l10n.ratingDelete),
+            ),
+          ],
+        ),
+      );
+      if (confirmed ?? false) await library.deleteRating(key);
+    } on Object {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.libraryChangeFailed)));
+      }
+    } finally {
+      if (mounted) setState(() => _deleting = false);
+    }
   }
 
-  Future<void> _toggleWatchlist(bool listed) {
+  Future<void> _toggleWatchlist(bool listed) async {
+    if (_updatingWatchlist) return;
     final library = ref.read(libraryProvider);
-    return listed
-        ? library.removeFromWatchlist(_key)
-        : library.addToWatchlist(widget.lineage);
+    final l10n = AppLocalizations.of(context);
+    final lineage = widget.lineage;
+    setState(() => _updatingWatchlist = true);
+    try {
+      if (listed) {
+        await library.removeFromWatchlist(lineage.last.key);
+      } else {
+        await library.addToWatchlist(lineage);
+      }
+    } on Object {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.libraryChangeFailed)));
+      }
+    } finally {
+      if (mounted) setState(() => _updatingWatchlist = false);
+    }
   }
 }
 
@@ -207,7 +279,7 @@ class _Unrated extends StatelessWidget {
   final bool listed;
   final bool watchlistable;
   final VoidCallback? onRate;
-  final Future<void> Function(bool listed) onToggleWatchlist;
+  final Future<void> Function(bool listed)? onToggleWatchlist;
 
   @override
   Widget build(BuildContext context) {
@@ -225,7 +297,9 @@ class _Unrated extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: OutlinedButton.icon(
-              onPressed: () => onToggleWatchlist(listed),
+              onPressed: onToggleWatchlist == null
+                  ? null
+                  : () => onToggleWatchlist!(listed),
               icon: Icon(
                 listed ? Icons.bookmark_added : Icons.bookmark_outline,
               ),
@@ -250,7 +324,7 @@ class _Rated extends StatelessWidget {
 
   final Rating rating;
   final VoidCallback? onEdit;
-  final VoidCallback onDelete;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {

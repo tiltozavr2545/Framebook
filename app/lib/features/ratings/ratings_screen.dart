@@ -17,6 +17,7 @@ import '../../shared/score_color.dart';
 import '../../shared/kind_filter.dart';
 import '../../shared/title_row.dart';
 import '../../shared/title_text.dart';
+import '../../shared/local_data_failure.dart';
 import '../title/title_routes.dart';
 import 'ratings_model.dart';
 
@@ -27,7 +28,9 @@ class RatingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final data = ref.watch(ratingsPageDataProvider).value;
+    final prepared = ref.watch(ratingsPageDataProvider);
+    final saved = ref.watch(ratedTitlesProvider);
+    final data = prepared.value;
     final RatingsListView view =
         data?.view ?? ref.watch<RatingsListView>(ratingsViewProvider);
     final all = data?.all;
@@ -57,6 +60,12 @@ class RatingsScreen extends ConsumerWidget {
         ],
       ),
       body: switch (shown) {
+        null when prepared.hasError || saved.hasError => LocalDataFailure(
+          onRetry: () {
+            ref.invalidate(ratedTitlesProvider);
+            ref.invalidate(ratingsPageDataProvider);
+          },
+        ),
         null => const Center(child: CircularProgressIndicator()),
         _ when all!.isEmpty => EmptyMessage(
           icon: Icons.star_outline,

@@ -15,6 +15,7 @@ in the [implementation plan](../implementation-plan.md).
 | [0.9.0 review](0.9.0/README.md) | Sync application cost, credits, clock corrections and layouts |
 | [0.9.1 review](0.9.1/README.md) | Resume, rating-editor races, source validation and narrow layouts |
 | [0.9.2 review](0.9.2/README.md) | Shelf stability, worker preparation and retained view state |
+| [0.9.4 review](0.9.4/README.md) | Storage/sync correctness, title identity, recovery and measured worker responsiveness |
 
 The [Samsung investigation](../android-troubleshooting.md#samsung-android-14-resume)
 keeps its affected-device evidence beside the diagnostic procedure.

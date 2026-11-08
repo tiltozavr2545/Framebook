@@ -1,6 +1,7 @@
 import 'dart:async';
 
-import 'package:drift/drift.dart' show driftRuntimeOptions;
+import 'package:drift/drift.dart'
+    show ApplyInterceptor, QueryExecutor, QueryInterceptor, driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -46,6 +47,68 @@ final class _ExpiringGoogle extends FakeGoogleAccount {
 final class _Unauthorized extends MemoryRemote {
   @override
   SyncFailure? get failing => SyncFailure.unauthorized;
+}
+
+final class _BlockingAccountPreferences implements SharedPreferences {
+  _BlockingAccountPreferences(this.delegate);
+  final SharedPreferences delegate;
+  final entered = Completer<void>();
+  final release = Completer<void>();
+  @override
+  String? getString(String key) => delegate.getString(key);
+  @override
+  Future<bool> setString(String key, String value) =>
+      delegate.setString(key, value);
+  @override
+  Future<bool> remove(String key) async {
+    if (key == syncAccountPreferenceKey && !entered.isCompleted) {
+      entered.complete();
+      await release.future;
+    }
+    return delegate.remove(key);
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+final class _CountingSignInGoogle extends FakeGoogleAccount {
+  _CountingSignInGoogle(super.remote);
+  int signIns = 0;
+
+  @override
+  Future<String> signIn() {
+    signIns++;
+    return super.signIn();
+  }
+}
+
+final class _FailingSyncMetadata extends QueryInterceptor {
+  bool unavailable = false;
+
+  @override
+  Future<List<Map<String, Object?>>> runSelect(
+    QueryExecutor executor,
+    String statement,
+    List<Object?> args,
+  ) {
+    if (unavailable && statement.contains('sync_state')) {
+      return Future.error(const FormatException('Local metadata unavailable'));
+    }
+    return super.runSelect(executor, statement, args);
+  }
+
+  @override
+  Future<int> runInsert(
+    QueryExecutor executor,
+    String statement,
+    List<Object?> args,
+  ) {
+    if (unavailable && statement.contains('sync_state')) {
+      return Future.error(const FormatException('Local metadata unavailable'));
+    }
+    return super.runInsert(executor, statement, args);
+  }
 }
 
 final class _UnavailableRestoreGoogle extends FakeGoogleAccount {
@@ -153,21 +216,28 @@ void main() {
     Duration debounce = SyncController.debounce,
     String? storedAccount,
     int? lastSyncAt,
+    QueryInterceptor? interceptor,
+    Future<void> Function()? beforeListen,
+    SharedPreferences Function(SharedPreferences)? wrapPreferences,
   }) async {
     SharedPreferences.setMockInitialValues({
       if (storedAccount != null) 'sync_account': storedAccount,
     });
-    final db = AppDatabase(NativeDatabase.memory());
+    final executor = NativeDatabase.memory();
+    final db = AppDatabase(
+      interceptor == null ? executor : executor.interceptWith(interceptor),
+    );
     databases.add(db);
     if (lastSyncAt != null) {
       await SyncStore(db).setStateValue(SyncStore.lastSyncKey, '$lastSyncAt');
     }
+    final prefs = await SharedPreferences.getInstance();
     final container = ProviderContainer(
       overrides: [
         databaseProvider.overrideWithValue(db),
         deviceIdProvider.overrideWithValue(id),
         sharedPreferencesProvider.overrideWithValue(
-          await SharedPreferences.getInstance(),
+          wrapPreferences?.call(prefs) ?? prefs,
         ),
         googleAccountProvider.overrideWithValue(google),
         appVersionProvider.overrideWithValue('test'),
@@ -175,6 +245,7 @@ void main() {
       ],
     );
     addTearDown(container.dispose);
+    await beforeListen?.call();
     container.listen(syncControllerProvider, (_, _) {});
     // Let it read its last sync before the test can close the database.
     await pumpEventQueue();
@@ -187,6 +258,50 @@ void main() {
   final other = [
     const WorkSnapshot(key: WorkKey.movie(27205), tmdbId: 27205, title: 'Inc'),
   ];
+
+  for (final startup in [false, true]) {
+    test(
+      'local sync metadata failure is recoverable, startup $startup',
+      () async {
+        final metadata = _FailingSyncMetadata();
+        final remote = MemoryRemote();
+        final google = FakeGoogleAccount(remote)..signedIn = true;
+        final (container, library) = await device(
+          'a',
+          google,
+          storedAccount: google.email,
+          lastSyncAt: DateTime.now().toUtc().millisecondsSinceEpoch,
+          interceptor: metadata,
+          beforeListen: startup
+              ? () async {
+                  await Library(
+                    databases.single,
+                    deviceId: 'a',
+                  ).rate(film, scoreHalf: 17, note: null);
+                  metadata.unavailable = true;
+                }
+              : null,
+        );
+        final controller = container.read(syncControllerProvider.notifier);
+        if (!startup) {
+          await library.rate(film, scoreHalf: 17, note: null);
+          metadata.unavailable = true;
+          await controller.sync();
+        }
+        expect(
+          container.read(syncControllerProvider).error,
+          SyncFailure.failed,
+        );
+        expect(container.read(syncControllerProvider).busy, isFalse);
+        expect(remote.names, isEmpty);
+        metadata.unavailable = false;
+        await controller.sync();
+        expect(container.read(syncControllerProvider).error, isNull);
+        expect(remote.names, [SyncFile.name]);
+        expect((await SyncStore(databases.single).read()).liveRatings, 1);
+      },
+    );
+  }
 
   test('account restoration cannot recursively restore on resume', () async {
     final google = _ResumingGoogle(MemoryRemote())..signedIn = true;
@@ -445,6 +560,92 @@ void main() {
     expect(a.read(syncControllerProvider).error, isNull);
     expect(remote.names, [SyncFile.name]);
   });
+
+  test(
+    'account listeners are invalidated before clearing preferences can block',
+    () async {
+      final google = FakeGoogleAccount(MemoryRemote(), email: 'new@example.com')
+        ..signedIn = true;
+      late _BlockingAccountPreferences prefs;
+      final (container, _) = await device(
+        'a',
+        google,
+        storedAccount: 'old@example.com',
+        lastSyncAt: DateTime.now().toUtc().millisecondsSinceEpoch,
+        wrapPreferences: (delegate) =>
+            prefs = _BlockingAccountPreferences(delegate),
+      );
+      final selection = container
+          .read(syncControllerProvider.notifier)
+          .signIn();
+      try {
+        await prefs.entered.future;
+        expect(container.read(syncControllerProvider).account, isNull);
+        expect(prefs.getString(syncAccountPreferenceKey), 'old@example.com');
+      } finally {
+        prefs.release.complete();
+        await selection;
+      }
+      expect(container.read(syncControllerProvider).account, google.email);
+    },
+  );
+
+  test('account selection waits for the previous upload', () async {
+    final remote = _BlockingRemote();
+    final google = _CountingSignInGoogle(remote);
+    final (container, library) = await device('a', google);
+    final controller = container.read(syncControllerProvider.notifier);
+    await library.rate(film, scoreHalf: 17, note: null);
+    await controller.signIn();
+    await library.rate(film, scoreHalf: 16, note: null);
+    final entered = Completer<void>();
+    remote.entered = entered;
+    remote.release = Completer<void>();
+    final upload = controller.sync();
+    await entered.future;
+    final selection = controller.signIn();
+    await pumpEventQueue();
+    expect(google.signIns, 1);
+    remote.release!.complete();
+    await upload;
+    expect(await selection, isNotNull);
+    expect(google.signIns, 2);
+    await controller.confirmFirstSync();
+  });
+
+  test(
+    'failed account preview cannot resume sync under the old selection',
+    () async {
+      final remote = MemoryRemote();
+      final google = FakeGoogleAccount(remote, email: 'new@example.com')
+        ..signedIn = true;
+      final (container, library) = await device(
+        'a',
+        google,
+        storedAccount: 'old@example.com',
+        lastSyncAt: DateTime.now().toUtc().millisecondsSinceEpoch,
+        debounce: Duration.zero,
+      );
+      final controller = container.read(syncControllerProvider.notifier);
+      remote.failing = SyncFailure.offline;
+      await expectLater(controller.signIn(), throwsA(isA<SyncException>()));
+      expect(container.read(syncControllerProvider).account, isNull);
+      expect(
+        container.read(sharedPreferencesProvider).getString('sync_account'),
+        isNull,
+      );
+      remote.failing = null;
+      await library.rate(film, scoreHalf: 17, note: null);
+      await pumpEventQueue();
+      await controller.sync();
+      expect(remote.names, isEmpty);
+      expect((await SyncStore(databases.single).read()).liveRatings, 1);
+
+      await controller.signIn();
+      expect(container.read(syncControllerProvider).account, google.email);
+      expect(remote.names, [SyncFile.name]);
+    },
+  );
 
   test('signing out keeps the data in both places', () async {
     final remote = MemoryRemote();

@@ -10,6 +10,7 @@ import '../library/library.dart';
 import '../db/database.dart';
 import '../library/taste_ratings.dart';
 import '../library/people_index.dart';
+import '../library/people_credit_payload.dart';
 import '../sources/providers.dart';
 import '../sources/tmdb/tmdb_models.dart';
 import '../work_key.dart';
@@ -52,6 +53,11 @@ typedef _TasteInput = (List<RatedTitle>, Map<String, List<PeopleCredit>>);
 TasteProfile _buildTaste(_TasteInput input) =>
     TasteProfile(tasteSignals(input.$1, input.$2));
 
+final _tasteCreditPayloadProvider = FutureProvider.autoDispose((ref) {
+  final credits = ref.watch(recommendationCreditsProvider);
+  return sharedPeopleCreditPayload(credits, active: () => ref.mounted);
+});
+
 final _tasteWorkerProvider =
     Provider.autoDispose<LatestWorker<_TasteInput, TasteProfile>>((ref) {
       final worker = LatestWorker<_TasteInput, TasteProfile>(
@@ -75,10 +81,12 @@ class _TasteProfileData extends AsyncNotifier<TasteProfile> {
       }
       if (entries <= 1000) return _buildTaste(input);
     }
-    return ref
-        .watch(_tasteWorkerProvider)
-        .run(input)
-        .then((profile) => profile ?? TasteProfile(const []));
+    final worker = ref.watch(_tasteWorkerProvider);
+    final payload = ref.watch(_tasteCreditPayloadProvider.future);
+    return payload.then((credits) async {
+      if (!ref.mounted || credits == null) return TasteProfile(const []);
+      return await worker.run((titles, credits)) ?? TasteProfile(const []);
+    });
   }
 }
 

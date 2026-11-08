@@ -65,6 +65,8 @@ Queries, pagination and people results are not recorded. Typing, changing
 mode, selection or loss of focus closes the overlay. Clearing a query leaves
 it closed until another tap. It overlays content without moving the shelves.
 Its storage boundary is listed in the [data model](data-model.md#outside-the-database).
+History writes run in order. Failed persistence restores the latest saved
+history without interrupting title navigation.
 
 ## Title cards
 
@@ -96,7 +98,9 @@ TMDB collections do not imply TV franchise membership.
 Renumbered rated parts and watchlisted seasons prompt Move / Keep inline:
 above the series' seasons, the season's episodes, or below the episode header.
 Only one question appears at a time; conflicting destination scores require
-a choice. Detection and mutation rules are in the
+a choice. Choices wait for persistence and disable repeated taps; a failed
+write reports an error and keeps the question available for retry.
+Detection and mutation rules are in the
 [data model](data-model.md#when-tmdb-renumbers).
 
 ## Rating editor and lists
@@ -105,8 +109,18 @@ Each card has My rating. The bottom-sheet editor uses a score reel from 1 to
 10 in half-point steps, with haptic feedback and an optional note. A new
 rating starts at 5; an existing one starts at its saved score. Scores display
 without a trailing `.0`. Future-dated movies cannot be rated yet; unknown
-dates remain rateable. Deletion requires confirmation. Failed persistence
-keeps the editor and draft open, and saving freezes the reel's current value.
+dates, including impossible calendar dates, remain rateable. Deletion requires
+confirmation. Failed persistence keeps the editor and draft open, and saving
+freezes the reel's current value.
+Failed deletion and watchlist changes show a retryable error while preserving
+the saved state. Card controls prevent duplicate writes while their operation
+is pending. Optional snapshot-refresh failures do not interrupt the card.
+A missing query result is not proof that a title is unrated. Until either the
+individual query or the loaded library confirms the state, the card shows
+loading or a retryable local-data error. Known library ratings remain visible
+while the individual query is pending; a confirmed deletion takes precedence.
+Opening a new draft also rechecks the stored row, so an empty library fallback
+that lags a concurrent import cannot discard an existing note.
 
 The comparison area appears only with more than 20 other live movie ratings
 or more than 10 other ratings of the same series, season or episode kind.
@@ -126,14 +140,26 @@ Note-only changes do not move a title to a new score day. Other sorts stay
 flat. Filter/order selections last for the session. Source comparison and
 parent-average formulas are specified in [analytics](analytics.md).
 
+Ratings, watchlist and statistics show a local-library error with Retry if
+reading or preparing their first useful data fails. Retry restarts the affected
+read and preparation; a useful previous result remains visible through refresh.
+
 Watchlist shows films, whole series and seasons, newest first. Seasons group
 under a tappable series heading that need not itself be selected. Choosing
 a whole series displaces its seasons; choosing a season displaces the whole
-series. Removing offers Undo. Rating a title removes it from the list, while
+series. Removing offers Undo; if Undo cannot save, its error offers Undo again.
+Rating a title removes it from the list, while
 deleting that rating does not re-add it. Offline/concurrent selection rules
 are specified in [sync](sync.md#series-and-season-watchlist-choices).
 
 ## People and statistics
+
+The People discovery page retains its last useful contributor shelves while
+indexing or insight preparation replaces their data. A temporary empty or
+partial pass must not collapse the vertical list and reset its scroll position.
+The first useful batch can appear during initial loading; completed results,
+including a genuinely empty result, replace the retained groups. Favourites
+remain independently reactive.
 
 Person profiles show dates, an expandable biography and a filmography with
 your scores. The default combines all roles with one row per title. Acting,

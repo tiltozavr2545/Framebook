@@ -9,6 +9,7 @@ import '../../data/work_key.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/title_row.dart';
 import '../../shared/title_text.dart';
+import '../../shared/local_data_failure.dart';
 import '../title/title_routes.dart';
 
 /// Films, series and grouped seasons, most recently added first. Rating a
@@ -19,7 +20,8 @@ class WatchlistScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final titles = ref.watch(watchlistTitlesProvider).value;
+    final saved = ref.watch(watchlistTitlesProvider);
+    final titles = saved.value;
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.tabWatchlist),
@@ -32,6 +34,9 @@ class WatchlistScreen extends ConsumerWidget {
         ],
       ),
       body: switch (titles) {
+        null when saved.hasError => LocalDataFailure(
+          onRetry: () => ref.invalidate(watchlistTitlesProvider),
+        ),
         null => const Center(child: CircularProgressIndicator()),
         [] => EmptyMessage(
           icon: Icons.bookmark_outline,
@@ -126,16 +131,38 @@ class _WatchlistRow extends ConsumerWidget {
       if (title.series case final series?) WorkSnapshot.fromWork(series),
       WorkSnapshot.fromWork(title.work),
     ];
-    await library.removeFromWatchlist(title.key);
+    try {
+      await library.removeFromWatchlist(title.key);
+    } on Object {
+      if (messenger.mounted) {
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.libraryChangeFailed)),
+        );
+      }
+      return;
+    }
+    if (!messenger.mounted) return;
+    Future<void> undo() async {
+      try {
+        await library.addToWatchlist(lineage);
+      } on Object {
+        if (messenger.mounted) {
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(l10n.libraryChangeFailed),
+              action: SnackBarAction(label: l10n.undo, onPressed: undo),
+            ),
+          );
+        }
+      }
+    }
+
     messenger
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
           content: Text(l10n.watchlistRemoved(title.work.title)),
-          action: SnackBarAction(
-            label: l10n.undo,
-            onPressed: () => library.addToWatchlist(lineage),
-          ),
+          action: SnackBarAction(label: l10n.undo, onPressed: undo),
         ),
       );
   }

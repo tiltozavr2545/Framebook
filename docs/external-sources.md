@@ -159,6 +159,12 @@ An OMDb key can be 7 or 8 characters — don't check the length on entry.
 
 ## Matching ids
 
+Movie, series and person detail responses must carry the requested TMDB ID;
+season details must carry the requested season number. Validate this before
+accepting a network response or a cached body. Mismatched cache entries trigger
+a new request; a mismatched network response may fall back only to a valid
+older entry and is never written over it.
+
 The anchor id is TMDB's (`work_key` is built from it). The others are derived
 along a chain and stored in `works`, so they aren't looked up again:
 
@@ -296,6 +302,10 @@ An invalid key isn't saved; with no network the key is saved marked "not
 checked". Trial requests receive plain text and parse JSON explicitly. A
 malformed or proxy HTML response is a source failure and does not save the key
 as if the phone were merely offline.
+
+Secure storage saves the key value and verification flag separately. Before
+replacing a value, saving clears the previous verification so an interrupted
+write cannot transfer an old key's verified status to its replacement.
 
 HTTP 200 must also carry the expected probe: TMDB's image configuration with
 a secure image base and poster sizes, PoiskKino's requested title ID, or OMDb's

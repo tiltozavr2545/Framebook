@@ -61,6 +61,19 @@ JSON, gzipped. Rows are the same columns as in the database, in
 
 The current writer uses format 6 and reads versions 1–6.
 
+Event dates used for calendar grouping or display (`created_at`, `scored_at`,
+`added_at` and comparison event dates) must fit Dart's DateTime range, with
+two days of headroom at each limit for time-zone conversion and local-day
+grouping. An out-of-range date makes the file broken before local application;
+it must not become a later screen failure.
+
+Version timestamps (`updated_at`, `deleted_at` and `snapshot_updated_at`) also
+stay within Dart's DateTime range, without the calendar-grouping margin. This
+validation covers compact deletions, watchlist fences and encrypted settings.
+Advancing a version at the maximum supported timestamp fails atomically instead
+of overflowing into a negative value. A later format does not legitimize an
+unrepresentable timestamp in an older-format file.
+
 - Version 6 adds required `pair_comparisons`. Versions 1–5 read with no
   comparison events; clients supporting only format 5 reject format 6.
   Events merge by `comparison_key`, ordered by `answered_at`, `answered_by`
@@ -254,6 +267,13 @@ locally so a retry cannot resurrect an older row.
   dialog with counters: "120 ratings on the device, 340 in Drive, 395 after
   merging". A local watchlist also triggers this confirmation. The account
   is remembered for automatic sync only after the user confirms.
+- Changing the Google selection first waits for any previous sync pass.
+  After Google accepts the selection, a failed Drive preview clears the saved
+  selection and leaves automatic sync disabled until sign-in succeeds again.
+  Account listeners are invalidated before awaiting preference cleanup, so
+  account-bound tasks cannot keep treating the previous selection as active
+  while that cleanup is pending.
+  A canceled Google dialog preserves the previous selection and pending edits.
 - **Signing out of Google** — the local data stays, the file in Drive stays.
 - **"Delete data from Google Drive"** deletes the file and the copies.
   `SyncActions` suspends encrypted-key operations before draining them and keeps
@@ -303,9 +323,12 @@ faithfully as a correct change. So, separately:
 | Drive quota exceeded | a message in settings; local work doesn't suffer |
 | the file can't be read (broken JSON, gzip) | don't overwrite; a message and an offer to restore from a daily copy |
 | `format_version` is newer | "update the app", sync is off until updated |
+| local sync metadata cannot be read or written | show a recoverable failure and allow a later retry |
 
 The last error is kept in `sync_state.last_sync_error` and is visible in
-settings along with the time of the last successful sync.
+settings along with the time of the last successful sync. If the local database
+also rejects that error-marker write, retain the error in memory without
+raising a second exception from an automatic pass.
 
 ## Optional encrypted key sync
 

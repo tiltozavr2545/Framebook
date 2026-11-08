@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../db/database.dart';
 import '../db/database_provider.dart';
 import '../sources/tmdb/tmdb_models.dart';
+import '../timestamps.dart';
 
 final favoritePeopleProvider = StreamProvider<List<FavoritePerson>>((ref) {
   final db = ref.watch(databaseProvider);
@@ -44,14 +45,19 @@ final class PeopleLibrary {
         )..where((p) => p.personId.equals(person.id))).getSingleOrNull();
         if ((old != null && old.deletedAt == null) == favorite) return;
         final now = clock().toUtc().millisecondsSinceEpoch;
-        final at = now > (old?.updatedAt ?? -1) ? now : old!.updatedAt + 1;
+        final at = nextTimestampMillis(now, old?.updatedAt ?? -1);
+        final profilePath = person.profilePath;
         await db
             .into(db.favoritePeople)
             .insertOnConflictUpdate(
               FavoritePeopleCompanion.insert(
                 personId: Value(person.id),
                 name: person.name,
-                profilePath: Value(person.profilePath),
+                profilePath: Value(
+                  profilePath != null && profilePath.startsWith('/')
+                      ? profilePath
+                      : null,
+                ),
                 updatedAt: at,
                 updatedBy: await db.deviceId(),
                 deletedAt: Value(favorite ? null : now),

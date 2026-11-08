@@ -38,6 +38,59 @@ void main() {
     serve(apiFixtures);
   });
 
+  for (final endpoint in ['movie', 'tv', 'person', 'season']) {
+    test(
+      '$endpoint rejects a mismatched detail response and retries',
+      () async {
+        final api = client();
+        Future<Object> load() => switch (endpoint) {
+          'movie' => api.movie(603),
+          'tv' => api.tv(1399),
+          'person' => api.person(6384),
+          _ => api.season(1399, 1),
+        };
+        serve(
+          (_) => (
+            status: 200,
+            body: '{"id":999,"season_number":2,"title":"Wrong","name":"Wrong"}',
+          ),
+        );
+        await expectLater(
+          load(),
+          throwsA(
+            isA<SourceException>().having(
+              (e) => e.failure,
+              'failure',
+              SourceFailure.failed,
+            ),
+          ),
+        );
+        expect(cache.entries, isEmpty);
+        serve(apiFixtures);
+        await load();
+        expect(http.requests, hasLength(1));
+        final cacheKey = cache.entries.keys.single;
+        cache.entries[cacheKey] = CachedResponse(
+          '{"id":999,"season_number":2,"title":"Wrong","name":"Wrong"}',
+          now.millisecondsSinceEpoch,
+        );
+        await load();
+        expect(http.requests, hasLength(2));
+        expect(cache.entries[cacheKey]!.body, isNot(contains('"Wrong"')));
+      },
+    );
+  }
+
+  test('a mismatched network identity preserves a valid stale card', () async {
+    final api = client();
+    await api.movie(603);
+    final original = cache.entries.values.single.body;
+    now = now.add(TmdbTtl.details);
+    serve((_) => (status: 200, body: '{"id":999,"title":"Wrong"}'));
+    expect((await api.movie(603)).key, const WorkKey.movie(603));
+    expect(cache.entries.values.single.body, original);
+  });
+
   test(
     'concurrent identical catalog requests share loading and allow retry',
     () async {
@@ -165,6 +218,7 @@ void main() {
           status: 200,
           body: '''{
         "id":1399,
+        "season_number":1,
         "aggregate_credits":{
           "cast":[{"id":1,"name":"Earlier actor"}],
           "crew":[{"id":2,"name":"Director and writer","jobs":[

@@ -145,10 +145,15 @@ class SyncController extends Notifier<SyncStatus> {
   /// Reads the last sync from `sync_state`, then — if signed in — restores
   /// the session silently and syncs if it is due.
   Future<void> _load(String? account) async {
-    final last = int.tryParse(
-      await _store.stateValue(SyncStore.lastSyncKey) ?? '',
-    );
-    final error = await _store.stateValue(_errorKey);
+    final int? last;
+    final String? error;
+    try {
+      last = int.tryParse(await _store.stateValue(SyncStore.lastSyncKey) ?? '');
+      error = await _store.stateValue(_errorKey);
+    } on Exception {
+      await _fail(SyncFailure.failed);
+      return;
+    }
     if (!ref.mounted) return;
     state = state.copyWith(
       lastSyncAt: () => last,
@@ -208,8 +213,41 @@ class SyncController extends Notifier<SyncStatus> {
   /// [confirmFirstSync]; otherwise syncs at once and returns `null`. Throws
   /// [SignInException] and [SyncException].
   Future<FirstSync?> signIn() async {
+    if (_suspended) return null;
+    _suspended = true;
+    final pendingEdit = _debounce?.isActive ?? false;
+    _debounce?.cancel();
+    state = state.copyWith(busy: true);
+    final FirstSync? first;
+    try {
+      // Finish the previous account's pass before changing its Google session.
+      await _running;
+      if (ref.mounted) state = state.copyWith(busy: true);
+      first = await _prepareSignIn();
+    } finally {
+      _suspended = false;
+      if (ref.mounted) {
+        state = state.copyWith(busy: false);
+        if (pendingEdit || _changedDuringSync) _changed();
+      }
+    }
+    if (!_firstSyncPending) await sync();
+    return first;
+  }
+
+  Future<FirstSync?> _prepareSignIn() async {
     final email = await _google.signIn();
-    _sessionReady = true;
+    // A successful Google login can select another account. Until its Drive
+    // preview succeeds, neither the old selection nor automatic sync is valid.
+    _sessionReady = false;
+    _firstSyncPending = true;
+    state = state.copyWith(
+      account: () => null,
+      error: () => null,
+      stale: () => null,
+      staleFingerprint: () => null,
+    );
+    await ref.read(sharedPreferencesProvider).remove(_accountKey);
     final drive = await _withDrive((engine) => engine.peek());
     final device = await _store.read();
     final hasLocalData =
@@ -224,8 +262,8 @@ class SyncController extends Notifier<SyncStatus> {
       await ref.read(sharedPreferencesProvider).remove(_accountKey);
     }
     state = state.copyWith(account: () => email, error: () => null);
+    _sessionReady = true;
     if (!_firstSyncPending) {
-      await sync();
       return null;
     }
     final remote = drive!;
@@ -278,6 +316,8 @@ class SyncController extends Notifier<SyncStatus> {
       await _acceptReport(report);
     } on SyncException catch (e) {
       await _fail(e.failure);
+    } on Exception {
+      await _fail(SyncFailure.failed);
     } finally {
       if (ref.mounted) {
         state = state.copyWith(busy: false);
@@ -311,8 +351,13 @@ class SyncController extends Notifier<SyncStatus> {
   Future<void> _fail(SyncFailure failure) async {
     // No connection is not an error worth showing: the next occasion retries.
     if (failure == SyncFailure.offline) return;
-    await _store.setStateValue(_errorKey, failure.name);
     if (ref.mounted) state = state.copyWith(error: () => failure);
+    try {
+      await _store.setStateValue(_errorKey, failure.name);
+    } on Exception {
+      // A failed local database can also prevent persisting its error marker.
+      // Keep the recoverable status visible without failing an automatic pass.
+    }
   }
 
   /// Runs [action] with Drive access; once Drive says the token expired,

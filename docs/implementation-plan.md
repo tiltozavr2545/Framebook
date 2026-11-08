@@ -15,7 +15,10 @@ specified in [features](features.md); the release history is in the
 Implementation and automated checks are complete. Verification
 results and their limits are recorded in
 [delivery validation](reviews/delivery-validation.md#bottom-navigation-visibility-repair--2026-11-07).
-The platform and independent-review work below remains separate.
+The [stability review](reviews/0.9.4/README.md) records additional repairs and
+host responsiveness measurements for the same unreleased version. Automated
+verification is complete. The platform and independent-review work below
+remains separate.
 
 ## MVP stages
 

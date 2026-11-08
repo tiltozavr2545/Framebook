@@ -79,6 +79,9 @@ final class ApiKeyStore {
   }
 
   Future<void> save(ApiSource source, StoredKey key) async {
+    // Invalidate the previous value's verification before replacing it: secure
+    // storage writes are separate and the process may stop between them.
+    await _storage.write(_verifiedKey(source), 'false');
     await _storage.write(_valueKey(source), key.value);
     await _storage.write(_verifiedKey(source), key.verified.toString());
   }

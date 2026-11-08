@@ -6,6 +6,7 @@ import 'package:crypto/crypto.dart' as hashes;
 import 'package:cryptography/cryptography.dart';
 
 import '../api_keys.dart';
+import '../timestamps.dart';
 import 'sync_engine.dart';
 
 class SecretsLocked implements Exception {
@@ -44,6 +45,7 @@ final class SecretsVersion {
     if (json is! Map ||
         json['updated_at'] is! int ||
         (json['updated_at'] as int) < 0 ||
+        !validTimestampMillis(json['updated_at'] as int) ||
         json['updated_by'] is! String ||
         (json['updated_by'] as String).isEmpty) {
       throw const FormatException('Invalid secrets version');
@@ -89,6 +91,7 @@ final class SecretsSnapshot {
         json['keys'] is! Map ||
         json['updated_at'] is! int ||
         (json['updated_at'] as int) < 0 ||
+        !validTimestampMillis(json['updated_at'] as int) ||
         json['updated_by'] is! String ||
         (json['updated_by'] as String).isEmpty ||
         (json['divergence_source'] != null &&
@@ -194,7 +197,7 @@ final class SecretsVault {
     final raw = await storage.read(key);
     final old = raw == null ? null : SecretsSnapshot.fromJson(jsonDecode(raw));
     final now = DateTime.now().toUtc().millisecondsSinceEpoch;
-    final updatedAt = max(now, (old?.updatedAt ?? 0) + 1);
+    final updatedAt = nextTimestampMillis(now, old?.updatedAt ?? 0);
     final version = SecretsVersion(updatedAt, deviceId);
     final versions = Map<String, SecretsVersion>.of(
       old?.keyVersions ?? const {},

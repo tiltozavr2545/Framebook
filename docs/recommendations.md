@@ -125,6 +125,18 @@ pools use the same pure ranking function synchronously. Progress-only updates
 do not rerank an unchanged candidate list. These are scheduling boundaries,
 not a measured guarantee about phone frame times.
 
+Large taste-profile workers reuse a prepared credit graph for the current
+published credit-index snapshot. Preparation shares immutable person records
+only when ID, role, name and photo path all match, preserving every row and its
+order. It yields after each 512 credits and stops superseded work. This reduces
+isolate-transfer and allocation pressure without dropping contributor metadata
+or repeating preparation after score changes alone. Small profiles retain the
+existing synchronous path. A bounded sample of up to 16 evenly spaced credits
+per work bypasses the full sharing table when fewer than 5% repeat, avoiding
+extra allocation for almost entirely unique contributors. Host evidence and
+its limits are recorded in the
+[0.9.4 review](reviews/0.9.4/README.md#host-responsiveness-measurements).
+
 ## Not interested
 
 The poster's menu hides the title across Discover shelves. A snackbar offers

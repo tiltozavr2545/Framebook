@@ -74,6 +74,8 @@ changes, sync and resume. Successful unchanged identities reuse results for
 24 hours per language/key generation; changed identities and failures retry.
 It requires a key and foreground state. A late result cannot apply after
 backgrounding or disposal.
+Local read/write exceptions end only the optional pass; the next sync or resume
+can retry without reporting an uncaught foreground-task exception.
 
 Watchlist streams read only live entries, required snapshots, relevant season
 rating keys and selection fences transactionally. They avoid full sync-state
@@ -92,6 +94,10 @@ Pure preparation uses `ViewComputer`: production runs real isolates; widget
 tests replace scheduling, with separate tests for actual isolate transfer.
 Latest-input workers serialize computation, skip superseded queued inputs
 and retain coherent previous results until a replacement is ready.
+Large recommendation-credit messages share equal immutable leaves and prepare
+in bounded batches before transfer; the preparation is cached per published
+index snapshot. The exact scheduling contract belongs to
+[recommendations](recommendations.md).
 
 Pair selection runs locally in a serialized `ViewComputer` worker above 200
 library rows. The screen keeps the current pair stable while its rating versions
@@ -105,6 +111,10 @@ The shell retains non-rendering listeners for ongoing derived data and
 foreground services. Nested cards can pause Discover widget subscriptions
 without losing the live recommendation graph. These listeners do not rebuild
 the shell for every enrichment update.
+
+Optional background rating refresh keeps its loop alive after a local storage
+exception. The active indicator resets and the next normal interval or resume
+can retry; a failed pass does not start an immediate retry loop.
 
 Tab navigators exist in advance, but screens mount on first display. Hidden
 branches stop tickers, focus and pointer input. Visited finite shelf sections,

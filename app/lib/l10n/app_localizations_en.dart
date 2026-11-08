@@ -488,6 +488,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'Could not save your rating. Your draft is still here; try again.';
 
   @override
+  String get libraryChangeFailed => 'Could not save changes. Try again.';
+
+  @override
+  String get localDataLoadFailed => 'Could not load your library. Try again.';
+
+  @override
   String get ratingSave => 'Save';
 
   @override
@@ -889,8 +895,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'The file in Google Drive was written by a newer Framebook. Update the app to sync.';
 
   @override
-  String get syncErrorFailed =>
-      'Google Drive didn\'t answer properly. Sync will try again later.';
+  String get syncErrorFailed => 'Could not complete sync. Try again later.';
 
   @override
   String get syncSignInAgain => 'Sign in again';

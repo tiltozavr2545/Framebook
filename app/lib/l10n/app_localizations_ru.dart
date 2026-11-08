@@ -491,6 +491,14 @@ class AppLocalizationsRu extends AppLocalizations {
       'Не получилось сохранить оценку. Заметка осталась здесь — попробуй ещё раз.';
 
   @override
+  String get libraryChangeFailed =>
+      'Не удалось сохранить изменения. Повторите попытку.';
+
+  @override
+  String get localDataLoadFailed =>
+      'Не удалось загрузить вашу библиотеку. Повторите попытку.';
+
+  @override
   String get ratingSave => 'Сохранить';
 
   @override
@@ -895,7 +903,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get syncErrorFailed =>
-      'Google Диск ответил с ошибкой. Синхронизация попробует позже.';
+      'Не удалось завершить синхронизацию. Повторите попытку позже.';
 
   @override
   String get syncSignInAgain => 'Войти заново';

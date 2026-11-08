@@ -6,6 +6,7 @@ import 'dart:io' show gzip;
 
 import '../db/database.dart';
 import '../work_key.dart';
+import '../timestamps.dart';
 import '../library/rating_note.dart';
 import '../library/pair_preference.dart';
 
@@ -32,7 +33,7 @@ final class DeletionRecord {
     final row = _Row(raw, 'deletions');
     final key = row.string('work_key');
     final hash = row.string('tie_break');
-    final time = row.integer('updated_at');
+    final time = row.versionTimestamp('updated_at');
     if (WorkKey.tryParse(key) == null ||
         time < 0 ||
         !RegExp(r'^[0-9a-f]{64}$').hasMatch(hash)) {
@@ -71,7 +72,7 @@ final class WatchlistFence {
     final row = _Row(raw, 'watchlist_fences');
     final key = row.string('series_key');
     final parsed = WorkKey.tryParse(key);
-    final at = row.integer('updated_at');
+    final at = row.versionTimestamp('updated_at');
     final by = row.string('updated_by');
     if (parsed == null ||
         parsed.kind != WorkKind.tv ||
@@ -412,7 +413,7 @@ abstract final class SyncFile {
     }
 
     int time(String key) {
-      final v = r.integer(key);
+      final v = r.timestamp(key);
       if (v < 0) throw const _BadRow('invalid comparison time');
       return v;
     }
@@ -467,9 +468,9 @@ abstract final class SyncFile {
     final row = _Row(raw, 'favorite_people');
     final id = row.integer('person_id');
     final name = row.string('name');
-    final at = row.integer('updated_at');
+    final at = row.versionTimestamp('updated_at');
     final by = row.string('updated_by');
-    final deleted = row.integerOrNull('deleted_at');
+    final deleted = row.versionTimestampOrNull('deleted_at');
     final path = row.stringOrNull('profile_path');
     if (id <= 0 ||
         name.trim().isEmpty ||
@@ -562,7 +563,7 @@ abstract final class SyncFile {
       year: row.integerOrNull('year'),
       posterPath: row.stringOrNull('poster_path'),
       genreIds: jsonEncode(row.integers('genre_ids')),
-      snapshotUpdatedAt: row.integer('snapshot_updated_at'),
+      snapshotUpdatedAt: row.versionTimestamp('snapshot_updated_at'),
     );
   }
 
@@ -578,11 +579,11 @@ abstract final class SyncFile {
       workKey: row.string('work_key'),
       scoreHalf: score,
       note: note,
-      createdAt: row.integer('created_at'),
-      scoredAt: row.integer('scored_at'),
-      updatedAt: row.integer('updated_at'),
+      createdAt: row.timestamp('created_at'),
+      scoredAt: row.timestamp('scored_at'),
+      updatedAt: row.versionTimestamp('updated_at'),
       updatedBy: row.string('updated_by'),
-      deletedAt: row.integerOrNull('deleted_at'),
+      deletedAt: row.versionTimestampOrNull('deleted_at'),
     );
   }
 
@@ -590,10 +591,10 @@ abstract final class SyncFile {
     final row = _Row(raw, 'watchlist');
     return WatchlistEntry(
       workKey: row.string('work_key'),
-      addedAt: row.integer('added_at'),
-      updatedAt: row.integer('updated_at'),
+      addedAt: row.timestamp('added_at'),
+      updatedAt: row.versionTimestamp('updated_at'),
       updatedBy: row.string('updated_by'),
-      deletedAt: row.integerOrNull('deleted_at'),
+      deletedAt: row.versionTimestampOrNull('deleted_at'),
     );
   }
 
@@ -660,6 +661,33 @@ extension type _Row._(Map<String, Object?> raw) {
     final int i => i,
     _ => throw _BadRow('$key is missing'),
   };
+
+  /// Event dates are converted to DateTime by library views and formatting.
+  int timestamp(String key) {
+    final value = versionTimestamp(key);
+    // Leave room for time-zone conversion and reconstructing local midnight.
+    const limit = maxTimestampMillis - 2 * Duration.millisecondsPerDay;
+    if (value < -limit || value > limit) {
+      throw _BadRow('$key is outside the supported date range');
+    }
+    return value;
+  }
+
+  int versionTimestamp(String key) {
+    final value = integer(key);
+    if (!validTimestampMillis(value)) {
+      throw _BadRow('$key is outside the supported timestamp range');
+    }
+    return value;
+  }
+
+  int? versionTimestampOrNull(String key) {
+    final value = integerOrNull(key);
+    if (value != null && !validTimestampMillis(value)) {
+      throw _BadRow('$key is outside the supported timestamp range');
+    }
+    return value;
+  }
 
   int? integerOrNull(String key) => switch (raw[key]) {
     null => null,

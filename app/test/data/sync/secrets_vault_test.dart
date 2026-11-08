@@ -74,6 +74,28 @@ class MemoryRemote implements SyncRemote {
 }
 
 void main() {
+  test(
+    'secret snapshots and per-key versions reject overflowing timestamps',
+    () {
+      for (final time in [0x7fffffffffffffff, 8640000000000001]) {
+        expect(
+          () =>
+              SecretsVersion.fromJson({'updated_at': time, 'updated_by': 'a'}),
+          throwsFormatException,
+        );
+        expect(
+          () => SecretsSnapshot.fromJson({
+            'keys': <String, Object>{},
+            'divergence_source': null,
+            'updated_at': time,
+            'updated_by': 'a',
+          }),
+          throwsFormatException,
+        );
+      }
+    },
+  );
+
   test('merges keys per source and keeps deletions', () async {
     final remote = MemoryRemote();
     final first = SecretsVault(

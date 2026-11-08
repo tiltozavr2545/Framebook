@@ -7,10 +7,54 @@ evidence in [review reports](docs/reviews/README.md).
 
 ## 0.9.4 — Bottom navigation visibility (build 24)
 
+- Preserve vertical position on People while background indexing temporarily
+  clears or partially replaces contributor shelves; publish confirmed changes
+  after loading instead of collapsing the list and jumping to the top.
 - Hide floating and classic bottom navigation on title, person and full cast
   pages; restore it when returning to a main tab.
 - Open full-screen covers and person photos above the tab shell so navigation
   cannot overlap the image viewer.
+- Keep automatic sync disabled after a failed preview of a newly selected
+  Google account, and finish the previous account's upload before switching.
+- Clear the previous API key's verification before writing a replacement so
+  interrupted secure-storage writes cannot mark an unchecked key as verified.
+- Retry optional background rating refresh on its normal schedule after a
+  transient local failure instead of stopping updates until the app restarts.
+- Show recoverable sync status when local metadata cannot be read or written,
+  including failure to save the error marker itself, and allow a later retry.
+- Reject TMDB detail responses for another title, person or season before
+  caching or displaying them, and refetch mismatched cached responses.
+- Reject imported event dates outside the supported calendar range before
+  they can break rating groups or date labels.
+- Report failed rating deletions and watchlist changes on title cards, retain
+  the saved data and allow retry; ignore failures of optional snapshot refresh.
+- Keep failed watchlist removal and Undo recoverable without uncaught errors,
+  including completion after the original screen has closed.
+- Treat invalid calendar release dates as unknown when deciding whether a film
+  can be rated, rather than normalizing them into future dates.
+- Keep renumbering choices retryable after a failed write and disable repeated
+  Move/Keep taps while the chosen rating or season-watchlist change is saving.
+- Serialize recent-title history writes and retain the last saved history when
+  preferences fail, without interrupting title opening or later history changes.
+- Offer Retry when ratings, watchlist or statistics cannot load local data,
+  replacing an endless loading indicator while retaining useful prior data.
+- Keep optional localized-title refresh retryable after a local storage error,
+  without unhandled background exceptions or changes to scores and notes.
+- Recheck renumbering source identity inside the transaction, so a stale
+  Move/Keep choice cannot move another title's rating or overwrite its snapshot.
+- Reject overflowing version timestamps in sync files and encrypted settings;
+  advance local versions with checked arithmetic so an edit cannot wrap negative.
+- Discard malformed optional profile-image paths before saving favourite people,
+  so missing artwork cannot make their sync file unreadable.
+- Reduce recommendation-update pauses in large contributor libraries by sharing
+  repeated immutable credit data before worker transfer, preparing it in small
+  interruptible batches and reusing it while the credit index stays unchanged.
+- Use the same prepared credit graph for large people-statistics workers,
+  retaining every contributor and drill-down title while reducing transfer pauses.
+- Wait for a known saved-rating state before offering a blank editor, with
+  Retry on failed reads, so slow loading cannot hide an existing score or note.
+- Keep full snapshot-refresh versions increasing after a device clock correction,
+  preserving a confirmed renumbering identity when older snapshots are merged.
 
 ## 0.9.3 — Pair calibration and fresher recommendations (build 23)
 

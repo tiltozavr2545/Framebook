@@ -5,6 +5,7 @@ import 'package:drift/drift.dart';
 
 import '../db/database.dart';
 import '../work_key.dart';
+import '../timestamps.dart';
 import 'merge.dart';
 import 'sync_file.dart';
 
@@ -648,8 +649,7 @@ final class SyncStore {
       (a.deletedAt == null) == (b.deletedAt == null);
 
   /// Monotonic within a row (docs/sync.md, "Device clocks").
-  static int _next(int now, int previous) =>
-      now > previous ? now : previous + 1;
+  static int _next(int now, int previous) => nextTimestampMillis(now, previous);
 
   static List<Work> _parentsFirst(List<Work> works) =>
       [...works]..sort((a, b) => _depth(a).compareTo(_depth(b)));

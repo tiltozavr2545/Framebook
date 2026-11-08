@@ -94,7 +94,7 @@ class RenumberNotice extends ConsumerWidget {
     final episodes = kind == WorkKind.episode;
 
     final String text;
-    final List<(String, VoidCallback)> actions;
+    final List<(String, Future<void> Function())> actions;
     if (question.conflicts.firstOrNull case final target?) {
       // A live rating already sits on the target: which score stays there.
       final move = question.moveTo(target);
@@ -109,7 +109,7 @@ class RenumberNotice extends ConsumerWidget {
             name(target),
             existing,
           );
-      void resolve({required bool keepMoved}) => library.moveRatings([
+      Future<void> resolve({required bool keepMoved}) => library.moveRatings([
         (from: move.from, to: lineageOf(target)),
       ], keepExisting: keepMoved ? const {} : {target});
       actions = [
@@ -134,9 +134,10 @@ class RenumberNotice extends ConsumerWidget {
       actions = [
         (
           l10n.renumberKeep,
-          () => library.keepRatings({
-            for (final move in moves) move.from: current[move.from],
-          }),
+          () => library.keepRatings(
+            {for (final move in moves) move.from: current[move.from]},
+            expectedIds: {for (final part in rated) part.key: part.tmdbId},
+          ),
         ),
         (
           l10n.renumberMove,
@@ -191,9 +192,10 @@ class WatchlistRenumberNotice extends ConsumerWidget {
       actions: [
         (
           l10n.renumberKeep,
-          () => library.keepRatings({
-            for (final move in question.moves) move.from: current[move.from],
-          }),
+          () => library.keepRatings(
+            {for (final move in question.moves) move.from: current[move.from]},
+            expectedIds: {for (final part in parts) part.key: part.tmdbId},
+          ),
         ),
         (
           l10n.renumberMove,
@@ -215,11 +217,35 @@ class WatchlistRenumberNotice extends ConsumerWidget {
   }
 }
 
-class _Notice extends StatelessWidget {
+class _Notice extends StatefulWidget {
   const _Notice({required this.text, required this.actions});
 
   final String text;
-  final List<(String, VoidCallback)> actions;
+  final List<(String, Future<void> Function())> actions;
+
+  @override
+  State<_Notice> createState() => _NoticeState();
+}
+
+class _NoticeState extends State<_Notice> {
+  bool _saving = false;
+
+  Future<void> _perform(Future<void> Function() action) async {
+    if (_saving) return;
+    final l10n = AppLocalizations.of(context);
+    setState(() => _saving = true);
+    try {
+      await action();
+    } on Object {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.libraryChangeFailed)));
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -245,15 +271,20 @@ class _Notice extends StatelessWidget {
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: 10),
-                Expanded(child: Text(text, style: theme.textTheme.bodyMedium)),
+                Expanded(
+                  child: Text(widget.text, style: theme.textTheme.bodyMedium),
+                ),
               ],
             ),
           ),
           Wrap(
             alignment: WrapAlignment.end,
             children: [
-              for (final (label, onPressed) in actions)
-                TextButton(onPressed: onPressed, child: Text(label)),
+              for (final (label, onPressed) in widget.actions)
+                TextButton(
+                  onPressed: _saving ? null : () => _perform(onPressed),
+                  child: Text(label),
+                ),
             ],
           ),
         ],

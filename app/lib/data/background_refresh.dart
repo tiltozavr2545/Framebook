@@ -182,6 +182,9 @@ class BackgroundRefreshNotifier extends Notifier<bool> {
           cancelled: () => cancelled() || !foreground(),
           wait: sleeper.sleep,
         );
+      } on Exception {
+        // Optional refresh must survive a transient local read/write failure.
+        // Retry on the normal schedule rather than ending the unawaited loop.
       } finally {
         if (!cancelled()) state = false;
       }

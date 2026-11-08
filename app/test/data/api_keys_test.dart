@@ -30,7 +30,49 @@ class PausingStorage implements KeyStorage {
   }
 }
 
+class _InterruptedStorage extends PausingStorage {
+  int? writesRemaining;
+
+  @override
+  Future<void> write(String key, String value) async {
+    if (writesRemaining == 0) throw StateError('Storage write interrupted');
+    if (writesRemaining != null) writesRemaining = writesRemaining! - 1;
+    await super.write(key, value);
+  }
+}
+
 void main() {
+  test(
+    'an interrupted key replacement never inherits previous verification',
+    () async {
+      for (final completedWrites in [0, 1, 2]) {
+        final storage = _InterruptedStorage();
+        final store = ApiKeyStore(storage);
+        await store.save(
+          ApiSource.tmdb,
+          const StoredKey('old', verified: true),
+        );
+        storage.writesRemaining = completedWrites;
+        await expectLater(
+          store.save(ApiSource.tmdb, const StoredKey('new', verified: false)),
+          throwsStateError,
+        );
+        final loaded = (await ApiKeyStore(storage).load())[ApiSource.tmdb]!;
+        if (loaded.value == 'new') expect(loaded.verified, isFalse);
+        expect(loaded.value, completedWrites == 2 ? 'new' : 'old');
+        expect(loaded.verified, completedWrites == 0);
+        storage.writesRemaining = null;
+        await store.save(
+          ApiSource.tmdb,
+          const StoredKey('retry', verified: true),
+        );
+        final retried = (await store.load())[ApiSource.tmdb]!;
+        expect(retried.value, 'retry');
+        expect(retried.verified, isTrue);
+      }
+    },
+  );
+
   test('cancelled remote replacement rolls back storage and state', () async {
     final storage = PausingStorage();
     final store = ApiKeyStore(storage);

@@ -46,6 +46,17 @@ reads through the real executor. `data/sync_store_reads_test.dart` gates bounded
 reads for both initial and unchanged application, row preservation and newer
 unreferenced metadata. See [the 0.9.0 review](reviews/0.9.0/README.md) for measurements.
 
+`test/benchmarks/ui_worker_benchmark.dart` measures real worker execution for
+10,000 rating/statistics rows and a 500-title taste profile with 150,000 credits.
+A one-millisecond timer observes the main-isolate scheduling gaps while each
+worker runs, including input/result transfer. It warms up twice, records five
+samples and checks complete result counts without a timing gate. Run it alone
+with `flutter test test/benchmarks/ui_worker_benchmark.dart --reporter expanded`.
+Its insight case compares raw and shared credit messages on the same 150,000-credit
+input and checks all 300 people with their full 500-title membership.
+These host scheduler gaps are neither rendered-frame durations nor Android
+input latency; run without another test/build workload for useful comparisons.
+
 ## Coverage reports
 
 Run `make test-coverage` to write `app/coverage/lcov.info`, or
@@ -90,6 +101,10 @@ as any app installation using that key.
 | Search, people, pagination, stale responses, selected-title history | `features/search_controller_test.dart`, `features/search_history_test.dart`, `app_test.dart` |
 | API parsing, typed identity matching, caching and quotas | `data/*_client_test.dart`, `data/ratings_service_test.dart`, `data/response_cache_test.dart` |
 | Rating, notes, cancellation, deletion, watchlist, season grouping | `data/library_test.dart`, `features/rating_note_test.dart`, `app_test.dart` |
+| Failed card/watchlist writes, Undo retry and release-date eligibility | `features/library_action_failure_test.dart` |
+| Unknown personal-rating reads, Retry and retaining existing note drafts | `features/rating_load_guard_test.dart`, `features/rating_initial_state_test.dart` |
+| Retrying failed initial library reads on ratings, watchlist and statistics | `features/local_library_failure_test.dart` |
+| People-page vertical position through empty/partial background refresh | `features/people_scroll_refresh_test.dart` |
 | Renumbered seasons/episodes and conflicts | `data/renumbering_test.dart`, `data/library_test.dart`, `app_test.dart` |
 | Calibration thresholds, neighbours and score reel | `data/library_test.dart`, `features/calibration_visibility_test.dart`, `app_test.dart` |
 | Sorting, source coverage, statistical aggregates | `data/comparison_test.dart`, `data/library_test.dart`, `app_test.dart` |
@@ -101,6 +116,8 @@ as any app installation using that key.
 | Startup failure/retry and update checks | `features/startup_test.dart`, `features/update_check_test.dart`, `data/update*_test.dart` |
 | Background-refresh queue, budgets, cancellation and lifecycle | `data/background_refresh_test.dart`, `features/background_lifecycle_test.dart` |
 | Sync algebra, convergence, deletion records, malformed/oversized files | `data/sync_test.dart`, `data/sync_limits_test.dart` |
+| Wrong TMDB detail identities and misplaced cached bodies | `data/tmdb_client_test.dart` |
+| Interrupted key writes, unavailable sync metadata and background-refresh recovery | `data/api_keys_test.dart`, `data/sync_controller_test.dart`, `features/background_lifecycle_test.dart` |
 | Import/export, comparison-only autosync, restore, account changes and concurrent edits | `data/sync_controller_test.dart`, `data/google_account_test.dart`, `app_test.dart` |
 | Drive HTTP pagination, media upload/download, size limits and error mapping | `data/sync/drive_remote_test.dart` |
 | Encrypted key merge, passwords, tampering, offline retry and account isolation | `data/sync/secrets_vault_test.dart`, `secrets_controller_test.dart` |

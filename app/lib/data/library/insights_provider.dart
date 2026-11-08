@@ -7,6 +7,7 @@ import '../sources/tmdb/tmdb_models.dart';
 import 'insights.dart';
 import 'library.dart';
 import 'people_index.dart';
+import 'people_credit_payload.dart';
 
 final emptyLibraryInsights = LibraryInsights(
   genres: const {},
@@ -18,6 +19,11 @@ final emptyLibraryInsights = LibraryInsights(
 
 typedef _Input = (List<RatedTitle>, Map<String, List<PeopleCredit>>);
 LibraryInsights _analyze(_Input input) => analyzeLibrary(input.$1, input.$2);
+
+final _creditPayloadProvider = FutureProvider.autoDispose((ref) {
+  final entries = ref.watch(peopleIndexProvider.select((s) => s.entries));
+  return sharedPeopleCreditPayload(entries, active: () => ref.mounted);
+});
 
 final _workerProvider = Provider.autoDispose
     .family<LatestWorker<_Input, LibraryInsights>, WorkKind?>((ref, kind) {
@@ -63,8 +69,10 @@ final libraryInsightsProvider = FutureProvider.autoDispose
           : all.where((t) => t.key.kind == kind).toList();
       final input = (titles, entries);
       if (!insightsNeedWorker(titles, entries)) return _analyze(input);
-      return ref
-          .watch(_workerProvider(kind))
-          .run(input)
-          .then((value) => value ?? emptyLibraryInsights);
+      final worker = ref.watch(_workerProvider(kind));
+      final payload = ref.watch(_creditPayloadProvider.future);
+      return payload.then((entries) async {
+        if (!ref.mounted || entries == null) return emptyLibraryInsights;
+        return await worker.run((titles, entries)) ?? emptyLibraryInsights;
+      });
     });

@@ -22,6 +22,7 @@ import '../../shared/format.dart';
 import '../../shared/score_color.dart';
 import '../../shared/kind_filter.dart';
 import '../../shared/title_row.dart';
+import '../../shared/local_data_failure.dart';
 import '../search/people_shelves.dart';
 import 'insight_sections.dart';
 import 'stats_works.dart';
@@ -94,8 +95,10 @@ class StatsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final requestedKind = ref.watch(statsKindProvider);
-    final all = ref.watch(ratedTitlesProvider).value;
-    final prepared = ref.watch(statsViewProvider).value;
+    final saved = ref.watch(ratedTitlesProvider);
+    final computed = ref.watch(statsViewProvider);
+    final all = saved.value;
+    final prepared = computed.value;
     final titles = prepared?.titles;
     final kind = prepared != null ? prepared.kind : requestedKind;
 
@@ -111,6 +114,12 @@ class StatsScreen extends ConsumerWidget {
         ],
       ),
       body: switch (titles) {
+        null when saved.hasError || computed.hasError => LocalDataFailure(
+          onRetry: () {
+            ref.invalidate(ratedTitlesProvider);
+            ref.invalidate(statsViewProvider);
+          },
+        ),
         null => const Center(child: CircularProgressIndicator()),
         _ when all!.isEmpty => EmptyMessage(
           icon: Icons.insights_outlined,

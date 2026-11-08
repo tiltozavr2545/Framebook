@@ -29,6 +29,46 @@ void main() {
     profilePath: '/q.jpg',
   );
   test(
+    'invalid optional profile paths cannot break favourite sync files',
+    () async {
+      for (final path in [
+        '',
+        'photo.jpg',
+        'https://example.invalid/photo.jpg',
+      ]) {
+        final entry = PersonSummary(id: 1, name: 'Person', profilePath: path);
+        await library.setFavorite(entry, true);
+        final state = await SyncStore(db).read();
+        expect(state.favoritePeople.single.profilePath, isNull);
+        expect(
+          SyncFile.decode(
+            SyncFile.encode(
+              state,
+              writtenAt: 1,
+              writtenBy: 'a',
+              appVersion: 'test',
+            ),
+          ).favoritePeople.single.personId,
+          1,
+        );
+        await library.setFavorite(entry, false);
+        final removed = await SyncStore(db).read();
+        expect(removed.favoritePeople.single.profilePath, isNull);
+        expect(
+          SyncFile.decode(
+            SyncFile.encode(
+              removed,
+              writtenAt: 1,
+              writtenBy: 'a',
+              appVersion: 'test',
+            ),
+          ).favoritePeople.single.deletedAt,
+          isNotNull,
+        );
+      }
+    },
+  );
+  test(
     'favorite whole person; idempotence, removal, clock skew and re-add',
     () async {
       await library.setFavorite(person, true);

@@ -10,6 +10,7 @@ import '../sync/merge.dart';
 import '../sync/sync_file.dart';
 import '../sync/sync_store.dart';
 import '../work_key.dart';
+import '../timestamps.dart';
 import 'divergence.dart';
 import 'library_models.dart';
 import 'rating_note.dart';
@@ -38,8 +39,7 @@ final class Library {
   /// A new `updated_at`: now, but never at or before the previous one — an
   /// edit on a device with a lagging clock must at least beat its own
   /// previous version (docs/sync.md, "Device clocks").
-  static int _next(int now, int previous) =>
-      now > previous ? now : previous + 1;
+  static int _next(int now, int previous) => nextTimestampMillis(now, previous);
 
   Future<int> _deletionTime(String storageKey, String key) =>
       SyncStore(_db).deletionTime(storageKey, key);
@@ -193,14 +193,16 @@ final class Library {
           ? key.parent
           : null;
       var version = now;
-      if (old != null && version <= old.updatedAt) version = old.updatedAt + 1;
+      if (old != null && version <= old.updatedAt) {
+        version = _next(version, old.updatedAt);
+      }
       final deletion = await _deletionTime(SyncStore.watchlistDeletionsKey, k);
-      if (version <= deletion) version = deletion + 1;
+      if (version <= deletion) version = _next(version, deletion);
       if (series != null) {
         for (final fence in state.watchlistFences) {
           if (fence.seriesKey == series.toString() &&
               version <= fence.updatedAt) {
-            version = fence.updatedAt + 1;
+            version = _next(version, fence.updatedAt);
           }
         }
         final fence = WatchlistFence(
@@ -339,6 +341,7 @@ final class Library {
     List<({WorkKey from, List<WorkSnapshot> to})> moves, {
     Set<WorkKey> keepExisting = const {},
   }) => _db.transaction(() async {
+    if (moves.isEmpty) return;
     final now = _now();
     final sources = {for (final move in moves) move.from.toString()};
     final targets = {
@@ -357,6 +360,21 @@ final class Library {
       )..where((w) => w.workKey.isIn(sources))).get())
         work.workKey: work,
     };
+    if (sources.length != moves.length || targets.length != moves.length) {
+      throw ArgumentError('Renumbering sources and targets must be unique');
+    }
+    for (final move in moves) {
+      if (move.from.kind != move.to.last.key.kind ||
+          move.from.tmdbId != move.to.last.key.tmdbId) {
+        throw ArgumentError('Renumbering must preserve title kind and series');
+      }
+      final source = move.from.toString();
+      if (rows[source] == null ||
+          rows[source]!.deletedAt != null ||
+          sourceWorks[source]?.tmdbId != move.to.last.tmdbId) {
+        throw StateError('Renumbering source changed');
+      }
+    }
     for (final move in moves) {
       await _putSnapshots(move.to, now, adopt: move.to.last.key);
       final source = sourceWorks[move.from.toString()];
@@ -460,7 +478,14 @@ final class Library {
             when visibleWatchlistEntry(row, state.watchlistFences))
           move.from.toString(): row,
     };
-    if (sources.isEmpty) return;
+    final sourceWorks = {for (final work in state.works) work.workKey: work};
+    for (final move in moves) {
+      final source = move.from.toString();
+      if (!sources.containsKey(source) ||
+          sourceWorks[source]?.tmdbId != move.to.last.tmdbId) {
+        throw StateError('Renumbering source changed');
+      }
+    }
     var previous = 0;
     for (final fence in state.watchlistFences) {
       if (fence.seriesKey == series.toString()) {
@@ -550,36 +575,41 @@ final class Library {
   /// number isn't known on this screen (another season, or the number is
   /// gone): the series' id stands in, and the next refresh of that card
   /// takes the real one. Ratings themselves are not touched.
-  Future<void> keepRatings(Map<WorkKey, int?> currentIds) =>
-      _db.transaction(() async {
-        final now = _now();
-        for (final MapEntry(:key, value: id) in currentIds.entries) {
-          final old = await (_db.select(
-            _db.works,
-          )..where((w) => w.workKey.equals(key.toString()))).getSingleOrNull();
-          await (_db.update(
-            _db.works,
-          )..where((w) => w.workKey.equals(key.toString()))).write(
-            WorksCompanion(
-              tmdbId: Value(id ?? key.tmdbId),
-              imdbId: old?.tmdbId == (id ?? key.tmdbId)
-                  ? const Value.absent()
-                  : const Value(null),
-              kpId: old?.tmdbId == (id ?? key.tmdbId)
-                  ? const Value.absent()
-                  : const Value(null),
-              snapshotUpdatedAt: Value(
-                old == null ? now : _next(now, old.snapshotUpdatedAt),
-              ),
-            ),
-          );
-          if (old?.tmdbId != (id ?? key.tmdbId)) {
-            await (_db.delete(
-              _db.externalRatings,
-            )..where((r) => r.workKey.equals(key.toString()))).go();
-          }
-        }
-      });
+  Future<void> keepRatings(
+    Map<WorkKey, int?> currentIds, {
+    Map<WorkKey, int>? expectedIds,
+  }) => _db.transaction(() async {
+    final now = _now();
+    for (final MapEntry(:key, value: id) in currentIds.entries) {
+      final old = await (_db.select(
+        _db.works,
+      )..where((w) => w.workKey.equals(key.toString()))).getSingleOrNull();
+      if (expectedIds != null && old?.tmdbId != expectedIds[key]) {
+        throw StateError('Renumbering source changed');
+      }
+      await (_db.update(
+        _db.works,
+      )..where((w) => w.workKey.equals(key.toString()))).write(
+        WorksCompanion(
+          tmdbId: Value(id ?? key.tmdbId),
+          imdbId: old?.tmdbId == (id ?? key.tmdbId)
+              ? const Value.absent()
+              : const Value(null),
+          kpId: old?.tmdbId == (id ?? key.tmdbId)
+              ? const Value.absent()
+              : const Value(null),
+          snapshotUpdatedAt: Value(
+            old == null ? now : _next(now, old.snapshotUpdatedAt),
+          ),
+        ),
+      );
+      if (old?.tmdbId != (id ?? key.tmdbId)) {
+        await (_db.delete(
+          _db.externalRatings,
+        )..where((r) => r.workKey.equals(key.toString()))).go();
+      }
+    }
+  });
 
   /// The saved snapshots of [key] and its ancestors, series first; `null`
   /// when the title itself has none (never rated or listed). What a card
@@ -887,14 +917,12 @@ final class Library {
         if (insert) await _db.into(_db.works).insert(row);
         continue;
       }
-      if (snapshot.key == adopt) {
-        row = row.copyWith(
-          snapshotUpdatedAt: Value(_next(now, stored.snapshotUpdatedAt)),
-        );
-      }
       if (snapshot.key != adopt && await _keepsOwnId(stored, snapshot)) {
         continue;
       }
+      row = row.copyWith(
+        snapshotUpdatedAt: Value(_next(now, stored.snapshotUpdatedAt)),
+      );
       if (stored.tmdbId != snapshot.tmdbId &&
           stored.tmdbId != snapshot.key.tmdbId) {
         row = row.copyWith(

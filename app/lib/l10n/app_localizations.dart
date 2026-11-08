@@ -938,6 +938,18 @@ abstract class AppLocalizations {
   /// **'Could not save your rating. Your draft is still here; try again.'**
   String get ratingSaveFailed;
 
+  /// No description provided for @libraryChangeFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save changes. Try again.'**
+  String get libraryChangeFailed;
+
+  /// No description provided for @localDataLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load your library. Try again.'**
+  String get localDataLoadFailed;
+
   /// No description provided for @ratingSave.
   ///
   /// In en, this message translates to:
@@ -1533,7 +1545,7 @@ abstract class AppLocalizations {
   /// No description provided for @syncErrorFailed.
   ///
   /// In en, this message translates to:
-  /// **'Google Drive didn\'t answer properly. Sync will try again later.'**
+  /// **'Could not complete sync. Try again later.'**
   String get syncErrorFailed;
 
   /// No description provided for @syncSignInAgain.

@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:drift/drift.dart'
+    show ApplyInterceptor, QueryExecutor, QueryInterceptor;
 import 'package:drift/native.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,7 +33,90 @@ class _PendingOmdb implements OmdbApi {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+class _FailingRead extends QueryInterceptor {
+  bool failNext = false;
+  int failures = 0;
+
+  @override
+  Future<List<Map<String, Object?>>> runSelect(
+    QueryExecutor executor,
+    String statement,
+    List<Object?> args,
+  ) {
+    if (failNext) {
+      failNext = false;
+      failures++;
+      return Future.error(
+        const FormatException('Transient local read failure'),
+      );
+    }
+    return super.runSelect(executor, statement, args);
+  }
+}
+
 void main() {
+  testWidgets('a failed local read does not terminate background refresh', (
+    tester,
+  ) async {
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    final reads = _FailingRead();
+    final db = AppDatabase(NativeDatabase.memory().interceptWith(reads));
+    final adapter = FakeHttpAdapter(apiFixtures);
+    final dio = createDio()..httpClientAdapter = adapter;
+    await tester.runAsync(
+      () => Library(db, deviceId: 'test').rate(
+        const [
+          WorkSnapshot(
+            key: WorkKey.movie(603),
+            tmdbId: 603,
+            title: 'Matrix',
+            imdbId: 'tt0133093',
+          ),
+        ],
+        scoreHalf: 16,
+        note: null,
+      ),
+    );
+    final container = ProviderContainer(
+      overrides: [
+        databaseProvider.overrideWithValue(db),
+        ratingsServiceProvider.overrideWithValue(
+          RatingsService(db, omdb: OmdbClient(dio, 'test-key')),
+        ),
+      ],
+    );
+    try {
+      reads.failNext = true;
+      container.listen(backgroundRefreshProvider, (_, _) {});
+      await tester.pump(BackgroundRefreshNotifier.startDelay);
+      for (var i = 0; i < 50 && reads.failures == 0; i++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 10)),
+        );
+        await tester.pump();
+      }
+      await tester.pump();
+      expect(reads.failures, 1);
+      expect(container.read(backgroundRefreshProvider), isFalse);
+      expect(adapter.requests, isEmpty);
+      expect(tester.takeException(), isNull);
+      await tester.pump(BackgroundRefreshNotifier.interval);
+      for (var i = 0; i < 100 && adapter.requests.isEmpty; i++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 10)),
+        );
+        await tester.pump();
+      }
+      expect(adapter.requests, hasLength(1));
+    } finally {
+      container.dispose();
+      await tester.pump(const Duration(hours: 1));
+      await tester.runAsync(db.close);
+      dio.close(force: true);
+    }
+    expect(tester.takeException(), isNull);
+  });
+
   for (final rebuild in [false, true]) {
     testWidgets(
       rebuild

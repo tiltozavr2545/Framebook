@@ -75,6 +75,16 @@ serialized latest-input worker and retain the previous result. The estimate
 may overcount duplicate credits; thresholds bound work rather than guarantee
 phone frame times.
 
+Before large insight transfers, equal immutable person records share one
+instance per ID/role/name/photo combination. The preparation yields every
+512 credits, cancels superseded work and is reused across kind filters while
+the published credit-index snapshot stays unchanged. It preserves list order,
+all contributor roles and complete drill-down memberships.
+An initial bounded sample bypasses the full sharing table for diverse inputs
+with little repeated metadata, avoiding an unnecessary allocation pass.
+Host scheduling measurements belong to the
+[0.9.4 review](reviews/0.9.4/README.md#host-responsiveness-measurements).
+
 Large summaries filter inputs and precompute medians, score groups, source
 agreement and discovery/disappointment lists in a worker. People ordering
 uses a worker above 200 titles or 200 people. Retained results carry their

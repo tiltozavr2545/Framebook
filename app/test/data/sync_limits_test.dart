@@ -4,6 +4,119 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:framebook/data/sync/sync_file.dart';
 
 void main() {
+  for (final table in [
+    'works',
+    'favorite_people',
+    'rating_deletions',
+    'watchlist_deletions',
+    'watchlist_fences',
+  ]) {
+    test('rejects overflowing $table version timestamps', () {
+      final raw = <String, Object?>{
+        'format_version': 6,
+        'purged_before': 0,
+        for (final name in [
+          'works',
+          'ratings',
+          'watchlist',
+          'favorite_people',
+          'rating_deletions',
+          'watchlist_deletions',
+          'watchlist_fences',
+          'pair_comparisons',
+        ])
+          name: <Object>[],
+      };
+      raw[table] = [
+        switch (table) {
+          'works' => {
+            'work_key': 'tmdb:movie:603',
+            'kind': 'movie',
+            'tmdb_id': 603,
+            'title': 'Film',
+            'snapshot_updated_at': 0x7fffffffffffffff,
+          },
+          'favorite_people' => {
+            'person_id': 1,
+            'name': 'Person',
+            'updated_at': 0x7fffffffffffffff,
+            'updated_by': 'a',
+          },
+          'watchlist_fences' => {
+            'series_key': 'tmdb:tv:1',
+            'season': true,
+            'updated_at': 0x7fffffffffffffff,
+            'updated_by': 'a',
+          },
+          _ => {
+            'work_key': 'tmdb:movie:603',
+            'tie_break': 'a' * 64,
+            'updated_at': 0x7fffffffffffffff,
+            'updated_by': 'a',
+          },
+        },
+      ];
+      expect(
+        () => SyncFile.decode(gzip.encode(utf8.encode(jsonEncode(raw)))),
+        throwsA(isA<SyncFileBroken>()),
+      );
+    });
+  }
+
+  for (final table in ['ratings', 'watchlist']) {
+    final fields = table == 'ratings'
+        ? ['created_at', 'scored_at', 'updated_at', 'deleted_at']
+        : ['added_at', 'updated_at', 'deleted_at'];
+    for (final field in fields) {
+      test('rejects unrenderable $table.$field before import', () async {
+        for (final timestamp in [
+          -8640000000000001,
+          8640000000000001,
+          if (!['updated_at', 'deleted_at'].contains(field)) ...[
+            -8640000000000000,
+            8640000000000000,
+          ],
+          0x7fffffffffffffff,
+        ]) {
+          final raw = {
+            'format_version': 1,
+            'works': [
+              {
+                'work_key': 'tmdb:movie:603',
+                'kind': 'movie',
+                'tmdb_id': 603,
+                'title': 'Film',
+                'snapshot_updated_at': 1,
+              },
+            ],
+            'ratings': <Object>[],
+            'watchlist': <Object>[],
+          };
+          raw[table] = [
+            {
+              'work_key': 'tmdb:movie:603',
+              if (table == 'ratings') ...{
+                'score_half': 10,
+                'created_at': 1,
+                'scored_at': 1,
+              } else
+                'added_at': 1,
+              'updated_at': 1,
+              'updated_by': 'a',
+              field: timestamp,
+            },
+          ];
+          final bytes = gzip.encode(utf8.encode(jsonEncode(raw)));
+          expect(() => SyncFile.decode(bytes), throwsA(isA<SyncFileBroken>()));
+          await expectLater(
+            SyncFile.decodeAsync(bytes),
+            throwsA(isA<SyncFileBroken>()),
+          );
+        }
+      });
+    }
+  }
+
   test('compressed and expanded size limits are checked independently', () {
     final bytes = gzip.encode(utf8.encode('x' * 10000));
     expect(

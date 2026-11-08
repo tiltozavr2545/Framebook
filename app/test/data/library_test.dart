@@ -11,6 +11,9 @@ import 'package:framebook/data/library/work_snapshot.dart';
 import 'package:framebook/data/source_failure.dart';
 import 'package:framebook/data/sources/tmdb/tmdb_models.dart';
 import 'package:framebook/data/work_key.dart';
+import 'package:framebook/data/timestamps.dart';
+import 'package:framebook/data/sync/merge.dart';
+import 'package:framebook/data/sync/sync_file.dart';
 
 import '../support/fake_http.dart';
 
@@ -69,6 +72,21 @@ void main() {
 
   tearDown(() => db.close());
 
+  test('exhausted user versions fail atomically instead of wrapping', () async {
+    await library.rate([matrix], scoreHalf: 17, note: 'Keep');
+    await (db.update(db.ratings)
+          ..where((r) => r.workKey.equals(matrix.key.toString())))
+        .write(const RatingsCompanion(updatedAt: Value(maxTimestampMillis)));
+    final rating = await ratingRow(matrix.key);
+    final snapshot = await workRow(matrix.key.toString());
+    await expectLater(
+      library.rate([matrix], scoreHalf: 12, note: 'Changed'),
+      throwsA(isA<TimestampRangeException>()),
+    );
+    expect(await ratingRow(matrix.key), rating);
+    expect(await workRow(matrix.key.toString()), snapshot);
+  });
+
   test(
     'moving an episode transfers its IMDb identity and Keep clears it',
     () async {
@@ -105,6 +123,50 @@ void main() {
   );
 
   group('snapshots', () {
+    test(
+      'snapshot refresh cannot move backwards after a clock correction',
+      () async {
+        await library.rate([matrix], scoreHalf: 17, note: 'Keep');
+        final before = (await workRow(matrix.key.toString()))!;
+        final rating = await ratingRow(matrix.key);
+        now = now.subtract(const Duration(days: 30));
+        await library.refreshSnapshots([matrix]);
+        final after = (await workRow(matrix.key.toString()))!;
+        expect(after.snapshotUpdatedAt, greaterThan(before.snapshotUpdatedAt));
+        expect(await ratingRow(matrix.key), rating);
+      },
+    );
+
+    test(
+      'refresh after Keep preserves the chosen identity against an old snapshot',
+      () async {
+        final lineage = season();
+        await library.rate(lineage, scoreHalf: 16, note: 'Keep');
+        final key = lineage.last.key;
+        final original = (await workRow(key.toString()))!;
+        now = now.subtract(const Duration(days: 30));
+        await library.keepRatings({key: 9000});
+        final chosen = (await workRow(key.toString()))!;
+        await library.refreshSnapshots([
+          lineage.first,
+          WorkSnapshot(key: key, tmdbId: 9000, title: 'Current season'),
+        ]);
+        final refreshed = (await workRow(key.toString()))!;
+        expect(
+          refreshed.snapshotUpdatedAt,
+          greaterThan(chosen.snapshotUpdatedAt),
+        );
+        expect(
+          mergeStates(
+            SyncState(works: [original]),
+            SyncState(works: [refreshed]),
+          ).works.single.tmdbId,
+          9000,
+        );
+        expect((await ratingRow(key))!.note, 'Keep');
+      },
+    );
+
     test('a film keeps what the offline list needs, and no more', () async {
       await library.rate([matrix], scoreHalf: 17, note: null);
       final work = (await workRow('tmdb:movie:603'))!;
@@ -337,6 +399,39 @@ void main() {
         expect(await library.watchInWatchlist(first.last.key).first, isFalse);
       },
     );
+
+    for (final removed in [false, true]) {
+      test(
+        'a stale watchlist move preserves snapshots, source removed $removed',
+        () async {
+          final first = season();
+          await library.addToWatchlist(first);
+          final destination = [
+            first.first,
+            const WorkSnapshot(
+              key: WorkKey.season(1399, 2),
+              tmdbId: 3624,
+              title: 'Moved',
+            ),
+          ];
+          if (removed) {
+            await library.removeFromWatchlist(first.last.key);
+          } else {
+            await library.keepRatings({first.last.key: 99999});
+          }
+          final before = await watchRow(first.last.key);
+          await expectLater(
+            library.moveWatchlistedSeasons([
+              (from: first.last.key, to: destination),
+            ]),
+            throwsStateError,
+          );
+          expect(await watchRow(first.last.key), before);
+          expect(await watchRow(destination.last.key), isNull);
+          expect(await workRow(destination.last.key.toString()), isNull);
+        },
+      );
+    }
 
     test(
       'watchlisted season keeps its TMDB id until renumbering is answered',
@@ -788,6 +883,107 @@ void main() {
 
         final cached = await db.select(db.externalRatings).get();
         expect([for (final c in cached) c.workKey], [e3.toString()]);
+      },
+    );
+
+    for (final deleted in [false, true]) {
+      test(
+        'a stale move does not alter the target, source deleted $deleted',
+        () async {
+          await library.rate(old(5, id: 63058), scoreHalf: 16, note: 'Keep');
+          if (deleted) {
+            await library.deleteRating(e5);
+          } else {
+            await library.keepRatings({e5: 99999});
+          }
+          final before = await ratingRow(e5);
+          await expectLater(
+            library.moveRatings([(from: e5, to: episode(3))]),
+            throwsStateError,
+          );
+          expect(await ratingRow(e5), before);
+          expect(await ratingRow(e3), isNull);
+          expect(await workRow(e3.toString()), isNull);
+        },
+      );
+    }
+
+    test(
+      'a stale Keep cannot replace an identity adopted by another action',
+      () async {
+        await library.rate(old(5, id: 63058), scoreHalf: 16, note: 'Keep');
+        await library.keepRatings({e5: 99999});
+        final before = await workRow(e5.toString());
+        await expectLater(
+          library.keepRatings({e5: 11111}, expectedIds: {e5: 63058}),
+          throwsStateError,
+        );
+        expect(await workRow(e5.toString()), before);
+        expect((await ratingRow(e5))!.note, 'Keep');
+      },
+    );
+
+    for (final otherSeries in [false, true]) {
+      test(
+        'moving ratings rejects another kind or series: other series $otherSeries',
+        () async {
+          await library.rate(old(5, id: 63058), scoreHalf: 16, note: 'Keep');
+          final target = otherSeries
+              ? const [
+                  WorkSnapshot(
+                    key: WorkKey.tv(100),
+                    tmdbId: 100,
+                    title: 'Other',
+                  ),
+                  WorkSnapshot(
+                    key: WorkKey.season(100, 1),
+                    tmdbId: 101,
+                    title: 'Season',
+                  ),
+                  WorkSnapshot(
+                    key: WorkKey.episode(100, 1, 3),
+                    tmdbId: 63058,
+                    title: 'Episode',
+                  ),
+                ]
+              : [
+                  WorkSnapshot.tv(thrones),
+                  const WorkSnapshot(
+                    key: WorkKey.season(1399, 2),
+                    tmdbId: 63058,
+                    title: 'Season',
+                  ),
+                ];
+          await expectLater(
+            library.moveRatings([(from: e5, to: target)]),
+            throwsArgumentError,
+          );
+          expect((await ratingRow(e5))!.note, 'Keep');
+          expect((await ratingRow(e5))!.deletedAt, isNull);
+          expect(await workRow(target.last.key.toString()), isNull);
+        },
+      );
+    }
+
+    test(
+      'duplicate move targets cannot silently overwrite a source rating',
+      () async {
+        const e4 = WorkKey.episode(1399, 1, 4);
+        await library.rate(old(5, id: 63058), scoreHalf: 16, note: 'Five');
+        await library.rate(old(4, id: 63059), scoreHalf: 12, note: 'Four');
+        await expectLater(
+          library.moveRatings([
+            (from: e5, to: episode(3)),
+            (from: e4, to: episode(3)),
+          ]),
+          throwsArgumentError,
+        );
+        expect((await ratingRow(e5))!.note, 'Five');
+        expect((await ratingRow(e4))!.note, 'Four');
+        expect((await ratingRow(e5))!.deletedAt, isNull);
+        expect((await ratingRow(e4))!.deletedAt, isNull);
+        expect(await ratingRow(e3), isNull);
+        expect(await workRow(e3.toString()), isNull);
       },
     );
 

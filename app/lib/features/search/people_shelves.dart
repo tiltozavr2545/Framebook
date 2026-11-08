@@ -21,18 +21,40 @@ final popularPeopleProvider = FutureProvider.autoDispose<List<PersonSummary>>(
   (ref) => ref.watch(tmdbProvider).popularPeople(),
 );
 
-class PeopleShelves extends ConsumerWidget {
+class PeopleShelves extends ConsumerStatefulWidget {
   const PeopleShelves({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PeopleShelves> createState() => _PeopleShelvesState();
+}
+
+class _PeopleShelvesState extends ConsumerState<PeopleShelves> {
+  LibraryInsights? _displayedInsights;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final favorites = ref.watch(favoritePeopleProvider).value ?? [];
     final hasTitles = ref.watch(
       ratedTitlesProvider.select((s) => s.value?.isNotEmpty ?? false),
     );
-    final insights =
-        ref.watch(libraryInsightsProvider(null)).value ?? emptyLibraryInsights;
+    final loaded = ref.watch(libraryInsightsProvider(null));
+    final indexing = ref.watch(
+      peopleIndexProvider.select((index) => index.running || index.total == 0),
+    );
+    final incoming = loaded.value ?? emptyLibraryInsights;
+    if (!hasTitles) {
+      _displayedInsights = null;
+    } else if ((!indexing && !loaded.isLoading && !loaded.hasError) ||
+        ((_displayedInsights?.people.isEmpty ?? true) &&
+            incoming.people.isNotEmpty)) {
+      // A refresh can temporarily clear the role sections and clamp the
+      // viewport to zero. Keep useful sections until the replacement is ready.
+      _displayedInsights = incoming;
+    }
+    final insights = hasTitles
+        ? _displayedInsights ?? incoming
+        : emptyLibraryInsights;
     final popular = ref.watch(popularPeopleProvider);
     PersonSummary person(PersonInsight p) => PersonSummary(
       id: p.person.id,
@@ -42,6 +64,7 @@ class PeopleShelves extends ConsumerWidget {
     );
     return ScrollStableContent(
       child: ListView(
+        key: const PageStorageKey('people-shelves'),
         padding: EdgeInsets.only(
           bottom: 24 + MediaQuery.paddingOf(context).bottom,
         ),

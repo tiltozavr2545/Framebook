@@ -54,6 +54,12 @@ rules belong to [external sources](external-sources.md#matching-ids).
 
 ### When TMDB renumbers
 
+Renumbering mutations recheck the stored source identity before changing any
+snapshot or user row. Move requires a live source with the destination's own
+TMDB identity and the same title kind/series. UI Keep choices carry the source
+identities shown in their prompt and reject a changed source transactionally.
+An outdated question cannot adopt a target snapshot after its source is removed.
+
 TMDB occasionally renumbers seasons and episodes (moves specials, merges a
 double episode, inserts a missing pilot), and a key built from numbers then
 means another title. The rated title's own TMDB id, stored in
@@ -132,7 +138,8 @@ Invariants:
 - Refresh may update a saved snapshot without changing the user's rating.
   A content-language refresh changes only local `title`, without advancing
   `snapshot_updated_at`. Other snapshot refreshes advance that timestamp,
-  never a rating's `updated_at`. Trigger/reuse scheduling belongs to the
+  including after a device clock correction, never a rating's `updated_at`.
+  Trigger/reuse scheduling belongs to the
   [architecture](client-architecture.md#library-writes-and-views).
   Known external IDs survive an upsert while identity is unchanged. Adopting
   another numbered TMDB object clears displaced external IDs and cached
@@ -199,6 +206,8 @@ The name/photo form an offline mini snapshot. A favourite refers to the whole
 person across professions. User changes advance its version monotonically;
 analytics never edits it. Permanent removal tombstones and merging are
 specified in [sync](sync.md#format-rules). Schema 2 added this table.
+Saving drops a non-relative optional profile-image path instead of persisting
+metadata that the sync reader would reject; the favourite itself is preserved.
 
 ### `pair_comparisons`
 
@@ -288,6 +297,10 @@ files. Details are in [sync.md](sync.md).
 
 All timestamps at the storage boundary are UTC epoch milliseconds. Release
 dates remain timezone-free `YYYY-MM-DD` strings, never timestamp conversions.
+Synced version timestamps must fit Dart's DateTime range. Shared checked
+increment logic rejects exhausted or invalid versions before a transaction
+can wrap an integer negative; rating, watchlist, favourite-person, restore
+and encrypted-setting writes use the same boundary.
 API calendar-date parsing must reject impossible dates rather than normalize
 them into another day.
 

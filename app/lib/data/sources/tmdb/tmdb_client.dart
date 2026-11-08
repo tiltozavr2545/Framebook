@@ -98,6 +98,18 @@ final class TmdbClient implements TmdbApi {
        _clock = clock ?? DateTime.now;
 
   static const _base = 'https://api.themoviedb.org/3';
+  static final _detailPath = RegExp(r'^/(movie|tv|person)/([0-9]+)$');
+  static final _seasonPath = RegExp(r'^/tv/[0-9]+/season/([0-9]+)$');
+
+  static bool _matchesRequestedIdentity(String path, Json json) {
+    final detail = _detailPath.firstMatch(path);
+    if (detail != null) {
+      return json.integer('id') == int.tryParse(detail.group(2)!);
+    }
+    final season = _seasonPath.firstMatch(path);
+    return season == null ||
+        json.integer('season_number') == int.tryParse(season.group(1)!);
+  }
 
   final Future<Json?> Function(String) _parseJson;
   final _inFlight = <String, Future<Json>>{};
@@ -452,7 +464,11 @@ final class TmdbClient implements TmdbApi {
     final cached = await _cache.read(key);
     // The cache is evictable and may be damaged. Only a decoded body can
     // satisfy a request or serve as an offline fallback.
-    final cachedJson = cached == null ? null : await _parseJson(cached.body);
+    final decodedCache = cached == null ? null : await _parseJson(cached.body);
+    final cachedJson =
+        decodedCache != null && _matchesRequestedIdentity(path, decodedCache)
+        ? decodedCache
+        : null;
     final now = _clock().toUtc().millisecondsSinceEpoch;
     if (cachedJson != null &&
         now - cached!.storedAt >= 0 &&
@@ -479,9 +495,12 @@ final class TmdbClient implements TmdbApi {
     switch (response.statusCode) {
       case 200:
         final json = await _parseJson(body);
-        if (json == null) {
+        if (json == null || !_matchesRequestedIdentity(path, json)) {
           if (cachedJson != null) return cachedJson;
-          throw const SourceException(SourceFailure.failed, 'not JSON');
+          throw const SourceException(
+            SourceFailure.failed,
+            'invalid catalog response',
+          );
         }
         await _cache.write(key, CachedResponse(body, now));
         return json;

@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:drift/drift.dart'
+    show ApplyInterceptor, QueryExecutor, QueryInterceptor;
 import 'package:drift/native.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,6 +27,38 @@ class _Sync extends SyncController {
   SyncStatus build() => const SyncStatus(configured: false);
 
   void synced(int time) => state = state.copyWith(lastSyncAt: () => time);
+}
+
+class _UnavailableWorks extends QueryInterceptor {
+  bool failReads = false;
+  bool failWrites = false;
+  @override
+  Future<List<Map<String, Object?>>> runSelect(
+    QueryExecutor executor,
+    String statement,
+    List<Object?> args,
+  ) {
+    if (failReads && statement.contains('works')) {
+      return Future.error(
+        const FormatException('Temporary snapshot read failure'),
+      );
+    }
+    return super.runSelect(executor, statement, args);
+  }
+
+  @override
+  Future<int> runUpdate(
+    QueryExecutor executor,
+    String statement,
+    List<Object?> args,
+  ) {
+    if (failWrites && statement.contains('works')) {
+      return Future.error(
+        const FormatException('Temporary snapshot write failure'),
+      );
+    }
+    return super.runUpdate(executor, statement, args);
+  }
 }
 
 class _Api implements TmdbApi {
@@ -74,6 +108,59 @@ void main() {
 
   Future<void> settle() =>
       Future<void>.delayed(const Duration(milliseconds: 80));
+
+  for (final readFailure in [false, true]) {
+    test(
+      'localized titles retry after local storage failure, reading $readFailure',
+      () async {
+        resumeApp();
+        final failures = _UnavailableWorks();
+        final db = AppDatabase(NativeDatabase.memory().interceptWith(failures));
+        final api = _Api('en');
+        final library = Library(db, deviceId: 'test');
+        await library.rate(
+          const [WorkSnapshot(key: WorkKey.movie(1), tmdbId: 1, title: 'old')],
+          scoreHalf: 16,
+          note: 'Keep',
+        );
+        failures.failReads = readFailure;
+        failures.failWrites = !readFailure;
+        final container = ProviderContainer(
+          overrides: [
+            databaseProvider.overrideWithValue(db),
+            deviceIdProvider.overrideWithValue('test'),
+            initialApiKeysProvider.overrideWithValue(
+              const ApiKeys({
+                ApiSource.tmdb: StoredKey('test', verified: true),
+              }),
+            ),
+            syncControllerProvider.overrideWith(_Sync.new),
+            tmdbProvider.overrideWithValue(api),
+          ],
+        );
+        try {
+          container.listen(localizedTitlesProvider, (_, _) {});
+          await settle();
+          expect(api.calls, readFailure ? isEmpty : [1]);
+          failures.failReads = false;
+          failures.failWrites = false;
+          expect((await db.select(db.works).getSingle()).title, 'old');
+          pauseApp();
+          resumeApp();
+          await settle();
+          expect(api.calls, readFailure ? [1] : [1, 1]);
+          expect((await db.select(db.works).getSingle()).title, 'en 1');
+          final rating = await db.select(db.ratings).getSingle();
+          expect(rating.scoreHalf, 16);
+          expect(rating.note, 'Keep');
+        } finally {
+          container.dispose();
+          await settle();
+          await db.close();
+        }
+      },
+    );
+  }
 
   test(
     'unchanged resumes reuse successful titles, snapshot changes and offline failures retry',

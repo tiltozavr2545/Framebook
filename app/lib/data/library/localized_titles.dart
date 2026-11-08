@@ -142,6 +142,9 @@ final localizedTitlesProvider = Provider<void>((ref) {
           }
         }
       } while (valid() && again);
+    } on Exception {
+      // Optional title enrichment can retry on the next sync or resume.
+      // Local storage failures must not escape an unawaited foreground task.
     } finally {
       running = false;
     }
