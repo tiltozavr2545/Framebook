@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../app/router.dart';
 import '../../app/foreground.dart';
 import '../../data/db/database.dart';
 import '../../data/latest_worker.dart';
@@ -15,6 +17,7 @@ import '../../l10n/app_localizations.dart';
 import '../../shared/format.dart';
 import '../../shared/poster.dart';
 import '../../shared/score_color.dart';
+import '../../shared/accent_panel.dart';
 
 class PairCalibrationEntry extends StatelessWidget {
   const PairCalibrationEntry({super.key, required this.filmCount});
@@ -22,32 +25,46 @@ class PairCalibrationEntry extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(top: 24),
-      child: Card(
+    final theme = Theme.of(context);
+    return Semantics(
+      container: true,
+      child: DecoratedBox(
+        decoration: accentPanelDecoration(context),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                l10n.pairTitle,
-                style: Theme.of(context).textTheme.headlineSmall,
+              Semantics(
+                header: true,
+                child: Text(
+                  l10n.pairEntryTitle,
+                  style: theme.textTheme.titleLarge,
+                ),
               ),
               const SizedBox(height: 8),
-              Text(l10n.pairDailyHint),
-              const SizedBox(height: 8),
-              if (filmCount < 2) Text(l10n.pairNeedFilms),
-              FilledButton.tonalIcon(
-                icon: const Icon(Icons.compare_arrows),
-                label: Text(l10n.pairStart),
-                onPressed: filmCount < 2
-                    ? null
-                    : () => Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const PairCalibrationScreen(),
-                        ),
-                      ),
+              Text(
+                filmCount < 2 ? l10n.pairNeedFilms : l10n.pairEntryHint,
+                style: theme.textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  icon: const Icon(Icons.compare_arrows),
+                  label: Text(l10n.pairStart, textAlign: TextAlign.center),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(0, 52),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    textStyle: theme.textTheme.titleMedium,
+                  ),
+                  onPressed: filmCount < 2
+                      ? null
+                      : () => context.push(Routes.statsCalibration),
+                ),
               ),
             ],
           ),

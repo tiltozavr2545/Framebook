@@ -1239,8 +1239,14 @@ abstract class AppLocalizations {
   /// No description provided for @pairTitle.
   ///
   /// In en, this message translates to:
-  /// **'Pairwise calibration'**
+  /// **'Review your scores'**
   String get pairTitle;
+
+  /// No description provided for @pairEntryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review your scores'**
+  String get pairEntryTitle;
 
   /// No description provided for @pairHow.
   ///
@@ -1398,6 +1404,132 @@ abstract class AppLocalizations {
   /// **'Could not load rated films or comparison history.'**
   String get pairLoadFailed;
 
+  /// No description provided for @statsSeeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get statsSeeAll;
+
+  /// No description provided for @statsRated.
+  ///
+  /// In en, this message translates to:
+  /// **'Rated'**
+  String get statsRated;
+
+  /// No description provided for @statsAverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Average score'**
+  String get statsAverage;
+
+  /// No description provided for @statsTopRated.
+  ///
+  /// In en, this message translates to:
+  /// **'Your high scores'**
+  String get statsTopRated;
+
+  /// No description provided for @statsFavoriteGenres.
+  ///
+  /// In en, this message translates to:
+  /// **'Favourite genres'**
+  String get statsFavoriteGenres;
+
+  /// No description provided for @statsScoresLinkHint.
+  ///
+  /// In en, this message translates to:
+  /// **'How often you give each score'**
+  String get statsScoresLinkHint;
+
+  /// No description provided for @statsGenresAndDecades.
+  ///
+  /// In en, this message translates to:
+  /// **'Genres and decades'**
+  String get statsGenresAndDecades;
+
+  /// No description provided for @statsGenresLinkHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ratings by genre and decade'**
+  String get statsGenresLinkHint;
+
+  /// No description provided for @statsActorsDirectors.
+  ///
+  /// In en, this message translates to:
+  /// **'Actors and directors'**
+  String get statsActorsDirectors;
+
+  /// No description provided for @statsPeopleLinkHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Who appears in your rated titles'**
+  String get statsPeopleLinkHint;
+
+  /// No description provided for @statsCompareLinkHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Kinopoisk and IMDb'**
+  String get statsCompareLinkHint;
+
+  /// No description provided for @statsNoCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'No genre or release-year information for these titles yet.'**
+  String get statsNoCategories;
+
+  /// No description provided for @statsActors.
+  ///
+  /// In en, this message translates to:
+  /// **'Actors'**
+  String get statsActors;
+
+  /// No description provided for @statsDirectors.
+  ///
+  /// In en, this message translates to:
+  /// **'Directors'**
+  String get statsDirectors;
+
+  /// No description provided for @statsPeopleMinimum.
+  ///
+  /// In en, this message translates to:
+  /// **'At least 3 rated titles are needed to rank by average score.'**
+  String get statsPeopleMinimum;
+
+  /// No description provided for @statsPersonSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{{count} title} other{{count} titles}} · average {average}'**
+  String statsPersonSummary(int count, String average);
+
+  /// No description provided for @statsOpenPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'Open profile: {name}'**
+  String statsOpenPerson(String name);
+
+  /// No description provided for @statsRatesHigher.
+  ///
+  /// In en, this message translates to:
+  /// **'You rate {value} points higher on average.'**
+  String statsRatesHigher(String value);
+
+  /// No description provided for @statsRatesLower.
+  ///
+  /// In en, this message translates to:
+  /// **'You rate {value} points lower on average.'**
+  String statsRatesLower(String value);
+
+  /// No description provided for @statsRatesSame.
+  ///
+  /// In en, this message translates to:
+  /// **'Your scores are about the same on average.'**
+  String get statsRatesSame;
+
+  /// No description provided for @pairEntryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose which film you enjoyed more and refine your scores.'**
+  String get pairEntryHint;
+
   /// No description provided for @statsEmpty.
   ///
   /// In en, this message translates to:
@@ -1419,7 +1551,7 @@ abstract class AppLocalizations {
   /// No description provided for @statsCompared.
   ///
   /// In en, this message translates to:
-  /// **'Compared with others'**
+  /// **'Compare with public ratings'**
   String get statsCompared;
 
   /// No description provided for @statsComparedHint.
@@ -2151,7 +2283,7 @@ abstract class AppLocalizations {
   /// No description provided for @statsAllTime.
   ///
   /// In en, this message translates to:
-  /// **'All time · rated titles'**
+  /// **'All time'**
   String get statsAllTime;
 
   /// No description provided for @statsBest.
@@ -2169,19 +2301,19 @@ abstract class AppLocalizations {
   /// No description provided for @statsFinds.
   ///
   /// In en, this message translates to:
-  /// **'Personal discoveries'**
+  /// **'You rated higher'**
   String get statsFinds;
 
   /// No description provided for @statsDisappointments.
   ///
   /// In en, this message translates to:
-  /// **'Personal disappointments'**
+  /// **'You rated lower'**
   String get statsDisappointments;
 
   /// No description provided for @statsFindsHint.
   ///
   /// In en, this message translates to:
-  /// **'Scores at least 1 point above or below the source. Tap to explore.'**
+  /// **'The lists below show gaps of at least 1 point.'**
   String get statsFindsHint;
 
   /// No description provided for @statsTasteAgreement.
@@ -2217,13 +2349,13 @@ abstract class AppLocalizations {
   /// No description provided for @statsPeopleFrequent.
   ///
   /// In en, this message translates to:
-  /// **'Most often rated'**
+  /// **'Most frequent'**
   String get statsPeopleFrequent;
 
   /// No description provided for @statsPeopleHighest.
   ///
   /// In en, this message translates to:
-  /// **'Highest average'**
+  /// **'Highest rated'**
   String get statsPeopleHighest;
 
   /// No description provided for @statsPeopleReliable.

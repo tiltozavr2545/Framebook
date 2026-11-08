@@ -102,11 +102,13 @@ void main() {
         titles,
         WorkKind.movie,
       ), 'stats test');
-      expect(stats.median, 8);
-      expect(stats.high.length, 2);
-      expect(stats.medium.length, 1);
-      expect(stats.sources[RatingSource.imdb]!.agreement, 1);
-      expect(stats.sources[RatingSource.imdb]!.finds.length, 2);
+      expect(stats.topRated.map((t) => t.key), [
+        const WorkKey.movie(3),
+        const WorkKey.movie(2),
+      ]);
+      expect(stats.favoriteGenres, isEmpty);
+      expect(stats.sources[RatingSource.imdb]!.higher.length, 2);
+      expect(stats.sources[RatingSource.imdb]!.lower, isEmpty);
       final insights = LibraryInsights(
         genres: {},
         decades: {},
@@ -173,4 +175,92 @@ void main() {
       c.dispose();
     },
   );
+
+  test('overview ranks eligible genres and high scores deterministically', () {
+    final titles = [
+      rated(1, 20, genres: [18, 18, 28]),
+      rated(2, 16, genres: [18, 28]),
+      rated(3, 12, genres: [18]),
+      rated(4, 18, genres: [35], at: 2),
+      rated(5, 18, genres: [35], at: 1),
+      rated(6, 18, genres: [35], at: 1),
+      rated(7, 20, genres: [99], kind: WorkKind.tv),
+    ];
+    final view = prepareStatsKind((titles, WorkKind.movie));
+    expect(view.stats.count, 6);
+    expect(view.favoriteGenres.map((g) => g.key), [35, 18]);
+    expect(view.favoriteGenres.map((g) => g.count), [3, 3]);
+    expect(view.favoriteGenres.map((g) => g.average), [9, 8]);
+    expect(view.topRated.map((t) => t.key.tmdbId), [1, 4, 5, 6, 2]);
+    final reversed = prepareStatsKind((
+      titles.reversed.toList(),
+      WorkKind.movie,
+    ));
+    expect(
+      reversed.topRated.map((t) => t.key),
+      view.topRated.map((t) => t.key),
+    );
+    expect(reversed.favoriteGenres.map((g) => g.key), [35, 18]);
+    final tv = prepareStatsKind((titles, WorkKind.tv));
+    expect(tv.stats.count, 1);
+    expect(tv.favoriteGenres, isEmpty);
+  });
+
+  test('people ordering respects role and the three-title minimum', () {
+    final titles = [rated(1, 20), rated(2, 16), rated(3, 12)];
+    final insights = LibraryInsights(
+      genres: {},
+      decades: {},
+      duos: [],
+      covered: 3,
+      people: [
+        PersonInsight(
+          const PeopleCredit(
+            id: 1,
+            name: 'Actor',
+            role: FilmographyRole.acting,
+          ),
+          titles,
+          {FilmographyRole.acting: titles},
+        ),
+        PersonInsight(
+          const PeopleCredit(
+            id: 2,
+            name: 'Director',
+            role: FilmographyRole.directing,
+          ),
+          titles,
+          {
+            FilmographyRole.directing: titles.take(1).toList(),
+            FilmographyRole.acting: titles.skip(1).toList(),
+          },
+        ),
+      ],
+    );
+    final frequent = prepareInsights((
+      titles,
+      insights,
+      FilmographyRole.directing,
+      PeopleOrder.frequent,
+    ));
+    expect(frequent.ranked.map((p) => p.$1.person.id), [2]);
+    expect(frequent.ranked.single.$2.count, 1);
+    expect(
+      prepareInsights((
+        titles,
+        insights,
+        FilmographyRole.directing,
+        PeopleOrder.highest,
+      )).ranked,
+      isEmpty,
+    );
+    final highest = prepareInsights((
+      titles,
+      insights,
+      FilmographyRole.acting,
+      PeopleOrder.highest,
+    ));
+    expect(highest.ranked.map((p) => p.$1.person.id), [1]);
+    expect(highest.ranked.single.$2.count, 3);
+  });
 }

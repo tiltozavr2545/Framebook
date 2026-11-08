@@ -693,7 +693,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get pairTitle => 'Pairwise calibration';
+  String get pairTitle => 'Review your scores';
+
+  @override
+  String get pairEntryTitle => 'Review your scores';
 
   @override
   String get pairHow => 'How pairs are selected';
@@ -787,6 +790,86 @@ class AppLocalizationsEn extends AppLocalizations {
       'Could not load rated films or comparison history.';
 
   @override
+  String get statsSeeAll => 'All';
+
+  @override
+  String get statsRated => 'Rated';
+
+  @override
+  String get statsAverage => 'Average score';
+
+  @override
+  String get statsTopRated => 'Your high scores';
+
+  @override
+  String get statsFavoriteGenres => 'Favourite genres';
+
+  @override
+  String get statsScoresLinkHint => 'How often you give each score';
+
+  @override
+  String get statsGenresAndDecades => 'Genres and decades';
+
+  @override
+  String get statsGenresLinkHint => 'Ratings by genre and decade';
+
+  @override
+  String get statsActorsDirectors => 'Actors and directors';
+
+  @override
+  String get statsPeopleLinkHint => 'Who appears in your rated titles';
+
+  @override
+  String get statsCompareLinkHint => 'Kinopoisk and IMDb';
+
+  @override
+  String get statsNoCategories =>
+      'No genre or release-year information for these titles yet.';
+
+  @override
+  String get statsActors => 'Actors';
+
+  @override
+  String get statsDirectors => 'Directors';
+
+  @override
+  String get statsPeopleMinimum =>
+      'At least 3 rated titles are needed to rank by average score.';
+
+  @override
+  String statsPersonSummary(int count, String average) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count titles',
+      one: '$count title',
+    );
+    return '$_temp0 · average $average';
+  }
+
+  @override
+  String statsOpenPerson(String name) {
+    return 'Open profile: $name';
+  }
+
+  @override
+  String statsRatesHigher(String value) {
+    return 'You rate $value points higher on average.';
+  }
+
+  @override
+  String statsRatesLower(String value) {
+    return 'You rate $value points lower on average.';
+  }
+
+  @override
+  String get statsRatesSame => 'Your scores are about the same on average.';
+
+  @override
+  String get pairEntryHint =>
+      'Choose which film you enjoyed more and refine your scores.';
+
+  @override
   String get statsEmpty => 'Statistics will be here once you have ratings.';
 
   @override
@@ -804,7 +887,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statsDistribution => 'Your scores';
 
   @override
-  String get statsCompared => 'Compared with others';
+  String get statsCompared => 'Compare with public ratings';
 
   @override
   String get statsComparedHint =>
@@ -1265,7 +1348,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filmographyAll => 'All work';
 
   @override
-  String get statsAllTime => 'All time · rated titles';
+  String get statsAllTime => 'All time';
 
   @override
   String get statsBest => 'Your highest scores';
@@ -1274,14 +1357,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statsWorst => 'Your lowest scores';
 
   @override
-  String get statsFinds => 'Personal discoveries';
+  String get statsFinds => 'You rated higher';
 
   @override
-  String get statsDisappointments => 'Personal disappointments';
+  String get statsDisappointments => 'You rated lower';
 
   @override
-  String get statsFindsHint =>
-      'Scores at least 1 point above or below the source. Tap to explore.';
+  String get statsFindsHint => 'The lists below show gaps of at least 1 point.';
 
   @override
   String get statsTasteAgreement => 'Preference agreement';
@@ -1301,10 +1383,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statsPeople => 'People in your library';
 
   @override
-  String get statsPeopleFrequent => 'Most often rated';
+  String get statsPeopleFrequent => 'Most frequent';
 
   @override
-  String get statsPeopleHighest => 'Highest average';
+  String get statsPeopleHighest => 'Highest rated';
 
   @override
   String get statsPeopleReliable => 'Most often 8+';

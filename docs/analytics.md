@@ -13,7 +13,8 @@ Genres for seasons/episodes come from the series. Genre names use cached
 TMDB lists; missing names do not block other aggregates.
 
 `divergence()` is personal score minus the source's value on a 1–10 scale.
-Kinopoisk, IMDb and TMDB qualify; RT and Metacritic do not. Display uses a
+Kinopoisk, IMDb and TMDB qualify; RT and Metacritic do not. The statistics
+and divergence selectors currently offer Kinopoisk and IMDb. Display uses a
 sign and one decimal, with `±0` for equality. My ratings joins cached
 Kinopoisk/IMDb values and sorts by absolute gap, higher personal score or
 lower personal score. Entries without a value stay last, most recent first,
@@ -31,16 +32,21 @@ calculations over library inputs and return contributing works for drill-down.
 
 | Metric | Definition or evidence requirement |
 | --- | --- |
-| Score summary | Count, mean, median, distribution in half points and population standard deviation |
+| Score summary | Overview count and mean; detailed distribution in half points |
+| Highly rated titles | Scores of 8 or above; score descending, rating date descending, then natural key |
+| Favourite genres | At least three rated works; mean descending, count descending, then genre ID; overview shows three |
 | Score groups | High 8–10, middle 4.5–7.5, low 1–4 |
 | Genre and decade summaries | Counts and means over contributing titles |
 | Source gaps | Signed and absolute mean differences, with coverage counts |
-| Preference agreement | Spearman correlation with average ranks for ties; at least three shared values and variance on both sides |
-| Discoveries / disappointments | Personal-minus-source gaps at least +1 / at most −1 |
-| Person and genre rankings | Mean/reliability rankings require three distinct works; frequency has no minimum |
-| Mixed-feeling authors | At least one score of 8+ and one of 4 or less |
-| Creative pairs | Director/actor combinations with at least three shared works; self-pairs excluded |
-| Effective diversity | `exp(Shannon entropy)` over category contributions |
+| Higher/lower personal scores | Personal-minus-source gaps at least +1 / at most −1; no inference about surprise or disappointment |
+| People rankings | Actor/director frequency has no minimum; mean rankings require three distinct works in the chosen role |
+
+The statistics UI does not expose median, numeric rank correlation, score
+spread, reliability/polarization, creative pairs or effective diversity.
+Some richer pure aggregates remain shared with people discovery and taste
+analysis; removing their presentation does not remove user data or alter
+recommendation inputs. Public comparison prepares gap lists without calculating
+the removed correlation coefficient.
 
 A person with several jobs counts once per title globally and once per
 applicable role. People aggregates include only loaded credits matching the
@@ -85,8 +91,8 @@ with little repeated metadata, avoiding an unnecessary allocation pass.
 Host scheduling measurements belong to the
 [0.9.4 review](reviews/0.9.4/README.md#host-responsiveness-measurements).
 
-Large summaries filter inputs and precompute medians, score groups, source
-agreement and discovery/disappointment lists in a worker. People ordering
+Large summaries filter inputs and prepare highly rated titles, eligible genres
+and source gap lists in a worker. People ordering
 uses a worker above 200 titles or 200 people. Retained results carry their
 kind/selection so the UI does not relabel an older result as a new one.
 Score profiles materialize during preparation, avoiding aggregate loops in

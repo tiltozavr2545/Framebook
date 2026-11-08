@@ -7,7 +7,7 @@ in the [implementation plan](../implementation-plan.md).
 
 | Record | Scope |
 | --- | --- |
-| [Delivery validation](delivery-validation.md) | Milestone checks and 0.9.3 calibration/rotation validation |
+| [Delivery validation](delivery-validation.md) | Milestone checks, calibration/rotation and statistics redesign |
 | [2026-11-02 audit](2026-11-02/README.md) | Repository inventory, correctness findings, resolutions and verification |
 | [2026-11-05 review](2026-11-05/README.md) | Cache/source races, import recovery and initial optimization measurements |
 | [0.8.4 optimization](../optimization.md) | Selected changes, host measurements, rejected options and packaging results |

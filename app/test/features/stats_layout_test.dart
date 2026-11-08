@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:framebook/app/theme.dart';
 import 'package:framebook/data/library/insights.dart';
 import 'package:framebook/data/library/insights_provider.dart';
 import 'package:framebook/data/library/library.dart';
@@ -14,6 +15,7 @@ import 'package:framebook/data/ratings_service.dart';
 import 'package:framebook/data/sources/tmdb/tmdb_models.dart';
 import 'package:framebook/features/stats/insight_sections.dart';
 import 'package:framebook/features/stats/stats_screen.dart';
+import 'package:framebook/features/stats/stats_detail_screen.dart';
 import 'package:framebook/l10n/app_localizations.dart';
 
 import '../data/insights_test.dart' show rated;
@@ -30,6 +32,7 @@ Widget app(Widget child) => ProviderScope(
     viewComputerProvider.overrideWithValue(const InlineViewComputer()),
   ],
   child: MaterialApp(
+    theme: FramebookTheme.light,
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     home: child,
@@ -72,11 +75,7 @@ void main() {
             body: CustomScrollView(
               controller: scroll,
               slivers: [
-                InsightSections(
-                  titles: [row],
-                  insights: insights,
-                  genreNames: {},
-                ),
+                StatsPeopleSection(titles: [row], insights: insights),
               ],
             ),
           ),
@@ -99,6 +98,8 @@ void main() {
       }
       expect(find.text('Person 999'), findsOneWidget);
       expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(milliseconds: 1));
     },
   );
 
@@ -112,7 +113,19 @@ void main() {
     addTearDown(db.close);
     final router = GoRouter(
       initialLocation: '/stats',
-      routes: [GoRoute(path: '/stats', builder: (_, _) => const StatsScreen())],
+      routes: [
+        GoRoute(
+          path: '/stats',
+          builder: (_, _) => const StatsScreen(),
+          routes: [
+            GoRoute(
+              path: 'genres',
+              builder: (_, _) =>
+                  const StatsDetailScreen(section: StatsSection.genres),
+            ),
+          ],
+        ),
+      ],
     );
     addTearDown(router.dispose);
     final pending = Completer<LibraryInsights>();
@@ -128,12 +141,25 @@ void main() {
           genreNamesProvider.overrideWith((ref) async => {}),
         ],
         child: MaterialApp.router(
+          theme: FramebookTheme.light,
           routerConfig: router,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
         ),
       ),
     );
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Genres and decades'),
+      200,
+      scrollable: find
+          .descendant(
+            of: find.byType(CustomScrollView),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    await tester.tap(find.text('Genres and decades'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.text('1990s · 1 rating'),

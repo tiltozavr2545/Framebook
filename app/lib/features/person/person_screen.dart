@@ -10,6 +10,7 @@ import '../../data/sources/providers.dart';
 import '../../data/sources/tmdb/tmdb_models.dart';
 import '../../data/work_key.dart';
 import '../../l10n/app_localizations.dart';
+import '../../shared/accent_panel.dart';
 import '../../shared/format.dart';
 import '../../shared/poster.dart';
 import '../../shared/favorite_person_button.dart';
@@ -140,25 +141,8 @@ class _Header extends StatelessWidget {
     );
     final born = context.formatDate(person.birthday);
     final died = context.formatDate(person.deathday);
-    final scheme = theme.colorScheme;
     return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: scheme.primary.withValues(alpha: 0.65)),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color.alphaBlend(
-              scheme.primary.withValues(
-                alpha: theme.brightness == Brightness.dark ? 0.38 : 0.24,
-              ),
-              scheme.surface,
-            ),
-            scheme.surface,
-          ],
-        ),
-      ),
+      decoration: accentPanelDecoration(context),
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Row(

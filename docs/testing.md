@@ -141,6 +141,20 @@ checks do not replace the two-physical-phone sync scenario.
 
 ## Regression-test conventions
 
+Statistics regressions cover deterministic high-score and eligible-genre
+rankings, role-specific people thresholds, lazy expansion across 1,000 people
+and decade drill-down without waiting for people enrichment. Navigation tests
+exercise score/category/source/person drill-down and return paths at 320 dp,
+in both languages and themes with normal, 1.3× and double-sized text. Full-app tests
+cover hiding both tab-navigation styles on statistics detail routes. Opt-in
+screenshots include the overview and all details with real bundled fonts.
+The four-kind switcher also has drag/cancel, RTL and reduced-motion checks;
+a full-app gesture regression ensures dragging it does not switch root tabs.
+Overview scroll regressions require a constant content extent through the
+whole page in both languages at normal and enlarged text sizes. A real-font
+rendering regression checks that Cyrillic and mixed-script strings produce the
+same glyphs in either interface locale across both bundled font families.
+
 Background-refresh regressions include a 155-film backlog after quota
 exhaustion: 150 automatic lookups on the next day, remaining interactive
 capacity, continuation on a later day and the resulting statistics coverage.

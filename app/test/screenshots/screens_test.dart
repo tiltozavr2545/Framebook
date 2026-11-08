@@ -18,6 +18,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:framebook/app/app.dart';
 import 'package:framebook/features/stats/pair_calibration_screen.dart';
 import 'package:framebook/features/stats/stats_screen.dart';
+import 'package:framebook/features/stats/stats_detail_screen.dart';
 import 'package:framebook/app/preferences.dart';
 import 'package:framebook/app/router.dart';
 import 'package:framebook/data/api_keys.dart';
@@ -268,9 +269,44 @@ void main() {
     });
 
     testWidgets('stats $theme', skip: skip != null, (tester) async {
-      await pump(tester, brightness: brightness, seed: library);
+      await pump(
+        tester,
+        brightness: brightness,
+        seed: (lib, db) async {
+          await library(lib, db);
+          final ratings = await db.select(db.ratings).get();
+          await db.putExternalRatings([
+            for (final (index, row) in ratings.indexed)
+              ExternalRating(
+                workKey: row.workKey,
+                source: RatingSource.kp,
+                status: RatingStatus.ok,
+                value: index.isEven ? 7.0 : 9.0,
+                scale: 10,
+                via: ApiSource.poiskkino,
+                fetchedAt: DateTime.now().toUtc().millisecondsSinceEpoch,
+              ),
+          ]);
+        },
+      );
       go(tester, Routes.stats);
       await shoot(tester, 'stats-$theme');
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(FramebookApp)),
+      );
+      await container.read(localeProvider.notifier).set(const Locale('en'));
+      await shoot(tester, 'stats-en-$theme');
+      await container.read(localeProvider.notifier).set(const Locale('ru'));
+      for (final section in StatsSection.values) {
+        go(tester, '${Routes.stats}/${section.name}');
+        await shoot(tester, 'stats-${section.name}-$theme');
+      }
+      tester.platformDispatcher.textScaleFactorTestValue = 2;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      go(tester, Routes.stats);
+      await shoot(tester, 'stats-large-$theme');
+      go(tester, Routes.statsComparison);
+      await shoot(tester, 'stats-comparison-large-$theme');
       await tester.pumpWidget(const SizedBox());
       await tester.pump(const Duration(milliseconds: 1));
     });
@@ -404,16 +440,15 @@ void main() {
 
 /// Lets images decode (that needs real async) and animations finish.
 Future<void> settle(WidgetTester tester) async {
-  for (var i = 0; i < 3; i++) {
+  var quiet = 0;
+  for (var i = 0; i < 200 && quiet < 3; i++) {
     await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 50)),
+      () => Future<void>.delayed(const Duration(milliseconds: 20)),
     );
-    await tester.pumpAndSettle(
-      const Duration(milliseconds: 100),
-      EnginePhase.sendSemanticsUpdate,
-      const Duration(seconds: 10),
-    );
+    await tester.pump(const Duration(milliseconds: 100));
+    quiet = tester.binding.hasScheduledFrame ? 0 : quiet + 1;
   }
+  expect(quiet, 3, reason: 'The renderer must finish native IO and animations');
 }
 
 Map<String, Object?> _fixtureJson(String path) =>

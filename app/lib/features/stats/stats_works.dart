@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../data/library/library.dart';
+import '../../data/api_source.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/format.dart';
 import '../../shared/score_color.dart';
@@ -12,8 +13,9 @@ import '../title/title_routes.dart';
 void showRatedWorks(
   BuildContext context,
   String heading,
-  List<RatedTitle> titles,
-) {
+  List<RatedTitle> titles, {
+  RatingSource? compareWith,
+}) {
   final router = GoRouter.of(context);
   final branch = TitleRoutes.branchOf(context);
   showModalBottomSheet<void>(
@@ -39,9 +41,18 @@ void showRatedWorks(
             );
           }
           final title = titles[index - 1];
+          final lines = describeRated(AppLocalizations.of(context), title);
+          final sourceValue = title.external[compareWith]?.value;
           return TitleRow(
             posterPath: title.posterPath,
-            lines: describeRated(AppLocalizations.of(context), title),
+            lines: compareWith != null && sourceValue != null
+                ? (
+                    title: lines.title,
+                    subtitle:
+                        '${ratingSourceLabel(AppLocalizations.of(context), compareWith)} '
+                        '${formatScore(sourceValue)} · ${formatDivergence(title.divergenceFrom(compareWith)!)}',
+                  )
+                : lines,
             trailing: Text(
               formatMyScore(title.rating.scoreHalf),
               style: Theme.of(context).textTheme.titleLarge?.copyWith(

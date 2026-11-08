@@ -12,38 +12,33 @@ class SourceBreakdown {
         .where((t) => t.divergenceFrom(source) != null)
         .toList();
     count = shared.length;
-    agreement = rankAgreement(titles, source);
-    finds = shared.where((t) => t.divergenceFrom(source)! >= 1).toList()
+    higher = shared.where((t) => t.divergenceFrom(source)! >= 1).toList()
       ..sort(
         (a, b) =>
             b.divergenceFrom(source)!.compareTo(a.divergenceFrom(source)!),
       );
-    disappointments =
-        shared.where((t) => t.divergenceFrom(source)! <= -1).toList()..sort(
-          (a, b) =>
-              a.divergenceFrom(source)!.compareTo(b.divergenceFrom(source)!),
-        );
+    lower = shared.where((t) => t.divergenceFrom(source)! <= -1).toList()
+      ..sort(
+        (a, b) =>
+            a.divergenceFrom(source)!.compareTo(b.divergenceFrom(source)!),
+      );
   }
   late final int count;
-  late final double? agreement;
-  late final List<RatedTitle> finds, disappointments;
+  late final List<RatedTitle> higher, lower;
 }
 
 class StatsView {
   StatsView(this.titles, {this.kind}) {
     stats = computeStats(titles);
-    final scores = titles.map((t) => t.rating.scoreHalf).toList()..sort();
-    final middle = scores.length ~/ 2;
-    median = scores.isEmpty
-        ? 0
-        : scores.length.isOdd
-        ? scores[middle] / 2
-        : (scores[middle - 1] + scores[middle]) / 4;
-    high = titles.where((t) => t.rating.scoreHalf >= 16).toList();
-    low = titles.where((t) => t.rating.scoreHalf <= 8).toList();
-    medium = titles
-        .where((t) => t.rating.scoreHalf > 8 && t.rating.scoreHalf < 16)
-        .toList();
+    topRated = titles.where((t) => t.rating.scoreHalf >= 16).toList()
+      ..sort(comparePersonalScores);
+    favoriteGenres = stats.genres.where((g) => g.count >= 3).toList()
+      ..sort((a, b) {
+        final average = b.average.compareTo(a.average);
+        if (average != 0) return average;
+        final count = b.count.compareTo(a.count);
+        return count != 0 ? count : a.key.compareTo(b.key);
+      });
     sources = {
       for (final source in compareSources)
         source: SourceBreakdown(titles, source),
@@ -52,8 +47,8 @@ class StatsView {
   final List<RatedTitle> titles;
   final WorkKind? kind;
   late final RatingStats stats;
-  late final double median;
-  late final List<RatedTitle> high, medium, low;
+  late final List<RatedTitle> topRated;
+  late final List<GroupAverage> favoriteGenres;
   late final Map<RatingSource, SourceBreakdown> sources;
 }
 
@@ -64,7 +59,14 @@ StatsView prepareStatsKind(StatsInput input) => StatsView([
     if (input.$2 == null || title.work.kind == input.$2) title,
 ], kind: input.$2);
 
-enum PeopleOrder { frequent, highest, reliable, polarizing }
+int comparePersonalScores(RatedTitle a, RatedTitle b) {
+  final score = b.rating.scoreHalf.compareTo(a.rating.scoreHalf);
+  if (score != 0) return score;
+  final date = b.rating.scoredAt.compareTo(a.rating.scoredAt);
+  return date != 0 ? date : a.work.workKey.compareTo(b.work.workKey);
+}
+
+enum PeopleOrder { frequent, highest }
 
 typedef InsightViewInput = (
   List<RatedTitle>,
@@ -75,26 +77,15 @@ typedef InsightViewInput = (
 
 class InsightView {
   InsightView(InsightViewInput input) {
-    titles = [...input.$1]
-      ..sort((a, b) {
-        final score = b.rating.scoreHalf.compareTo(a.rating.scoreHalf);
-        if (score != 0) return score;
-        final date = b.rating.scoredAt.compareTo(a.rating.scoredAt);
-        return date != 0 ? date : a.work.workKey.compareTo(b.work.workKey);
-      });
-    genres = input.$2.genres.entries.where((e) => e.value.eligible).toList()
-      ..sort((a, b) {
-        final share = b.value.highShare.compareTo(a.value.highShare);
-        return share != 0 ? share : b.value.average.compareTo(a.value.average);
-      });
+    role = input.$3;
+    order = input.$4;
     ranked = [];
     for (final person in input.$2.people) {
       final profile = input.$3 == null
           ? person.profile
           : person.roles[input.$3];
       if (profile == null ||
-          input.$4 != PeopleOrder.frequent && !profile.eligible ||
-          input.$4 == PeopleOrder.polarizing && !profile.polarizing) {
+          input.$4 != PeopleOrder.frequent && !profile.eligible) {
         continue;
       }
       ranked.add((person, profile));
@@ -103,20 +94,15 @@ class InsightView {
       final cmp = switch (input.$4) {
         PeopleOrder.frequent => b.$2.count.compareTo(a.$2.count),
         PeopleOrder.highest => b.$2.average.compareTo(a.$2.average),
-        PeopleOrder.reliable => b.$2.highShare.compareTo(a.$2.highShare),
-        PeopleOrder.polarizing => b.$2.spread.compareTo(a.$2.spread),
       };
       if (cmp != 0) return cmp;
       final count = b.$2.count.compareTo(a.$2.count);
       return count != 0 ? count : a.$1.person.id.compareTo(b.$1.person.id);
     });
-    genreBreadth = categoryBreadth(input.$2.genres.values);
-    decadeBreadth = categoryBreadth(input.$2.decades.values);
   }
-  late final List<RatedTitle> titles;
-  late final List<MapEntry<int, ScoreProfile>> genres;
+  late final FilmographyRole? role;
+  late final PeopleOrder order;
   late final List<(PersonInsight, ScoreProfile)> ranked;
-  late final double genreBreadth, decadeBreadth;
 }
 
 InsightView prepareInsights(InsightViewInput input) => InsightView(input);

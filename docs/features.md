@@ -181,12 +181,41 @@ on one tap and toggles favourite on double tap, with a brief heart animation,
 snackbar and a saved-heart badge. An equivalent accessibility action exists.
 
 Stats separates films, series, seasons and episodes, starting with films.
-Interactive score, genre, decade, people and pair rows open contributing
-works and then cards inside the Stats tab. It displays partial people-credit
-coverage and offers continuation. Definitions and evidence requirements are
-in [analytics](analytics.md). Movie statistics also opens guided pairwise
-calibration; its answers, score confirmation and daily allowance are specified
-in [pair calibration](pair-calibration.md).
+Its four-way inset switcher shares Discover's moving glass selection and
+supports taps and horizontal dragging, including RTL and reduced motion.
+Compact labels stay on one line and scale down when space is tight.
+The overview shows a compact rating count and mean, up to six posters with
+scores of 8 or above, and up to three favourite genres. Genre ranking uses
+the highest mean over at least three rated works. Empty optional sections
+are omitted; the overview does not wait for people-credit enrichment.
+Its bounded summary, genre and navigation sections have exact heights from
+their first layout, keeping the scroll range steady while they enter view.
+
+Separate routes contain score distribution, genres/decades, actors/directors
+and public-score comparison. They keep the overview's kind filter, hide tab
+navigation and return to the retained overview with Back. Score, genre,
+decade and people rows open contributing works; title and person links keep
+that detail screen beneath them in the Stats stack.
+
+People offers Acting/Directing and Most frequent/Highest rated, with count
+and mean only. Highest rated requires three works in the selected role.
+Partial credit coverage and continuation stay on that detail page.
+Source comparison displays one chosen service, a plain-language signed mean
+gap, coverage and contributing titles. Higher/lower lists use a one-point
+gap and show both personal and source scores when opened. Median, numeric
+correlation, score spread, diversity, creative duos and reliability/polarization
+rankings are absent from the statistics UI. Calculation definitions are in
+[analytics](analytics.md).
+
+Movie statistics offers a separate Review your scores panel below the count/
+mean summary and before the poster shelf. Its static violet gradient and frame
+are shared with person headers. A heading and explanation sit above the
+full-width filled Compare films button, making the panel an independent
+feature rather than an action on the summary numbers. It opens a nested
+calibration route with tab navigation hidden and remains distinct from the
+four ruled detail links below.
+Its confirmed score
+changes and daily allowance are specified in [pair calibration](pair-calibration.md).
 
 ## Images, offline use and keyboard
 
@@ -217,6 +246,9 @@ The editing-table theme uses a cool lightbox, ink, film stock and grease-pencil
 marks. Both light and dark palettes are designed explicitly. Bundled Sofia
 Sans uses Extra Condensed for figures/titles and normal width for reading;
 static weights select the intended font file.
+Both interface languages use the Russian Cyrillic glyph forms for saved titles,
+names and notes; choosing English does not switch them to the font's Bulgarian
+default. This glyph choice does not change interface translations or formatting.
 
 Scores below 4 are red, 4–6.5 inclusive amber, and above 6.5 green. Sources
 on a 100-point scale are normalized before choosing colour. Reel frames and

@@ -35,6 +35,7 @@ import 'package:framebook/data/sync/sync_file.dart';
 import 'package:framebook/data/sync/sync_store.dart';
 import 'package:framebook/data/work_key.dart';
 import 'package:framebook/features/person/person_screen.dart';
+import 'package:framebook/features/stats/stats_screen.dart';
 import 'package:framebook/features/search/search_controller.dart';
 import 'package:framebook/features/search/search_mode_switcher.dart';
 import 'package:framebook/features/search/search_history.dart';
@@ -1113,7 +1114,7 @@ void main() {
     expect(inList('5'), findsOneWidget);
     go(tester, Routes.stats);
     await settle(tester);
-    expect(find.text('your score, the only one so far'), findsOneWidget);
+    expect(find.text('Rated'), findsOneWidget);
     expect(find.text('5.0'), findsOneWidget);
   });
 
@@ -1357,7 +1358,7 @@ void main() {
     expect(inList('8.7 · +0.3'), findsOneWidget);
   });
 
-  cardTest('Stats: distribution, comparison, genres and decades', (
+  cardTest('Stats: overview opens comparison, genres and decades', (
     tester,
   ) async {
     await pumpApp(
@@ -1383,38 +1384,133 @@ void main() {
     go(tester, Routes.stats);
     await settle(tester);
     // The list, not the chip row that also scrolls.
-    final statsList = find.descendant(
-      of: find.byType(CustomScrollView),
-      matching: find.byType(Scrollable),
-    );
+    final statsList = find
+        .descendant(
+          of: find.byType(StatsScreen),
+          matching: find.byWidgetPredicate(
+            (w) => w is Scrollable && w.axisDirection == AxisDirection.down,
+          ),
+        )
+        .first;
 
     expect(find.text('8.0'), findsOneWidget);
-    expect(find.text('your average over 2 ratings'), findsOneWidget);
-    expect(find.text('Your scores'), findsOneWidget);
+    expect(find.text('Rated'), findsOneWidget);
+    expect(find.text('Average score'), findsOneWidget);
     // Without a PoiskKino key there is nothing to compare with.
     await tester.scrollUntilVisible(
-      find.text('Nothing to compare with yet: no Kinopoisk ratings.'),
+      find.text('Compare with public ratings'),
       200,
       scrollable: statsList,
+    );
+    await Scrollable.ensureVisible(
+      tester.element(find.text('Compare with public ratings')),
+      alignment: .5,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Compare with public ratings'));
+    await settle(tester);
+    expect(
+      find.text('Nothing to compare with yet: no Kinopoisk ratings.'),
+      findsOneWidget,
     );
     expect(
       find.text('Add a key in Sources to compare with Kinopoisk'),
       findsOneWidget,
     );
 
+    ProviderScope.containerOf(
+      tester.element(find.byType(FramebookApp)),
+    ).read(routerProvider).pop();
+    await settle(tester);
     await tester.scrollUntilVisible(
-      find.text('By genre'),
+      find.text('Genres and decades'),
       200,
       scrollable: statsList,
     );
+    await Scrollable.ensureVisible(
+      tester.element(find.text('Genres and decades')),
+      alignment: .5,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Genres and decades'));
     await settle(tester);
     await tester.scrollUntilVisible(
       find.text('1990s · 1 rating'),
       200,
-      scrollable: statsList,
+      scrollable: find
+          .descendant(
+            of: find.byType(CustomScrollView),
+            matching: find.byType(Scrollable),
+          )
+          .last,
     );
     expect(find.text('Боевик · 1 rating'), findsOneWidget);
     expect(find.text('2010s · 1 rating'), findsOneWidget);
+  });
+
+  cardTest(
+    'statistics details hide both navigation styles and return to the overview',
+    (tester) async {
+      await pumpApp(tester, keys: tmdbOnly);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(FramebookApp)),
+      );
+      final router = container.read(routerProvider);
+      for (final floating in [false, true]) {
+        await container.read(floatingNavigationProvider.notifier).set(floating);
+        go(tester, Routes.stats);
+        await settle(tester);
+        for (final path in [
+          Routes.statsScores,
+          Routes.statsGenres,
+          Routes.statsPeople,
+          Routes.statsComparison,
+          Routes.statsCalibration,
+        ]) {
+          expect(find.byType(NavigationBar), findsOneWidget);
+          unawaited(router.push<void>(path));
+          await settle(tester);
+          expect(find.byType(NavigationBar), findsNothing);
+          expect(find.byKey(const ValueKey('glass-navigation')), findsNothing);
+          router.pop();
+          await settle(tester);
+          expect(find.byType(NavigationBar), findsOneWidget);
+        }
+      }
+    },
+  );
+
+  cardTest('dragging the statistics kind switcher keeps the Stats tab active', (
+    tester,
+  ) async {
+    await pumpApp(
+      tester,
+      keys: tmdbOnly,
+      seed: (library) => matrixRated(library, 17),
+    );
+    go(tester, Routes.stats);
+    await settle(tester);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(FramebookApp)),
+    );
+    final rect = tester.getRect(
+      find.byKey(const ValueKey('stats-kind-slider')),
+    );
+    final gesture = await tester.startGesture(
+      Offset(rect.left + rect.width / 8, rect.center.dy),
+    );
+    await gesture.moveBy(const Offset(25, 0));
+    await tester.pump();
+    await gesture.moveBy(Offset(rect.width / 4 * 1.6, 0));
+    await tester.pump();
+    await gesture.up();
+    await settle(tester);
+    expect(container.read(statsKindProvider), WorkKind.season);
+    expect(
+      container.read(routerProvider).routeInformationProvider.value.uri.path,
+      Routes.stats,
+    );
+    expect(find.text('Nothing of this kind is rated yet.'), findsOneWidget);
   });
 
   cardTest('signing in merges with Google Drive after a dialog', (
@@ -2109,7 +2205,7 @@ void main() {
   );
 
   cardTest(
-    'statistics score groups open contributing works and cards in the Stats tab',
+    'statistics high scores open contributing works and cards in the Stats tab',
     (tester) async {
       await pumpApp(
         tester,
@@ -2118,10 +2214,15 @@ void main() {
       );
       go(tester, Routes.stats);
       await settle(tester);
-      await tester.tap(find.text('Scores 8–10 · 100%'));
+      await tester.tap(find.widgetWithText(TextButton, 'All'));
       await tester.pumpAndSettle();
-      expect(find.text('Scores 8–10 · 1'), findsOneWidget);
-      await tester.tap(find.text('Матрица'));
+      expect(find.text('Your high scores · 1'), findsOneWidget);
+      await tester.tap(
+        find.descendant(
+          of: find.byType(DraggableScrollableSheet),
+          matching: find.text('Матрица'),
+        ),
+      );
       await settle(tester);
       expect(find.byType(MovieScreen), findsOneWidget);
       expect(
@@ -2130,7 +2231,7 @@ void main() {
       );
       await tester.tap(find.byTooltip('Back'));
       await settle(tester);
-      expect(find.text('All time · rated titles'), findsOneWidget);
+      expect(find.text('All time'), findsOneWidget);
     },
   );
 

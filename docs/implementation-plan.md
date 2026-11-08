@@ -7,18 +7,29 @@ verification evidence in the [review reports](reviews/README.md).
 
 ## Latest delivery
 
-Version 0.9.4 hides both bottom navigation styles on title, person and full cast
-pages and opens full-screen images above the tab shell. Current behavior is
+Version 0.9.4 combines a simpler statistics overview and focused detail pages,
+automatic catch-up for missing public ratings, date-preserving score review
+and navigation, stability and typography repairs. Current behavior is
 specified in [features](features.md); the release history is in the
-[changelog](../CHANGELOG.md#094--bottom-navigation-visibility-build-24).
+[changelog](../CHANGELOG.md#094--clearer-statistics-and-automatic-rating-catch-up-build-24).
 
 Implementation and automated checks are complete. Verification
 results and their limits are recorded in
 [delivery validation](reviews/delivery-validation.md#bottom-navigation-visibility-repair--2026-11-07).
 The [stability review](reviews/0.9.4/README.md) records additional repairs and
-host responsiveness measurements for the same unreleased version. Automated
+host responsiveness measurements for the same version. Automated
 verification is complete. The platform and independent-review work below
 remains separate.
+
+## Statistics redesign
+
+The statistics redesign selected on 2026-11-08 replaces the long analytics
+feed with a compact overview and focused detail routes. Implementation,
+automated verification and host-rendered visual inspection are complete;
+evidence is in [delivery validation](reviews/delivery-validation.md#statistics-redesign--2026-11-08).
+Current behavior belongs to [features](features.md#people-and-statistics)
+and [analytics](analytics.md). Physical-device acceptance remains part of
+the separate delivery checklist below.
 
 ## MVP stages
 

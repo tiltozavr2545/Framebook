@@ -698,7 +698,10 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get pairTitle => 'Попарная калибровка';
+  String get pairTitle => 'Проверка оценок';
+
+  @override
+  String get pairEntryTitle => 'Проверить свои оценки';
 
   @override
   String get pairHow => 'Как подбираются пары';
@@ -792,6 +795,88 @@ class AppLocalizationsRu extends AppLocalizations {
       'Не удалось загрузить оценки или историю сравнений.';
 
   @override
+  String get statsSeeAll => 'Все';
+
+  @override
+  String get statsRated => 'Оценено';
+
+  @override
+  String get statsAverage => 'Средняя оценка';
+
+  @override
+  String get statsTopRated => 'С высокими оценками';
+
+  @override
+  String get statsFavoriteGenres => 'Любимые жанры';
+
+  @override
+  String get statsScoresLinkHint => 'Как часто ты ставишь разные баллы';
+
+  @override
+  String get statsGenresAndDecades => 'Жанры и годы';
+
+  @override
+  String get statsGenresLinkHint => 'Оценки по жанрам и десятилетиям';
+
+  @override
+  String get statsActorsDirectors => 'Актёры и режиссёры';
+
+  @override
+  String get statsPeopleLinkHint => 'Кто встречается в твоих оценках';
+
+  @override
+  String get statsCompareLinkHint => 'Кинопоиск и IMDb';
+
+  @override
+  String get statsNoCategories =>
+      'Жанры и годы пока неизвестны для этих оценок.';
+
+  @override
+  String get statsActors => 'Актёры';
+
+  @override
+  String get statsDirectors => 'Режиссёры';
+
+  @override
+  String get statsPeopleMinimum =>
+      'Для сравнения по среднему баллу нужны хотя бы 3 оценки.';
+
+  @override
+  String statsPersonSummary(int count, String average) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count работы',
+      many: '$count работ',
+      few: '$count работы',
+      one: '$count работа',
+    );
+    return '$_temp0 · средняя $average';
+  }
+
+  @override
+  String statsOpenPerson(String name) {
+    return 'Открыть страницу: $name';
+  }
+
+  @override
+  String statsRatesHigher(String value) {
+    return 'В среднем ты ставишь на $value выше.';
+  }
+
+  @override
+  String statsRatesLower(String value) {
+    return 'В среднем ты ставишь на $value ниже.';
+  }
+
+  @override
+  String get statsRatesSame => 'В среднем оценки примерно совпадают.';
+
+  @override
+  String get pairEntryHint =>
+      'Выбирай, какой фильм понравился больше, и уточняй оценки.';
+
+  @override
   String get statsEmpty => 'Статистика появится, когда будут оценки.';
 
   @override
@@ -811,7 +896,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get statsDistribution => 'Твои оценки';
 
   @override
-  String get statsCompared => 'В сравнении с другими';
+  String get statsCompared => 'Сравнение с рейтингами';
 
   @override
   String get statsComparedHint =>
@@ -1276,7 +1361,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get filmographyAll => 'Все работы';
 
   @override
-  String get statsAllTime => 'За всё время · оценённые работы';
+  String get statsAllTime => 'За всё время';
 
   @override
   String get statsBest => 'Ваши лучшие оценки';
@@ -1285,14 +1370,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get statsWorst => 'Ваши худшие оценки';
 
   @override
-  String get statsFinds => 'Личные находки';
+  String get statsFinds => 'Ты оценил выше';
 
   @override
-  String get statsDisappointments => 'Личные разочарования';
+  String get statsDisappointments => 'Ты оценил ниже';
 
   @override
-  String get statsFindsHint =>
-      'Оценки минимум на 1 балл выше или ниже источника. Нажмите, чтобы посмотреть работы.';
+  String get statsFindsHint => 'В списках ниже — разница от 1 балла.';
 
   @override
   String get statsTasteAgreement => 'Совпадение предпочтений';
@@ -1312,10 +1396,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get statsPeople => 'Люди в вашей библиотеке';
 
   @override
-  String get statsPeopleFrequent => 'Чаще всего оцениваете';
+  String get statsPeopleFrequent => 'Чаще встречаются';
 
   @override
-  String get statsPeopleHighest => 'Высокая средняя оценка';
+  String get statsPeopleHighest => 'Выше оцениваешь';
 
   @override
   String get statsPeopleReliable => 'Чаще получаются 8+';

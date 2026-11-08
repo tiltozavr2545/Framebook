@@ -14,6 +14,8 @@ import '../features/settings/sync_screen.dart';
 import '../features/shell/shell_screen.dart';
 import '../features/shell/navigation_motion.dart';
 import '../features/stats/stats_screen.dart';
+import '../features/stats/stats_detail_screen.dart';
+import '../features/stats/pair_calibration_screen.dart';
 import '../features/title/title_routes.dart';
 import '../features/watchlist/watchlist_screen.dart';
 
@@ -24,6 +26,11 @@ abstract final class Routes {
   static const ratings = '/ratings';
   static const watchlist = '/watchlist';
   static const stats = '/stats';
+  static const statsScores = '/stats/scores';
+  static const statsGenres = '/stats/genres';
+  static const statsPeople = '/stats/people';
+  static const statsComparison = '/stats/comparison';
+  static const statsCalibration = '/stats/calibration';
   static const settings = '/settings';
   static const sources = '/settings/sources';
   static const about = '/settings/about';
@@ -82,7 +89,21 @@ final routerProvider = Provider<GoRouter>((ref) {
                     AppTab.stats => const StatsScreen(),
                   },
                   // Cards open inside the tab they were opened from.
-                  routes: TitleRoutes.routes(),
+                  routes: [
+                    ...TitleRoutes.routes(),
+                    if (tab == AppTab.stats)
+                      GoRoute(
+                        path: 'calibration',
+                        builder: (_, _) => const PairCalibrationScreen(),
+                      ),
+                    if (tab == AppTab.stats)
+                      for (final section in StatsSection.values)
+                        GoRoute(
+                          path: section.name,
+                          builder: (context, state) =>
+                              StatsDetailScreen(section: section),
+                        ),
+                  ],
                 ),
               ],
             ),

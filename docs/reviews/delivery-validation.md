@@ -115,3 +115,108 @@ These are host tests and rendered UI checks, not physical-device acceptance,
 measured recommendation relevance or an independent code review. Remaining
 platform work stays in the [implementation plan](../implementation-plan.md#remaining-delivery-work).
 Distribution: [v0.9.3](https://github.com/tiltozavr2545/Framebook/releases/tag/v0.9.3).
+
+## Statistics redesign — 2026-11-08
+
+The selected overview-and-details layout replaced the long statistics feed.
+It keeps the existing theme, score colours and poster components. The root
+shows count, mean, highly rated titles and eligible favourite genres. Separate
+routes hold score distribution, genres/decades, actors/directors and Kinopoisk/
+IMDb comparison. Calibration uses a nested route too. Secondary pages hide
+both tab-navigation styles and retain their originating screen beneath cards.
+
+`make codegen` completed. The final
+`make verify TEST_ARGS='--concurrency=2 --reporter expanded'` passed with
+748 tests and 22 opt-in renderers skipped; formatting, static analysis and
+version-script fixtures were clean. Focused checks covered deterministic
+genre/high-score ordering, the role-specific three-title minimum, real worker
+transfer, lazy expansion across 1,000 people and decade drill-down before
+people enrichment completes. Twelve navigation journeys used 320 dp, both
+languages and themes, and text scales of 1, 1.3 and 2. They covered source
+selection, comparison values, contributing works, title/person links, Back
+and measured title bounds. Full-app scenarios covered both navigation styles,
+including the calibration route, and the high-score shelf's work list.
+
+Two opt-in screenshot scenarios produced fourteen renders with bundled fonts:
+the overview and four detail pages in both themes, plus enlarged overview and
+comparison pages. Representative renders were inspected; the full app retained
+its existing 1.3 text-scale cap. Inspection caught excessive poster-shelf
+spacing and a clipped intermediate-scale comparison heading; both were repaired.
+The [tracked overview image](../screenshots/stats-dark.png) was refreshed.
+
+The project version/build, schema and sync format did not change. These are host
+functional checks and visual renders; no physical-device acceptance or
+performance measurement is claimed. Remaining platform work stays in the
+[implementation plan](../implementation-plan.md#remaining-delivery-work).
+
+The signed universal release preview subsequently built successfully (64.3 MB)
+and installed over the existing app with `adb install -r`, without clearing
+app data. Android confirmed version 0.9.4, build 24, and a successful cold
+activity launch. The user chose to inspect the UI themselves; this installation
+check does not mark visual or broader physical-device acceptance complete.
+
+### Entry actions and kind selection follow-up
+
+Compare films moved directly below the count/mean summary and became a
+full-width violet primary button with a short explanation beneath it. The
+four kind chips were replaced by an inset sliding selector sharing the same
+rendering component as Discover's two-mode field. Compact labels stay on one
+line and scale down within equal segments instead of splitting a final letter
+onto another line.
+
+The follow-up passed `make verify` with 753 tests and 22 skipped renderers;
+formatting, static analysis and script fixtures were clean. Four new gesture
+checks covered taps, pointer cancellation, RTL and reduced motion at large
+text size. The full-app drag regression kept the Stats root tab active while
+changing the selected kind. Existing Discover drag/query behavior and the
+twelve statistics navigation journeys also passed. Both theme render sets
+were regenerated and the overview images were refreshed. App version/build
+and schema/sync formats stayed unchanged; the UI follow-up introduced no
+user-data migrations.
+
+The refreshed signed universal APK built successfully (64.4 MB) and was
+installed over the previous preview with `adb install -r`. Visual acceptance
+on the physical device remains the user's manual check.
+
+### Separate calibration panel follow-up
+
+The calibration entry now groups its own heading, explanation and primary
+button inside a separate panel below the summary. Its violet gradient and
+border use the same shared decoration as person headers. The explanation
+sits above the button and the summary has additional spacing before the panel.
+
+`make codegen` completed and `make verify` passed with 753 tests and 22 skipped
+renderers; formatting, analysis and version-script fixtures were clean.
+Both screenshot scenarios passed and produced fourteen renders. The overview
+was inspected in both themes and with enlarged text, and the tracked overview
+images were refreshed. App version/build and data formats stayed unchanged.
+
+The signed universal APK built successfully (64.4 MB), installed with
+`adb install -r` and completed a cold activity launch. Physical-device visual
+acceptance remains the user's manual check.
+
+### Overview scrolling and Cyrillic follow-up
+
+The overview used short lazy lists for unequal summary and navigation rows.
+Scroll regressions reproduced changes in the estimated content extent during
+scrolling in both languages, including a 54 dp correction with enlarged text.
+The bounded sections now lay out their complete contents, keeping the scroll
+range constant. The four locale/scale cases passed after failing before the fix.
+
+Bundled Sofia Sans uses Bulgarian Cyrillic by default. The text theme now
+selects Russian glyph forms independently of the interface language, including
+for saved titles and notes in English mode. A real-font raster comparison
+reproduced the difference before the fix and passed afterward across both
+families and five text styles.
+
+`make verify` passed with 758 tests and 22 skipped renderers; formatting,
+analysis and version-script fixtures were clean. Both screenshot scenarios
+passed and generated sixteen images, including the English overview in both
+themes. Representative renders were inspected and tracked overview images
+were refreshed. These host checks establish stable layout geometry and glyph
+selection; they do not measure scrolling frame times on Android.
+
+The signed universal preview built successfully (64.4 MB) and installed over
+the existing app with `adb install -r`, preserving app data. Android confirmed
+a successful cold activity launch. Version/build remained 0.9.4+24; the user
+will assess scrolling smoothness and typography on the physical device.

@@ -171,8 +171,11 @@ abstract final class FramebookTheme {
   /// The type scale: display and headline sizes in Extra Condensed, the rest
   /// in the normal width. Body text gets air (1.45) for notes and overviews.
   static TextTheme _text(Color ink) {
+    // Sofia Sans defaults to Bulgarian Cyrillic. Select Russian glyph forms
+    // independently of the interface language, including for saved titles.
     TextStyle display(double size, FontWeight weight, double height) =>
         TextStyle(
+          locale: const Locale('ru'),
           fontFamily: Fonts.display,
           fontSize: size,
           fontWeight: weight,
@@ -186,6 +189,7 @@ abstract final class FramebookTheme {
       double height, {
       double spacing = 0,
     }) => TextStyle(
+      locale: const Locale('ru'),
       fontFamily: Fonts.text,
       fontSize: size,
       fontWeight: weight,

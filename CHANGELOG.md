@@ -475,7 +475,7 @@ Versions are listed from oldest to newest; append new entries at the end.
 - Consolidate documentation into primary topic references, a documentation
   index and separate historical validation records.
 
-## 0.9.4 — Bottom navigation visibility (build 24)
+## 0.9.4 — Clearer statistics and automatic rating catch-up (build 24)
 
 - Shorten the Russian watchlist tab label to fit larger interface scales.
 - Exclude undated and invalid-dated titles from recommendations, including
@@ -537,3 +537,18 @@ Versions are listed from oldest to newest; append new entries at the end.
   requests, filling gaps before refreshing known values and preserving a
   reserve for title cards. Newly rated titles wake the queue immediately;
   unfinished work continues on later days and updates source comparisons.
+- Replace the long statistics feed with a compact overview of rated titles,
+  average score, highly rated posters and favourite genres. Open score
+  distribution, genres/decades, actors/directors and public-score comparison
+  on focused detail pages, using plain-language comparisons and fewer metrics.
+- Put Compare films directly below the statistics summary, before the poster
+  shelf, and highlight it as a violet primary button so the pair-comparison
+  action is easy to find on entry.
+- Use Discover's sliding inset control for the four statistics title kinds,
+  with tap and drag selection and adaptive labels.
+- Group score review in its own violet panel matching person headers, with
+  a heading and explanation above the Compare films button.
+- Keep the statistics overview's scroll range stable as sections enter view,
+  removing height-estimation corrections during scrolling.
+- Preserve Russian Cyrillic glyph forms in English mode for saved titles,
+  names and notes instead of using the font's default Bulgarian forms.
