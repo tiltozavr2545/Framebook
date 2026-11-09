@@ -1203,8 +1203,11 @@ void main() {
     expect(inList('5'), findsOneWidget);
     go(tester, Routes.stats);
     await settle(tester);
-    expect(find.text('Rated'), findsOneWidget);
-    expect(find.text('5.0'), findsOneWidget);
+    expect(find.text('your score, the only one so far'), findsOneWidget);
+    expect(
+      find.descendant(of: find.byType(FittedBox), matching: find.text('5.0')),
+      findsOneWidget,
+    );
   });
 
   cardTest('deleting a rating asks first', (tester) async {
@@ -1482,22 +1485,17 @@ void main() {
         )
         .first;
 
-    expect(find.text('8.0'), findsOneWidget);
-    expect(find.text('Rated'), findsOneWidget);
-    expect(find.text('Average score'), findsOneWidget);
-    // Without a PoiskKino key there is nothing to compare with.
+    expect(
+      find.descendant(of: find.byType(FittedBox), matching: find.text('8.0')),
+      findsOneWidget,
+    );
+    expect(find.text('your average over 2 ratings'), findsOneWidget);
+    // Source comparison is visible directly on the restored statistics page.
     await tester.scrollUntilVisible(
-      find.text('Compare with public ratings'),
+      find.text('Nothing to compare with yet: no Kinopoisk ratings.'),
       200,
       scrollable: statsList,
     );
-    await Scrollable.ensureVisible(
-      tester.element(find.text('Compare with public ratings')),
-      alignment: .5,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Compare with public ratings'));
-    await settle(tester);
     expect(
       find.text('Nothing to compare with yet: no Kinopoisk ratings.'),
       findsOneWidget,
@@ -1507,21 +1505,7 @@ void main() {
       findsOneWidget,
     );
 
-    ProviderScope.containerOf(
-      tester.element(find.byType(FramebookApp)),
-    ).read(routerProvider).pop();
-    await settle(tester);
-    await tester.scrollUntilVisible(
-      find.text('Genres and decades'),
-      200,
-      scrollable: statsList,
-    );
-    await Scrollable.ensureVisible(
-      tester.element(find.text('Genres and decades')),
-      alignment: .5,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Genres and decades'));
+    go(tester, Routes.statsGenres);
     await settle(tester);
     await tester.scrollUntilVisible(
       find.text('1990s · 1 rating'),
@@ -2294,7 +2278,7 @@ void main() {
   );
 
   cardTest(
-    'statistics high scores open contributing works and cards in the Stats tab',
+    'statistics score details open contributing works and cards in the Stats tab',
     (tester) async {
       await pumpApp(
         tester,
@@ -2303,9 +2287,12 @@ void main() {
       );
       go(tester, Routes.stats);
       await settle(tester);
-      await tester.tap(find.widgetWithText(TextButton, 'All'));
+      go(tester, Routes.statsScores);
+      await settle(tester);
+      await tester.ensureVisible(find.widgetWithText(ListTile, '8.5'));
+      await tester.tap(find.widgetWithText(ListTile, '8.5'));
       await tester.pumpAndSettle();
-      expect(find.text('Your high scores · 1'), findsOneWidget);
+      expect(find.text('8.5 · 1'), findsOneWidget);
       await tester.tap(
         find.descendant(
           of: find.byType(DraggableScrollableSheet),
@@ -2320,7 +2307,7 @@ void main() {
       );
       await tester.tap(find.byTooltip('Back'));
       await settle(tester);
-      expect(find.text('All time'), findsOneWidget);
+      expect(find.text('Your scores'), findsOneWidget);
     },
   );
 

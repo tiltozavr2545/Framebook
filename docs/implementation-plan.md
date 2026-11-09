@@ -7,6 +7,11 @@ verification evidence in the [review reports](reviews/README.md).
 
 ## Current work
 
+0.9.6+26 restores the original statistics presentation while keeping the
+current kind switcher and prepared data pipeline, plus high-rated posters and
+decades and all rated genres below the chart. Final `make verify` passes (821 tests passed, 22 skipped), and the signed
+build is installed over the existing app on the connected Android phone.
+
 Implementation and automated verification of the requested repairs in
 0.9.5+25 are complete. Release assets and publication status belong to
 [GitHub Releases](https://github.com/tiltozavr2545/Framebook/releases/tag/v0.9.5).

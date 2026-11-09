@@ -205,38 +205,21 @@ Stats separates films, series, seasons and episodes, starting with films.
 Its four-way inset switcher shares Discover's moving glass selection and
 supports taps and horizontal dragging, including RTL and reduced motion.
 Compact labels stay on one line and scale down when space is tight.
-The overview shows a compact rating count and mean, up to six posters with
-scores of 8 or above, and up to three favourite genres. Genre ranking uses
-the highest mean over at least three rated works. Empty optional sections
-are omitted; the overview does not wait for people-credit enrichment.
-Its bounded summary, genre and navigation sections have exact heights from
-their first layout, keeping the scroll range steady while they enter view.
-
-Separate routes contain score distribution, genres/decades, actors/directors
-and public-score comparison. They keep the overview's kind filter, hide tab
-navigation and return to the retained overview with Back. Score, genre,
-decade and people rows open contributing works; title and person links keep
-that detail screen beneath them in the Stats stack.
-
-People offers Acting/Directing and Most frequent/Highest rated, with count
-and mean only. Highest rated requires three works in the selected role.
-Partial credit coverage and continuation stay on that detail page.
-Source comparison displays one chosen service, a plain-language signed mean
-gap, coverage and contributing titles. Higher/lower lists use a one-point
-gap and show both personal and source scores when opened. Median, numeric
-correlation, score spread, diversity, creative duos and reliability/polarization
-rankings are absent from the statistics UI. Calculation definitions are in
-[analytics](analytics.md).
-
-Movie statistics offers a separate Review your scores panel below the count/
-mean summary and before the poster shelf. Its static violet gradient and frame
-are shared with person headers. A heading and explanation sit above the
-full-width filled Compare films button, making the panel an independent
-feature rather than an action on the summary numbers. It opens a nested
-calibration route with tab navigation hidden and remains distinct from the
-four ruled detail links below.
-Its confirmed score
-changes and daily allowance are specified in [pair calibration](pair-calibration.md).
+The main page restores the original presentation: a large personal mean and
+rating count, a score-distribution chart and ruled source-comparison blocks.
+Both available sources appear inline with signed and absolute mean gaps,
+contributing counts and coverage. The page uses prepared worker results and
+retains local-library failure recovery. Its complete bounded content is laid
+out together so scrolling does not revise the content height.
+Below the chart, the high-score poster shelf opens all qualifying works.
+Decade rows follow the posters and open their contributing works.
+Every rated genre follows the decades, including genres with fewer than three works;
+there is no favourite-genre threshold or top-three limit. Genre rows open
+contributing works. People sections and detail-navigation links are absent. Existing detail and calibration routes and their
+calculations remain available internally; their data processing is unchanged.
+Calculation definitions are in [analytics](analytics.md). Calibration's confirmed
+score changes and daily allowance are specified in
+[pair calibration](pair-calibration.md).
 
 ## Images, offline use and keyboard
 

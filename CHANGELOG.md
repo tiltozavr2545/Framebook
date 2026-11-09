@@ -593,3 +593,11 @@ Versions are listed from oldest to newest; append new entries at the end.
   isolate while preserving the same conflict and deletion rules.
 - Restore the last saved preference and report failed settings writes, keeping
   rapid theme, language, navigation and comparison-source changes in order.
+
+## 0.9.6+26
+
+- Restore the original statistics layout with a large average, score distribution
+  and inline public-rating comparisons, retaining the current kind switcher
+  and background data preparation.
+- Place high-rated posters below the chart, followed by decades and every
+  rated genre rather than a short favourite-genre selection.

@@ -7,6 +7,10 @@ movie-score review is specified in [pair calibration](pair-calibration.md).
 
 ## Scope and source comparison
 
+The restored statistics page renders the prepared mean, distribution and
+source deviations inline. Worker preparation, kind filtering and source
+coverage semantics remain unchanged by this presentation change.
+
 All analysis is all-time and separated by title kind. Imported timestamps
 are not viewing activity. Live ratings contribute; deleted ratings do not.
 Genres for seasons/episodes come from the series. Genre names use cached

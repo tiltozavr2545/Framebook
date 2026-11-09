@@ -18,6 +18,7 @@ in the [implementation plan](../implementation-plan.md).
 | [0.9.2 review](0.9.2/README.md) | Shelf stability, worker preparation and retained view state |
 | [0.9.4 review](0.9.4/README.md) | Storage/sync correctness, title identity, recovery and measured worker responsiveness |
 | [0.9.5 review](0.9.5/README.md) | Responsiveness, bounded reads/workers, action races and storage-failure recovery in the unreleased version |
+| [0.9.6 statistics](0.9.6/README.md) | Restored presentation, responsive average and signed device update |
 
 Current Samsung reproduction and recovery procedures belong to
 [Android troubleshooting](../android-troubleshooting.md).

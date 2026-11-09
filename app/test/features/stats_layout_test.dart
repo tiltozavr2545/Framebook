@@ -149,17 +149,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('Genres and decades'),
-      200,
-      scrollable: find
-          .descendant(
-            of: find.byType(CustomScrollView),
-            matching: find.byType(Scrollable),
-          )
-          .first,
-    );
-    await tester.tap(find.text('Genres and decades'));
+    router.go('/stats/genres');
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.text('1990s · 1 rating'),

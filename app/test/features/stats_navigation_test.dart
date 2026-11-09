@@ -35,7 +35,7 @@ void main() {
           addTearDown(tester.view.reset);
           final db = AppDatabase(NativeDatabase.memory());
           final titles = [
-            rated(1, 18, imdb: 7, genres: [18], year: 1999),
+            rated(1, 18, imdb: 7, genres: [18, 28], year: 1999),
             rated(2, 16, imdb: 9, genres: [18], year: 1999),
             rated(3, 14, imdb: 8, genres: [18], year: 2010),
           ];
@@ -132,7 +132,10 @@ void main() {
                     return insights;
                   }),
                   genreNamesProvider.overrideWith(
-                    (ref) async => {18: locale == 'ru' ? 'драма' : 'drama'},
+                    (ref) async => {
+                      18: locale == 'ru' ? 'драма' : 'drama',
+                      28: locale == 'ru' ? 'боевик' : 'action',
+                    },
                   ),
                 ],
                 child: MaterialApp.router(
@@ -155,8 +158,16 @@ void main() {
             final l10n = AppLocalizations.of(
               tester.element(find.byType(StatsScreen)),
             );
-            expect(find.text(l10n.statsRated), findsOneWidget);
-            expect(find.text(l10n.statsAverage), findsOneWidget);
+            expect(find.text(l10n.statsAverageOver(3)), findsOneWidget);
+            expect(find.text(l10n.statsDistribution), findsOneWidget);
+            expect(find.text(l10n.statsTopRated), findsOneWidget);
+            expect(
+              find.text(
+                '${locale == 'ru' ? 'Боевик' : 'Action'} · ${l10n.statsRatingCount(1)}',
+              ),
+              findsOneWidget,
+              reason: 'Genres with only one rated work must remain visible',
+            );
             expect(
               insightReads,
               0,
@@ -164,7 +175,8 @@ void main() {
             );
             expect(tester.takeException(), isNull);
 
-            await tap(l10n.statsDistribution);
+            router.go('/stats/scores');
+            await tester.pumpAndSettle();
             expect(
               tester
                   .widget<StatsDetailScreen>(find.byType(StatsDetailScreen))
@@ -181,7 +193,8 @@ void main() {
             router.pop();
             await tester.pumpAndSettle();
 
-            await tap(l10n.statsGenresAndDecades);
+            router.go('/stats/genres');
+            await tester.pumpAndSettle();
             expect(
               tester
                   .widget<StatsDetailScreen>(find.byType(StatsDetailScreen))
@@ -198,7 +211,8 @@ void main() {
             router.pop();
             await tester.pumpAndSettle();
 
-            await tap(l10n.statsCompared);
+            router.go('/stats/comparison');
+            await tester.pumpAndSettle();
             expect(
               tester
                   .widget<StatsDetailScreen>(find.byType(StatsDetailScreen))
@@ -246,7 +260,8 @@ void main() {
             router.pop();
             await tester.pumpAndSettle();
 
-            await tap(l10n.statsActorsDirectors);
+            router.go('/stats/people');
+            await tester.pumpAndSettle();
             expect(find.text('Shared actor'), findsOneWidget);
             expect(find.text('Shared director'), findsNothing);
             await tester.tap(

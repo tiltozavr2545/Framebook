@@ -1,3 +1,7 @@
+import 'package:drift/native.dart';
+import 'package:framebook/data/db/database.dart';
+import 'package:framebook/data/ratings_service.dart';
+import 'package:framebook/data/background_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -17,9 +21,12 @@ void main() {
           tester.view.physicalSize = const Size(360, 780);
           tester.view.devicePixelRatio = 1;
           addTearDown(tester.view.reset);
+          final db = AppDatabase(NativeDatabase.memory());
           await tester.pumpWidget(
             ProviderScope(
               overrides: [
+                ratingsServiceProvider.overrideWithValue(RatingsService(db)),
+                backgroundRefreshEnabledProvider.overrideWithValue(false),
                 ratedTitlesProvider.overrideWith(
                   (ref) => Stream.value([
                     for (var i = 1; i <= 7; i++)
@@ -49,13 +56,13 @@ void main() {
           final scroll = tester.state<ScrollableState>(
             find
                 .descendant(
-                  of: find.byType(CustomScrollView),
+                  of: find.byType(SingleChildScrollView),
                   matching: find.byType(Scrollable),
                 )
                 .first,
           );
           final extent = scroll.position.maxScrollExtent;
-          expect(extent, greaterThan(400));
+          expect(extent, greaterThan(100));
           for (var offset = 100.0; offset < extent; offset += 100) {
             scroll.position.jumpTo(offset);
             await tester.pumpAndSettle();
@@ -73,6 +80,7 @@ void main() {
           expect(tester.takeException(), isNull);
           await tester.pumpWidget(const SizedBox.shrink());
           await tester.pump(const Duration(milliseconds: 1));
+          await db.close();
         },
       );
     }

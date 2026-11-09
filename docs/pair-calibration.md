@@ -1,13 +1,13 @@
 # Pair calibration
 
-Guided review of movie scores from Stats. Delivery evidence belongs to
+Guided review of movie scores on the retained Stats calibration route. Delivery evidence belongs to
 [validation records](reviews/delivery-validation.md#093--pair-calibration-and-daily-rotation);
 storage and transport contracts remain in the linked technical references.
 
 ## Workflow
 
-The movie statistics section opens comparisons once at least two live movie
-ratings exist. Series, seasons and episodes do not enter this workflow. The
+The calibration route supports comparisons once at least two live movie
+ratings exist. The restored statistics page currently has no calibration entry. Series, seasons and episodes do not enter this workflow. The
 screen shows two saved movie snapshots and why the pair was selected. The
 explanation of the overall algorithm is expandable; no catalog request is
 needed to select or answer a pair. Posters use the ordinary image cache.
